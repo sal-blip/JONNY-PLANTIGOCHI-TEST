@@ -4,6 +4,10 @@ Plantigochi is a small React game about raising a cheeky Monstera in a leaf-shap
 
 Full growth takes seven real days (168 hours) from planting. A care set includes water, sunlight, kind words, and plant food once each, in any order. One set as a sprout unlocks the young plant after 72 hours. A second set unlocks the final set after 120 hours. The Monstera grows its split leaves when the final set is complete and 168 hours have elapsed. Early care counts, late visits can catch up, and existing plants keep their stage and care history. The outer keychain buttons choose an action, and the heart gives it. The browser saves progress and sound preferences.
 
+Tap the ink display to open the pocket menu. Care, growth, the field guide and settings each have their own pop-up. Choose a scene under **Backgrounds**. A backup includes the selected scene as well as your plant. The launch animation parts Monstera leaves over a slow zoom. **Play sound** enables the rustle and chimes on devices that require a tap for audio. **Settings** lets you mute or replay the intro. Reduced-motion preferences skip the automatic reveal.
+
+The five background photographs are adapted from Pexels under the [Pexels license](https://www.pexels.com/license/). The source photo IDs in menu order are 10133281, 32347759, 24243721, 35298174 and 933701.
+
 ## Run locally
 
 Use Node.js 22 or newer.
@@ -21,15 +25,15 @@ Run `npm test` to verify watering, elapsed time, saved progress, and all four gr
 
 ## Install on a phone
 
-Open the published Site online first. In **Install app**, wait for **Ready for offline play**. On iPhone, choose Safari → Share → Add to Home Screen. On Android, use the install prompt or Chrome → Add to home screen.
+Open the published Site online first. In **Pocket menu → App & saves → Install app**, wait for **Ready for offline play**. On iPhone, choose Safari → Share → Add to Home Screen. On Android, use the install prompt or Chrome → Add to home screen.
 
-Progress is stored locally after each care action. **Install app → Back up** exports a save that can be restored on a different device or in a newly installed copy. In standalone mode the same menu is named **App & saves**. Moving to a different Site origin creates separate browser storage.
+Progress is stored locally after each care action. **App & saves → Saved plant → Back up** exports a save that can be restored on a different device or in a newly installed copy. Moving to a different Site origin creates separate browser storage.
 
 The production build uses vite-plugin-pwa and Workbox to generate a manifest and a versioned service worker that caches the game, artwork, icons and fonts. Service workers require HTTPS (or localhost for development). The normal Vite dev server does not register the production worker.
 
 ## Plant alerts
 
-Players opt in on their device from **Plant alerts**. On iOS, use the installed Home Screen app. The game queues one Web Push reminder for its next growth timer and updates it as the plant progresses. The hosted scheduler checks the queue hourly, so delivery can be up to one additional hour later. Growth transitions also notify an opted-in player. Phones control delivery timing, permissions, and quiet modes.
+Players opt in on their device from **App & saves → Plant alerts**. On iOS, use the installed Home Screen app. The game queues one Web Push reminder for its next growth timer and updates it as the plant progresses. The hosted scheduler checks the queue hourly, so delivery can be up to one additional hour later. Growth transitions also notify an opted-in player. Phones control delivery timing, permissions, and quiet modes.
 
 The Site Worker stores only outstanding reminder delivery data in D1. Game progress stays on the player's device. Provide a stable P-256 VAPID key pair through runtime variables `PUSH_PUBLIC_KEY` (raw base64url) and `PUSH_PRIVATE_JWK` (secret). The build packages the Worker and the generated Drizzle migrations. The first migration creates the reminder queue. To generate future migrations after schema changes, run `npx drizzle-kit generate`.
 

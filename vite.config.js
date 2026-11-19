@@ -14,8 +14,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#f9f9f2',
-        theme_color: '#f9f9f2',
+        background_color: '#1f3532',
+        theme_color: '#1f3532',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
           { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
@@ -25,7 +25,7 @@ export default defineConfig({
       workbox: {
         cacheId: 'plantigochi',
         importScripts: ['/plant-alerts.js'],
-        globPatterns: ['**/*.{html,js,css,woff2,svg,png,webmanifest}'],
+        globPatterns: ['**/*.{html,js,css,woff2,svg,png,webp,webmanifest}'],
         inlineWorkboxRuntime: true,
         cleanupOutdatedCaches: true,
         clientsClaim: true,
