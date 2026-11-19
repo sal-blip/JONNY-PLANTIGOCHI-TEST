@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Bell, BookOpen, Check, ChevronLeft, ChevronRight, Clock3, Download, Droplets, Heart, Image as Picture, Leaf, LockKeyhole, Menu, MessageCircleHeart, Play, Settings2, Smartphone, Sprout, Sun, Utensils, Volume2, VolumeX } from 'lucide-react';
+import { Bell, BookOpen, Check, ChevronLeft, ChevronRight, Clock3, Download, Droplets, Heart, Image as Picture, Leaf, LockKeyhole, Menu, MessageCircleHeart, Play, Settings2, Smartphone, Move, Sprout, Sun, Utensils, Volume2, VolumeX } from 'lucide-react';
 import PhonePanel from './PhonePanel.jsx';
 import GardenDialog from './GardenDialog.jsx';
+import { useGardenTilt } from './useGardenTilt.js';
 import { useGardenSound } from './GardenSound.js';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
@@ -101,6 +102,7 @@ export default function App() {
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
   const [intro, setIntro] = useState(() => !reducedMotion());
+  const tilt = useGardenTilt(intro || page !== null);
   const [introAudible, setIntroAudible] = useState(false);
   const [selected, setSelected] = useState(0), [selectedAction, setSelectedAction] = useState(false);
   const [reaction, setReaction] = useState(null), [speaking, setSpeaking] = useState(false);
@@ -197,7 +199,7 @@ export default function App() {
   }
   const parent = phoneItems.some(([id]) => id === page) ? 'phone' : 'menu';
 
-  return <main className={'garden scene-' + scene + (intro ? ' revealing' : '')} aria-label="Plantigochi pocket garden">
+  return <main ref={tilt.garden} className={'garden scene-' + scene + (intro ? ' revealing' : '')} aria-label="Plantigochi pocket garden">
     <div key={scene} className="scenery" style={{backgroundImage:'url(/scenes/' + scene + '.webp)'}} aria-hidden="true"/>
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
       <Device plant={plant} reaction={reaction} selected={selected} selectedAction={selectedAction} speaking={speaking}
@@ -230,6 +232,8 @@ export default function App() {
           <span className="swatch" style={{backgroundImage:'url(/scenes/' + id + '.webp)'}}/><span>{name}</span>{id === scene && <Check className="chosen"/>}
         </button>)}</div>}
       {page === 'settings' && <div className="menu-items"><button aria-pressed={plant.sound} onClick={toggleSound}>{plant.sound ? <Volume2/> : <VolumeX/>}Sound effects<span className="setting-value">{plant.sound ? 'On' : 'Off'}</span></button>
+        <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
+        {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
         <button onClick={replay}><Play/>Replay intro<ChevronRight className="row-end"/></button></div>}
       {phoneItems.some(([id]) => id === page) && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} onRestore={restoreBackup}/>}
     </GardenDialog>}

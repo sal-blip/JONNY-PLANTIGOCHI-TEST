@@ -6,6 +6,8 @@ Full growth takes seven real days (168 hours) from planting. A care set includes
 
 Tap the ink display to open the pocket menu. Care, growth, the field guide and settings each have their own pop-up. Choose a scene under **Backgrounds**. A backup includes the selected scene as well as your plant. The launch animation parts Monstera leaves over a slow zoom. **Play sound** enables the rustle and chimes on devices that require a tap for audio. **Settings** lets you mute or replay the intro. Reduced-motion preferences skip the automatic reveal.
 
+The background has a light blur. On supported phones, tilting moves the scenery up to 10 pixels and the keychain up to 3 pixels in the opposite direction. **Settings → Tilt motion** controls the effect and requests sensor access on phones that require it. Holding the phone naturally when returning to the garden sets the center. Tilt respects the device’s reduced-motion preference.
+
 The five background photographs are adapted from Pexels under the [Pexels license](https://www.pexels.com/license/). The source photo IDs in menu order are 10133281, 32347759, 24243721, 35298174 and 933701.
 
 ## Run locally
