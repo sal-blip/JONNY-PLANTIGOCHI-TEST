@@ -23,7 +23,7 @@ export function nextMilestone(plant) {
 }
 
 export function newPlant(now = Date.now()) {
-  return { version: 1, plantedAt: now, wateredAt: null, stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: false };
+  return { version: 1, plantedAt: now, wateredAt: null, stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true };
 }
 
 export function wake(plant, now) {

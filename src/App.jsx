@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Bell, BookOpen, Check, ChevronLeft, ChevronRight, Clock3, Download, Droplets, Heart, Image as Picture, Leaf, LockKeyhole, Waves, Moon, ImagePlus, Music2, MessageCircleHeart, Play, Settings2, Smartphone, Move, Sprout, Sun, Utensils, Volume2, VolumeX } from 'lucide-react';
+import { BookOpen, Check, ChevronLeft, ChevronRight, Clock3, Droplets, Heart, Leaf, LockKeyhole, Waves, Moon, ImagePlus, Music2, MessageCircleHeart, Play, Move, Sun, Utensils, Volume2, VolumeX } from 'lucide-react';
 import PhotoBackground from './PhotoBackground.jsx';
 import { scenes, selectedScene, photoStyle } from './gardenScenes.js';
 import PhonePanel from './PhonePanel.jsx';
@@ -23,10 +23,10 @@ const titles = {
   guide: 'Field guide', settings: 'Settings', phone: 'App & saves', install: 'Install app',
   saves: 'Saved plant', alerts: 'Plant alerts',
 };
-const homeItems = [['care', Heart], ['journey', Sprout], ['scenes', Picture], ['guide', BookOpen], ['settings', Settings2], ['phone', Smartphone]];
-const phoneItems = [['install', Smartphone], ['saves', Download], ['alerts', Bell]];
+const homeItems = ['care','journey','scenes','guide','settings','phone'];
+const phoneItems = ['install','saves','alerts'];
 const guidePages = [
-  ['Meet your Monstera', 'Look closely at the ink screen. The three waves in the top right open the pocket menu. The two arrow keys on the toy choose a care action. Press the heart to give it.'],
+  ['Meet your Monstera', 'Look closely at the ink screen. The three waves in the top right open the pocket menu. Touch the toy to look closer. The two arrow keys choose a care action. Press the heart to give it.'],
   ['Wake the seed', 'A seed sleeps for its first real hour. Give it water once, and it will sprout when the hour is up. Water it later and it wakes right away.'],
   ['Raise a Monstera', 'A set of care means water, sunlight, kind words, and food. The first set grows a young plant after 3 days. Another set unlocks the final set at 5 days. Finish that set for split leaves after 7 days.'],
   ['Come back anytime', 'Time passes while your pocket garden is closed. Your Monstera remembers each kindness. If you miss a visit, pick up where you left off.'],
@@ -44,16 +44,41 @@ function initialPlant() {
 }
 
 function MenuItems({ items, open }) {
-  return <div className="menu-items">{items.map(([id, Icon]) =>
-    <button key={id} onClick={() => open(id)}><Icon aria-hidden="true"/><span>{titles[id]}</span><ChevronRight className="row-end"/></button>
+  return <div className="menu-items">{items.map(id =>
+    <button key={id} onClick={() => open(id)}><span>{titles[id]}</span></button>
   )}</div>;
 }
 
-function Device({ plant, reaction, selected, selectedAction, select, act, speaking }) {
+function Device({ plant, reaction, selected, selectedAction, select, act, speaking, resting }) {
+  const [closeUp, setCloseUp] = useState(false);
+  const retreat = useRef(null), held = useRef(null);
+  const release = () => {
+    clearTimeout(retreat.current);
+    held.current = null;
+    retreat.current = setTimeout(() => setCloseUp(false), 3400);
+  };
+  useEffect(() => {
+    clearTimeout(retreat.current);
+    held.current = null;
+    setCloseUp(false);
+    return () => clearTimeout(retreat.current);
+  }, [resting]);
   const chosen = ACTIONS[selected];
   const status = selectedAction ? controls[chosen].label : plant.stage === 'seed' ? 'Sleeping' : mood[plant.stage];
-  return <div className="device">
-    <img className="shell" src="/art/device.svg" alt="" draggable="false"/>
+  return <div className={'inspect-view' + (closeUp && resting ? ' close-up' : '')}
+    onPointerDownCapture={event => {
+      if (!resting || !event.isPrimary || event.button !== 0) return;
+      const target = event.target.closest('button');
+      if (!target) return;
+      clearTimeout(retreat.current);
+      held.current = event.pointerId;
+      target.setPointerCapture(event.pointerId);
+      setCloseUp(true);
+    }}
+    onLostPointerCapture={event => { if (held.current === event.pointerId) release(); }}
+    onClickCapture={() => { if (resting) { setCloseUp(true); release(); } }}>
+    <div className="device">
+    <button className="inspect-shell" aria-label="Look closer at Plantigochi"><img className="shell" src="/art/device.svg" alt="" draggable="false"/></button>
     <div className="lcd" role="img" aria-label={'Monstera · ' + STAGE_NAMES[plant.stage] + ' · ' + mood[plant.stage]}>
       <span className="lcd-top"><span><i/> MONSTERA</span><span className="battery"><b/><b/><b/></span></span>
       <span className="lcd-art"><PlantPixel stage={plant.stage} reaction={reaction}/></span>
@@ -66,7 +91,7 @@ function Device({ plant, reaction, selected, selectedAction, select, act, speaki
       <button data-audio="care" className="accept" aria-label={'Give ' + controls[chosen].label.toLowerCase()} onClick={() => act(chosen)}><Heart/></button>
       <button aria-label="Next care action" onClick={() => select(1)}><ChevronRight/></button>
     </div>
-  </div>;
+  </div></div>;
 }
 
 function Growth({ plant, now }) {
@@ -103,13 +128,12 @@ export default function App() {
   const [intro, setIntro] = useState(() => !reducedMotion());
   const tilt = useGardenTilt(intro || page !== null);
   const [leafReady, setLeafReady] = useState(false);
-  const [introAudible, setIntroAudible] = useState(false);
   const [selected, setSelected] = useState(0), [selectedAction, setSelectedAction] = useState(false);
   const [reaction, setReaction] = useState(null), [speaking, setSpeaking] = useState(false);
   const [saveOK, setSaveOK] = useState(() => readSave() !== null);
   const feedbackTimer = useRef(null), menuButton = useRef(null), restoreFocus = useRef(false);
   const savedLastChange = useRef(saveOK);
-  const { play, hush } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, sleeping:plant.stage === 'seed', intro});
+  const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, sleeping:plant.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
   const scenery = useRef(null);
   const scene = selectedScene(plant);
@@ -153,18 +177,16 @@ export default function App() {
     return () => { active = false; };
   }, []);
   const finishIntro = useCallback(() => {
-    setIntro(false); setIntroAudible(false); hush();
-  }, [hush]);
+    setIntro(false);
+  }, []);
   useEffect(() => {
     if (!intro || !leafReady) return;
-    let active = true;
-    if (current.current.sound && !restoreFocus.current) void play('intro', false).then(heard => { if (active && heard) setIntroAudible(true); });
     const timer = setTimeout(finishIntro, reducedMotion() ? 400 : 6800);
     const media = window.matchMedia?.('(prefers-reduced-motion: reduce)');
     const motionChange = e => { if (e.matches) finishIntro(); };
     media?.addEventListener?.('change', motionChange);
-    return () => { active = false; clearTimeout(timer); media?.removeEventListener?.('change', motionChange); };
-  }, [intro, leafReady, play, finishIntro]);
+    return () => { clearTimeout(timer); media?.removeEventListener?.('change', motionChange); };
+  }, [intro, leafReady, finishIntro]);
   useEffect(() => {
     if (!page && !intro && restoreFocus.current) {
       menuButton.current?.focus({preventScroll:true}); restoreFocus.current = false;
@@ -191,16 +213,16 @@ export default function App() {
   function toggleSound() {
     const enabled = !current.current.sound;
     commit(old => ({...old, sound:enabled}));
-    if (enabled) void play('care'); else hush();
+    if (enabled) { unlock(); play('care'); }
   }
   function replay() {
-    setPage(null); setIntro(true); setIntroAudible(false);
-    if (current.current.sound) void play('intro').then(setIntroAudible);
+    setPage(null); setIntro(true);
+    if (current.current.sound) unlock();
   }
   function introSound() {
-    if (introAudible) { hush(); commit(old => ({...old,sound:false})); setIntroAudible(false); return; }
+    if (plant.sound && running) { commit(old => ({...old,sound:false})); return; }
     commit(old => ({...old,sound:true}));
-    void play('intro').then(setIntroAudible);
+    unlock();
   }
   function changeScene(id) {
     commit(old => ({...old,scene:id}));
@@ -219,7 +241,8 @@ export default function App() {
     clearTimeout(feedbackTimer.current); setSpeaking(false); setReaction(null); setSelectedAction(false); setSelected(0); setNow(Date.now());
     return commit(() => wake(backup,Date.now()));
   }
-  const parent = phoneItems.some(([id]) => id === page) ? 'phone' : 'menu';
+  const introAudible = plant.sound && running;
+  const parent = phoneItems.includes(page) ? 'phone' : 'menu';
 
   return <main ref={tilt.garden} className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
     const button = event.target.closest?.('button');
@@ -230,7 +253,7 @@ export default function App() {
     </div>
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
       <Device plant={plant} reaction={reaction} selected={selected} selectedAction={selectedAction} speaking={speaking}
-        select={select} act={act}/>
+        select={select} act={act} resting={!intro && !page}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo'} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
@@ -245,7 +268,7 @@ export default function App() {
       {['left','right'].map(side => <div key={side} className={'foliage ' + side} aria-hidden="true">
         <i className="blade back"/><i className="blade front"/><i className="blade low"/>
       </div>)}
-      <div className="intro-controls"><button data-audio="intro" onClick={introSound} aria-pressed={introAudible}>{introAudible ? <Volume2/> : <VolumeX/>}{introAudible ? 'Mute' : 'Play sound'}</button><button onClick={finishIntro}>Skip intro<ChevronRight/></button></div>
+      <div className="intro-controls"><button data-audio="master" onClick={introSound} aria-pressed={introAudible}>{introAudible ? <Volume2/> : <VolumeX/>}{introAudible ? 'Mute' : 'Play sound'}</button><button onClick={finishIntro}>Skip intro<ChevronRight/></button></div>
     </div>}
     {page === 'photo' && <PhotoBackground photo={draftPhoto} update={setDraftPhoto} layer={scenery} apply={savePhoto}
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
@@ -275,7 +298,7 @@ export default function App() {
         <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
         <button data-audio="intro" onClick={replay}><Play/>Replay intro<ChevronRight className="row-end"/></button></div>}
-      {phoneItems.some(([id]) => id === page) && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} onRestore={restoreBackup}/>}
+      {phoneItems.includes(page) && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} onRestore={restoreBackup}/>}
     </GardenDialog>}
   </main>;
 }

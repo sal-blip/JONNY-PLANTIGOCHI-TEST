@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { playButton, playReveal, startGardenBed } from './gardenVoices.js';
 
-export function useGardenSound({ enabled, ambience, sleeping, intro }) {
-  const context = useRef(null), effects = useRef(null), sequence = useRef(0), note = useRef(0);
+export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady }) {
+  const context = useRef(null), effects = useRef(null), note = useRef(0);
   const [readyContext, setReadyContext] = useState(null);
   const [visible, setVisible] = useState(() => !document.hidden);
+
   const hush = useCallback(() => {
-    sequence.current++;
     const ctx = context.current, bus = effects.current;
     if (ctx && bus) {
       bus.gain.cancelScheduledValues(ctx.currentTime);
@@ -15,28 +15,47 @@ export function useGardenSound({ enabled, ambience, sleeping, intro }) {
     effects.current = null;
   }, []);
 
-  const play = useCallback(async (kind, fromGesture = true) => {
+  const unlock = useCallback(() => {
+    const Audio = window.AudioContext || window.webkitAudioContext;
+    if (!Audio || document.hidden) return null;
     try {
-      const Audio = window.AudioContext || window.webkitAudioContext;
-      if (!Audio || document.hidden) return false;
-      const ctx = context.current || (context.current = new Audio());
-      hush();
-      const ticket = sequence.current;
-      if (ctx.state !== 'running') {
-        if (!fromGesture) return false;
-        await ctx.resume();
+      if (!context.current) {
+        const ctx = new Audio();
+        context.current = ctx;
+        ctx.onstatechange = () => {
+          if (context.current === ctx) setReadyContext(ctx.state === 'running' ? ctx : null);
+        };
       }
-      if (ctx.state !== 'running' || document.hidden || ctx !== context.current) return false;
-      setReadyContext(ctx);
-      if (ticket !== sequence.current) return false;
-      const bus = ctx.createGain();
-      effects.current = bus;
-      bus.connect(ctx.destination);
-      if (kind === 'intro') playReveal(ctx,bus);
-      else playButton(ctx,bus,kind,note.current++);
-      return true;
-    } catch { return false; }
-  }, [hush]);
+      const ctx = context.current;
+      if (ctx.state === 'running') setReadyContext(ctx);
+      else void ctx.resume().catch(() => {});
+      return ctx;
+    } catch { return null; }
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !visible) return;
+    unlock();
+    if (readyContext) return;
+    const activate = event => {
+      // The explicit sound buttons handle their own gesture and mute state.
+      if (!event.target.closest?.('[data-audio="master"]')) unlock();
+    };
+    for (const type of ['pointerdown','pointerup','touchend','click','keydown']) window.addEventListener(type,activate,true);
+    return () => {
+      for (const type of ['pointerdown','pointerup','touchend','click','keydown']) window.removeEventListener(type,activate,true);
+    };
+  }, [enabled,visible,readyContext,unlock]);
+
+  const play = useCallback((kind) => {
+    const ctx = unlock();
+    if (!ctx || ctx.state !== 'running') return;
+    hush();
+    const bus = ctx.createGain();
+    effects.current = bus;
+    bus.connect(ctx.destination);
+    playButton(ctx,bus,kind,note.current++);
+  }, [unlock,hush]);
 
   useEffect(() => {
     const change = () => { setVisible(!document.hidden); if (document.hidden) hush(); };
@@ -45,14 +64,22 @@ export function useGardenSound({ enabled, ambience, sleeping, intro }) {
   }, [hush]);
   useEffect(() => {
     if (!enabled) hush();
-    if (!enabled || !ambience || !visible || intro || !readyContext) return;
-    return startGardenBed(readyContext, readyContext.destination, sleeping);
-  }, [enabled,ambience,visible,intro,readyContext,sleeping,hush]);
+    if (!enabled || !visible || !readyContext) return;
+    if (intro && leafReady) {
+      hush();
+      const bus = readyContext.createGain();
+      effects.current = bus;
+      bus.connect(readyContext.destination);
+      playReveal(readyContext,bus);
+      return hush;
+    }
+    if (!intro && ambience) return startGardenBed(readyContext,readyContext.destination,sleeping);
+  }, [enabled,visible,intro,leafReady,ambience,readyContext,sleeping,hush]);
   useEffect(() => () => {
     hush();
     const ctx = context.current;
     context.current = null;
-    if (ctx) void ctx.close().catch(() => {});
+    if (ctx) { ctx.onstatechange = null; void ctx.close().catch(() => {}); }
   }, [hush]);
-  return { play, hush };
+  return { play, unlock, running: !!readyContext };
 }

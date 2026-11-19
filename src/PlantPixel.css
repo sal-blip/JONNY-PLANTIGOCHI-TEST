@@ -6,14 +6,73 @@
   image-rendering: pixelated;
 }
 
+.plant-pixel-active,
+.plant-pixel-return {
+  opacity: 0;
+}
+
+.plant-pixel-rest {
+  --neutral: 1;
+  --active: 0;
+  --return: 0;
+}
+
+.plant-pixel-active {
+  --neutral: 0;
+  --active: 1;
+  --return: 0;
+}
+
+.plant-pixel-return {
+  --neutral: 0;
+  --active: 0;
+  --return: 1;
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .plant-pixel-breathe > g {
+    animation: plant-pixel-two-poses 2.6s steps(1, end) infinite;
+  }
+
+  .plant-pixel-unfurl > g {
+    animation: plant-pixel-two-poses 2.1s steps(1, end) infinite;
+  }
+
+  .plant-pixel-blink > g {
+    animation: plant-pixel-eye-blink 3.9s steps(1, end) infinite;
+  }
+
+  .plant-pixel-sway > g {
+    animation: plant-pixel-leaf-sway 4.2s steps(1, end) infinite;
+  }
+
+  .plant-pixel-grown .plant-pixel-sway > g {
+    animation-duration: 5.2s;
+  }
+
   .plant-pixel-snooze {
-    animation: plant-pixel-snooze 3.2s steps(1, end) infinite;
+    animation: plant-pixel-snooze 2.6s steps(1, end) infinite;
   }
 
   .plant-pixel-reaction {
     animation: plant-pixel-reaction .7s steps(1, end) 2;
   }
+}
+
+@keyframes plant-pixel-two-poses {
+  0%, 72%, 100% { opacity: var(--neutral); }
+  30% { opacity: var(--active); }
+}
+
+@keyframes plant-pixel-eye-blink {
+  0%, 82%, 100% { opacity: var(--neutral); }
+  77% { opacity: var(--active); }
+}
+
+@keyframes plant-pixel-leaf-sway {
+  0%, 37%, 84%, 100% { opacity: var(--neutral); }
+  16% { opacity: var(--active); }
+  62% { opacity: var(--return); }
 }
 
 @keyframes plant-pixel-snooze {

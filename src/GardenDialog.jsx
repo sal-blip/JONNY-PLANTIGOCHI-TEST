@@ -1,5 +1,4 @@
 import React, { useLayoutEffect, useRef } from 'react';
-import { ArrowLeft, X } from 'lucide-react';
 
 export default function GardenDialog({ page, title, back, close, children }) {
   const dialog = useRef(null), card = useRef(null), heading = useRef(null);
@@ -32,9 +31,9 @@ export default function GardenDialog({ page, title, back, close, children }) {
     <div className="glass-pane" aria-hidden="true"/>
     <section className="menu-card" ref={card}>
       <header className="menu-heading">
-        {back && <button className="round-button" onClick={back} aria-label="Back"><ArrowLeft/></button>}
+        {back && <button className="round-button" onClick={back} aria-label="Back">Back</button>}
         <h1 id="menu-title" ref={heading} tabIndex="-1">{title}</h1>
-        <button className="round-button" onClick={close} aria-label="Close menu"><X/></button>
+        <button className="round-button" onClick={close} aria-label="Close menu">Close</button>
       </header>
       <div className={'menu-body page-' + page}>{children}</div>
     </section>
