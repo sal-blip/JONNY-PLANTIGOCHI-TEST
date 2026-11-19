@@ -53,4 +53,35 @@ test('a player can schedule, cancel, and receive one due notification', async ()
   assert.equal((await (await tick()).json()).sent,1);
   assert.equal((await (await tick()).json()).sent,0);
   assert.equal(count,1);
+  const when=Date.now()-1000;
+  assert.equal((await call('PUT','/api/alerts/reminder',{endpoint,due:when,criticalDue:when})).status,200);
+  assert.equal((await (await tick()).json()).sent,2);
+  await call('PUT','/api/alerts/reminder',{endpoint,due:when,criticalDue:when});
+  await call('PUT','/api/alerts/reminder',{endpoint,due:when,criticalDue:null});
+  assert.equal((await (await tick()).json()).sent,1);
+  await call('PUT','/api/alerts/reminder',{endpoint,due:when,criticalDue:when});
+  await call('DELETE','/api/alerts/reminder');
+  assert.equal((await (await tick()).json()).sent,0);
+});
+
+test('the service worker shows the right care warning and suppresses duplicate and stale alerts', async () => {
+  const {runInNewContext} = await import('node:vm');
+  const entries = new Map(), shown = [];
+  const cache = {
+    match:async key => entries.get(key)?.clone(),
+    put:async (key,response) => entries.set(key,response),
+  };
+  let onPush;
+  const self = {addEventListener:(name,handler)=>{if(name==='push') onPush=handler;},
+    registration:{showNotification:async(title,options)=>shown.push([title,options.tag])}};
+  runInNewContext(fs.readFileSync('public/plant-alerts.js','utf8'),{self,caches:{open:async()=>cache},Response,Date});
+  const push=()=>new Promise((resolve,reject)=>onPush({waitUntil:p=>p.then(resolve,reject)}));
+  const now=Date.now();
+  const record=(reason,due,criticalDue,expires)=>cache.put('/notice-schedule',Response.json({reason,due,criticalDue,expires}));
+  await record('thirst',now+HOUR,now-2000,now+12*HOUR);
+  await push();await push();assert.deepEqual(shown,[['Your Monstera is very thirsty','plantigochi-care']]);
+  await record('rot',now-3000,now-1500,now+HOUR);
+  await push();assert.deepEqual(shown.slice(1).map(x=>x[1]),['plantigochi-care','plantigochi-growth']);
+  assert.match(shown[1][0],/drainage/);
+  await record('thirst',null,now-10000,now-1);await push();assert.equal(shown.length,3);
 });

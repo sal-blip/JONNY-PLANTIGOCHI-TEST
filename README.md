@@ -2,13 +2,17 @@
 
 Plantigochi is a small React game about raising a cheeky Monstera in a leaf-shaped pocket keychain. The first seed starts sleeping. It sprouts when an hour has elapsed since planting and it has received water. The timer includes time spent with the browser closed.
 
-Full growth takes seven real days (168 hours) from planting. A care set includes water, sunlight, kind words, and plant food once each, in any order. One set as a sprout unlocks the young plant after 72 hours. A second set unlocks the final set after 120 hours. The Monstera grows its split leaves when the final set is complete and 168 hours have elapsed. Early care counts, late visits can catch up, and existing plants keep their stage and care history. The outer keychain buttons choose an action, and the heart gives it. The browser saves progress and sound preferences.
+Full growth takes seven real days (168 hours) from planting. A care set includes water, sunlight, kind words, and plant food once each, in any order. One set as a sprout unlocks the young plant after 72 hours. A second set unlocks the final set after 120 hours. The Monstera grows its split leaves when the final set is complete and 168 hours have elapsed. Existing gardens keep their stage and care history and receive a fresh survival clock on their first updated visit. The outer keychain buttons choose an action, and the heart gives it. The browser saves progress and sound preferences.
 
 Tap the three waves at the top right to open the glass pocket menu. Care, growth, the field guide and settings each have their own pop-up. Choose a scene under **Backgrounds**. Use **Use My Photo** to select a local image and drag it into place. A backup includes the resized photo and its framing as well as your plant. The launch animation parts Monstera leaves with a slow zoom and a soft passing rustle. Fresh gardens start with sound enabled. The game plays at launch when the browser permits it, or on the first tap or keypress. Existing mute preferences are respected. **Settings** controls sound, the continuous synth and sleeping-seed ambience, and intro replay. Reduced-motion preferences skip the automatic reveal.
 
 Touch the shell or any key to ease closer to the dot-matrix screen. The camera holds while pressed and eases back after a short pause. The LCD uses the bundled Silkscreen font under the SIL Open Font License.
 
-The background has a light blur. On supported phones, tilting moves the scenery up to 17 pixels and the keychain up to 5 pixels in the opposite direction, with a one-degree swing. **Settings → Tilt motion** controls the effect and requests sensor access on phones that require it. Holding the phone naturally when returning to the garden sets the center. Tilt respects the device’s reduced-motion preference.
+A sprouted Monstera dries out after 4 hours, becomes critical at 12, and dies after 24 without a drink. Two confirmed extra pours at least an hour apart in the same wet period cause root rot. Drain the pot within 12 hours. Sleeping seeds are safe. A death adds a pressed leaf with its age, generation, and cause to the Leaf Book.
+
+Open **Play** for Dew Catch as a sprout and Leaf Echo as a young plant. Use the toy buttons or keyboard arrows and Enter. A grown Monstera can root one cutting in a jar over 12 real hours. The jar survives the parent and a rooted cutting can start the next generation. The local save and exported backup include the jar and keepsakes.
+
+The articulated links swing around the eyelet as you tilt. A moving highlight and soft shadow follow the leaf surface. The background has a light blur. On supported phones, tilting moves the scenery up to 17 pixels and the keychain up to 5 pixels in the opposite direction, with a one-degree swing. **Settings → Tilt motion** controls the effect and requests sensor access on phones that require it. Holding the phone naturally when returning to the garden sets the center. Tilt respects the device’s reduced-motion preference.
 
 Stonewashed Pocket uses a [denim photograph](https://www.pexels.com/photo/photo-of-denim-pants-6843233/) under the [Pexels license](https://www.pexels.com/license/). Raked Sand, Still Water, Cotton Clouds, Shoji Morning and Pebble Garden use original artwork.
 
@@ -37,7 +41,7 @@ The production build uses vite-plugin-pwa and Workbox to generate a manifest and
 
 ## Plant alerts
 
-Players opt in on their device from **App & saves → Plant alerts**. On iOS, use the installed Home Screen app. The game queues one Web Push reminder for its next growth timer and updates it as the plant progresses. The hosted scheduler checks the queue hourly, so delivery can be up to one additional hour later. Growth transitions also notify an opted-in player. Phones control delivery timing, permissions, and quiet modes.
+Players opt in on their device from **App & saves → Plant alerts**. On iOS, use the installed Home Screen app. The game queues the next growth reminder and a separate critical-care reminder. Thirst alerts are due after 12 hours without water. Root-rot reminders are due six hours into the rescue window. The hosted scheduler checks the queue hourly, so delivery can be up to one additional hour later. Growth transitions also notify an opted-in player. Phones control delivery timing, permissions, and quiet modes.
 
 The Site Worker stores only outstanding reminder delivery data in D1. Game progress stays on the player's device. Provide a stable P-256 VAPID key pair through runtime variables `PUSH_PUBLIC_KEY` (raw base64url) and `PUSH_PRIVATE_JWK` (secret). The build packages the Worker and the generated Drizzle migrations. The first migration creates the reminder queue. To generate future migrations after schema changes, run `npx drizzle-kit generate`.
 

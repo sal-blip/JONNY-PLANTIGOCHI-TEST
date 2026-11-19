@@ -10,7 +10,7 @@ export const scenes = {
 const previousScenes = { pocket:'denim', sand:'raked', water:'stillwater', sky:'clouds', forest:'shoji' };
 export const photoZoom = 1.12;
 export const photoLimit = 560000;
-export const backupLimit = photoLimit + 16384;
+export const backupLimit = 5 * 1024 * 1024;
 
 export function selectedScene(plant) {
   const id = plant.scene;

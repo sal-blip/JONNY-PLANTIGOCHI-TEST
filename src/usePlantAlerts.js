@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { nextMilestone, STAGE_NAMES } from './game.js';
+import { nextMilestone, STAGE_NAMES, criticalReminder, deathDeadline } from './game.js';
 
 const DEVICE_KEY = 'plantigochi.alert-device.v1';
 function readDevice() {
@@ -32,6 +32,21 @@ export function usePlantAlerts(plant, offline) {
   const denied = capable && Notification.permission === 'denied';
   const next = nextMilestone(plant);
   const due = next ? plant.plantedAt + next.age : null;
+  const criticalDue = criticalReminder(plant);
+  const expires = deathDeadline(plant);
+  const schedule = JSON.stringify({due,criticalDue,expires,reason:plant.rotAt===null?'thirst':'rot'});
+  const storeSchedule = useCallback(async () => {
+    const cache = await caches.open('plantigochi-notices');
+    await cache.put('/notice-schedule',new Response(schedule));
+  },[schedule]);
+  useEffect(() => {
+    if (enabled && offline==='ready') void storeSchedule().catch(()=>{});
+  },[enabled,offline,storeSchedule]);
+  const syncSchedule = useCallback(async (token,endpoint) => {
+    await storeSchedule();
+    const now = Date.now();
+    await updateReminder('PUT',token,{endpoint,due:due>now ? due : null,criticalDue:criticalDue>now ? criticalDue : null});
+  },[due,criticalDue,storeSchedule]);
 
   const toggle = useCallback(async () => {
     if (!capable || offline !== 'ready' || lock.current) return;
@@ -59,10 +74,8 @@ export function usePlantAlerts(plant, offline) {
         const sub = await reg.pushManager.getSubscription() || await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:decodeKey(publicKey)});
         const token = device.token || Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('');
         device = {token,enabled:true,registered:null};
-        if (due && due > Date.now()) {
-          await updateReminder('PUT',token,{endpoint:sub.endpoint,due});
-          device.registered = due;
-        }
+        await syncSchedule(token,sub.endpoint);
+        device.registered = schedule;
         writeDevice(device);
         didInitialSync.current = true;
         setEnabled(true); setNotice('Plant alerts are on for this device.');
@@ -70,7 +83,7 @@ export function usePlantAlerts(plant, offline) {
     } catch {
       setNotice('Couldn’t update alerts. Open the installed app while online and try again.');
     } finally { lock.current = false; setBusy(false); }
-  }, [capable,enabled,offline,due]);
+  }, [capable,enabled,offline,schedule,syncSchedule]);
 
   useEffect(() => {
     const onOnline = () => retry(n=>n+1);
@@ -82,7 +95,7 @@ export function usePlantAlerts(plant, offline) {
     if (!enabled || offline !== 'ready' || !navigator.onLine || lock.current) return;
     const device = readDevice();
     if (!device.token) return;
-    if (didInitialSync.current && device.registered === due) return;
+    if (didInitialSync.current && device.registered === schedule) return;
     let active = true;
     async function sync() {
       const reg = await navigator.serviceWorker.ready;
@@ -92,24 +105,23 @@ export function usePlantAlerts(plant, offline) {
         writeDevice({token:device.token,enabled:false});
         setEnabled(false); setNotice('Enable alerts again to reconnect this device.'); return;
       }
-      if (due && due > Date.now()) await updateReminder('PUT',device.token,{endpoint:sub.endpoint,due});
-      else if (due === null || device.registered !== due) await updateReminder('DELETE',device.token);
+      await syncSchedule(device.token,sub.endpoint);
       if (active && readDevice().enabled) {
         didInitialSync.current = true;
-        writeDevice({...device, registered:due});
+        writeDevice({...device, registered:schedule});
       }
     }
     sync().catch(() => { if (active) setNotice('Reconnect to sync your next reminder.'); });
     return () => { active=false; };
-  }, [due,enabled,offline,onlineAttempt]);
+  }, [schedule,syncSchedule,enabled,offline,onlineAttempt]);
 
   useEffect(() => {
     const prior = lastStage.current;
     lastStage.current = plant.stage;
-    if (!enabled || !capable || prior === plant.stage) return;
+    if (!enabled || !capable || plant.deadAt !== null || prior === plant.stage) return;
     navigator.serviceWorker.ready.then(reg=>reg.showNotification('Monstera milestone 🌿',{
       body:'Your Monstera reached the '+STAGE_NAMES[plant.stage].toLowerCase()+' stage.', tag:'plantigochi-growth', icon:'/icons/icon-192.png',
     })).catch(()=>{});
-  },[plant.stage,enabled,capable]);
+  },[plant.stage,plant.deadAt,enabled,capable]);
   return { enabled, busy, notice, toggle, capable, denied };
 }

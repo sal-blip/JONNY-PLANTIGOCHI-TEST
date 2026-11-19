@@ -24,20 +24,21 @@ test('a cared-for plant unlocks each milestone at its exact age, including after
   assert.equal(plant.stage, 'sprout');
   plant = care(care(plant, 'sun', atAge(1)), 'sun', atAge(1));
   assert.deepEqual(plant.given, ['sun']);
-  plant = giveSet(plant, atAge(1));
-  assert.equal(giveSet(plant, atAge(72) - 1).stage, 'sprout');
+  plant = giveSet(plant, atAge(5));
+  for (let h=17;h<72;h+=12) plant=care(plant,'water',atAge(h));
+  assert.equal(wake(plant, atAge(72)-1).stage, 'sprout');
   plant = restore(JSON.stringify(plant), atAge(72));
   assert.equal(plant.stage, 'young');
   assert.equal(plant.round, 0);
   assert.deepEqual(plant.given, []);
-
-  plant = giveSet(plant, atAge(72));
-  assert.equal(giveSet(plant, atAge(120) - 1).round, 0);
+  plant = giveSet(plant, atAge(77));
+  for (let h=89;h<120;h+=12) plant=care(plant,'water',atAge(h));
+  assert.equal(wake(plant, atAge(120)-1).round, 0);
   plant = restore(JSON.stringify(plant), atAge(120));
   assert.equal(plant.round, 1);
-  assert.deepEqual(plant.given, []);
-  plant = giveSet(plant, atAge(120));
-  assert.equal(giveSet(plant, atAge(168) - 1).stage, 'young');
+  plant = giveSet(plant, atAge(125));
+  for (let h=137;h<168;h+=12) plant=care(plant,'water',atAge(h));
+  assert.equal(wake(plant, atAge(168)-1).stage, 'young');
   plant = restore(JSON.stringify(plant), atAge(168));
   assert.equal(plant.stage, 'grown');
   assert.equal(nextMilestone(plant), null);
@@ -50,24 +51,23 @@ test('late visits can catch up and each care set is still required', () => {
   assert.equal(plant.stage, 'seed');
   plant = care(plant, 'water', now);
   assert.equal(plant.stage, 'sprout');
-  plant = giveSet(plant, now);
+  plant = giveSet(plant, now+4*HOUR);
   assert.equal(plant.stage, 'young');
-  plant = giveSet(plant, now);
+  plant = giveSet(plant, now+8*HOUR);
   assert.equal(plant.round, 1);
-  for (const action of ['talk','food','sun']) plant = care(plant, action, now);
-  assert.equal(wake(plant, now + WEEK).stage, 'young');
-  assert.equal(care(plant, 'water', now).stage, 'grown');
+  for (const action of ['talk','food','sun']) plant = care(plant, action, now+9*HOUR);
+  assert.equal(wake(plant, now+10*HOUR).stage, 'young');
+  assert.equal(care(plant, 'water', now+12*HOUR).stage, 'grown');
 });
 
-test('existing mature and partly cared-for young plants keep their progress', () => {
-  const legacy = { ...newPlant(1000), wateredAt:1001, stage:'young', round:1, given:['sun','talk'], sound:true };
-  const young = restore(JSON.stringify(legacy), HOUR + 1000);
-  assert.deepEqual(young, legacy);
-  const early = giveSet(young, 2 * HOUR);
-  assert.equal(early.stage, 'young');
-  assert.equal(restore(JSON.stringify(early), WEEK + 1000).stage, 'grown');
-  const grown = { ...legacy, stage:'grown', round:0 };
-  assert.deepEqual(restore(JSON.stringify(grown), HOUR + 1000), grown);
+test('legacy plants keep their growth, settings and a fresh care clock', () => {
+  const legacy = { version:1, plantedAt:1000, wateredAt:1001, stage:'young', round:1,
+    given:['sun','talk'], sound:false, message:'Hi!',scene:'pebbles' };
+  const young = restore(JSON.stringify(legacy), WEEK);
+  assert.equal(young.stage, 'young'); assert.deepEqual(young.given,legacy.given);
+  assert.equal(young.lastDrink,WEEK); assert.equal(young.sound,false); assert.equal(young.scene,'pebbles');
+  assert.equal(restore(JSON.stringify(young), WEEK+HOUR).lastDrink,WEEK);
+  assert.equal(restore(JSON.stringify({...legacy,stage:'grown'}),WEEK).stage,'grown');
 });
 test('malformed saves recover and the timer clamps at zero', () => {
   assert.equal(restore('{',123).plantedAt,123);

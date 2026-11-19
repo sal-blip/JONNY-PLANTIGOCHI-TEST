@@ -56,7 +56,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, onResto
       <div className="offline-state" role="status">{phone.offline === 'ready' ? <Check size={15}/> : <HardDrive size={15}/>} {offlineText}</div>
     </section>}
     {page === 'alerts' && <section className="phone-section">
-      <p>Get a reminder when your plant’s next growth timer ends. Reminders are checked hourly, even with the game closed.</p>
+      <p>Get growth reminders and a rescue alert when your plant is very thirsty or its roots need drainage. Delivery is checked hourly while the game is closed.</p>
       {alerts.capable && !alerts.denied ? <button className="alert-control" aria-pressed={alerts.enabled} onClick={alerts.toggle} disabled={alerts.busy || phone.offline !== 'ready'}>
         <Bell size={16}/>{alerts.busy ? 'Updating…' : alerts.enabled ? 'Turn off alerts' : 'Enable plant alerts'}</button>
         : <p className="support-hint">{alerts.denied ? 'Notifications are blocked. You can allow them in the browser or device settings.' : 'On iPhone or iPad, add this game to the Home Screen and open its icon to enable alerts. Other devices need a browser that supports Web Push.'}</p>}
@@ -69,7 +69,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, onResto
         <button onClick={() => fileInput.current.click()}><Upload size={16}/> Restore</button>
       </div>
       <input ref={fileInput} type="file" accept=".json,application/json" aria-label="Plantigochi backup file" hidden onChange={chooseFile}/>
-      {candidate && <div className="restore-confirm"><p>Replace this plant with the <b>{STAGE_NAMES[candidate.stage].toLowerCase()}</b> from your backup?</p>
+      {candidate && <div className="restore-confirm"><p>Restore this garden and its Leaf Book? The backup holds a <b>{candidate.deadAt === null ? STAGE_NAMES[candidate.stage].toLowerCase() : 'pressed leaf'}</b>.</p>
         <div className="save-buttons"><button onClick={() => {
           const saved = onRestore(candidate);
           setCandidate(null);

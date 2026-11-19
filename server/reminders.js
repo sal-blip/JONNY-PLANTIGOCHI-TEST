@@ -47,7 +47,7 @@ async function dispatch(env, origin, send) {
     if (now-item.due >= 24*HOUR || item.attempts >= 5) { await remove(); continue; }
     try {
       const auth = await authorization(item.endpoint,env,origin,now);
-      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:'plantigochi-growth'},body:new Uint8Array()});
+      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:item.id.endsWith('.care') ? 'plantigochi-care' : 'plantigochi-growth'},body:new Uint8Array()});
       if (result.ok || [400,404,410].includes(result.status)) {
         if (result.ok) sent++;
         await remove(); continue;
@@ -71,7 +71,7 @@ export async function reminderAPI(request, env, send = fetch) {
   if (!/^[a-f0-9]{64}$/.test(secret)) return json({},401);
   const owner = await digest(secret);
   if (request.method === 'DELETE') {
-    await env.DB.prepare('DELETE FROM reminders WHERE owner=?').bind(owner).run();
+    await env.DB.prepare('DELETE FROM reminders WHERE owner IN (?,?)').bind(owner,owner+'.care').run();
     return json({ cancelled: true });
   }
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json({},415);
@@ -79,11 +79,21 @@ export async function reminderAPI(request, env, send = fetch) {
   if (raw.length > 5000) return json({},413);
   let body;
   try { body = JSON.parse(raw); } catch { return json({},400); }
-  const endpoint = pushTarget(body?.endpoint), now=Date.now(), due = body?.due;
-  if (!endpoint || !Number.isSafeInteger(due) || due < now-5*60000 || due > now+WEEK+5*60000) return json({error:'Invalid reminder.'},400);
+  const endpoint = pushTarget(body?.endpoint), now=Date.now();
+  if (!endpoint || !body || !Object.hasOwn(body,'due')) return json({error:'Invalid reminder.'},400);
   const id = await digest(endpoint);
-  const q = env.DB.prepare('INSERT INTO reminders (id, owner, endpoint, due, next_try, attempts) VALUES (?,?,?,?,?,0) ON CONFLICT(id) DO UPDATE SET due=excluded.due, next_try=excluded.next_try, attempts=0 WHERE reminders.owner=excluded.owner AND reminders.due!=excluded.due');
-  // The same token owns at most one endpoint, even if the browser rotates subscriptions.
-  await env.DB.batch([env.DB.prepare('DELETE FROM reminders WHERE owner=? AND id!=?').bind(owner,id),q.bind(id,owner,endpoint,due,due)]);
+  const slots = [[id,owner,body.due]];
+  if (Object.hasOwn(body,'criticalDue')) slots.push([id+'.care',owner+'.care',body.criticalDue]);
+  const statements = [];
+  for (const [key,slot,time] of slots) {
+    if (time === null) {
+      statements.push(env.DB.prepare('DELETE FROM reminders WHERE owner=?').bind(slot));
+      continue;
+    }
+    if (!Number.isSafeInteger(time) || time < now-5*60000 || time > now+WEEK+5*60000) return json({error:'Invalid reminder.'},400);
+    statements.push(env.DB.prepare('DELETE FROM reminders WHERE owner=? AND id!=?').bind(slot,key));
+    statements.push(env.DB.prepare('INSERT INTO reminders (id, owner, endpoint, due, next_try, attempts) VALUES (?,?,?,?,?,0) ON CONFLICT(id) DO UPDATE SET due=excluded.due, next_try=excluded.next_try, attempts=0 WHERE reminders.owner=excluded.owner AND reminders.due!=excluded.due').bind(key,slot,endpoint,time,time));
+  }
+  await env.DB.batch(statements);
   return json({ scheduled: true });
 }

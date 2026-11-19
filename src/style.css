@@ -178,3 +178,11 @@ h1,h2,p{margin:0}svg{flex-shrink:0}
 @media(min-width:900px) and (min-height:510px){.glass-pane{background:linear-gradient(105deg,#f2f9ec42 0%,#f1f6ea60 37%,#eff6e8dc 65%,#f3f7eaf0)}}
 @media(max-height:520px) and (min-width:540px){.page-menu .menu-items,.page-phone .menu-items{display:grid;grid-template-columns:1fr 1fr;column-gap:16px}.menu-items button,.scene-choice,.care-grid button{min-height:38px}.glass-pane{background:linear-gradient(100deg,#ecf4e54d,#f0f5e8d9 53%,#f4f8ebee)}.page-menu .menu-items button{font-size:21px}}
 @media(prefers-reduced-motion:reduce){.inspect-view,.inspect-view.close-up{transition:none}}
+
+.garden-specimen{width:min(100%,220px);height:92px;margin:0 auto 12px;color:#344630}
+.pressed-entry{display:flex;align-items:center;gap:16px}
+.pressed-entry>svg{width:72px;height:72px;flex:none}
+.page-book h2,.page-jar h2{font:650 21px/1.2 var(--display);margin-bottom:6px}
+.page-play .hint{margin-top:12px}
+.page-play .setting-value{margin-left:auto;font-size:14px}
+@media(max-height:480px){.garden-specimen{height:62px}.page-menu .menu-items{display:grid;grid-template-columns:1fr 1fr}}

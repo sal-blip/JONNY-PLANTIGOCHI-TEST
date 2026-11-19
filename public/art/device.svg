@@ -77,13 +77,14 @@
     </g>
   </defs>
 
-  <!-- Soft double shadow anchors the toy to the tabletop. -->
-  <use xlink:href="#leaf" fill="#526447" opacity=".21" transform="translate(5 19)" filter="url(#cast)"/>
-  <use xlink:href="#leaf" fill="#536743" opacity=".19" transform="translate(2 12)" filter="url(#near)"/>
   <g fill="none" stroke="#56614f" opacity=".21" filter="url(#ringShadow)" transform="translate(3 9)">
     <ellipse cx="146" cy="67" rx="44" ry="38" transform="rotate(-31 146 67)" stroke-width="7"/>
     <path d="M175 91 L211 146" stroke-width="8"/>
   </g>
+  <g id="case-surface">
+  <!-- Soft double shadow anchors the toy to the tabletop. -->
+  <use xlink:href="#leaf" fill="#526447" opacity=".21" transform="translate(5 19)" filter="url(#cast)"/>
+  <use xlink:href="#leaf" fill="#536743" opacity=".19" transform="translate(2 12)" filter="url(#near)"/>
 
   <!-- The visible lower edge has a seam and a narrow reflection. -->
   <use xlink:href="#leaf" transform="translate(0 8)" fill="url(#lip)" stroke="#587956" stroke-width="2.2" stroke-linejoin="round"/>
@@ -106,6 +107,8 @@
     <path d="M179 148 Q225 121 258 152" stroke="#eff2cf" stroke-width="9" stroke-linecap="round" fill="none" opacity=".22" filter="url(#soft)"/>
     <use xlink:href="#leaf" fill="url(#resin)" opacity=".63"/>
   </g>
+  </g>
+  <g id="case-detail">
   <!-- Small fenestrations at the leaf base and right edge. -->
   <g transform="rotate(-23 235 177)">
     <ellipse cx="235" cy="178" rx="5.6" ry="10.7" fill="#d4e3ad"/>
@@ -134,7 +137,8 @@
     <ellipse cx="208" cy="146" rx="7.3" ry="6.0" fill="#6f8764"/>
     <ellipse cx="208.8" cy="147.2" rx="5.9" ry="4.4" fill="#4f6752"/>
   </g>
-  <g fill="none" transform="rotate(-31 146 67)">
+  </g>
+  <g id="silver-ring" fill="none" transform="rotate(-31 146 67)">
     <ellipse cx="146" cy="67" rx="43.9" ry="37.2" stroke="#535e56" stroke-width="7.2"/>
     <ellipse cx="146" cy="65.8" rx="44.1" ry="37.1" stroke="url(#metal)" stroke-width="6.1"/>
     <path d="M105.6 52 Q114 31 141 28.9 C159 27.8 172 33.9 180 43" stroke="#fffcf1" stroke-width="1.45" stroke-linecap="round"/>
@@ -146,6 +150,8 @@
   <use xlink:href="#chainLink" transform="translate(182.6 106.1) rotate(-24) scale(.52 .88)"/>
   <use xlink:href="#chainLink" transform="translate(191.1 119.9) rotate(-33) scale(.83 .89)"/>
   <use xlink:href="#chainLink" transform="translate(201.6 134.5) rotate(-29) scale(.60 .90)"/>
+  <g id="eyelet-pin">
   <path d="M204.9 142.8 Q209.6 147.6 212.2 144.2" stroke="#636e62" fill="none" stroke-width="4" stroke-linecap="round"/>
   <path d="M204.8 141.8 Q208 146.7 211.7 143.4" stroke="#c7d0bd" fill="none" stroke-width="2.3" stroke-linecap="round"/>
+  </g>
 </svg>

@@ -8,10 +8,15 @@ import { useGardenTilt } from './useGardenTilt.js';
 import { useGardenSound } from './GardenSound.js';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
+import DeviceShell from './DeviceShell.jsx';
+import {DewArt,EchoArt} from './ActivityArt.jsx';
+import {PlayMenu,CuttingJar,LeafBook} from './GardenLife.jsx';
+import {gameNames,playText,usePocketPlay} from './pocketPlay.js';
 import PlantPixel from './PlantPixel.jsx';
-import { ACTIONS, DAY, HOUR, KEY, STAGE_NAMES, care, countdown, nextMilestone, restore, wake } from './game.js';
+import { ACTIONS, DAY, HOUR, KEY, STAGE_NAMES, care, countdown, nextMilestone, restore, wake, condition, healthLabels, needsPourConfirmation, takeCutting, replant, deathDeadline } from './game.js';
 
 const controls = {
+  drain: { label: 'Drain pot', Icon: Droplets },
   water: { label: 'Water', Icon: Droplets },
   sun: { label: 'Sunlight', Icon: Sun },
   talk: { label: 'Kind words', Icon: MessageCircleHeart },
@@ -19,17 +24,20 @@ const controls = {
 };
 const mood = { seed: 'Sleepy', sprout: 'Curious', young: 'Playful', grown: 'Flourishing' };
 const titles = {
-  menu: 'Pocket menu', care: 'Care', journey: 'Growth journey', scenes: 'Backgrounds',
+  play: 'Play', jar: 'Cutting jar', book: 'Leaf Book', pour: 'Still wet', menu: 'Pocket menu', care: 'Care', journey: 'Growth journey', scenes: 'Backgrounds',
   guide: 'Field guide', settings: 'Settings', phone: 'App & saves', install: 'Install app',
   saves: 'Saved plant', alerts: 'Plant alerts',
 };
-const homeItems = ['care','journey','scenes','guide','settings','phone'];
+const homeItems = ['care','play','journey','book','scenes','guide','settings','phone'];
 const phoneItems = ['install','saves','alerts'];
 const guidePages = [
   ['Meet your Monstera', 'Look closely at the ink screen. The three waves in the top right open the pocket menu. Touch the toy to look closer. The two arrow keys choose a care action. Press the heart to give it.'],
   ['Wake the seed', 'A seed sleeps for its first real hour. Give it water once, and it will sprout when the hour is up. Water it later and it wakes right away.'],
   ['Raise a Monstera', 'A set of care means water, sunlight, kind words, and food. The first set grows a young plant after 3 days. Another set unlocks the final set at 5 days. Finish that set for split leaves after 7 days.'],
-  ['Come back anytime', 'Time passes while your pocket garden is closed. Your Monstera remembers each kindness. If you miss a visit, pick up where you left off.'],
+  ['Read the soil', 'After sprouting, your Monstera gets thirsty after 4 hours. At 12 hours it slumps. Give it a proper drink before 24 hours pass or it dies. Time counts while the garden is closed.'],
+  ['Read the roots', 'Wet soil glistens. Two extra pours in the same four-hour wet period, at least an hour apart, cause root rot. Choose Drain pot within 12 hours to save it.'],
+  ['Play together', 'Catch three drops with the arrows or copy your Monstera’s three-beat dance with left, heart, and right. Play is just for fun. The waves let you leave a game.'],
+  ['Leave a cutting', 'A grown plant can leave a stem in a jar. It roots in 12 hours. When a plant dies, visit the Leaf Book for its pressed leaf, then plant a seed or pot a rooted cutting.'],
 ];
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
 const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -38,7 +46,7 @@ function writeSave(value) {
   try { localStorage.setItem(KEY, JSON.stringify(value)); return true; } catch { return false; }
 }
 function initialPlant() {
-  const p = restore(readSave());
+  const p = restore(readSave(), Date.now(), !document.hidden);
   writeSave(p);
   return p;
 }
@@ -49,9 +57,9 @@ function MenuItems({ items, open }) {
   )}</div>;
 }
 
-function Device({ plant, reaction, selected, selectedAction, select, act, speaking, resting }) {
+function Device({ plant, reaction, selected, selectedAction, select, act, speaking, resting, choices, soil, activity, showBook }) {
   const [closeUp, setCloseUp] = useState(false);
-  const retreat = useRef(null), held = useRef(null);
+  const retreat = useRef(null), held = useRef(null), pressedButton = useRef(null);
   const release = () => {
     clearTimeout(retreat.current);
     held.current = null;
@@ -59,12 +67,26 @@ function Device({ plant, reaction, selected, selectedAction, select, act, speaki
   };
   useEffect(() => {
     clearTimeout(retreat.current);
-    held.current = null;
+    held.current = null; pressedButton.current = null;
     setCloseUp(false);
     return () => clearTimeout(retreat.current);
   }, [resting]);
-  const chosen = ACTIONS[selected];
-  const status = selectedAction ? controls[chosen].label : plant.stage === 'seed' ? 'Sleeping' : mood[plant.stage];
+  const chosen = choices[selected] ?? choices[0];
+  const game = activity.game;
+  const heart = useRef(null);
+  useEffect(() => { if (game?.name) heart.current?.focus({preventScroll:true}); }, [game?.name]);
+  useEffect(() => {
+    if (!game || !resting) return;
+    function press(e) {
+      if (e.key === 'Escape') { activity.exit(); return; }
+      if ((e.key==='Enter' || e.key===' ') && e.target.closest?.('button')) return;
+      const key = {ArrowLeft:'left',ArrowRight:'right',Enter:'heart',' ':'heart'}[e.key];
+      if (key) { e.preventDefault(); if (!e.repeat) activity.key(key); }
+    }
+    window.addEventListener('keydown',press);
+    return () => window.removeEventListener('keydown',press);
+  },[game,resting,activity]);
+  const status = game ? playText(game) : soil === 'dead' ? 'Leaf Book · ♥' : selectedAction ? controls[chosen].label : soil !== 'healthy' ? healthLabels[soil] : plant.stage === 'seed' ? 'Sleeping' : mood[plant.stage];
   return <div className={'inspect-view' + (closeUp && resting ? ' close-up' : '')}
     onPointerDownCapture={event => {
       if (!resting || !event.isPrimary || event.button !== 0) return;
@@ -72,30 +94,41 @@ function Device({ plant, reaction, selected, selectedAction, select, act, speaki
       if (!target) return;
       clearTimeout(retreat.current);
       held.current = event.pointerId;
+      pressedButton.current = target;
       target.setPointerCapture(event.pointerId);
       setCloseUp(true);
     }}
     onLostPointerCapture={event => { if (held.current === event.pointerId) release(); }}
-    onClickCapture={() => { if (resting) { setCloseUp(true); release(); } }}>
+    onPointerCancel={() => { pressedButton.current = null; release(); }}
+    onClickCapture={event => {
+      if (!resting) return;
+      setCloseUp(true); release();
+      const pressed = pressedButton.current;
+      pressedButton.current = null;
+      // Mobile browsers can retarget the synthesized click after the toy zooms.
+      if (event.detail > 0 && pressed && pressed !== event.target.closest('button')) {
+        event.preventDefault(); event.stopPropagation(); pressed.focus({preventScroll:true}); pressed.click();
+      }
+    }}>
     <div className="device">
-    <button className="inspect-shell" aria-label="Look closer at Plantigochi"><img className="shell" src="/art/device.svg" alt="" draggable="false"/></button>
-    <div className="lcd" role="img" aria-label={'Monstera · ' + STAGE_NAMES[plant.stage] + ' · ' + mood[plant.stage]}>
-      <span className="lcd-top"><span><i/> MONSTERA</span><span className="battery"><b/><b/><b/></span></span>
-      <span className="lcd-art"><PlantPixel stage={plant.stage} reaction={reaction}/></span>
-      {speaking && <span className="lcd-speech">{plant.message}</span>}
+    <button className="inspect-shell" aria-label="Look closer at Plantigochi"><DeviceShell/></button>
+    <div className="lcd" role="img" aria-label={game ? gameNames[game.name]+' · '+status : 'Monstera · '+STAGE_NAMES[plant.stage]+' · '+status}>
+      <span className="lcd-top"><span><i/> {game ? gameNames[game.name].toUpperCase() : 'MONSTERA'}</span><span className="battery"><b/><b/><b/></span></span>
+      <span className="lcd-art"> {game ? (game.name === 'dew' ? <DewArt lane={game.lane} dropLane={game.dropLane ?? 1} progress={game.progress} result={game.result}/> : <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>) : <PlantPixel stage={plant.stage} reaction={reaction} condition={soil}/>}</span>
+      {speaking && !game && soil !== 'dead' && <span className="lcd-speech">{plant.message}</span>}
       <span className="lcd-status">{status}</span>
     </div>
     <span className="shell-name" aria-hidden="true">PLANTIGOCHI</span>
     <div className="toy-keys">
-      <button aria-label="Previous care action" onClick={() => select(-1)}><ChevronLeft/></button>
-      <button data-audio="care" className="accept" aria-label={'Give ' + controls[chosen].label.toLowerCase()} onClick={() => act(chosen)}><Heart/></button>
-      <button aria-label="Next care action" onClick={() => select(1)}><ChevronRight/></button>
+      <button disabled={!game && soil==='dead'} aria-label={game ? 'Play left' : 'Previous care action'} onClick={() => game ? activity.key('left') : select(-1)}><ChevronLeft/></button>
+      <button ref={heart} data-audio="care" className="accept" aria-label={game ? 'Play heart' : soil==='dead' ? 'Open Leaf Book' : chosen==='drain' ? 'Drain pot' : 'Give ' + controls[chosen].label.toLowerCase()} onClick={() => game ? activity.key('heart') : soil==='dead' ? showBook() : act(chosen)}><Heart/></button>
+      <button disabled={!game && soil==='dead'} aria-label={game ? 'Play right' : 'Next care action'} onClick={() => game ? activity.key('right') : select(1)}><ChevronRight/></button>
     </div>
   </div></div>;
 }
 
 function Growth({ plant, now }) {
-  const next = nextMilestone(plant), age = Math.max(0, now - plant.plantedAt);
+  const next = nextMilestone(plant), age = Math.max(0, (plant.deadAt ?? now) - plant.plantedAt);
   const ageLabel = age >= DAY ? Math.floor(age / DAY) + 'd old' : age >= HOUR ? Math.floor(age / HOUR) + 'h old' : 'First hour';
   const milestones = [['Seed', 'Planting'], ['Sprout', '1 hour'], ['Young plant', '3 days'], ['Final care set', '5 days'], ['Grown plant', '7 days']];
   const step = {seed: 0, sprout: 1, young: 2 + plant.round, grown: 4}[plant.stage];
@@ -108,7 +141,7 @@ function Growth({ plant, now }) {
       <li key={name} className={i <= step ? 'achieved' : ''} aria-current={i === step ? 'step' : undefined}><i>{i <= step && <Check/>}</i><span>{name}</span><small>{time}</small></li>
     )}</ol>
     {next && <div className="countdown"><span><Clock3/>{next.label}</span><b>{age < next.age ? countdown(next.age - age) : 'Ready'}</b></div>}
-    <p className="hint">{hint}</p>
+    <p className="hint">{plant.deadAt !== null ? 'A pressed leaf remembers this plant in the Leaf Book.' : hint}</p>
   </>;
 }
 
@@ -125,6 +158,10 @@ export default function App() {
   const alerts = usePlantAlerts(plant, phone.offline);
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
+  const activity = usePocketPlay(plant);
+  const [pourFrom,setPourFrom] = useState(null);
+  const soil = condition(plant,now);
+  const choices = ['rootRot','soggy'].includes(soil) ? [...ACTIONS,'drain'] : ACTIONS;
   const [intro, setIntro] = useState(() => !reducedMotion());
   const tilt = useGardenTilt(intro || page !== null);
   const [leafReady, setLeafReady] = useState(false);
@@ -143,7 +180,7 @@ export default function App() {
 
   const commit = useCallback((fn, requireStorage = false) => {
     const raw = savedLastChange.current ? readSave() : null;
-    const next = fn(raw ? restore(raw) : current.current);
+    const next = fn(raw ? restore(raw,Date.now(),!document.hidden) : current.current);
     const ok = writeSave(next);
     if (!ok && requireStorage) return false;
     savedLastChange.current = ok;
@@ -154,12 +191,13 @@ export default function App() {
 
   useEffect(() => {
     function refresh() {
+      if (document.hidden) return;
       const t = Date.now(); setNow(t);
       if (wake(current.current,t) !== current.current) commit(latest => wake(latest,t));
     }
     function sync(e) {
       if (e.key !== KEY || !e.newValue) return;
-      const next = restore(e.newValue); current.current = next; savedLastChange.current = true; setSaveOK(true); setPlant(next); setNow(Date.now());
+      const next = restore(e.newValue,Date.now(),!document.hidden); current.current = next; savedLastChange.current = true; setSaveOK(true); setPlant(next); setNow(Date.now());
     }
     const timer = setInterval(refresh, 1000);
     window.addEventListener('storage', sync); document.addEventListener('visibilitychange', refresh);
@@ -194,21 +232,34 @@ export default function App() {
   }, [page, intro]);
 
   function open(id) {
+    activity.exit();
     restoreFocus.current = true;
     setPage(id);
   }
   function select(delta) {
     clearTimeout(feedbackTimer.current); setSpeaking(false); setReaction(null);
-    setSelected(i => (i + delta + ACTIONS.length) % ACTIONS.length); setSelectedAction(true);
+    setSelected(i => ((i % choices.length) + delta + choices.length) % choices.length); setSelectedAction(true);
   }
-  function act(action) {
-    const ready = wake(current.current,Date.now());
-    const allowed = ready.stage === 'seed' ? action === 'water' && ready.wateredAt === null : !ready.given.includes(action);
-    commit(old => care(old,action)); setSelected(ACTIONS.indexOf(action)); setSelectedAction(false); setNow(Date.now());
-    setSpeaking(true); setReaction(allowed ? action : null);
+  function act(action, confirmed = false) {
+    const t = Date.now(), ready = wake(current.current,t);
+    if (ready.deadAt !== null) { commit(old => wake(old,t)); open('book'); return; }
+    if (action === 'water' && !confirmed && needsPourConfirmation(ready,t)) {
+      setPourFrom(page); open('pour'); return;
+    }
+    commit(old => care(old,action,t,confirmed));
+    setSelected(Math.max(0,choices.indexOf(action))); setSelectedAction(false); setNow(t);
+    setSpeaking(true); setReaction(action==='drain' ? null : action);
     clearTimeout(feedbackTimer.current);
     feedbackTimer.current = setTimeout(() => { setSpeaking(false); setReaction(null); }, 3200);
-    if (allowed && ready.sound) void play('care');
+    if (ready.sound) void play('care');
+  }
+  function startActivity(id) {
+    restoreFocus.current = false;
+    setSpeaking(false); setPage(null); setSelectedAction(false); activity.enter(id);
+  }
+  function restart(source) {
+    commit(old => replant(old,source));
+    setSelected(0); setSelectedAction(false); setSpeaking(false); setReaction(null); setNow(Date.now()); setPage(null);
   }
   function toggleSound() {
     const enabled = !current.current.sound;
@@ -242,7 +293,7 @@ export default function App() {
     return commit(() => wake(backup,Date.now()));
   }
   const introAudible = plant.sound && running;
-  const parent = phoneItems.includes(page) ? 'phone' : 'menu';
+  const parent = page === 'jar' ? 'play' : page === 'pour' ? pourFrom : phoneItems.includes(page) ? 'phone' : 'menu';
 
   return <main ref={tilt.garden} className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
     const button = event.target.closest?.('button');
@@ -253,7 +304,7 @@ export default function App() {
     </div>
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
       <Device plant={plant} reaction={reaction} selected={selected} selectedAction={selectedAction} speaking={speaking}
-        select={select} act={act} resting={!intro && !page}/>
+        select={select} act={act} resting={!intro && !page} activity={activity} soil={soil} choices={choices} showBook={() => open('book')}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo'} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
@@ -262,7 +313,7 @@ export default function App() {
       <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
       <small className="garden-credit">© 2026 Waz Lab</small>
     </div>
-    <span className="sr-only" role="status">{!page && speaking ? plant.message : ''}</span>
+    <span className="sr-only" role="status">{activity.game ? playText(activity.game) : !page && speaking ? plant.message : ''}</span>
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>
       <div className="intro-shade" aria-hidden="true"/>
       {['left','right'].map(side => <div key={side} className={'foliage ' + side} aria-hidden="true">
@@ -275,13 +326,20 @@ export default function App() {
     {page && page !== 'photo' && <GardenDialog page={page} title={titles[page]} back={page === 'menu' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'menu' && <MenuItems items={homeItems} open={open}/>}
       {page === 'phone' && <MenuItems items={phoneItems} open={open}/>}
+      {page === 'play' && <PlayMenu plant={plant} start={startActivity} open={open}/>}
+      {page === 'jar' && <CuttingJar plant={plant} now={now} cut={stem=>commit(old=>takeCutting(old,stem))} pot={()=>restart('cutting')}/>}
+      {page === 'book' && <LeafBook plant={plant} now={now} restart={restart} open={open}/>}
+      {page === 'pour' && <><p>Still wet. Water anyway?</p><p className="hint">Extra water can cause root rot.</p><div className="menu-items">
+        <button onClick={()=>setPage(pourFrom)}>Leave it be</button><button onClick={()=>{setPage(pourFrom);act('water',true);}}>Water anyway</button></div></>}
       {page === 'care' && <>
-        <div className="care-plant"><div className="mini-lcd"><PlantPixel stage={plant.stage} reaction={reaction}/></div><div><h2>Monstera</h2><span>{STAGE_NAMES[plant.stage]} · {mood[plant.stage]}</span></div></div>
-        <div className="care-grid">{ACTIONS.map(key => {
+        <div className="care-plant"><div className="mini-lcd"><PlantPixel stage={plant.stage} reaction={reaction} condition={soil}/></div><div><h2>Monstera</h2><span>{STAGE_NAMES[plant.stage]} · {plant.stage==='seed' ? mood.seed : healthLabels[soil]}</span></div></div>
+         {soil==='dead' ? <div className="menu-items"><button onClick={()=>open('book')}>Visit Leaf Book</button></div> :
+        <div className="care-grid">{choices.map(key => {
           const {label, Icon} = controls[key], locked = plant.stage === 'seed' && key !== 'water';
           const done = plant.given.includes(key) || (plant.stage === 'seed' && key === 'water' && plant.wateredAt !== null);
           return <button data-audio="care" key={key} disabled={locked} onClick={() => act(key)} aria-label={label + (locked ? ', unlocks after sprouting' : '')}><Icon/>{label}{locked ? <LockKeyhole className="corner"/> : done ? <Check className="corner"/> : null}</button>;
-        })}</div>
+        })}</div>}
+        {['dry','critical','rootRot'].includes(soil) && <p className="hint">{soil==='rootRot' ? 'Drain the pot within ' : 'Give water within '}{countdown(deathDeadline(plant)-now)}.</p>}
         <p className="plant-quote" role="status">“{plant.message}”</p>
       </>}
       {page === 'journey' && <Growth plant={plant} now={now}/>}
