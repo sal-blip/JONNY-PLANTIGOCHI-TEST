@@ -15,15 +15,19 @@ export function wake(plant, now) {
   return plant;
 }
 
-export function restore(text, now = Date.now()) {
+export function readPlant(text, now = Date.now()) {
   try {
     const p = JSON.parse(text);
     if (p && p.version === 1 && STAGES.includes(p.stage) && Number.isFinite(p.plantedAt)
       && (p.wateredAt === null || Number.isFinite(p.wateredAt)) && [0,1].includes(p.round)
       && Array.isArray(p.given) && p.given.every(a => ACTIONS.includes(a)) && new Set(p.given).size === p.given.length
       && typeof p.message === 'string' && typeof p.sound === 'boolean') return wake(p, now);
-  } catch { /* Use a fresh seed when a save cannot be read. */ }
-  return newPlant(now);
+  } catch { /* An unreadable save must never replace a plant during import. */ }
+  return null;
+}
+
+export function restore(text, now = Date.now()) {
+  return readPlant(text, now) ?? newPlant(now);
 }
 
 const happy = {

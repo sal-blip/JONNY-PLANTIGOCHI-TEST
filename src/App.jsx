@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Bean, BookOpen, Check, ChevronLeft, ChevronRight, Clock3, Droplets, Flower2, Heart, Leaf, LockKeyhole, Maximize2, MessageCircleHeart, Moon, Sprout, Sun, Utensils, Volume2, VolumeX, X } from 'lucide-react';
+import { Bean, BookOpen, Smartphone, Check, ChevronLeft, ChevronRight, Clock3, Droplets, Flower2, Heart, Leaf, LockKeyhole, Maximize2, MessageCircleHeart, Moon, Sprout, Sun, Utensils, Volume2, VolumeX, X } from 'lucide-react';
+import PhonePanel from './PhonePanel.jsx';
+import { usePlantAlerts } from './usePlantAlerts.js';
+import { usePhoneApp } from './usePhoneApp.js';
 import PlantPixel from './PlantPixel.jsx';
 import { ACTIONS, HOUR, KEY, STAGES, STAGE_NAMES, care, countdown, restore, wake } from './game.js';
 
@@ -68,7 +71,9 @@ function Journey({ stage }) {
 }
 
 export default function App() {
+  const phone = usePhoneApp();
   const [plant, setPlant] = useState(initialPlant);
+  const alerts = usePlantAlerts(plant, phone.offline);
   const current = useRef(plant);
   const [now, setNow] = useState(Date.now);
   const [modal, setModal] = useState(null);
@@ -79,11 +84,17 @@ export default function App() {
   const reactionTimer = useRef(null);
   const audio = useRef(null);
 
+  const savedLastChange = useRef(saveOK);
   const commit = useCallback(fn => {
-    const raw = readSave();
+    const raw = savedLastChange.current ? readSave() : null;
     const old = raw ? restore(raw) : current.current;
     const next = fn(old);
-    current.current = next; setPlant(next); setSaveOK(writeSave(next));
+    const ok = writeSave(next);
+    savedLastChange.current = ok;
+    current.current = next;
+    setPlant(next);
+    setSaveOK(ok);
+    return ok;
   }, []);
   useEffect(() => {
     const refresh = () => {
@@ -93,7 +104,7 @@ export default function App() {
     };
     function sync(e) {
       if (e.key !== KEY || !e.newValue) return;
-      const next = restore(e.newValue); current.current = next; setPlant(next); setNow(Date.now());
+      const next = restore(e.newValue); current.current = next; savedLastChange.current = true; setSaveOK(true); setPlant(next); setNow(Date.now());
     }
     const timer = setInterval(refresh, 1000);
     window.addEventListener('storage', sync); document.addEventListener('visibilitychange', refresh);
@@ -143,7 +154,7 @@ export default function App() {
   return <div className="app">
     <header className="topbar"><div className="nav-inner">
       <a className="brand" href="#garden" aria-label="Plantigochi pocket garden"><span className="brand-tile"><PixelLeaf/></span>Plantigochi<span className="brand-dot">.</span></a>
-      <div className="nav-actions"><button className="guide-link" onClick={() => setModal('guide')}><BookOpen size={17}/><span>Field guide</span></button>
+      <div className="nav-actions"><button className="phone-link" onClick={() => setModal('phone')}><Smartphone size={16}/><span>{phone.installed ? 'App & saves' : 'Install app'}</span></button><button className="guide-link" aria-label="Field guide" onClick={() => setModal('guide')}><BookOpen size={17}/><span>Field guide</span></button>
         <span className="nav-separator"/><button className="sound" aria-label={plant.sound ? 'Mute sound' : 'Enable sound'} aria-pressed={plant.sound} onClick={toggleSound}>{plant.sound ? <Volume2 size={18}/> : <VolumeX size={18}/>}</button>
       </div></div></header>
     <main id="garden">
@@ -171,8 +182,12 @@ export default function App() {
         </section>
       </div>
       <Journey stage={plant.stage}/>
-      <div className="save-note"><span className={saveOK ? 'save-dot' : 'save-dot warn'}/>{saveOK ? 'Saved on this device' : 'Progress is saved for this session only'}</div>
+      <div className="save-note"><button className="alerts-link" onClick={() => setModal('phone')}>Plant alerts</button><span className={saveOK ? 'save-dot' : 'save-dot warn'}/>{saveOK ? 'Saved on this device' : 'Progress is saved for this session only'}</div>
     </main>
+    {modal === 'phone' && <Modal type="phone-modal" close={() => setModal(null)}><PhonePanel phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} onRestore={backup => {
+      clearTimeout(reactionTimer.current); setReaction(null); setHasSelected(false); setNow(Date.now());
+      return commit(() => wake(backup, Date.now()));
+    }}/></Modal>}
     {modal === 'guide' && <Modal type="guide-modal" close={() => setModal(null)}><div className="guide-badge"><BookOpen size={26}/></div><span className="eyebrow">植物の手帳</span><h2 id="modal-title">Field guide</h2><div className="guide-sections">
       <div><h3>01 · A sleepy seed</h3><p>Water once. Your Monstera sprouts one real hour after planting if it has had a drink. Watering later wakes it immediately.</p></div>
       <div><h3>02 · A little daily care</h3><p>Give your sprout water, sunlight, kind words, and food in any order. One full set grows a young plant. Two more sets grow its split leaves.</p></div>
