@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 const radians = Math.PI / 180;
-const fullTilt = Math.sin(20 * radians);
+const fullTilt = Math.sin(18 * radians);
 const motionQuery = '(prefers-reduced-motion: reduce)';
 const preferenceKey = 'plantigochi.tilt';
 

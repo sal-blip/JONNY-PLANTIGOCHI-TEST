@@ -1,3 +1,5 @@
+import { validPhoto } from './gardenScenes.js';
+
 export const HOUR = 60 * 60 * 1000;
 export const DAY = 24 * HOUR;
 export const WEEK = 7 * DAY;
@@ -40,7 +42,7 @@ export function wake(plant, now) {
 export function readPlant(text, now = Date.now()) {
   try {
     const p = JSON.parse(text);
-    if (p && p.version === 1 && STAGES.includes(p.stage) && Number.isFinite(p.plantedAt)
+    if (p && p.version === 1 && (p.photo === undefined || validPhoto(p.photo)) && STAGES.includes(p.stage) && Number.isFinite(p.plantedAt)
       && (p.wateredAt === null || Number.isFinite(p.wateredAt)) && [0,1].includes(p.round)
       && Array.isArray(p.given) && p.given.every(a => ACTIONS.includes(a)) && new Set(p.given).size === p.given.length
       && typeof p.message === 'string' && typeof p.sound === 'boolean') return wake(p, now);

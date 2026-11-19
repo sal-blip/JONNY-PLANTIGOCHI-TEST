@@ -1,75 +1,58 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { playButton, playReveal, startGardenBed } from './gardenVoices.js';
 
-// The launch sound is synthesized locally so it also works offline.
-export function useGardenSound() {
-  const context = useRef(null);
-  const voice = useRef(null);
-  const generation = useRef(0);
-
+export function useGardenSound({ enabled, ambience, sleeping, intro }) {
+  const context = useRef(null), effects = useRef(null), sequence = useRef(0), note = useRef(0);
+  const [readyContext, setReadyContext] = useState(null);
+  const [visible, setVisible] = useState(() => !document.hidden);
   const hush = useCallback(() => {
-    generation.current++;
-    const ctx = context.current, bus = voice.current;
-    if (bus && ctx) {
+    sequence.current++;
+    const ctx = context.current, bus = effects.current;
+    if (ctx && bus) {
       bus.gain.cancelScheduledValues(ctx.currentTime);
-      bus.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+      bus.gain.setTargetAtTime(0, ctx.currentTime, 0.025);
     }
-    voice.current = null;
+    effects.current = null;
   }, []);
 
   const play = useCallback(async (kind, fromGesture = true) => {
     try {
       const Audio = window.AudioContext || window.webkitAudioContext;
-      if (!Audio) return false;
+      if (!Audio || document.hidden) return false;
       const ctx = context.current || (context.current = new Audio());
       hush();
-      const ticket = generation.current;
+      const ticket = sequence.current;
       if (ctx.state !== 'running') {
         if (!fromGesture) return false;
         await ctx.resume();
       }
-      if (ctx.state !== 'running' || ticket !== generation.current) return false;
+      if (ctx.state !== 'running' || document.hidden || ctx !== context.current) return false;
+      setReadyContext(ctx);
+      if (ticket !== sequence.current) return false;
       const bus = ctx.createGain();
-      voice.current = bus;
+      effects.current = bus;
       bus.connect(ctx.destination);
-      const start = ctx.currentTime;
-      const intro = kind === 'intro';
-      const notes = intro ? [392, 493.88, 587.33, 783.99] : kind === 'care' ? [523.25, 659.25] : [523.25];
-      notes.forEach((hz, i) => {
-        const t = start + i * (intro ? 0.72 : 0.1);
-        const duration = intro ? 1.85 : 0.27;
-        const note = ctx.createOscillator(), envelope = ctx.createGain();
-        note.type = 'sine';
-        note.frequency.value = hz;
-        envelope.gain.setValueAtTime(0.0001, t);
-        envelope.gain.exponentialRampToValueAtTime(intro ? 0.047 : 0.052, t + (intro ? 0.065 : 0.014));
-        envelope.gain.exponentialRampToValueAtTime(0.0001, t + duration);
-        note.connect(envelope).connect(bus);
-        note.start(t);
-        note.stop(t + duration + 0.03);
-      });
-      if (intro) {
-        const rustle = ctx.createBufferSource(), lowpass = ctx.createBiquadFilter(), fade = ctx.createGain();
-        const length = Math.floor(ctx.sampleRate * 3.3);
-        const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
-        const wave = buffer.getChannelData(0);
-        for (let i = 0; i < length; i++) wave[i] = Math.random() * 2 - 1;
-        rustle.buffer = buffer;
-        lowpass.type = 'lowpass';
-        lowpass.frequency.setValueAtTime(680, start);
-        lowpass.frequency.linearRampToValueAtTime(1650, start + 1.4);
-        fade.gain.setValueAtTime(0, start);
-        fade.gain.linearRampToValueAtTime(0.06, start + 1.1);
-        fade.gain.linearRampToValueAtTime(0, start + 3.3);
-        rustle.connect(lowpass).connect(fade).connect(bus);
-        rustle.start(start);
-      }
+      if (kind === 'intro') playReveal(ctx,bus);
+      else playButton(ctx,bus,kind,note.current++);
       return true;
     } catch { return false; }
   }, [hush]);
 
+  useEffect(() => {
+    const change = () => { setVisible(!document.hidden); if (document.hidden) hush(); };
+    document.addEventListener('visibilitychange',change);
+    return () => document.removeEventListener('visibilitychange',change);
+  }, [hush]);
+  useEffect(() => {
+    if (!enabled) hush();
+    if (!enabled || !ambience || !visible || intro || !readyContext) return;
+    return startGardenBed(readyContext, readyContext.destination, sleeping);
+  }, [enabled,ambience,visible,intro,readyContext,sleeping,hush]);
   useEffect(() => () => {
     hush();
-    if (context.current) void context.current.close().catch(() => {});
+    const ctx = context.current;
+    context.current = null;
+    if (ctx) void ctx.close().catch(() => {});
   }, [hush]);
   return { play, hush };
 }

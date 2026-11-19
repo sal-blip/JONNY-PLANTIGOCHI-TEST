@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Bell, Check, Download, HardDrive, Upload } from 'lucide-react';
+import { backupLimit } from './gardenScenes.js';
 import { readPlant, STAGE_NAMES } from './game.js';
 
 function installSteps() {
@@ -36,7 +37,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, onResto
     setNotice('');
     if (!file) return;
     try {
-      const next = file.size <= 16384 ? readPlant(await file.text()) : null;
+      const next = file.size <= backupLimit ? readPlant(await file.text()) : null;
       if (!next) { setNotice('Choose a valid Plantigochi backup file.'); return; }
       setCandidate(next);
     } catch { setNotice('The file could not be opened. Try choosing it again.'); }

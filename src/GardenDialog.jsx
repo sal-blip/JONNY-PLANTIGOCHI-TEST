@@ -29,6 +29,7 @@ export default function GardenDialog({ page, title, back, close, children }) {
   return <dialog className="garden-dialog" ref={dialog} aria-labelledby="menu-title"
     onCancel={event => { event.preventDefault(); close(); }}
     onClick={event => { if (event.target === event.currentTarget) close(); }}>
+    <div className="glass-pane" aria-hidden="true"/>
     <section className="menu-card" ref={card}>
       <header className="menu-heading">
         {back && <button className="round-button" onClick={back} aria-label="Back"><ArrowLeft/></button>}
