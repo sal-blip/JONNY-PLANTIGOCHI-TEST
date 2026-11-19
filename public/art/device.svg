@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 600 565" width="600" height="565" role="img" aria-labelledby="title">
+  <title id="title">A jade green Monstera leaf keychain with a polished silver split ring and an inset screen</title>
+  <defs>
+    <!-- The split leaves have soft rounded ends like a single injection-molded shell. -->
+    <path id="leaf" d="M364 513
+      C353 509 329 503 301 502 C255 502 213 491 183 473
+      C172 466 167 458 162 451 C159 446 162 443 167 445
+      C179 450 193 453 204 453 C207 453 208 449 204 447
+      C170 436 136 421 119 402 C108 390 103 378 99 367
+      C96 358 99 355 106 359 C120 368 137 377 159 381
+      C165 382 166 378 161 374 C126 350 97 331 86 306
+      C80 291 78 278 80 266 C81 258 85 257 91 264
+      C108 282 123 295 146 306 C151 308 154 305 150 300
+      C123 269 99 245 103 218 C107 193 121 174 140 157
+      C164 135 191 122 215 121 C242 120 257 129 270 145
+      C277 153 282 159 286 158 C291 157 294 145 301 135
+      C312 119 330 111 350 112 C377 112 397 119 417 129
+      C437 139 452 150 465 164 C470 169 467 171 461 171
+      C435 168 412 169 392 177 C387 179 388 182 394 182
+      C429 179 457 182 478 194 C497 207 507 225 513 245
+      C516 255 513 257 506 254 C489 245 472 240 449 239
+      C442 239 442 242 447 244 C481 255 509 272 520 295
+      C526 309 526 325 524 341 C523 350 520 352 512 345
+      C494 328 477 317 453 310 C447 309 446 312 451 316
+      C482 339 507 363 503 389 C500 406 493 421 481 436
+      C475 444 471 443 470 434 C468 417 461 401 450 388
+      C446 383 443 385 445 391 C455 417 457 442 442 462
+      C429 481 409 489 397 496 C385 502 378 509 371 513
+      C368 515 365 515 364 513 Z"/>
+    <clipPath id="outline"><use xlink:href="#leaf"/></clipPath>
+    <linearGradient id="lip" x1="0" y1="0" x2=".8" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#648965"/><stop offset=".31" stop-color="#a4b887"/><stop offset=".58" stop-color="#789a70"/><stop offset=".82" stop-color="#5d805d"/><stop offset="1" stop-color="#527953"/>
+    </linearGradient>
+    <radialGradient id="skin" cx=".34" cy=".20" r=".98">
+      <stop stop-color="#c8d99f"/><stop offset=".24" stop-color="#bad297"/><stop offset=".48" stop-color="#a9c58b"/><stop offset=".73" stop-color="#95b783"/><stop offset=".91" stop-color="#82a77a"/><stop offset="1" stop-color="#6d926a"/>
+    </radialGradient>
+    <linearGradient id="bevel" x1=".12" y1="0" x2=".79" y2="1">
+      <stop stop-color="#eef3cb"/><stop offset=".29" stop-color="#d5e3b2"/><stop offset=".54" stop-color="#aec693"/><stop offset=".75" stop-color="#88a678"/><stop offset="1" stop-color="#688a65"/>
+    </linearGradient>
+    <linearGradient id="metal" x1=".08" y1="0" x2=".84" y2="1">
+      <stop stop-color="#858e80"/><stop offset=".11" stop-color="#fbfcf1"/><stop offset=".22" stop-color="#c4cbc0"/>
+      <stop offset=".34" stop-color="#737c70"/><stop offset=".48" stop-color="#e2e7dd"/><stop offset=".56" stop-color="#fafcf2"/>
+      <stop offset=".73" stop-color="#a7afa4"/><stop offset=".86" stop-color="#e6eae1"/><stop offset="1" stop-color="#727e71"/>
+    </linearGradient>
+    <linearGradient id="eyelet" x1="0" y1="0" x2=".75" y2="1">
+      <stop stop-color="#f0f3cd"/><stop offset=".36" stop-color="#aec491"/><stop offset=".67" stop-color="#769a70"/><stop offset="1" stop-color="#b3cc9a"/>
+    </linearGradient>
+    <linearGradient id="rim" x1=".25" y1="0" x2=".65" y2="1">
+      <stop stop-color="#83a071"/><stop offset=".15" stop-color="#91ad7c"/><stop offset=".55" stop-color="#a8bf89"/><stop offset=".87" stop-color="#c1d59e"/><stop offset="1" stop-color="#d8e4b7"/>
+    </linearGradient>
+    <linearGradient id="gasket" x1=".1" y1="0" x2=".8" y2="1">
+      <stop stop-color="#52684d"/><stop offset=".32" stop-color="#657959"/><stop offset=".74" stop-color="#94a178"/><stop offset="1" stop-color="#b9c398"/>
+    </linearGradient>
+    <linearGradient id="vein" x1=".1" y1="0" x2=".9" y2="1">
+      <stop stop-color="#e0edbd"/><stop offset=".52" stop-color="#bbd39f"/><stop offset="1" stop-color="#98b688"/>
+    </linearGradient>
+    <filter id="cast" filterUnits="userSpaceOnUse" x="32" y="70" width="544" height="492"><feGaussianBlur stdDeviation="9"/></filter>
+    <filter id="near" filterUnits="userSpaceOnUse" x="42" y="78" width="520" height="477"><feGaussianBlur stdDeviation="3.1"/></filter>
+    <filter id="ringShadow" x="-50%" y="-50%" width="220%" height="230%"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="soft" x="-.2" y="-.2" width="1.4" height="1.4"><feGaussianBlur stdDeviation="2.3"/></filter>
+    <pattern id="resin" width="19" height="17" patternUnits="userSpaceOnUse">
+      <g fill="#f9f3cb" opacity=".38"><circle cx="2.2" cy="3.3" r=".48"/><circle cx="9.5" cy="11" r=".37"/><circle cx="15.4" cy="7.4" r=".46"/><circle cx="17" cy="16" r=".32"/></g>
+      <g fill="#587851" opacity=".27"><circle cx="5.1" cy="13.7" r=".48"/><circle cx="12.5" cy="1.2" r=".38"/><circle cx="3" cy="8" r=".28"/></g>
+    </pattern>
+    <g id="veins" fill="none" stroke-linecap="round">
+      <path d="M287 168 Q294 184 297 208 M299 397 Q320 448 366 501" stroke-width="5.5"/>
+      <path d="M118 217 Q151 207 172 215 M103 328 Q130 343 155 345 M131 404 Q161 423 198 423 M193 466 Q234 480 273 474" stroke-width="3.5"/>
+      <path d="M317 196 Q339 159 369 141 M437 223 Q473 214 487 220 M442 279 Q484 279 504 300 M431 357 Q474 373 480 405 M396 405 Q418 437 413 470" stroke-width="3"/>
+    </g>
+    <g id="channel" fill="none" stroke-linecap="round">
+      <path d="M216 166 Q247 173 268 198 M112 256 Q136 270 154 278 M162 188 Q184 183 199 185 M335 151 Q340 143 347 139 M480 274 Q499 282 506 292 M464 354 Q483 369 487 382 M370 475 Q383 468 391 455" />
+    </g>
+    <g id="chainLink">
+      <rect x="-6.2" y="-15.2" width="12.4" height="30.4" rx="6.2" fill="none" stroke="#5b685e" stroke-width="5.5"/>
+      <rect x="-6.2" y="-15.8" width="12.4" height="30.4" rx="6.2" fill="none" stroke="url(#metal)" stroke-width="4"/>
+      <path d="M-6 -3 L-6 -9 Q-6.2 -14.9 -1.6 -15.4 M6 2 V9" stroke="#fffdf0" stroke-width=".95" stroke-linecap="round" fill="none"/>
+    </g>
+  </defs>
+
+  <!-- Soft double shadow anchors the toy to the tabletop. -->
+  <use xlink:href="#leaf" fill="#526447" opacity=".21" transform="translate(5 19)" filter="url(#cast)"/>
+  <use xlink:href="#leaf" fill="#536743" opacity=".19" transform="translate(2 12)" filter="url(#near)"/>
+  <g fill="none" stroke="#56614f" opacity=".21" filter="url(#ringShadow)" transform="translate(3 9)">
+    <ellipse cx="146" cy="67" rx="44" ry="38" transform="rotate(-31 146 67)" stroke-width="7"/>
+    <path d="M175 91 L211 146" stroke-width="8"/>
+  </g>
+
+  <!-- The visible lower edge has a seam and a narrow reflection. -->
+  <use xlink:href="#leaf" transform="translate(0 8)" fill="url(#lip)" stroke="#587956" stroke-width="2.2" stroke-linejoin="round"/>
+  <use xlink:href="#leaf" transform="translate(0 4.5)" fill="url(#lip)" stroke="#76956d" stroke-width="2" stroke-linejoin="round"/>
+  <use xlink:href="#leaf" fill="url(#skin)" stroke="url(#bevel)" stroke-width="4.2" stroke-linejoin="round"/>
+  <g clip-path="url(#outline)">
+    <use xlink:href="#leaf" fill="none" stroke="#76936c" stroke-width="11" opacity=".19" filter="url(#soft)"/>
+    <use xlink:href="#leaf" fill="none" stroke="#f9ffe2" stroke-width="5" transform="translate(1.8 3.2)" opacity=".49" filter="url(#soft)"/>
+    <use xlink:href="#veins" transform="translate(.5 2.8)" stroke="#749769" opacity=".35" filter="url(#soft)"/>
+    <use xlink:href="#veins" transform="translate(0 1.1)" stroke="#a2bd8e" opacity=".75"/>
+    <use xlink:href="#veins" transform="translate(-.45 -.7)" stroke="url(#vein)" opacity=".83"/>
+    <use xlink:href="#channel" stroke="#d9e8b7" stroke-width="3" opacity=".6" transform="translate(0 1.7)"/>
+    <use xlink:href="#channel" stroke="#8fab7c" stroke-width="2.2" opacity=".44"/>
+    <g fill="none" stroke="#f4f7d6" stroke-linecap="round" opacity=".7">
+      <path d="M119 194 Q129 177 149 162 Q163 151 180 144" stroke-width="3.4"/>
+      <path d="M187 141 Q194 138 204 137 M320 127 Q334 120 349 121" stroke-width="2.8"/>
+      <path d="M91 278 Q95 299 113 317 M106 370 Q112 383 127 395" stroke-width="2"/>
+      <path d="M427 143 Q444 152 451 161 M487 207 Q497 218 503 234" stroke-width="1.9" opacity=".65"/>
+    </g>
+    <path d="M179 148 Q225 121 258 152" stroke="#eff2cf" stroke-width="9" stroke-linecap="round" fill="none" opacity=".22" filter="url(#soft)"/>
+    <use xlink:href="#leaf" fill="url(#resin)" opacity=".63"/>
+  </g>
+  <!-- Small fenestrations at the leaf base and right edge. -->
+  <g transform="rotate(-23 235 177)">
+    <ellipse cx="235" cy="178" rx="5.6" ry="10.7" fill="#d4e3ad"/>
+    <ellipse cx="235" cy="176.5" rx="5.2" ry="10.1" fill="#78946a"/>
+    <ellipse cx="235.6" cy="177.5" rx="3.7" ry="7.8" fill="#94ab83"/>
+    <path d="M233.5 168.7 Q231.1 172.6 232.3 177" fill="none" stroke="#627e5e" stroke-width="1.4" stroke-linecap="round"/>
+  </g>
+  <g transform="rotate(33 385 160)">
+    <ellipse cx="385" cy="161" rx="4.1" ry="11.2" fill="#d6e5b4"/>
+    <ellipse cx="385" cy="159.6" rx="3.9" ry="10.3" fill="#79976c"/>
+    <ellipse cx="385.5" cy="160.8" rx="2.5" ry="8.3" fill="#95ad82"/>
+  </g>
+
+  <!-- Recessed LCD component; the glass itself is the game's live DOM. -->
+  <rect x="168" y="211" width="266" height="188" rx="28" fill="#bcd09c" stroke="#b9cf99" stroke-width="1"/>
+  <rect x="170" y="213" width="262" height="184" rx="26" fill="url(#rim)" stroke="#79956c" stroke-width="1.35"/>
+  <rect x="173" y="216" width="256" height="178" rx="23" fill="none" stroke="#b5c99a" stroke-opacity=".74" stroke-width="2"/>
+  <rect x="178.4" y="222" width="245.2" height="165" rx="16" fill="url(#gasket)" stroke="#8d9f79" stroke-width="1"/>
+  <rect x="182.8" y="226.5" width="236.4" height="156" rx="11" fill="#849070"/>
+  <rect x="184" y="228" width="234" height="153" rx="9" fill="#b0b798"/>
+  <path d="M197 395.6 H403" fill="none" stroke="#dce7bd" stroke-linecap="round" stroke-width="1.8"/>
+
+  <!-- Lanyard attachment, split ring and links. -->
+  <g transform="rotate(-27 208 146)">
+    <ellipse cx="208" cy="146" rx="12.4" ry="10.5" fill="url(#eyelet)" stroke="#85a272" stroke-width="1"/>
+    <ellipse cx="208" cy="146" rx="7.3" ry="6.0" fill="#6f8764"/>
+    <ellipse cx="208.8" cy="147.2" rx="5.9" ry="4.4" fill="#4f6752"/>
+  </g>
+  <g fill="none" transform="rotate(-31 146 67)">
+    <ellipse cx="146" cy="67" rx="43.9" ry="37.2" stroke="#535e56" stroke-width="7.2"/>
+    <ellipse cx="146" cy="65.8" rx="44.1" ry="37.1" stroke="url(#metal)" stroke-width="6.1"/>
+    <path d="M105.6 52 Q114 31 141 28.9 C159 27.8 172 33.9 180 43" stroke="#fffcf1" stroke-width="1.45" stroke-linecap="round"/>
+    <path d="M111 89.6 C124 106 151 110 171 100" stroke="#f9faf1" stroke-width="1.1" stroke-linecap="round"/>
+    <path d="M145 102.4 C161 103.6 177 95.6 184.8 82.8 C194.4 67 190.4 50.8 180.6 40.6" stroke="#545e56" stroke-width="3.1" stroke-linecap="round"/>
+    <path d="M146 101.1 C161 101.8 176 94.7 183.6 82.1 C192.1 67.4 190.0 52.6 180.7 41.6" stroke="url(#metal)" stroke-width="2.45" stroke-linecap="round"/>
+  </g>
+  <use xlink:href="#chainLink" transform="translate(173.2 91.5) rotate(-33) scale(.81 .83)"/>
+  <use xlink:href="#chainLink" transform="translate(182.6 106.1) rotate(-24) scale(.52 .88)"/>
+  <use xlink:href="#chainLink" transform="translate(191.1 119.9) rotate(-33) scale(.83 .89)"/>
+  <use xlink:href="#chainLink" transform="translate(201.6 134.5) rotate(-29) scale(.60 .90)"/>
+  <path d="M204.9 142.8 Q209.6 147.6 212.2 144.2" stroke="#636e62" fill="none" stroke-width="4" stroke-linecap="round"/>
+  <path d="M204.8 141.8 Q208 146.7 211.7 143.4" stroke="#c7d0bd" fill="none" stroke-width="2.3" stroke-linecap="round"/>
+</svg>
