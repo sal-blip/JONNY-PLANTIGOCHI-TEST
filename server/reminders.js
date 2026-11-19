@@ -1,4 +1,4 @@
-const HOUR = 3600000;
+import { HOUR, WEEK } from '../src/game.js';
 const supportedEndpoint = [
   ['fcm.googleapis.com', '/'],
   ['updates.push.services.mozilla.com', '/'],
@@ -47,7 +47,7 @@ async function dispatch(env, origin, send) {
     if (now-item.due >= 24*HOUR || item.attempts >= 5) { await remove(); continue; }
     try {
       const auth = await authorization(item.endpoint,env,origin,now);
-      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:'plantigochi-sprout'},body:new Uint8Array()});
+      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:'plantigochi-growth'},body:new Uint8Array()});
       if (result.ok || [400,404,410].includes(result.status)) {
         if (result.ok) sent++;
         await remove(); continue;
@@ -80,7 +80,7 @@ export async function reminderAPI(request, env, send = fetch) {
   let body;
   try { body = JSON.parse(raw); } catch { return json({},400); }
   const endpoint = pushTarget(body?.endpoint), now=Date.now(), due = body?.due;
-  if (!endpoint || !Number.isSafeInteger(due) || due < now-5*60000 || due > now+HOUR+5*60000) return json({error:'Invalid reminder.'},400);
+  if (!endpoint || !Number.isSafeInteger(due) || due < now-5*60000 || due > now+WEEK+5*60000) return json({error:'Invalid reminder.'},400);
   const id = await digest(endpoint);
   const q = env.DB.prepare('INSERT INTO reminders (id, owner, endpoint, due, next_try, attempts) VALUES (?,?,?,?,?,0) ON CONFLICT(id) DO UPDATE SET due=excluded.due, next_try=excluded.next_try, attempts=0 WHERE reminders.owner=excluded.owner AND reminders.due!=excluded.due');
   // The same token owns at most one endpoint, even if the browser rotates subscriptions.

@@ -1,17 +1,39 @@
 export const HOUR = 60 * 60 * 1000;
+export const DAY = 24 * HOUR;
+export const WEEK = 7 * DAY;
 export const KEY = 'jonny.plantigochi.v1';
 export const ACTIONS = ['water', 'sun', 'talk', 'food'];
 export const STAGES = ['seed', 'sprout', 'young', 'grown'];
 export const STAGE_NAMES = { seed: 'Seed', sprout: 'Sprout', young: 'Young plant', grown: 'Grown plant' };
+
+const milestones = {
+  sprout: { start: 0, age: HOUR, label: 'Sprout' },
+  young: { start: HOUR, age: 3 * DAY, label: 'Young plant' },
+  finalCare: { start: 3 * DAY, age: 5 * DAY, label: 'Final care set' },
+  grown: { start: 5 * DAY, age: WEEK, label: 'Full growth' },
+};
+
+export function nextMilestone(plant) {
+  if (plant.stage === 'seed') return milestones.sprout;
+  if (plant.stage === 'sprout') return milestones.young;
+  if (plant.stage === 'young') return plant.round === 0 ? milestones.finalCare : milestones.grown;
+  return null;
+}
 
 export function newPlant(now = Date.now()) {
   return { version: 1, plantedAt: now, wateredAt: null, stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: false };
 }
 
 export function wake(plant, now) {
-  if (plant.stage === 'seed' && plant.wateredAt !== null && now >= plant.plantedAt + HOUR) {
+  const next = nextMilestone(plant);
+  if (!next || now < plant.plantedAt + next.age) return plant;
+  if (plant.stage === 'seed' && plant.wateredAt !== null) {
     return { ...plant, stage: 'sprout', given: [], round: 0, message: 'Ohayō! Look who finally leafed out.' };
   }
+  if (plant.given.length !== ACTIONS.length) return plant;
+  if (plant.stage === 'sprout') return { ...plant, stage: 'young', round: 0, given: [], message: 'New leaf, new me. Notice my cheekbones?' };
+  if (plant.stage === 'young' && plant.round === 0) return { ...plant, round: 1, given: [], message: 'One last set of care for my fancy split leaves!' };
+  if (plant.stage === 'young') return { ...plant, stage: 'grown', round: 0, given: [], message: 'Ta-da! These leaf windows are designer.' };
   return plant;
 }
 
@@ -45,15 +67,21 @@ export function care(saved, action, now = Date.now()) {
     if (p.wateredAt !== null) return { ...p, message: 'Still damp. Still napping.' };
     return wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now);
   }
+  if (p.given.length === ACTIONS.length) return { ...p, message: 'All cared for. Growing leaves takes beauty sleep.' };
   if (p.given.includes(action)) return { ...p, message: 'Had that already. Try another little kindness?' };
   const given = [...p.given, action];
   if (given.length < ACTIONS.length) return { ...p, given, message: happy[action][(given.length + p.round) % 2] };
-  if (p.stage === 'sprout') return { ...p, stage: 'young', round: 0, given: [], message: 'New leaf, new me. Notice my cheekbones?' };
-  if (p.stage === 'young' && p.round === 1) return { ...p, stage: 'grown', round: 0, given: [], message: 'Ta-da! These leaf windows are designer.' };
-  return { ...p, round: p.stage === 'young' ? 1 : 0, given: [], message: p.stage === 'young' ? 'Another round of care and I’ll be all grown up.' : 'Thriving. Obviously. Thank you, gardener.' };
+  if (p.stage === 'grown') return { ...p, round: 0, given: [], message: 'Thriving. Obviously. Thank you, gardener.' };
+  return wake({ ...p, given, message: 'All cared for. Growing leaves takes beauty sleep.' }, now);
 }
 
 export function countdown(ms) {
   const total = Math.max(0, Math.ceil(ms / 1000));
+  if (total >= DAY / 1000) {
+    const days = Math.floor(total / 86400);
+    const hours = Math.floor(total / 3600) % 24;
+    const minutes = Math.floor(total / 60) % 60;
+    return days + 'd ' + hours + 'h ' + minutes + 'm';
+  }
   return [Math.floor(total / 3600), Math.floor(total / 60) % 60, total % 60].map(n => String(n).padStart(2, '0')).join(':');
 }

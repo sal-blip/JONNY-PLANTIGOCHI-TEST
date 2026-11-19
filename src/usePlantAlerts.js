@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { HOUR, STAGE_NAMES } from './game.js';
+import { nextMilestone, STAGE_NAMES } from './game.js';
 
 const DEVICE_KEY = 'plantigochi.alert-device.v1';
 function readDevice() {
@@ -30,7 +30,8 @@ export function usePlantAlerts(plant, offline) {
   const lock = useRef(false);
   const capable = support();
   const denied = capable && Notification.permission === 'denied';
-  const due = plant.stage === 'seed' ? plant.plantedAt + HOUR : null;
+  const next = nextMilestone(plant);
+  const due = next ? plant.plantedAt + next.age : null;
 
   const toggle = useCallback(async () => {
     if (!capable || offline !== 'ready' || lock.current) return;
@@ -92,7 +93,7 @@ export function usePlantAlerts(plant, offline) {
         setEnabled(false); setNotice('Enable alerts again to reconnect this device.'); return;
       }
       if (due && due > Date.now()) await updateReminder('PUT',device.token,{endpoint:sub.endpoint,due});
-      else if (due === null) await updateReminder('DELETE',device.token);
+      else if (due === null || device.registered !== due) await updateReminder('DELETE',device.token);
       if (active && readDevice().enabled) {
         didInitialSync.current = true;
         writeDevice({...device, registered:due});
@@ -106,9 +107,8 @@ export function usePlantAlerts(plant, offline) {
     const prior = lastStage.current;
     lastStage.current = plant.stage;
     if (!enabled || !capable || prior === plant.stage) return;
-    const tag = plant.stage === 'sprout' ? 'plantigochi-sprout' : 'plantigochi-growth';
     navigator.serviceWorker.ready.then(reg=>reg.showNotification('Monstera milestone 🌿',{
-      body:'Your Monstera reached the '+STAGE_NAMES[plant.stage].toLowerCase()+' stage.', tag, icon:'/icons/icon-192.png',
+      body:'Your Monstera reached the '+STAGE_NAMES[plant.stage].toLowerCase()+' stage.', tag:'plantigochi-growth', icon:'/icons/icon-192.png',
     })).catch(()=>{});
   },[plant.stage,enabled,capable]);
   return { enabled, busy, notice, toggle, capable, denied };

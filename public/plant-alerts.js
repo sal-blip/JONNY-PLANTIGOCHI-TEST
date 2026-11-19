@@ -1,8 +1,8 @@
 /* Loaded by the production service worker, including when the game is closed. */
 self.addEventListener('push', event => {
-  event.waitUntil(self.registration.showNotification('Your Monstera is ready 🌱', {
-    body: 'Your seed’s first hour is up. Open your pocket garden to check on it.',
-    icon: '/icons/icon-192.png', badge: '/leaf.svg', tag: 'plantigochi-sprout',
+  event.waitUntil(self.registration.showNotification('Time to check your Monstera 🌱', {
+    body: 'Your plant’s growth timer is up. Open your pocket garden to see what it needs.',
+    icon: '/icons/icon-192.png', badge: '/leaf.svg', tag: 'plantigochi-growth',
     data: { path: '/' },
   }));
 });

@@ -2,7 +2,7 @@
 
 Plantigochi is a small React game about raising a cheeky Monstera in a leaf-shaped pocket keychain. The first seed starts sleeping. It sprouts when an hour has elapsed since planting and it has received water. The timer includes time spent with the browser closed.
 
-After sprouting, try water, sunlight, kind words, and plant food once each to grow a young plant. Two more complete care sets grow a mature Monstera. The outer keychain buttons choose an action, and the heart gives it. Progress and the sound preference are stored in the current browser.
+Full growth takes seven real days (168 hours) from planting. A care set includes water, sunlight, kind words, and plant food once each, in any order. One set as a sprout unlocks the young plant after 72 hours. A second set unlocks the final set after 120 hours. The Monstera grows its split leaves when the final set is complete and 168 hours have elapsed. Early care counts, late visits can catch up, and existing plants keep their stage and care history. The outer keychain buttons choose an action, and the heart gives it. The browser saves progress and sound preferences.
 
 ## Run locally
 
@@ -29,7 +29,7 @@ The production build uses vite-plugin-pwa and Workbox to generate a manifest and
 
 ## Plant alerts
 
-Players opt in on their device from **Plant alerts**. On iOS, use the installed Home Screen app. A one-time Web Push reminder is queued for the seed’s first hour. The hosted scheduler checks the queue hourly, so delivery can be up to one additional hour later. Growth transitions also notify an opted-in player. Phones control delivery timing, permissions, and quiet modes.
+Players opt in on their device from **Plant alerts**. On iOS, use the installed Home Screen app. The game queues one Web Push reminder for its next growth timer and updates it as the plant progresses. The hosted scheduler checks the queue hourly, so delivery can be up to one additional hour later. Growth transitions also notify an opted-in player. Phones control delivery timing, permissions, and quiet modes.
 
 The Site Worker stores only outstanding reminder delivery data in D1. Game progress stays on the player's device. Provide a stable P-256 VAPID key pair through runtime variables `PUSH_PUBLIC_KEY` (raw base64url) and `PUSH_PRIVATE_JWK` (secret). The build packages the Worker and the generated Drizzle migrations. The first migration creates the reminder queue. To generate future migrations after schema changes, run `npx drizzle-kit generate`.
 

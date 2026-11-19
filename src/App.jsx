@@ -4,7 +4,7 @@ import PhonePanel from './PhonePanel.jsx';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PlantPixel from './PlantPixel.jsx';
-import { ACTIONS, HOUR, KEY, STAGES, STAGE_NAMES, care, countdown, restore, wake } from './game.js';
+import { ACTIONS, DAY, HOUR, KEY, STAGES, STAGE_NAMES, care, countdown, nextMilestone, restore, wake } from './game.js';
 
 const controls = {
   water: { label: 'Water', Icon: Droplets },
@@ -13,6 +13,7 @@ const controls = {
   food: { label: 'Plant food', Icon: Utensils },
 };
 const growthIcons = [Bean, Sprout, Leaf, Flower2];
+const growthAges = ['At planting', 'After 1 hour', 'After 3 days', 'After 7 days'];
 const moods = { seed: 'Sleepy', sprout: 'Curious', young: 'Playful', grown: 'Flourishing' };
 function readSave() {
   try { return localStorage.getItem(KEY); } catch { return null; }
@@ -65,7 +66,7 @@ function Journey({ stage }) {
   return <section className="journey" aria-labelledby="journey-title">
     <div className="journey-heading"><span className="eyebrow"><span className="short-rule"/> GROWTH TRACKER</span><h2 id="journey-title">Growth journey</h2></div>
     <ol>{STAGES.map((s,i) => { const Icon = growthIcons[i]; return <li key={s} className={i <= current ? 'achieved' : ''} aria-current={i === current ? 'step' : undefined}>
-      <span className="journey-icon"><Icon size={18} strokeWidth={1.8}/></span><span>{STAGE_NAMES[s]}</span>
+      <span className="journey-icon"><Icon size={18} strokeWidth={1.8}/></span><span className="journey-label">{STAGE_NAMES[s]}<small>{growthAges[i]}</small></span>
     </li>; })}</ol>
   </section>;
 }
@@ -143,13 +144,16 @@ export default function App() {
     }
   }
 
-  const left = Math.max(0, plant.plantedAt + HOUR - now);
+  const age = Math.max(0, now - plant.plantedAt);
+  const next = nextMilestone(plant);
+  const left = next ? Math.max(0, next.age - age) : 0;
   const isSeed = plant.stage === 'seed';
-  const day = Math.max(1,Math.floor((now - plant.plantedAt) / 86400000) + 1);
+  const ageLabel = age >= DAY ? Math.floor(age / DAY) + 'd old' : age >= HOUR ? Math.floor(age / HOUR) + 'h old' : 'First hour';
   const deviceProps = { plant, selected, select, doCare: act, reaction, hasSelected };
-  const seedHint = plant.wateredAt !== null ? 'Watered. Let your seed rest.' : left > 0 ? 'Water once to wake your seed in an hour.' : 'A little water will wake your seed.';
-  const careHint = plant.stage === 'young' && plant.round === 0 ? 'Two rounds of care to grow up.' : plant.stage === 'grown' ? 'Keep your grown Monstera flourishing.' : 'Give all four kinds of care to grow.';
-  const progress = isSeed ? (HOUR - Math.min(left,HOUR)) / HOUR : (plant.given.length + (plant.stage === 'young' ? plant.round * 4 : 0)) / (plant.stage === 'young' ? 8 : 4);
+  const seedHint = plant.wateredAt !== null ? 'Watered. Let your seed rest.' : left > 0 ? 'Water once before the timer ends to wake your seed on time.' : 'A little water will wake your seed.';
+  const careCount = plant.given.length + ' of 4 care actions given.';
+  const careHint = plant.given.length === ACTIONS.length ? 'Care complete. Your Monstera is growing on its own.' : careCount + (left ? ' Early care counts.' : ' Finish the set to grow.');
+  const progress = next ? Math.min(1, Math.max(0, (age - next.start) / (next.age - next.start))) : plant.given.length / ACTIONS.length;
 
   return <div className="app">
     <header className="topbar"><div className="nav-inner">
@@ -159,7 +163,7 @@ export default function App() {
       </div></div></header>
     <main id="garden">
       <div className="page-title"><div><span className="eyebrow"><span className="kicker-dot"/> ポケットガーデン</span><h1>Pocket garden<span>.</span></h1></div>
-        <div className="day-pill"><Sun size={16}/><span>Day {String(day).padStart(2,'0')}</span></div></div>
+        <div className="day-pill"><Sun size={16}/><span>{ageLabel}</span></div></div>
       <div className="play-layout">
         <section className="stage" aria-label="Interactive leaf keychain">
           <div className="stage-toolbar"><span className="live-label"><i/> PET CAM</span><button className="expand" onClick={() => setModal('focus')} aria-label="Enlarge keychain" title="Enlarge keychain"><Maximize2 size={16}/></button></div>
@@ -171,9 +175,9 @@ export default function App() {
           <div className="plant-heading"><div><span className="eyebrow"><span className="short-rule"/> YOUR PLANT</span><h2>Monstera</h2><p className="latin">Monstera deliciosa</p></div>
             <span className="specimen-icon"><Leaf size={30} strokeWidth={1.5}/></span></div>
           <div className="status-row"><div><span className="stat-label">Growth stage</span><b><Sprout/>{STAGE_NAMES[plant.stage]}</b></div><div><span className="stat-label">Mood</span><b>{isSeed ? <Moon/> : <Heart/>}{moods[plant.stage]}</b></div></div>
-          <div className="progress-box"><div className="progress-head"><span>{isSeed ? <Clock3/> : <Leaf/>}{isSeed ? left ? 'Sprout timer' : 'Ready to sprout' : plant.stage === 'grown' ? 'Daily care' : 'Growth progress'}</span><strong>{isSeed ? countdown(left) : Math.round(progress*100) + '%'}</strong></div>
+          <div className="progress-box"><div className="progress-head"><span>{next ? <Clock3/> : <Leaf/>}{next ? next.label : 'Ongoing care'}</span><strong>{next ? left ? countdown(left) : 'Ready' : Math.round(progress*100) + '%'}</strong></div>
             <div className="track" aria-hidden="true"><i style={{width: (progress*100)+'%'}}/></div>
-            <div className="progress-hint">{isSeed ? seedHint : careHint}</div></div>
+            <div className="progress-hint">{isSeed ? seedHint : next ? careHint : 'Fully grown. Keep giving your Monstera a little love.'}</div></div>
           <div className="care-head"><h3>Care actions</h3><span lang="ja">お世話</span></div>
           <div className="care-grid">{ACTIONS.map((key,i) => { const {label,Icon} = controls[key], locked = isSeed && key !== 'water', done = plant.given.includes(key) || (isSeed && key === 'water' && plant.wateredAt !== null); return <button className={'action action-' + key + (selected === i && hasSelected ? ' picked' : '')} key={key} disabled={locked} aria-label={locked ? label + ', unlocks after sprouting' : label} onClick={() => act(key)}>
             <span className="action-icon"><Icon size={19} strokeWidth={1.9}/></span><b>{label}</b>{locked ? <LockKeyhole className="corner-icon"/> : done ? <Check className="corner-icon"/> : null}
@@ -190,8 +194,8 @@ export default function App() {
     }}/></Modal>}
     {modal === 'guide' && <Modal type="guide-modal" close={() => setModal(null)}><div className="guide-badge"><BookOpen size={26}/></div><span className="eyebrow">植物の手帳</span><h2 id="modal-title">Field guide</h2><div className="guide-sections">
       <div><h3>01 · A sleepy seed</h3><p>Water once. Your Monstera sprouts one real hour after planting if it has had a drink. Watering later wakes it immediately.</p></div>
-      <div><h3>02 · A little daily care</h3><p>Give your sprout water, sunlight, kind words, and food in any order. One full set grows a young plant. Two more sets grow its split leaves.</p></div>
-      <div><h3>03 · Play your way</h3><p>Use the care buttons or the keychain itself. Its outer buttons choose an action and its heart gives it. Your plant remembers its progress in this browser while you’re away.</p></div>
+      <div><h3>02 · A week of growing</h3><p>Give your sprout water, sunlight, kind words, and food. With that set complete, it becomes a young plant 3 days after planting. Give another set to unlock the final care set at 5 days. After 7 full days and all three sets, its split leaves open.</p></div>
+      <div><h3>03 · Play your way</h3><p>The outer keychain buttons choose a care action. The heart gives it. Early care is saved and time keeps passing while you’re away. If you miss a visit, finish the set whenever you return.</p></div>
       </div><button className="primary-btn" onClick={() => setModal(null)}>Back to my plant</button></Modal>}
     {modal === 'focus' && <Modal type="focus-modal" close={() => setModal(null)}><h2 id="modal-title">Pet cam</h2><Device {...deviceProps}/><div className="focus-speech" role="status">{plant.message}</div></Modal>}
   </div>;

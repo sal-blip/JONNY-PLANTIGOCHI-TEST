@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readPlant,restore,newPlant,care,HOUR} from '../src/game.js';
+import {readPlant,restore,newPlant,care,HOUR,DAY,WEEK} from '../src/game.js';
 import {pushTarget,reminderAPI} from '../server/reminders.js';
 import {DatabaseSync} from 'node:sqlite';
 import fs from 'node:fs';
@@ -42,7 +42,11 @@ test('a player can schedule, cancel, and receive one due notification', async ()
   const call=(method,path,body,device=token)=>reminderAPI(new Request(origin+path,{method,headers:{Origin:origin,Authorization:'Bearer '+device,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined}),env,send);
   const tick=()=>call('POST','/api/alerts/dispatch');
   const set=(due)=>call('PUT','/api/alerts/reminder',{endpoint,due});
-  await set(Date.now()+HOUR);assert.equal((await (await tick()).json()).sent,0);
+  for (const delay of [HOUR, 3*DAY, 5*DAY, WEEK]) {
+    assert.equal((await set(Date.now()+delay)).status,200);
+    assert.equal((await (await tick()).json()).sent,0);
+  }
+  assert.equal((await set(Date.now()+WEEK+HOUR)).status,400);
   await call('DELETE','/api/alerts/reminder');
   await set(Date.now()-2000);
   await call('DELETE','/api/alerts/reminder',undefined,'bb'.repeat(32));

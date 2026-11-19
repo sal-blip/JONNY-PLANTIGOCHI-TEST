@@ -58,7 +58,7 @@ export default function PhonePanel({ phone, alerts, plant, saveOK, onRestore }) 
     </section>
     <section className="phone-section">
       <h3>Plant alerts</h3>
-      <p>Get a sprout reminder on the next hourly check after your seed is ready. New growth stages also trigger an alert while you play.</p>
+      <p>Get a reminder when your plant’s next growth timer ends. Reminders are checked hourly, even with the game closed.</p>
       {alerts.capable && !alerts.denied ? <button className="alert-control" aria-pressed={alerts.enabled} onClick={alerts.toggle} disabled={alerts.busy || phone.offline !== 'ready'}>
         <Bell size={16}/>{alerts.busy ? 'Updating…' : alerts.enabled ? 'Turn off alerts' : 'Enable plant alerts'}</button>
         : <p className="support-hint">{alerts.denied ? 'Notifications are blocked. You can allow them in the browser or device settings.' : 'On iPhone or iPad, add this game to the Home Screen and open its icon to enable alerts. Other devices need a browser that supports Web Push.'}</p>}
