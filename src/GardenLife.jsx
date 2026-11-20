@@ -9,9 +9,9 @@ const guide = [
   ['Wake a seed','Water once. Sprouts at one hour old.'],
   ['Thirst','Dry at 4h. Critical at 12h. Water by 24h.'],
   ['Root rot','Two extra wet pours 1h apart. Drain within 12h.'],
-  ['Care sets','Water, sun, words and food once per set.'],
-  ['Plant food','Food helps growth. Water keeps your plant alive.'],
-  ['Growing up','Young on day 3. Last set on day 5. Grown on day 7.'],
+  ['Company','Talk or finish a game. Quiet at 12h, lonely at 24h.'],
+  ['Plant food','Food every 48h. Light every 24h.'],
+  ['Growing up','Young on day 3. First split on day 5. Grown on day 7.'],
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Leaf Echo','Watch three beats. Copy them with the keys.'],
   ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
@@ -67,9 +67,13 @@ export function toyCards(section, plant, now) {
     case 'growth': {
       const progress=growthReadout(plant,now);
       const entries=[card(STAGE_NAMES[plant.stage],ageLabel((plant.deadAt??now)-plant.plantedAt)+' old · Gen '+plant.generation,'next')];
-      if (progress.next) entries.push(card(progress.next,progress.detail,'next'));
-      if (!dead && plant.stage!=='seed') entries.push(card('Care set',plant.given.length+' of 4 given','next'));
-      return [...entries,...[['Sprout','1 hour'],['Young plant','3 days'],['Final care set','5 days'],['Grown plant','7 days']].map(([name,age])=>card(name,age+' from planting','next'))];
+      if (progress.next) {
+        const [remaining, blockers]=progress.detail.split(' · ');
+        entries.push(card(progress.next,remaining,'next'));
+        if(blockers)entries.push(card('Growth needs',blockers.replace('Needs ',''),'care'));
+      }
+      if (!dead && plant.stage==='grown') entries.unshift(card('Move to garden','Choose a permanent pot','graduate'));
+      return [...entries,...[['Sprout','1 hour'],['Young plant','3 days'],['First split','5 days'],['Grown plant','7 days']].map(([name,age])=>card(name,age+' growing time','next'))];
     }
     case 'jar': {
       if (!plant.jar) {

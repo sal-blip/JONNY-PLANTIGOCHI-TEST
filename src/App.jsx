@@ -10,27 +10,17 @@ import { useGardenSound } from './GardenSound.js';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
-import {KEY, restore, wake} from './game.js';
+import {wake,graduate} from './game.js';
+import {useGardenSave} from './useGardenSave.js';
+import Recovery from './Recovery.jsx';
+import Collector from './Collector.jsx';
+import './collector.css';
 
 const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts'};
 const homeItems = ['scenes','settings','install','phone'];
 const phoneItems = ['install','saves','alerts'];
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
 const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-const readSave = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
-function writeSave(value, previous = null) {
-  try {
-    const serialized = JSON.stringify(value);
-    if (serialized !== previous) localStorage.setItem(KEY, serialized);
-    return true;
-  } catch { return false; }
-}
-function initialPlant() {
-  const p = restore(readSave(), Date.now(), !document.hidden);
-  writeSave(p);
-  return p;
-}
-
 function MenuItems({ items, open }) {
   return <div className="menu-items">{items.map(id =>
     <button key={id} onClick={() => open(id)}><span>{titles[id]}</span></button>
@@ -38,18 +28,28 @@ function MenuItems({ items, open }) {
 }
 
 export default function App() {
-  const phone = usePhoneApp();
-  const [plant, setPlant] = useState(initialPlant), current = useRef(plant);
+  const storage=useGardenSave();
+  const phone=usePhoneApp();
+  if (!storage.plant) return <Recovery {...storage}/>;
+  return <GardenApp storage={storage} phone={phone}/>;
+}
+function GardenApp({storage,phone}) {
+  const {plant,current,commit,replace,issue}=storage;
+  const saveOK=!issue;
+  const [room,setRoom]=useState(null);
+  const [leaving,setLeaving]=useState(false);
+  const leaveRoom=useCallback(()=>{setLeaving(true);},[]);
+  useEffect(()=>{if(!leaving)return;const timer=setTimeout(()=>{setRoom(null);setLeaving(false);requestAnimationFrame(()=>gardenTab.current?.focus());},reducedMotion()?0:550);return ()=>clearTimeout(timer);},[leaving]);
+  const [careTarget,setCareTarget]=useState(null);
+  const gardenTab=useRef(null), swipe=useRef(null);
   const alerts = usePlantAlerts(plant, phone.offline);
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
   const [sharing, setSharing] = useState(false);
   const [intro, setIntro] = useState(() => !reducedMotion());
-  const tilt = useGardenTilt(intro || page !== null);
+  const tilt = useGardenTilt(intro || page !== null || room!==null);
   const [leafReady, setLeafReady] = useState(false);
-  const [saveOK, setSaveOK] = useState(() => readSave() !== null);
   const menuButton = useRef(null), shareButton = useRef(null), restoreFocus = useRef(null);
-  const savedLastChange = useRef(saveOK);
   const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, sleeping:plant.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
   const scenery = useRef(null);
@@ -58,31 +58,29 @@ export default function App() {
   const time = new Date(now);
   const TimeIcon = time.getHours() >= 6 && time.getHours() < 18 ? Sun : Moon;
 
-  const commit = useCallback((fn, requireStorage = false) => {
-    const raw = savedLastChange.current ? readSave() : null;
-    const next = fn(raw ? restore(raw,Date.now(),!document.hidden) : current.current);
-    const ok = writeSave(next, raw);
-    if (!ok && requireStorage) return false;
-    savedLastChange.current = ok;
-    current.current = next;
-    setPlant(next); setSaveOK(ok);
-    return ok;
-  }, []);
-
-  useEffect(() => {
+  useEffect(()=>{
     function refresh() {
-      if (document.hidden) return;
-      const t = Date.now(); setNow(t);
-      if (wake(current.current,t) !== current.current) commit(latest => wake(latest,t));
+      if(document.hidden)return;
+      const t=Date.now();setNow(t);
+      if(wake(current.current,t)!==current.current) void commit(p=>wake(p,t));
     }
-    function sync(e) {
-      if (e.key !== KEY || !e.newValue) return;
-      const next = restore(e.newValue,Date.now(),!document.hidden); current.current = next; savedLastChange.current = true; setSaveOK(true); setPlant(next); setNow(Date.now());
+    const timer=setInterval(refresh,1000);
+    document.addEventListener('visibilitychange',refresh);
+    return ()=>{clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};
+  },[commit,current]);
+  useEffect(()=>{
+    function rescue(action) {
+      const p=wake(current.current);
+      if(p.deadAt!==null || p.stage==='seed')return;
+      if(action==='drain'?p.rotAt===null:action==='water'?p.rotAt!==null||Date.now()<p.lastDrink+12*3600000:true)return;
+      setIntro(false);setPage(null);setRoom(null);setCareTarget({action,seq:Date.now()});
     }
-    const timer = setInterval(refresh, 1000);
-    window.addEventListener('storage', sync); document.addEventListener('visibilitychange', refresh);
-    return () => { clearInterval(timer); window.removeEventListener('storage',sync); document.removeEventListener('visibilitychange',refresh); };
-  }, [commit]);
+    const onMessage=e=>{if(e.data?.type==='plant-care')rescue(e.data.action);};
+    navigator.serviceWorker?.addEventListener('message',onMessage);
+    const url=new URL(location.href);
+    if(url.searchParams.has('care')){rescue(url.searchParams.get('care'));url.searchParams.delete('care');history.replaceState(null,'',url);}
+    return ()=>navigator.serviceWorker?.removeEventListener('message',onMessage);
+  },[current]);
 
   useEffect(() => {
     let active = true;
@@ -157,27 +155,28 @@ export default function App() {
     setDraftPhoto(plant.photo ?? null);
     open('photo');
   }
-  function savePhoto() {
-    const saved = commit(old => ({...old, scene:'photo', photo:draftPhoto}), true);
+  async function savePhoto() {
+    const saved = await commit(old => ({...old, scene:'photo', photo:draftPhoto}), true);
     if (saved) { setDraftPhoto(null); setPage(null); }
     return saved;
   }
   function restoreBackup(backup) {
     setNow(Date.now());
-    return commit(() => wake(backup,Date.now()));
+    return replace(backup);
   }
   const introAudible = plant.sound && running;
   const parent = page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
-  return <main ref={tilt.garden} className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
+  return <main ref={tilt.garden} className={'garden scene-' + scene + (room!==null && !leaving?' visiting-room':'')+(leaving?' leaving-room':'') + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
     const button = event.target.closest?.('button');
     if (plant.sound && button && !button.disabled && !button.dataset.audio) void play('tap');
   }}>
+    <div className="pocket-floor" inert={room!==null?'':undefined} aria-hidden={room!==null||undefined}>
     <div key={photo ? 'photo' : scene} ref={scenery} className="scenery" style={photo ? undefined : {backgroundImage:'url(/scenes/' + scene + '.webp)'}} aria-hidden="true">
       {photo && <img className="custom-photo" src={photo.src} style={photoStyle(photo)} alt="" draggable="false"/>}
     </div>
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
-      <PocketDevice key={plant.id+'-'+(plant.deadAt ?? 'alive')} plant={plant} now={now} resting={!intro && !page && !sharing} commit={commit} sound={play}/>
+      <PocketDevice plant={plant} now={now} careTarget={careTarget} openMove={()=>setRoom({moving:plant.id})} resting={!intro && !page && !sharing && room===null} commit={commit} sound={play}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo'} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
@@ -189,6 +188,17 @@ export default function App() {
       <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
       <small className="garden-credit">© 2026 Waz Lab</small>
     </div>
+    {!intro && !page && <button className="garden-pull" ref={gardenTab}
+      onPointerDown={e=>{swipe.current=e.clientY;e.currentTarget.setPointerCapture(e.pointerId);}}
+      onPointerCancel={()=>{swipe.current=null;}}
+      onPointerUp={e=>{if(swipe.current!==null && swipe.current-e.clientY>30)setRoom({});swipe.current=null;}}
+      onClick={()=>setRoom({})}>⌃ Garden</button>}
+    </div>
+    {room!==null && <Collector plant={plant} moving={room.moving} now={now}
+      move={async slot=>{const id=room.moving;const ok=await commit(p=>graduate(p,id,slot,Date.now()));
+        return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
+      startClose={leaveRoom} shareLink={shareGame}/>}
+    {!saveOK && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>
       <div className="intro-shade" aria-hidden="true"/>
       {['left','right'].map(side => <div key={side} className={'foliage ' + side} aria-hidden="true">
@@ -214,7 +224,7 @@ export default function App() {
         <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
         <button data-audio="intro" onClick={replay}><Play/>Replay intro<ChevronRight className="row-end"/></button></div>}
-      {phoneItems.includes(page) && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} onRestore={restoreBackup}/>}
+      {phoneItems.includes(page) && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
     </GardenDialog>}
   </main>;
 }

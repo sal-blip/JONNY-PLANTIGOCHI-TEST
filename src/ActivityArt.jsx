@@ -153,7 +153,7 @@ export function JarArt({ progress = 0 }) {
 
 export function PressedLeaf({ stage = "seed" }) {
   const grown = stage === "grown";
-  const young = stage === "young";
+  const young = stage === "young" || stage === "split";
   return (
     <Canvas square>
       <path opacity=".18" d="M3 4h5v1H4v4H3z M28 31h4v-4h1v5h-5z" />
@@ -168,7 +168,7 @@ export function PressedLeaf({ stage = "seed" }) {
         <path fill="none" stroke="currentColor" d="M5 11h6v1h3v2h2v2h2v3h-5v-1h-3v-2H7v-2H5z M19 16v-3h2v-3h3V8h4V7h3v4h-1v2h-2v2h-3v2h-6z" />
       </g>}
       {(young || grown) && <g>
-        <g transform={grown ? "translate(6 5) scale(1.2)" : "translate(7 7) scale(1.1)"}><Blade split={grown} /></g>
+        <g transform={grown ? "translate(6 5) scale(1.2)" : "translate(7 7) scale(1.1)"}><Blade split={grown || stage === "split"} /></g>
         <path d={grown ? "M18 24h2v3h-2v2h-2v2h-3v-1h2v-2h2v-2h1z" : "M18 24h2v3h-1v2h-2v1h-2v-1h1v-2h2z"} />
       </g>}
     </Canvas>

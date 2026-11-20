@@ -2,97 +2,81 @@
   display: block;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  color: var(--pixel-ink, #35452d);
   image-rendering: pixelated;
+  overflow: hidden;
 }
 
-.plant-pixel-active,
-.plant-pixel-return {
-  opacity: 0;
-}
-
-.plant-pixel-rest {
-  --neutral: 1;
-  --active: 0;
-  --return: 0;
-}
-
-.plant-pixel-active {
-  --neutral: 0;
-  --active: 1;
-  --return: 0;
-}
-
-.plant-pixel-return {
-  --neutral: 0;
-  --active: 0;
-  --return: 1;
-}
+.plant-pixel-rest { --neutral: 1; --active: 0; --return: 0; }
+.plant-pixel-active { --neutral: 0; --active: 1; --return: 0; opacity: 0; }
+.plant-pixel-return { --neutral: 0; --active: 0; --return: 1; opacity: 0; }
+.plant-seeking-light { opacity: .76; }
+.plant-pixel-sway { --sway-time: 4.2s; }
+.plant-pixel[data-mood="happy"] .plant-pixel-sway { --sway-time: 3.4s; }
+.plant-pixel[data-mood="quiet"] .plant-pixel-sway,
+.plant-pixel[data-mood="lonely"] .plant-pixel-sway { --sway-time: 5.8s; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .plant-pixel-breathe > g {
-    animation: plant-pixel-two-poses 2.6s steps(1, end) infinite;
-  }
-
-  .plant-pixel-unfurl > g {
-    animation: plant-pixel-two-poses 2.1s steps(1, end) infinite;
-  }
-
-  .plant-pixel-blink > g {
-    animation: plant-pixel-eye-blink 3.9s steps(1, end) infinite;
-  }
-
-  .plant-pixel-sway > g {
-    animation: plant-pixel-leaf-sway 4.2s steps(1, end) infinite;
-  }
-
-  .plant-pixel-grown .plant-pixel-sway > g {
-    animation-duration: 5.2s;
-  }
-
-  .plant-pixel-snooze {
-    animation: plant-pixel-snooze 2.6s steps(1, end) infinite;
-  }
-
-  .plant-pixel-reaction {
-    animation: plant-pixel-reaction .7s steps(1, end) 2;
-  }
+  .plant-pixel-breathe > g { animation: pixel-two-poses 2.6s steps(1, end) infinite; }
+  .plant-pixel-unfurl > g { animation: pixel-two-poses 2.4s steps(1, end) infinite; }
+  .plant-pixel-blink > g { animation: pixel-blink 4.3s steps(1, end) infinite; }
+  .plant-pixel-sway > g { animation: pixel-leaf-sway var(--sway-time) steps(1, end) infinite; }
+  .plant-pixel-drips { animation: pixel-fall 1.7s steps(1, end) infinite; }
+  .plant-pixel-snooze, .plant-pixel-sigh { animation: pixel-rise 3s steps(1, end) infinite; }
+  .plant-event { animation: pixel-mark .7s steps(1, end) 2; }
+  .plant-event-water, .plant-event-overwater, .plant-event-drain,
+  .plant-event-death, .plant-event-food { animation-name: pixel-fall; }
+  .plant-event-talk, .plant-event-replant, .plant-event-gameLoss { animation-name: pixel-rise; }
+  .plant-event-gameWin, .plant-event-growth { animation-name: pixel-glint; }
 }
 
-@keyframes plant-pixel-two-poses {
+@keyframes pixel-two-poses {
   0%, 72%, 100% { opacity: var(--neutral); }
   30% { opacity: var(--active); }
 }
-
-@keyframes plant-pixel-eye-blink {
-  0%, 82%, 100% { opacity: var(--neutral); }
-  77% { opacity: var(--active); }
+@keyframes pixel-blink {
+  0%, 84%, 100% { opacity: var(--neutral); }
+  80% { opacity: var(--active); }
 }
-
-@keyframes plant-pixel-leaf-sway {
+@keyframes pixel-leaf-sway {
   0%, 37%, 84%, 100% { opacity: var(--neutral); }
   16% { opacity: var(--active); }
   62% { opacity: var(--return); }
 }
-
-@keyframes plant-pixel-snooze {
-  0%, 100% { opacity: .62; }
-  38% { opacity: .84; }
-  70% { opacity: 1; transform: translate(1px, -1px); }
-}
-
-@keyframes plant-pixel-reaction {
-  50% { transform: translateY(-1px); }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .plant-pixel-drips {
-    animation: plant-pixel-drip 1.8s steps(1, end) infinite;
-  }
-}
-
-@keyframes plant-pixel-drip {
+@keyframes pixel-fall {
   0%, 100% { transform: translateY(0); }
-  45% { transform: translateY(1px); }
-  65% { transform: translateY(2px); }
+  34% { transform: translateY(1px); }
+  66% { transform: translateY(2px); }
 }
+@keyframes pixel-rise {
+  0%, 100% { transform: translateY(0); opacity: .73; }
+  37% { transform: translateY(-1px); opacity: 1; }
+  73% { transform: translateY(-2px); opacity: .82; }
+}
+@keyframes pixel-mark {
+  0%, 100% { opacity: .82; }
+  45% { opacity: 1; }
+}
+@keyframes pixel-glint {
+  0%, 100% { opacity: .72; }
+  30% { transform: translateY(-1px); opacity: 1; }
+  66% { transform: translateY(0); opacity: .88; }
+}
+
+.plant-body,.plant-seeking-light{transform-box:view-box;transform-origin:36px 26px}
+.plant-seeking-light{transform:skewX(-5deg)}
+.plant-pixel[data-condition="dry"] .plant-body{transform:scaleY(.93)}
+@media(prefers-reduced-motion:no-preference){
+  .plant-pixel:is([data-condition="critical"],[data-condition="rootRot"]) .plant-body{animation:pixel-fatigue 5s steps(3,end) infinite}
+  .plant-pixel:is([data-effect="drain"],[data-effect="water"]) .plant-body{animation:pixel-relief 1.1s steps(5,end) both}
+  .plant-pixel[data-effect="growth"] .plant-body{animation:pixel-emerge 1.6s steps(8,end) both}
+  .plant-pixel[data-effect="death"] .plant-body{animation:pixel-fade-stem 1.2s steps(6,end) both}
+  .plant-pixel[data-effect="death"] .plant-event-death{animation:pixel-leaf-drop 1.2s steps(7,end) forwards}
+  .plant-pixel[data-effect="sun"] .plant-body{animation:pixel-sun-turn 1.7s steps(4,end)}
+}
+@keyframes pixel-fatigue{50%{transform:scaleY(.9) skewX(1deg)}}
+@keyframes pixel-relief{from{transform:scaleY(.82)}70%{transform:scaleY(1.02)}to{transform:scaleY(1)}}
+@keyframes pixel-emerge{from{transform:scale(.77,.61)}to{transform:scale(1)}}
+@keyframes pixel-fade-stem{from{transform:scaleY(1.14) skewX(-3deg)}to{transform:scaleY(1)}}
+@keyframes pixel-leaf-drop{from{transform:translate(2px,-5px)}to{transform:translate(6px,16px);opacity:0}}
+@keyframes pixel-sun-turn{50%{transform:skewX(6deg)}}

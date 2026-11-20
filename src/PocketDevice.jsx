@@ -5,12 +5,11 @@ import PlantPixel from './PlantPixel.jsx';
 import {DewArt,EchoArt,JarArt,PressedLeaf} from './ActivityArt.jsx';
 import {toyBranches,toyCards,toyTitles} from './GardenLife.jsx';
 import {DEW_CHANCES,LEVELS,gameNames,playText,saveDewCheckpoint,usePocketPlay} from './pocketPlay.js';
-import {care,careStatus,condition,healthLabels,replant,takeCutting,wake} from './game.js';
+import {care,careStatus,condition,company,moodOf,FOOD_INTERVAL,LIGHT_INTERVAL,HOUR,healthLabels,replant,takeCutting,wake} from './game.js';
 import {foodReadout, GROWTH_STEPS, growthReadout, waterReadout} from './plantReadout.js';
 import './PocketDevice.css';
 import './ToyMenu.css';
 
-const moods={seed:'Sleeping',sprout:'Curious',young:'Playful',grown:'Flourishing'};
 const frame=(id,index=0)=>({id,index});
 const BACK_HOLD_MS=700;
 const parentBranch={pour:'care',pause:'play'};
@@ -59,18 +58,47 @@ function GameArt({game}) {
   return <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>;
 }
 
-export default function PocketDevice({plant,now,resting,commit,sound}) {
+export default function PocketDevice({plant,now,resting,commit,sound,openMove,careTarget}) {
   const [path,setPath]=useState([]);
   const [closeUp,setCloseUp]=useState(false), [feedback,setFeedback]=useState(null);
   const retreat=useRef(null), held=useRef(null), pressed=useRef(null), speech=useRef(null), heart=useRef(null);
   const backHold=useRef(null), suppressBackClick=useRef(false);
   const screen=path.at(-1), paused=screen?.id==='pause';
-  const recordLevel=useCallback(level=>commit(old=>old.id===plant.id ? saveDewCheckpoint(old,level) : old),[commit,plant.id]);
-  const activity=usePocketPlay(plant,!resting || paused,recordLevel);
+  const previous=useRef({id:plant.id,stage:plant.stage,dead:plant.deadAt});
+  const serial=useRef(0);
+  const react=useCallback(effect=>{
+    setFeedback({effect,id:++serial.current});
+    clearTimeout(speech.current);speech.current=setTimeout(()=>setFeedback(null),2500);
+  },[]);
+  useEffect(()=>{
+    const last=previous.current;
+    if(last.id!==plant.id){setPath([]);react('replant');}
+    else if(last.dead===null && plant.deadAt!==null){setPath([]);react('death');}
+    else if(last.stage!==plant.stage) react('growth');
+    previous.current={id:plant.id,stage:plant.stage,dead:plant.deadAt};
+  },[plant.id,plant.stage,plant.deadAt,react]);
+  useEffect(()=>{
+    if(careTarget) setPath([frame('home'),frame('care',careTarget.action==='drain'?4:0)]);
+  },[careTarget]);
+  const recordRound=useCallback((name,phase,level)=>{
+    const id=plant.id, time=Date.now();
+    void commit(old=>{
+      let p=wake(old,time);
+      if(p.id!==id || p.deadAt!==null)return p;
+      if(name==='dew')p=saveDewCheckpoint(p,phase==='won'?level:0);
+      return company(p,time);
+    });
+    react(phase==='won'?'gameWin':'gameLoss');
+  },[commit,plant.id,react]);
+  const activity=usePocketPlay(plant,!resting || paused,recordRound);
+  const gameOwner=useRef(plant.id);
+  useEffect(()=>{
+    if (gameOwner.current!==plant.id) {activity.exit();gameOwner.current=plant.id;}
+  },[plant.id,activity.exit]);
   const game=activity.game, lost=game?.phase==='lost', playing=game && !paused;
   const section=screen?.id;
   const browsing=Boolean(section && !playing);
-  const soil=condition(plant,now), mood=soil==='healthy'?moods[plant.stage]:healthLabels[soil];
+  const soil=condition(plant,now), mood=soil==='healthy'?moodOf(plant,now):healthLabels[soil];
   const cards=browsing?toyCards(section,plant,now):[];
   const index=Math.min(screen?.index??0,cards.length-1), choice=cards[index];
   const branch=browsing?(section==='home'?choice.command:parentBranch[section]??section):undefined;
@@ -110,10 +138,9 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
     const state=careStatus(live,action,time);
     if (state.locked) return false;
     if (state.confirm && !confirmed) {go('pour');return 'tap';}
-    commit(p=>care(p,action,time,confirmed));
+    void commit(p=>p.id===plant.id?care(p,action,time,confirmed):p).then(ok=>{if(ok)react(confirmed?'overwater':action);});
     if (section==='pour') setPath(old=>old.slice(0,-1));
-    setFeedback(action);
-    clearTimeout(speech.current);speech.current=setTimeout(()=>setFeedback(null),2500);
+
     return 'care';
   }
   function choose() {
@@ -123,13 +150,14 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
     if (cmd==='back' || cmd==='resume') back();
     else if (cmd==='next') browse(1);
     else if (cmd==='leave') leaveGame();
+    else if (cmd==='graduate') openMove();
     else if (cmd==='pour-extra') return give('water',true);
     else {
       const [type,value]=cmd.split(':');
       if (type==='give') return give(value);
       if (type==='game') activity.enter(value);
-      else if (type==='cut') commit(p=>takeCutting(p,value));
-      else if (type==='new') {commit(p=>replant(p,value));setPath([]);}
+      else if (type==='cut') commit(p=>p.id===plant.id?takeCutting(p,value):p);
+      else if (type==='new') {commit(p=>p.id===plant.id?replant(p,value):p);setPath([]);}
       else go(cmd,cmd==='care' && soil==='rootRot'?toyCards('care',plant,now).findIndex(c=>c.command==='give:drain'):0);
     }
     return 'tap';
@@ -223,13 +251,14 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
         {showMeters && <span className="lcd-menu-key" aria-hidden="true">♥ Menu</span>}
         {browsing && <BranchIcons active={branch}/>}
         <span className={game?'lcd-art':'lcd-art lcd-plant'}>
-          {game?<GameArt game={game}/>:<PlantPixel stage={plant.stage} condition={soil} reaction={feedback}/>}
+          {game?<GameArt game={game}/>:<PlantPixel key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={moodOf(plant,now)} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} reaction={feedback?.effect}/>}
           {browsing && choice.jar!==undefined && <span className="lcd-keepsake"><JarArt progress={choice.jar}/></span>}
           {browsing && choice.leaf && <span className="lcd-keepsake"><PressedLeaf stage={choice.leaf}/></span>}
         </span>
         {browsing ? <MenuItem item={choice}/> : showMeters ? <div className="lcd-readout">
-          <ReadoutMeter name="Growth" label={growth.label} detail={growth.next ? growth.next+' · '+growth.detail : growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>
+          <ReadoutMeter name="Growth" label={Math.floor((now-plant.plantedAt)/HOUR/24)+"d "+Math.floor((now-plant.plantedAt)/HOUR)%24+"h old"} detail={growth.next ? growth.next+' · '+growth.detail : growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>
           <ReadoutMeter name="Water" label={water.label} detail={water.detail} tone={water.tone} value={water.fraction}/>
+          <ReadoutMeter name="Mood ♥" label={moodOf(plant,now)} detail={moodOf(plant,now)} value={({happy:4,content:3,quiet:2,lonely:1,sleeping:0})[moodOf(plant,now)]} steps={4}/>
         </div> : <span className="lcd-status">{status}{ready && <small className="lcd-hint">Hold Back to exit</small>}</span>}
       </div>
       <span className="shell-name" aria-hidden="true">PLANTIGOCHI</span>

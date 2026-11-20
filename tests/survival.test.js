@@ -110,7 +110,9 @@ test('completed and unavailable care are true no-ops, while dry soil can always 
   const grown=care({...p,stage:'grown',given:['water','sun','talk']},'food',H);
   assert.equal(care(grown,'food',H+1),grown);
   assert.deepEqual(readPlant(JSON.stringify(grown),H+1),grown);
-  assert.deepEqual(care(grown,'food',5*H).given,['food']);
+  assert.equal(care(grown,'food',5*H),grown);
+  const eligible={...grown,lastDrink:39*H};
+  assert.equal(care(eligible,'food',41*H).fedAt,41*H);
 });
 
 test('three cumulative misses across levels automatically start a fresh level-one run',()=>{

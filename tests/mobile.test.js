@@ -10,7 +10,7 @@ test('backup rejects bad files and restores an older watered seed', () => {
   assert.equal(readPlant('{"version":1,"stage":"sprout"}'),null);
   const p=care(newPlant(0),'water',12);
   assert.equal(readPlant(JSON.stringify(p),HOUR+5).stage,'sprout');
-  assert.equal(restore('bad',11).plantedAt,11);
+  assert.equal(restore('bad',11),null);
 });
 test('push destination is restricted to HTTPS browser push services', () => {
   const apple='https://web.push.apple.com/example';
@@ -53,6 +53,10 @@ test('a player can schedule, cancel, and receive one due notification', async ()
   assert.equal((await (await tick()).json()).sent,1);
   assert.equal((await (await tick()).json()).sent,0);
   assert.equal(count,1);
+  await call('PUT','/api/alerts/reminder',{endpoint,due:null,companyDue:Date.now()-1500});
+  assert.equal((await (await tick()).json()).sent,1);
+  await call('PUT','/api/alerts/reminder',{endpoint,due:null,companyDue:Date.now()-1500});
+  await call('DELETE','/api/alerts/reminder');assert.equal((await (await tick()).json()).sent,0);
   const when=Date.now()-1000;
   assert.equal((await call('PUT','/api/alerts/reminder',{endpoint,due:when,criticalDue:when})).status,200);
   assert.equal((await (await tick()).json()).sent,2);
@@ -76,12 +80,18 @@ test('the service worker shows the right care warning and suppresses duplicate a
     registration:{showNotification:async(title,options)=>shown.push([title,options.tag])}};
   runInNewContext(fs.readFileSync('public/plant-alerts.js','utf8'),{self,caches:{open:async()=>cache},Response,Date});
   const push=()=>new Promise((resolve,reject)=>onPush({waitUntil:p=>p.then(resolve,reject)}));
+  await push();assert.equal(shown.length,0);
   const now=Date.now();
   const record=(reason,due,criticalDue,expires)=>cache.put('/notice-schedule',Response.json({reason,due,criticalDue,expires}));
   await record('thirst',now+HOUR,now-2000,now+12*HOUR);
   await push();await push();assert.deepEqual(shown,[['Your Monstera is very thirsty','plantigochi-care']]);
   await record('rot',now-3000,now-1500,now+HOUR);
-  await push();assert.deepEqual(shown.slice(1).map(x=>x[1]),['plantigochi-care','plantigochi-growth']);
+  await push();assert.deepEqual(shown.slice(1).map(x=>x[1]),['plantigochi-care']);
   assert.match(shown[1][0],/drainage/);
-  await record('thirst',null,now-10000,now-1);await push();assert.equal(shown.length,3);
+  await record('thirst',null,now-10000,now-1);await push();assert.equal(shown.length,2);
+  const company={id:'test',companyDue:now-1000,companyAt:now-11*HOUR};
+  await cache.put('/notice-schedule',Response.json(company));
+  await push();await push();assert.equal(shown.length,3);assert.equal(shown[2][1],'plantigochi-company');
+  await cache.put('/notice-schedule',Response.json({...company,companyAt:now-10*HOUR}));await push();assert.equal(shown.length,3);
+  await cache.put('/notice-schedule',Response.json({disabled:true}));await push();assert.equal(shown.length,3);
 });

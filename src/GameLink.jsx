@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-export const gameLink = () => new URL('/', window.location.href).href;
+export const gameLink = () => document.querySelector('link[rel="canonical"]')?.href || new URL('/', window.location.href).href;
 
 export default function GameLink({ showAddress = false }) {
   const [status, setStatus] = useState('idle');

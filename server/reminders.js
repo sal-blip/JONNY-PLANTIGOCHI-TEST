@@ -47,7 +47,7 @@ async function dispatch(env, origin, send) {
     if (now-item.due >= 24*HOUR || item.attempts >= 5) { await remove(); continue; }
     try {
       const auth = await authorization(item.endpoint,env,origin,now);
-      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:item.id.endsWith('.care') ? 'plantigochi-care' : 'plantigochi-growth'},body:new Uint8Array()});
+      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:item.id.endsWith('.care') ? 'plantigochi-care' : item.id.endsWith('.company') ? 'plantigochi-company' : 'plantigochi-growth'},body:new Uint8Array()});
       if (result.ok || [400,404,410].includes(result.status)) {
         if (result.ok) sent++;
         await remove(); continue;
@@ -71,7 +71,7 @@ export async function reminderAPI(request, env, send = fetch) {
   if (!/^[a-f0-9]{64}$/.test(secret)) return json({},401);
   const owner = await digest(secret);
   if (request.method === 'DELETE') {
-    await env.DB.prepare('DELETE FROM reminders WHERE owner IN (?,?)').bind(owner,owner+'.care').run();
+    await env.DB.prepare('DELETE FROM reminders WHERE owner IN (?,?,?)').bind(owner,owner+'.care',owner+'.company').run();
     return json({ cancelled: true });
   }
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json({},415);
@@ -84,6 +84,7 @@ export async function reminderAPI(request, env, send = fetch) {
   const id = await digest(endpoint);
   const slots = [[id,owner,body.due]];
   if (Object.hasOwn(body,'criticalDue')) slots.push([id+'.care',owner+'.care',body.criticalDue]);
+  if (Object.hasOwn(body,'companyDue')) slots.push([id+'.company',owner+'.company',body.companyDue]);
   const statements = [];
   for (const [key,slot,time] of slots) {
     if (time === null) {

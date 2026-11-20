@@ -16,3 +16,14 @@
 ## Handoff
 
 Garden progress belongs to its browser origin. Export a backup before moving to a different host such as Overskill. Use the existing public Site for this release.
+
+## Release results · November 20, 2026
+
+| Status | Result |
+| --- | --- |
+| Verified | 34 automated tests pass. Seven successive simulated seven-day cycles fill one room and open the next. Verified pause/resume, rescue deadlines, company timing, death, both games, graduation identity and a backup round trip. |
+| Verified | At 320 × 568, Chromium opened the production build, rendered all three LCD meters and six pot targets, restored a backup through the app and moved a graduate using the toy buttons. An interrupted IndexedDB move rolled back without changing the plant or its pot. Two tabs competed for the same graduate and only one received a permanent pot. Reload retained the room and next seed. Damaged and future saves downloaded byte-for-byte through recovery. |
+| Verified | Reviewed all five stages across six soil conditions, 16 mood/need combinations and 11 effects. Checked reduced motion, the installed asset bundle, six full and empty pot positions, and daylight and nighttime room images. Postcard preview and PNG download worked. |
+| Verified | Mocked native sharing accepted a PNG and the public game URL, respected cancellation, and fell back to manual copy with clipboard access denied. The public preview PNG is 1200 × 630. Worker/API tests covered opt-out, duplicate and expired wakes, overlapping rescue and growth, missing schedules and company cooldown. |
+| Built · device verification pending | Actual receipt on locked iPhone and Android, an actual social app composer, and a social crawler's rendered preview require external device/service checks. No post was sent. |
+| Planned separately | Plant-biodata music player and Overskill hosting migration. |

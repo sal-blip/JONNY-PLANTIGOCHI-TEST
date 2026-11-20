@@ -1,71 +1,103 @@
 import React from "react";
 import "./PlantPixel.css";
 
-// A dot lets the LCD show through. The other pixels are four densities of one ink.
-const densities = { "#": 1, "+": 0.67, ":": 0.34, "-": 0.13 };
+const levels = { "#": 1, "+": .7, ":": .39, "-": .16, "=": .52 };
 
-function bitmap(rows, rowOffsets = []) {
-  const paths = { "#": "", "+": "", ":": "", "-": "" };
+// Sprites share one LCD ink. Empty cells are transparent, including leaf fenestrations.
+function draw(rows, offsets = []) {
+  const ink = { "#": "", "+": "", ":": "", "-": "", "=": "" };
   rows.forEach((row, y) => {
-    for (const match of row.matchAll(/([#+:\-])\1*/g)) {
-      const length = match[0].length;
-      paths[match[1]] += `M${match.index + (rowOffsets[y] ?? 0)} ${y}h${length}v1h-${length}z`;
+    for (const run of row.matchAll(/([#+:=\-])\1*/g)) {
+      const w = run[0].length;
+      ink[run[1]] += `M${run.index + (offsets[y] ?? 0)} ${y}h${w}v1h-${w}z`;
     }
   });
-  return Object.entries(paths).filter(([, path]) => path);
+  return Object.entries(ink).filter(([, path]) => path.length);
 }
 
-function Pixels({ image, x, y, mirror = false }) {
-  return (
-    <g transform={`translate(${x} ${y})${mirror ? " scale(-1 1)" : ""}`}>
-      {image.map(([shade, d]) => <path key={shade} d={d} opacity={densities[shade]} />)}
-    </g>
-  );
+function Pixels({ image, x = 0, y = 0, mirror = false }) {
+  return <g transform={`translate(${x} ${y})${mirror ? " scale(-1 1)" : ""}`}>
+    {image.map(([tone, path]) => <path key={tone} d={path} opacity={levels[tone]} />)}
+  </g>;
 }
 
-const seedRows = [
-  "..................###",
-  ".................#::#",
-  ".............####::+#",
-  ".........####::---:+#",
-  "......###:::------:#",
-  "....##::---..----:+#",
-  "...#::---..-------:#",
-  "..#::-------------:+#",
-  ".#:----------------:#",
-  ".#:----------------:#",
-  "#:-----------------:+#",
-  "#:-----------------:+#",
-  "#::----------------:+#",
-  ".#+::-------------:+#",
-  "..#++::-------:-:++#",
-  "...##++::::::-:++##",
-  ".....###+++++++##",
-  "........#######",
-];
-const seed = bitmap(seedRows);
-// Duplicate a row at the belly. Drawing a taller silhouette one pixel higher
-// lifts the shoulders and face while leaving the grounded bottom row in place.
-const breathingSeed = bitmap([...seedRows.slice(0, 11), seedRows[10], ...seedRows.slice(11)]);
+// The upper petiole stays attached. Motion is a different drawing on the same pixel grid.
+function blade(rows) {
+  const offsets = rows.map((_, row) => row < 5 ? 0 : row < 11 ? 1 : 2);
+  return [draw(rows), draw(rows, offsets), draw(rows, offsets.map(x => -x))];
+}
 
-const sproutBall = bitmap([
-  "......####",
-  "....##-:--##",
-  "..##--:-----##",
-  ".#:--:--------#",
-  ".#:-----------:#",
-  "#:-------------#",
-  "#--------------:#",
-  "#--------------:#",
-  "#--------------:#",
-  ".#-------------+#",
-  ".#::----------:+#",
-  "..#+::::----:++#",
-  "...##++++:+++##",
-  ".....########",
+const simple = blade([
+  "....####....###",
+  "..##:---##.#:-#",
+  ".#:-----::#--:#",
+  "#:-----::---:+#",
+  "#-----:---::+#",
+  "#----:---::+#",
+  "#---:---::+#",
+  "#--:---:++#",
+  ".#:--::+##",
+  ".#:--++#",
+  "..#++##",
+  "..###",
 ]);
-
-const shoot = bitmap([
+const firstSplit = blade([
+  "......####.....###",
+  "....##:---##..#::#",
+  "..##:------:##--:#",
+  ".#:------:----:-+#",
+  "#:==..+=:---:::+#",
+  "#-==..+=---::++#",
+  ".###++:---::###",
+  "....#=:--:+##",
+  ".##-:---:+#",
+  "#:---::++#",
+  ".#--:++##",
+  ".#:++##",
+  "..###",
+]);
+const fenestrated = blade([
+  ".......####......###",
+  "....###:---##...#::#",
+  "..##:-------##.#--:#",
+  ".#:--:=..+--:-#---+#",
+  "#:--:==..+::----::#",
+  ".##===+==-:==..:+#",
+  "...###=-:=::=..+#",
+  "..##--=:--:=:++#",
+  ".#:=..+---=:###",
+  "#:==..+--=++#",
+  ".##=++=-++###",
+  "....#-:++#",
+  "..#:--++#",
+  ".#:--++#",
+  ".#:++##",
+  "..###",
+]);
+const wilted = blade([
+  ".......####",
+  ".....##++:+#",
+  "....#+::#::#",
+  "...#:--:#:+#",
+  "..#:---:##:#",
+  ".#:--::+#..#",
+  "#:--::+#",
+  "#---:++#",
+  "#--:++#",
+  ".#:++#",
+  ".#++#",
+  "..##",
+]);
+const little = blade([
+  "...###..##",
+  ".##---##:#",
+  "#---::--:#",
+  "#---:--:#",
+  "#--:--+#",
+  ".#:--+#",
+  "..####",
+]);
+const shoot = draw([
   ".........####",
   "........#::+#",
   ".####..#:-+#",
@@ -76,8 +108,7 @@ const shoot = bitmap([
   "......+#",
   "......##",
 ]);
-
-const openShoot = bitmap([
+const openShoot = draw([
   "...........###",
   "..........#::#",
   ".........#:-#",
@@ -89,404 +120,271 @@ const openShoot = bitmap([
   "......+#",
   "......##",
 ]);
-
-// The upper rows of a blade travel farthest as it bends at its stalk.
-function leafFrames(rows) {
-  const offsets = rows.map((_, y) => y < rows.length / 3 ? 2 : y < rows.length * .72 ? 1 : 0);
-  return [bitmap(rows), bitmap(rows, offsets), bitmap(rows, offsets.map(x => -x))];
-}
-
-const uncutLeaf = leafFrames([
-  "....####.....####",
-  "..##::--##.##:::-##",
-  ".#::------#-----::-#",
-  "#:---------:-------:#",
-  "#:---------:-------:#",
-  "#------:-:-:---:---:+#",
-  "#:------:-::--:----:+#",
-  ".#--------::-------:+#",
-  ".#:---------------:+#",
-  "..#---------------:+#",
-  "...#-------------:+#",
-  "....#-----------:+#",
-  ".....#+-:------:+#",
-  "......##+:----:+#",
-  "........##:--:+#",
-  "..........##:+#",
-  "............##",
-]);
-
-const splitLeaf = leafFrames([
-  ".....####.......####",
-  "...##::--##...##--::##",
-  "..#::------#.#------::#",
-  ".#:---..----#------..-:#",
-  "#:---..-----:----:..--:+#",
-  ".##---:---:-:---:-----:+#",
-  "...##-----:-:---:---:++#",
-  "..#::-:----::------++##",
-  ".#:---..---::-----+##",
-  ".#:---..---::------:###",
-  "..##-----------------:+#",
-  "....##---------------:+#",
-  "...#:---------------:+#",
-  "....#+------------:++#",
-  ".....##:-------:-++##",
-  ".......##:----:++##",
-  ".........##:-:+##",
-  "...........#:++#",
-  "............##",
-]);
-
-const sideLeaf = leafFrames([
-  "..####",
-  ".#:---##",
-  "#:--:---#",
-  "#:-:----:#",
-  ".##-:-:--#",
-  "....#::-:+#",
-  "..##:--:+#",
-  "....#::+#",
-  ".....###",
-]);
-
-const closedFace = bitmap([
-  "#...#....#...#",
-  ".###......###",
-  ".......#",
-  "......#.#",
-]);
-const breathingFace = bitmap([
-  "#...#....#...#",
-  ".###......###",
-  "......##",
-  "......##",
-]);
-const blinkFace = bitmap([
-  "..........",
-  "##......##",
-  "....#..#",
-  ".....##",
-]);
-const impishFace = bitmap([
-  "##......##",
-  "##......##",
-  "....#..#",
-  ".....##",
-]);
-const delightedFace = bitmap([
-  ".#......#",
-  "#.#....#.#",
-  "....##",
-  "....##",
-]);
-
-const earth = bitmap([
-  ".............:...................:.........",
-  "........::..#::.......::........:+..:......",
-  ".....:++::++:#++:.++::::.::++++:+#++:......",
-  "..:++###:#####+++##++++##+#####++:###++:...",
-  "....:++::++++::++#####++#+++:::++:++:......",
-  ".......:....:++::..++::::::..:.....:.......",
-  ".................:......:..................",
-]);
-
-const planter = bitmap([
-  "...:++##++++##++:...",
-  ".##++:::+#++++:++##.",
-  "#+::::----:-::::+++#",
-  ".##################.",
-  "..#+:---------::+#..",
-  "...#+:-----:-::+#...",
-  "...#+::---:--:++#...",
-  "....############....",
-]);
-
-const dryGround = bitmap([
-  "......:..:::::.....:+::......:........:::::",
-  "...::++##++#+++.++####:..:++###++:..+++##+::",
-  ".:++###:--:--++.:#++--:#++:#---:+#..#::--:+",
-  "++:--::##-::--+..#+--:++:.##--::++..#+:-:##",
-  "..:++:..+#++:::..#::+:.:++:#+++##..:++#++.:",
-  "....:....::..:.++###::....:...::...::.....",
-]);
-const puddle = bitmap([
-  ".....:::+::...:..............::.....",
-  "...:++--..::+++::....:++:..:+--++:..",
-  ".++:--...--:----:++++:::----......:+",
-  "...::::++::::::-----:::::++++++:::..",
-  "..............:++++++++::...........",
-]);
-const exposedRoots = bitmap([
-  "..##....###..#......##",
-  ".#+.....###...##.....+#",
-  ".##...##+#...###...++#",
-  "#++.....##....#+#..#+",
-  "..#......+#....#..:+",
-  "........##........#",
-]);
-const rotSpots = bitmap([".++...#", "+##+..+", ".+#..+#", "....+#.", "....+.."]);
-const stressedFace = bitmap([".##...##.", "##.....##", "....##...", "...#..#.."]);
-const wiltFace = bitmap(["##....##", "..#..#..", "........", "...##..."]);
-const drenchedFace = bitmap(["##....##", ".#....#.", "........", "..#..#..", "...##..."]);
-const deadFace = bitmap(["#.#...#.#", ".#.....#.", "#.#...#.#", ".........", "....#...."]);
-const bentShoot = bitmap([
-  "....######...",
-  "..##::---:##.",
+const droopedShoot = draw([
+  "....######",
+  "..##::---:##",
   ".#:----:#:-:#",
   "#----:#####:#",
-  "#--###.##..#+",
+  "#--###.##..+#",
   "###....+#..+#",
   ".......+#...#",
-  ".......##....",
+  ".......##",
 ]);
-const shrunkSeed = bitmap([
-  "............####",
-  "........####--:#",
-  ".....###+---::-#",
-  "...##:--:-----:#",
-  "..#:----------:+#",
-  ".#:------------+#",
-  "#:------------:+#",
-  "#:-----------::+#",
-  ".#:----------++#",
-  "..##++:---:++##",
-  "....#########",
-]);
-const hangingLeaf = bitmap([
-  "..######......",
-  ".#::-::-###...",
-  "#:---:::---##.",
-  "#:----:::---:#",
-  ".#:-:--++---:+#",
-  "..#----:+:---+#",
-  "...#----#---:+#",
-  "...#:------:++#",
-  "....#:-----:+#",
-  ".....#:-:-:+#",
-  "......##:-:+#",
-  "........#::#",
-  ".........#+#",
-  "..........##",
-]);
-const fallenLeaf = bitmap([
-  "........###...",
-  "....####--:##.",
-  "..##::::--:+##",
-  ".#+..:-:--+#..",
-  "#:--:.:-:++#..",
-  ".##:-:++##....",
-  "...#####......",
-]);
-const conditionLabels = {
-  dry: "is dry, with cracked soil",
-  critical: "is critically wilted and slumping",
-  soggy: "is soggy and dripping with water",
-  rootRot: "has root rot, dark patches, and exposed damaged roots",
-  dead: "has died and is still",
-};
-const plantNames = { seed: "Monstera seed", sprout: "Monstera sprout", young: "Young Monstera", grown: "Grown Monstera" };
-
-const zSmall = bitmap(["###", "..#", ".#.", "###"]);
-const zLarge = bitmap(["#####", "...#.", "..#..", ".#...", "#####"]);
-const heart = bitmap([".##.##.", "#::#::#", "#:::::#", ".#:::#.", "..#:#..", "...#..."]);
-const drop = bitmap(["..#..", ".#:#.", ".#:#.", "#:-:#", "#:-:#", ".###."]);
-const gleam = bitmap(["..#..", "..#..", "##:##", "..#..", "..#.."]);
-const sun = bitmap([
-  "....#....",
-  ".#.....#.",
-  "...###...",
-  "..#:::#..",
-  "#.#:::#.#",
-  "..#:::#..",
-  "...###...",
-  ".#.....#.",
-  "....#....",
+const seedRows = [
+  "...........###",
+  ".........##-:#",
+  "......###---:#",
+  "....##::---:+#",
+  "..##::-..--:+#",
+  ".#:---..---:+#",
+  "#:---------:+#",
+  "#::--------:+#",
+  ".#+:-----::+#",
+  "..##+:::++##",
+  "....######",
+];
+const seed = draw(seedRows);
+const seedInhale = draw([...seedRows.slice(0, 6), seedRows[5], ...seedRows.slice(6)]);
+const shrunkSeed = draw([
+  "..........###",
+  ".......###::#",
+  "....###:---#",
+  "..##:---:+:#",
+  ".#-----+--:+#",
+  "#:-::------+#",
+  ".#+--:--:++#",
+  "..#########",
 ]);
 
-const stageLabels = {
-  seed: "A sleepy Monstera seed tucked into the soil",
-  sprout: "A smiling Monstera sprout with two little leaves",
-  young: "A cheeky young Monstera with a heart-shaped leaf",
-  grown: "A happy grown Monstera with split leaves",
+// Each entry specifies the leaf's own petiole, so independent stems stay readable.
+const foliage = {
+  young: [
+    { kind: simple, x: 15, y: 8, stem: "M34 26v-7h-2v-4h-2v-4h-2" },
+    { kind: little, x: 54, y: 12, mirror: true, stem: "M37 25v-6h3v-3h4" },
+  ],
+  split: [
+    { kind: firstSplit, x: 11, y: 7, stem: "M34 26v-6h-2v-4h-2v-5h-2" },
+    { kind: simple, x: 59, y: 9, mirror: true, stem: "M37 26v-7h3v-4h2v-3h3" },
+    { kind: little, x: 34, y: 2, stem: "M35 24v-8h2v-5h3V6h3" },
+  ],
+  grown: [
+    { kind: fenestrated, x: 3, y: 11, stem: "M33 25v-4h-3v-3h-4v-3h-4" },
+    { kind: firstSplit, x: 17, y: 1, stem: "M34 25v-8h1V5h-1" },
+    { kind: firstSplit, x: 55, y: 1, mirror: true, stem: "M37 25v-8h-1V7h2V5" },
+    { kind: fenestrated, x: 69, y: 10, mirror: true, stem: "M38 25v-4h3v-3h4v-3h5" },
+  ],
 };
 
-function Reaction({ kind, asleep }) {
-  if (!kind && asleep) {
-    return <g className="plant-pixel-snooze"><Pixels image={zSmall} x={48} y={7} /><Pixels image={zLarge} x={53} y={1} /></g>;
-  }
-  const image = { sun, water: drop, talk: heart, food: gleam }[kind];
-  return image && <g className="plant-pixel-reaction"><Pixels image={image} x={53} y={3} /></g>;
-}
+const pot = draw([
+  ".....++###++##+++##++....",
+  "...##:++:::+++:::++:##..",
+  "..#####################.",
+  ".#+::::----------:::::+#",
+  ".######################.",
+  "..#::----------------+#.",
+  "..#::----------------+#.",
+  "...#:---------------:+#.",
+  "...#:---------------+#..",
+  "....#::------------:+#..",
+  "....#+:::---------:++#..",
+  ".....##++++++++++++##...",
+  "......##############....",
+]);
+const earthBits = draw(["..:++:...::", "++:..++:+#:", "...:...:+.."]);
+const cracked = draw([
+  "....####...:##++:..",
+  ".:##----#..#:---:+#",
+  "##--::--#..#--::++#",
+  "..+##:::#.#::++##..",
+  ".....++##..###.....",
+]);
+const puddle = draw([
+  ".....:::::....::.....",
+  "..:++--..::+++--++:..",
+  ".++:---..---:----..:+",
+  "...::::++:::::+++::..",
+]);
+const roots = draw([
+  "..##...#+...##...#",
+  ".#+...###...+##..+#",
+  ".##..#.+#...#+#..#",
+  "#++.....##...#..:+",
+  "..#....#+.......#",
+]);
+const spots = draw([".++...#", "+##+..+", ".+#..+#", "....+#."]);
+const deadLeaf = draw([
+  "..........###",
+  "......####--:##",
+  "....##::---::+#",
+  "...#+..:-:-:+#",
+  "..#:--:--:++#",
+  ".#++:--:++##",
+  "#...####",
+]);
 
-function AwakeFace({ x, y, happy }) {
-  if (happy) return <Pixels image={delightedFace} x={x} y={y} />;
-  return (
-    <g className="plant-pixel-blink">
-      <g className="plant-pixel-rest"><Pixels image={impishFace} x={x} y={y} /></g>
-      <g className="plant-pixel-active"><Pixels image={blinkFace} x={x} y={y} /></g>
+const faces = {
+  asleep: draw(["#..#....#..#", ".##......##", ".....##"]),
+  happy: draw([".#........#.", "#.#......#.#", "....#..#", ".....##"]),
+  content: draw(["##........##", "##........##", ".....#.#", "......#"]),
+  quiet: draw(["............", "###......###", ".....##"]),
+  lonely: draw([".##......##", ".#.......#.", ".....##", "....#..#"]),
+  dry: draw([".##......##", "#..........#", ".....##", "....#..#"]),
+  critical: draw(["##........##", "..#......#..", ".....##", "....#..#"]),
+  soggy: draw([".#........#.", "##........##", ".....###", "....#...#"]),
+  rootRot: draw(["..#......#..", "##........##", ".....##", "....#..#"]),
+  hungry: draw(["##........##", "##........##", ".....##", ".....##"]),
+  lowLight: draw(["###......###", ".#........#.", ".....##"]),
+  dead: draw(["#.#......#.#", ".#........#.", "#.#......#.#", ".....##"]),
+};
+const blink = draw(["............","###......###",".....#.#","......#"]);
+const zSmall = draw(["###", "..#", ".#.", "###"]);
+const zLarge = draw(["#####", "...#.", "..#..", ".#...", "#####"]);
+const drop = draw(["..#..", ".#:#.", ".#:#.", "#:-:#", "#:-:#", ".###."]);
+const heart = draw([".##.##.", "#::#::#", "#:::::#", ".#:::#.", "..#:#..", "...#..."]);
+const star = draw(["...#...", "...#...", "..#+#..", "##:-:##", "..#+#..", "...#...", "...#..."]);
+const sparkle = draw(["..#..", "..#..", "##:##", "..#..", "..#.."]);
+const sun = draw(["....#....",".#.....#.","...###...","..#:::#..","#.#:::#.#","..#:::#..","...###...",".#.....#.","....#...."]);
+const food = draw([".....##", "...##+#", ".##:::#", "#:--:+#", ".#::##", "..##"]);
+const littleSun = draw(["..#..", ".+#+.", "##.##", ".+#+.", "..#.."]);
+const scoop = draw(["....##", "...#+#", ".##-+#", "#:-+#", "#++#", ".##"]);
+const down = draw(["...##", "...##", "...##", ".#.##.#", "..####", "...##"]);
+const sprig = draw([".....###", ".##.#:-#", "#:-##:#", ".##:##", "...##", "...##"]);
+const splitHeart = draw([".##...##", "#::#.#:+#", "#:#..#::#", ".#:#..:#", "..#..:#", ".....#"]);
+
+const stageName = { seed: "Sleeping Monstera seed", sprout: "Monstera sprout", young: "Young Monstera", split: "Monstera with its first split leaf", grown: "Grown Monstera with a broad canopy" };
+const healthName = { dry: "dry with cracked soil", critical: "critically thirsty and slumping", soggy: "soggy and dripping", rootRot: "root rot with mottled leaves and damaged roots", dead: "dead and still" };
+const effectName = { water: "being watered", food: "receiving food", sun: "receiving sunlight", talk: "hearing kind words", drain: "draining excess water", overwater: "an extra pour", growth: "growing", death: "a fallen leaf", replant: "newly planted", gameWin: "celebrating a game win", gameLoss: "a game loss" };
+
+function Canopy({ stage, condition, lowLight }) {
+  const drooping = condition === "critical" || condition === "rootRot";
+  return <g className={'plant-canopy' + (lowLight && !drooping ? ' plant-seeking-light' : '')}>
+    {foliage[stage].map(({ stem }, i) => <path key={i} d={stem} fill="none" stroke="currentColor" strokeWidth="2" />)}
+    <g className={drooping ? undefined : "plant-pixel-sway"}>
+      {(drooping ? [0] : [0, 1, 2]).map(frame => <g key={frame} className={["plant-pixel-rest", "plant-pixel-active", "plant-pixel-return"][frame]}>
+        {foliage[stage].map(({ kind, x, y, mirror }, i) => {
+          // Drooping tissue hangs from the same petiole as its healthy blade.
+          const inset = kind === little ? -2 : kind === simple ? 3 : kind === firstSplit ? 6 : 8;
+          const px = x + (drooping ? (mirror ? -inset : inset) : 0);
+          const py = y + (drooping ? 3 : 0);
+          const sideFrame = mirror && frame ? 3 - frame : frame;
+          return <g key={i}>
+            <Pixels image={drooping ? wilted[0] : kind[sideFrame]} x={px} y={py} mirror={mirror} />
+            {condition === "rootRot" && <Pixels image={spots} x={px + (mirror ? -9 : 4)} y={py + 4} />}
+          </g>;
+        })}
+      </g>)}
     </g>
-  );
+  </g>;
 }
 
-function SleepingSeed() {
-  return (
-    <g className="plant-pixel-breathe">
-      <g className="plant-pixel-rest">
-        <Pixels image={seed} x={25} y={9} />
-        <Pixels image={closedFace} x={28} y={19} />
-      </g>
-      <g className="plant-pixel-active">
-        <Pixels image={breathingSeed} x={25} y={8} />
-        <Pixels image={breathingFace} x={28} y={18} />
-      </g>
-    </g>
-  );
-}
-
-function Sprout({ happy }) {
-  return (
-    <>
-      <g className="plant-pixel-unfurl">
-        <g className="plant-pixel-rest"><Pixels image={shoot} x={31} y={4} /></g>
-        <g className="plant-pixel-active"><Pixels image={openShoot} x={31} y={3} /></g>
-      </g>
-      <Pixels image={sproutBall} x={28} y={13} />
-      <AwakeFace x={31} y={19} happy={happy} />
-    </>
-  );
-}
-
-function LeafyPlant({ grown, happy }) {
-  const blade = grown ? splitLeaf : uncutLeaf;
-  const faceX = [32, 33, 31];
-  return (
-    <g className={grown ? "plant-pixel-grown" : "plant-pixel-young"}>
-      <path d="M35 14h2v8h1v5h-3z M36 22h-2v-2h-3v-2h-2v-2h-2v-2h2v1h2v2h2v2h3z" />
-      {grown && <path d="M36 20h2v-2h3v-2h3v-2h3v-2h2v3h-4v3h-3v2h-4v3h-2z" />}
-      <g className="plant-pixel-sway">
-        {blade.map((frame, i) => (
-          <g key={i} className={["plant-pixel-rest", "plant-pixel-active", "plant-pixel-return"][i]}>
-            <Pixels image={sideLeaf[i]} x={20} y={8} />
-            {grown && <Pixels image={sideLeaf[i === 0 ? 0 : 3 - i]} mirror x={54} y={5} />}
-            <Pixels image={frame} x={grown ? 24 : 26} y={grown ? 2 : 5} />
-            <AwakeFace x={faceX[i]} y={grown ? 12 : 13} happy={happy} />
-          </g>
-        ))}
-      </g>
-      <Pixels image={planter} x={26} y={24} />
-    </g>
-  );
-}
-
-function StressedPlant({ stage, condition }) {
-  const potted = stage === "young" || stage === "grown";
-  const droops = condition === "critical" || condition === "rootRot";
-  const face = droops ? wiltFace : condition === "soggy" ? drenchedFace : stressedFace;
-  if (stage === "seed") {
-    return <>
-      <Pixels image={droops ? shrunkSeed : seed} x={droops ? 27 : 25} y={droops ? 16 : 9} />
-      <Pixels image={face} x={30} y={droops ? 21 : 19} />
-      {condition === "rootRot" && <Pixels image={rotSpots} x={37} y={17} />}
-    </>;
-  }
-  if (!potted) {
-    return <>
-      <Pixels image={droops ? bentShoot : shoot} x={droops ? 30 : 31} y={droops ? 8 : 4} />
-      <Pixels image={sproutBall} x={28} y={14} />
-      <Pixels image={face} x={31} y={20} />
-      {condition === "rootRot" && <Pixels image={rotSpots} x={38} y={14} />}
-    </>;
-  }
-  const grown = stage === "grown";
-  if (droops) {
-    return <>
-      <path d="M34 25V16h2v-4h2V9h3V8h5v2h-5v1h-2v3h-2v3h-1v8z M35 19h-3v-2h-4v-1h-3v-2h5v1h3v2h2z" />
-      {grown && <Pixels image={hangingLeaf} mirror x={30} y={13} />}
-      <Pixels image={hangingLeaf} x={40} y={9} />
-      <Pixels image={face} x={43} y={13} />
-      {condition === "rootRot" && <Pixels image={rotSpots} x={46} y={16} />}
-    </>;
-  }
+function Stem({ stage, condition }) {
+  const limp = condition === "critical" || condition === "rootRot";
+  if (stage === "seed") return <>
+    {limp ? <Pixels image={shrunkSeed} x={30} y={18} /> : <g className="plant-pixel-breathe">
+      <g className="plant-pixel-rest"><Pixels image={seed} x={29} y={15} /></g>
+      <g className="plant-pixel-active"><Pixels image={seedInhale} x={29} y={14} /></g>
+    </g>}
+    {condition === "rootRot" && <Pixels image={spots} x={36} y={18} />}
+  </>;
+  if (limp) return <>
+    <Pixels image={droopedShoot} x={29} y={17} />
+    {condition === "rootRot" && <Pixels image={spots} x={33} y={17} />}
+  </>;
   return <>
-    <path d="M35 14h2v12h-2z M36 22h-2v-2h-3v-2h-2v-2h-2v-2h2v1h2v2h2v2h3z" />
-    <Pixels image={sideLeaf[0]} x={20} y={8} />
-    {grown && <Pixels image={sideLeaf[0]} mirror x={54} y={5} />}
-    <Pixels image={(grown ? splitLeaf : uncutLeaf)[0]} x={grown ? 24 : 26} y={grown ? 2 : 5} />
-    <Pixels image={face} x={32} y={grown ? 12 : 13} />
+    <path d="M36 20h2v6h-2z" />
+    <g className="plant-pixel-unfurl">
+      <g className="plant-pixel-rest"><Pixels image={shoot} x={30} y={12} /></g>
+      <g className="plant-pixel-active"><Pixels image={openShoot} x={30} y={11} /></g>
+    </g>
   </>;
 }
 
-function StressedGround({ potted, condition }) {
-  if (condition === "soggy") {
-    return <>
-      <Pixels image={puddle} x={17} y={27} />
-      {potted && <Pixels image={planter} x={26} y={21} />}
-      <g className="plant-pixel-drips">
-        <Pixels image={drop} x={46} y={19} />
-        <path d="M23 24h1v2h-1z M22 26h3v2h-3z" />
-      </g>
-    </>;
-  }
-  if (condition === "rootRot") {
-    return <>
-      {potted && <Pixels image={planter} x={26} y={21} />}
-      <Pixels image={exposedRoots} x={25} y={26} />
-    </>;
-  }
+function Remains({ stage }) {
+  if (stage === "seed") return <Pixels image={shrunkSeed} x={29} y={18} />;
   return <>
-    <Pixels image={dryGround} x={14} y={26} />
-    {potted && <>
-      <Pixels image={planter} x={26} y={24} />
-      <path d="M40 25h2v1h-2z M38 26h2v1h-2z M37 27h2v2h2v1h-3v-2h-1z" />
+    <path d="M35 27v-9h1v-4h2v-3h6v1h2v4h-2v-3h-5v3h-2v4h-1v7z" />
+    {stage !== "sprout" && <path d="M36 21h-4v-2h-3v-3h2v2h3v1h2z" />}
+    {(stage === "split" || stage === "grown") && <path d="M38 13V8h2V6h4v2h-3v2h-1v3z" />}
+    {stage === "grown" && <path d="M36 24h4v-3h4v-2h3v2h-2v2h-4v2h-5z" />}
+    <Pixels image={deadLeaf} x={47} y={30} />
+  </>;
+}
+
+function Pot({ condition, expression }) {
+  const parched = condition === "dry" || condition === "critical";
+  return <>
+    {parched && <>
+      <Pixels image={cracked} x={6} y={32} />
+      <Pixels image={cracked} mirror x={66} y={33} />
+    </>}
+    {condition === "soggy" && <>
+      <Pixels image={puddle} x={10} y={34} />
+      <Pixels image={puddle} mirror x={63} y={35} />
+      <g className="plant-pixel-drips"><Pixels image={drop} x={49} y={27} /></g>
+    </>}
+    {condition === "rootRot" && <>
+      <Pixels image={roots} x={14} y={33} />
+      <Pixels image={roots} mirror x={58} y={33} />
+    </>}
+    <Pixels image={pot} x={24} y={25} />
+    {parched && <path d="M29 26h3v1h-2v1h-1z M36 25h3v1h-1v1h-2z M28 28h3v1h-2v2h-1z" />}
+    {condition === "rootRot" && <path d="M26 28h4v1h-2v1h-2z M43 28h3v1h-3z" />}
+    {expression === "content" ? <g className="plant-pixel-blink">
+      <g className="plant-pixel-rest"><Pixels image={faces.content} x={30} y={31} /></g>
+      <g className="plant-pixel-active"><Pixels image={blink} x={30} y={31} /></g>
+    </g> : <Pixels image={faces[expression]} x={30} y={31} />}
+  </>;
+}
+
+function Feeling({ stage, mood, hungry, lowLight, condition, reaction }) {
+  if (condition === "dead") return null;
+  return <>
+    {hungry && <Pixels image={food} x={10} y={26} />}
+    {lowLight && <Pixels image={littleSun} x={60} y={26} />}
+    {condition === "healthy" && !reaction && <>
+      {stage === "seed" ? <g className="plant-pixel-snooze">
+        <Pixels image={zSmall} x={45} y={12} /><Pixels image={zLarge} x={50} y={5} />
+      </g> : mood === "happy" ? <Pixels image={sparkle} x={9} y={4} /> : mood === "lonely" ?
+        <path className="plant-pixel-sigh" d="M3 4h3v1H3z M7 4h2v1H7z M11 3h2v1h-2z" /> : null}
     </>}
   </>;
 }
 
-function DeadPlant({ stage }) {
-  const potted = stage === "young" || stage === "grown";
-  if (stage === "seed") {
-    return <>
-      <Pixels image={dryGround} x={14} y={26} />
-      <Pixels image={shrunkSeed} x={27} y={17} />
-      <Pixels image={deadFace} x={30} y={20} />
-      <path d="M40 17h1v2h-2v2h-1v-3h2z" />
-    </>;
+function EventArt({ kind }) {
+  let art;
+  switch (kind) {
+    case "water": art = <><Pixels image={drop} x={5} y={3} /><Pixels image={drop} x={11} y={9} /></>; break;
+    case "food": art = <><Pixels image={food} x={4} y={4} /><path d="M12 12h3v2h-3z M16 17h2v2h-2z" /></>; break;
+    case "sun": art = <><Pixels image={sun} x={3} y={1} /><Pixels image={sparkle} x={13} y={7} /></>; break;
+    case "talk": art = <><Pixels image={heart} x={5} y={3} /><path d="M14 4h2v1h-2z M15 1h1v2h-1z" /></>; break;
+    case "drain": art = <><Pixels image={down} x={5} y={13} /><Pixels image={drop} x={11} y={23} /></>; break;
+    case "overwater": art = <><Pixels image={drop} x={4} y={1} /><Pixels image={drop} x={11} y={6} /><Pixels image={drop} x={2} y={12} /><Pixels image={puddle} x={2} y={34} /></>; break;
+    case "growth": art = <><Pixels image={star} x={4} y={2} /><Pixels image={sparkle} x={62} y={4} /><Pixels image={sprig} x={48} y={28} /></>; break;
+    case "death": art = <><Pixels image={deadLeaf} x={5} y={9} /><path opacity=".55" d="M7 4h1v2H7z M11 7h1v1h-1z" /></>; break;
+    case "replant": art = <><Pixels image={scoop} x={14} y={9} /><Pixels image={earthBits} x={13} y={23} /><Pixels image={sparkle} x={48} y={16} /></>; break;
+    case "gameWin": art = <><Pixels image={star} x={4} y={2} /><Pixels image={star} x={61} y={3} /><path d="M5 11h1v2H5z M65 13h2v1h-2z" /></>; break;
+    case "gameLoss": art = <><Pixels image={splitHeart} x={4} y={3} /><path d="M12 10h2v1h-2z M14 12h2v1h-2z" /></>; break;
+    default: return null;
   }
-  return <>
-    <path d="M35 26V15h1v-3h3v-2h6v2h2v4h-2v-3h-2v-1h-3v2h-2v3h-1v9z M35 21h-3v-2h-2v-2h2v1h2v1h2z" />
-    {stage === "grown" && <path d="M38 14v-6h1V6h2V4h3v2h-2v2h-1v6z" />}
-    <Pixels image={fallenLeaf} x={potted ? 47 : 44} y={24} />
-    {potted ? <Pixels image={planter} x={26} y={24} /> : <Pixels image={dryGround} x={14} y={26} />}
-  </>;
+  return <g className={`plant-event plant-event-${kind}`} data-effect={kind}>{art}</g>;
 }
 
-function ConditionArt({ stage, condition, reaction }) {
-  if (condition === "dead") return <DeadPlant stage={stage} />;
-  return <>
-    <StressedPlant stage={stage} condition={condition} />
-    <StressedGround condition={condition} potted={stage === "young" || stage === "grown"} />
-    <Reaction kind={reaction} asleep={false} />
-  </>;
-}
-
-export default function PlantPixel({ stage = "seed", reaction = null, condition = "healthy" }) {
-  const description = conditionLabels[condition];
-  const label = description ? `${plantNames[stage] ?? plantNames.seed} ${description}` : (stageLabels[stage] ?? stageLabels.seed);
-  const happy = reaction === "talk" || reaction === "food";
-  const leafy = stage === "young" || stage === "grown";
-  return (
-    <svg className="plant-pixel" viewBox="0 0 72 32" xmlns="http://www.w3.org/2000/svg"
-      role="img" aria-label={label} shapeRendering="crispEdges">
-      <g fill="var(--pixel-ink, #35452d)">
-        {description ? <ConditionArt stage={stage} condition={condition} reaction={reaction} /> : <>
-        {!leafy && <Pixels image={earth} x={15} y={24} />}
-        {stage === "seed" && <SleepingSeed />}
-        {stage === "sprout" && <Sprout happy={happy} />}
-        {leafy && <LeafyPlant grown={stage === "grown"} happy={happy} />}
-        <Reaction kind={reaction} asleep={stage === "seed"} />
-        </>}
-      </g>
-    </svg>
-  );
+export default function PlantPixel({ stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false }) {
+  const growth = Object.hasOwn(stageName, stage) ? stage : "seed";
+  const soil = Object.hasOwn(healthName, condition) ? condition : "healthy";
+  const feeling = ["happy", "content", "quiet", "lonely"].includes(mood) ? mood : "content";
+  const effect = Object.hasOwn(effectName, reaction) && (soil !== "dead" || reaction === "death") ? reaction : null;
+  const expression = soil !== "healthy" ? soil : growth === "seed" ? "asleep" : hungry ? "hungry" : lowLight ? "lowLight" : feeling;
+  const subject = growth === "seed" && soil !== "healthy" ? "Monstera seed" : stageName[growth];
+  const label = [subject, healthName[soil], soil !== "dead" && feeling, soil !== "dead" && hungry && "needs food", soil !== "dead" && lowLight && "needs light", effectName[effect]].filter(Boolean).join(", ");
+  return <svg className="plant-pixel" viewBox="0 0 72 40" xmlns="http://www.w3.org/2000/svg"
+    role="img" aria-label={label} shapeRendering="crispEdges" data-stage={growth} data-condition={soil} data-mood={feeling} data-effect={effect ?? undefined}>
+    <g fill="currentColor">
+      <g className="plant-body">{soil === "dead" ? <Remains stage={growth} /> : foliage[growth] ?
+        <Canopy stage={growth} condition={soil} lowLight={lowLight} /> : <Stem stage={growth} condition={soil} />}</g>
+      <Pot condition={soil} expression={expression} />
+      <Feeling stage={growth} mood={feeling} hungry={hungry} lowLight={lowLight} condition={soil} reaction={effect} />
+      {effect && <EventArt kind={effect} />}
+    </g>
+  </svg>;
 }

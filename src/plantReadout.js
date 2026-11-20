@@ -1,9 +1,9 @@
-import {ACTIONS, HOUR, MATURE_CARE_DELAY, WATER_INTERVAL, careStatus, condition, deathDeadline, nextMilestone} from './game.js';
+import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, condition, deathDeadline, nextMilestone} from './game.js';
 
 export const GROWTH_STEPS = 4;
 const clamp = value => Math.min(1, Math.max(0, value));
 
-function timeLeft(ms) {
+export function timeLeft(ms) {
   const minutes = Math.max(1, Math.ceil(ms / 60000));
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
@@ -20,19 +20,12 @@ export function growthReadout(plant, now) {
       : {filled: 0, label: 'Pressed leaf', detail: 'Growth ended'};
   }
 
-  const elapsed = now - plant.plantedAt;
-  const remaining = next.age - elapsed;
-  const seed = plant.stage === 'seed';
-  const missingCare = seed ? Number(plant.wateredAt === null) : ACTIONS.length - plant.given.length;
-  const waiting = remaining <= 0 && missingCare > 0;
-  const completed = seed ? 0 : plant.stage === 'sprout' ? 1 : 2 + plant.round;
-  // Each segment marks a milestone. Keep its last pixel open until it unlocks.
-  const filled = completed + Math.min(.94, clamp((elapsed - next.start) / (next.age - next.start)));
-  const care = seed ? 'Water to sprout' : missingCare + (missingCare === 1 ? ' care action left' : ' care actions left');
-  const detail = remaining > 0
-    ? 'In ' + timeLeft(remaining) + (missingCare ? ' · ' + care : '')
-    : waiting ? care : 'Ready now';
-  return {filled, label: waiting ? 'Care needed' : ['Seed','Sprout','Young','Final set'][completed], detail, next: next.label};
+  const elapsed=earnedAt(plant,now), remaining=Math.max(0,next.age-elapsed);
+  const seed=plant.stage==='seed', holds=seed?(plant.wateredAt===null?['Water']:[]):growthHolds(plant,now);
+  const completed={seed:0,sprout:1,young:2,split:3}[plant.stage];
+  const filled=completed + Math.min(.98,clamp((elapsed-next.start)/(next.age-next.start)));
+  const detail=(remaining?timeLeft(remaining)+' growing time':'Ready')+(holds.length?' · Needs '+holds.join('/'):'');
+  return {filled,label:holds.length?'Needs care':['Seed','Sprout','Young','First split'][completed],detail,next:next.label};
 }
 
 export function waterReadout(plant, now) {
@@ -67,21 +60,6 @@ export function waterReadout(plant, now) {
 export function foodReadout(plant, now) {
   if (plant.deadAt !== null) return {label:'', detail:'Visit the Leaf Book'};
   if (plant.stage === 'seed') return {label:'Food at sprout', detail:'Unlocks after sprouting'};
-  if (!careStatus(plant, 'food', now).locked) {
-    return {
-      label:'Food ready',
-      detail:plant.stage === 'grown' ? 'Ready · Optional at full growth' : 'Ready · Once per care set',
-      tone:'due',
-    };
-  }
-  if (plant.stage === 'grown' && plant.lastFullCare != null && now < plant.lastFullCare + MATURE_CARE_DELAY) {
-    const wait = timeLeft(plant.lastFullCare + MATURE_CARE_DELAY - now);
-    return {label:'Food in ' + wait, detail:'Fed · Next food in ' + wait};
-  }
-  const next = nextMilestone(plant);
-  if (next && plant.given.length === ACTIONS.length) {
-    const remaining = plant.plantedAt + next.age - now;
-    if (remaining > 0) return {label:'Fed', detail:'Fed · Next set in ' + timeLeft(remaining)};
-  }
-  return {label:'Fed', detail:'Fed · Next care set'};
+  const remaining=plant.fedAt+FOOD_INTERVAL-now;
+  return {label:remaining<=0?'Feed now':'Food '+timeLeft(remaining),detail:careStatus(plant,'food',now).hint,tone:remaining<=0?'due':undefined};
 }

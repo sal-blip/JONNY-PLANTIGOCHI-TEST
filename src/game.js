@@ -9,13 +9,13 @@ const CRITICAL_WATER_AGE = 12 * HOUR;
 const ROT_RESCUE_WINDOW = 12 * HOUR;
 export const KEY = 'jonny.plantigochi.v1';
 export const ACTIONS = ['water', 'sun', 'talk', 'food'];
-export const STAGES = ['seed', 'sprout', 'young', 'grown'];
-export const STAGE_NAMES = { seed: 'Seed', sprout: 'Sprout', young: 'Young plant', grown: 'Grown plant' };
+export const STAGES = ['seed', 'sprout', 'young', 'split', 'grown'];
+export const STAGE_NAMES = { seed: 'Seed', sprout: 'Sprout', young: 'Young plant', split: 'First split', grown: 'Grown plant' };
 
 const milestones = {
   sprout: { start: 0, age: HOUR, label: 'Sprout' },
   young: { start: HOUR, age: 3 * DAY, label: 'Young plant' },
-  finalCare: { start: 3 * DAY, age: 5 * DAY, label: 'Final care set' },
+  finalCare: { start: 3 * DAY, age: 5 * DAY, label: 'First split' },
   grown: { start: 5 * DAY, age: WEEK, label: 'Full growth' },
 };
 
@@ -23,7 +23,8 @@ export function nextMilestone(plant) {
   if (plant.deadAt !== null) return null;
   if (plant.stage === 'seed') return milestones.sprout;
   if (plant.stage === 'sprout') return milestones.young;
-  if (plant.stage === 'young') return plant.round === 0 ? milestones.finalCare : milestones.grown;
+  if (plant.stage === 'young') return milestones.finalCare;
+  if (plant.stage === 'split') return milestones.grown;
   return null;
 }
 
@@ -32,7 +33,7 @@ export const ROOT_TIME = 12 * HOUR;
 export const healthLabels = { healthy: 'Damp soil', dry: 'Thirsty', critical: 'Very thirsty', soggy: 'Still wet', rootRot: 'Drain pot', dead: 'Pressed leaf' };
 
 export function newPlant(now = Date.now()) {
-  return { version: 2, id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
+  return { version: 3, earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
     ...blankHealth, jar: null, book: [], dewCleared: 0 };
 }
@@ -57,29 +58,65 @@ export function criticalReminder(p) {
   return p.rotAt === null ? p.lastDrink + CRITICAL_WATER_AGE : p.rotAt + ROT_RESCUE_WINDOW / 2;
 }
 
-function grow(plant, now) {
-  const next = nextMilestone(plant);
-  if (!next || now < plant.plantedAt + next.age) return plant;
-  if (plant.stage === 'seed' && plant.wateredAt !== null) {
-    return { ...plant, stage: 'sprout', lastDrink: now, given: [], round: 0, message: 'Ohayō! Look who finally leafed out.' };
-  }
-  if (plant.given.length !== ACTIONS.length) return plant;
-  if (plant.stage === 'sprout') return { ...plant, stage: 'young', round: 0, given: [], message: 'New leaf, new me. Notice my cheekbones?' };
-  if (plant.stage === 'young' && plant.round === 0) return { ...plant, round: 1, given: [], message: 'One last set of care for my fancy split leaves!' };
-  if (plant.stage === 'young') return { ...plant, stage: 'grown', round: 0, given: [], message: 'Ta-da! These leaf windows are designer.' };
-  return plant;
+export const FOOD_INTERVAL = 2 * DAY;
+export const LIGHT_INTERVAL = DAY;
+export const EARLY_WINDOW = 8 * HOUR;
+export function moodOf(p, now = Date.now()) {
+  if (p.stage === 'seed') return 'sleeping';
+  const elapsed = now - p.companyAt;
+  if (elapsed < HOUR / 2 && p.accompanied) return 'happy';
+  if (elapsed < 12 * HOUR) return 'content';
+  return elapsed < DAY ? 'quiet' : 'lonely';
 }
-
+export function growthHolds(p, now) {
+  const holds = [];
+  if (p.rotAt !== null) holds.push('Drain');
+  else if (now >= p.lastDrink + CRITICAL_WATER_AGE) holds.push('Water');
+  if (now >= p.fedAt + FOOD_INTERVAL) holds.push('Food');
+  if (now >= p.litAt + LIGHT_INTERVAL) holds.push('Light');
+  return holds;
+}
+function eligibleUntil(p) {
+  return Math.min(p.lastDrink + CRITICAL_WATER_AGE, p.fedAt + FOOD_INTERVAL, p.litAt + LIGHT_INTERVAL);
+}
+export function earnedAt(p, now) {
+  if (p.stage === 'seed') return Math.min(HOUR, Math.max(0, now - p.plantedAt));
+  if (p.stage === 'grown') return WEEK;
+  const end = Math.min(now, eligibleUntil(p), p.deadAt ?? Infinity, p.rotAt ?? Infinity);
+  return Math.min(WEEK, p.earned + Math.max(0, end - p.anchor));
+}
+export function milestoneDue(p) {
+  const next = nextMilestone(p);
+  if (!next) return null;
+  if (p.stage === 'seed') return p.wateredAt === null ? null : Math.max(p.wateredAt,p.plantedAt + HOUR);
+  const due = p.anchor + Math.max(0, next.age - p.earned);
+  return p.rotAt === null && due <= eligibleUntil(p) ? due : null;
+}
+function sprout(p, now) {
+  return {...p, stage:'sprout', earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
+    companyAt:now, accompanied:false, given:[], message:'Ohayō! Look who finally leafed out.'};
+}
+function settle(p, now) {
+  return {...p, earned:earnedAt(p,now), anchor:Math.max(now,p.anchor)};
+}
 export function wake(p, now = Date.now(), visible = true) {
-  if (p.deadAt !== null || (p.stage === 'seed' && !visible)) return p;
+  if (p.deadAt !== null) return p;
+  if (p.stage === 'seed') return visible && p.wateredAt !== null && now >= p.plantedAt + HOUR ? sprout(p,now) : p;
   const deadline = deathDeadline(p);
-  if (deadline === null || now < deadline) return grow(p, now);
-  const last = grow(p, deadline - 1);
+  const elapsed = earnedAt(p,Math.min(now,deadline));
+  const target = elapsed >= WEEK ? 'grown' : elapsed >= 5*DAY ? 'split' : elapsed >= 3*DAY ? 'young' : 'sprout';
+  if (STAGES.indexOf(target) > STAGES.indexOf(p.stage)) {
+    p = {...p,stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'};
+  }
+  if (now < deadline) return p;
   const cause = p.rotAt === null ? 'Thirst' : 'Root rot';
-  const leaf = { id: p.id, stage: last.stage, generation: p.generation, plantedAt: p.plantedAt, diedAt: deadline, cause };
-  return { ...last, deadAt: deadline, book: [...p.book, leaf], message: 'A leaf for your book.' };
+  const leaf = {id:p.id,stage:p.stage,generation:p.generation,plantedAt:p.plantedAt,diedAt:deadline,cause};
+  return {...settle(p,deadline),deadAt:deadline,book:[...p.book,leaf],message:'A leaf for your book.'};
 }
-
+export function company(p, now = Date.now()) {
+  p = wake(p,now);
+  return p.deadAt !== null || p.stage === 'seed' ? p : {...p,companyAt:now,accompanied:true};
+}
 const stamp = n => Number.isSafeInteger(n) && n >= 0;
 const optionalStamp = n => n === null || stamp(n);
 const generation = n => Number.isSafeInteger(n) && n >= 1;
@@ -101,12 +138,28 @@ function validGarden(p) {
 export function readPlant(text, now = Date.now(), visible = true) {
   try {
     const p = JSON.parse(text);
-    if (!p || ![1,2].includes(p.version) || (p.photo !== undefined && !validPhoto(p.photo)) || !STAGES.includes(p.stage)
+    if (!p || ![1,2,3].includes(p.version) || (p.photo !== undefined && !validPhoto(p.photo)) || !STAGES.includes(p.stage)
       || !stamp(p.plantedAt) || !optionalStamp(p.wateredAt) || ![0,1].includes(p.round)
       || !Array.isArray(p.given) || !p.given.every(a => ACTIONS.includes(a)) || new Set(p.given).size !== p.given.length
       || typeof p.message !== 'string' || typeof p.sound !== 'boolean') return null;
-    if (p.version === 1) return wake({ ...p, version: 2, id: 'legacy-' + p.plantedAt, generation: 1,
-      ...blankHealth, lastDrink: p.stage === 'seed' ? null : now, jar: null, book: [], dewCleared: 0 }, now, visible);
+    if (p.version === 1) Object.assign(p,{version:2,id:'legacy-'+p.plantedAt,generation:1,...blankHealth,
+      lastDrink:p.stage==='seed'?null:now,jar:null,book:[],dewCleared:0});
+    if (p.version === 2) {
+      if (!validGarden(p)) return null;
+      if (p.stage==='young' && p.round===1) p.stage='split';
+      const floor = {seed:0,sprout:HOUR,young:3*DAY,split:5*DAY,grown:WEEK}[p.stage];
+      const limit = nextMilestone(p)?.age ?? WEEK;
+      const legacyAge = Math.max(0,(p.deadAt ?? now)-p.plantedAt);
+      Object.assign(p,{version:3,graduates:[],earned:Math.max(floor,Math.min(legacyAge,Math.max(floor,limit-1))),
+        anchor:now,fedAt:p.lastDrink===null?null:now,litAt:p.lastDrink===null?null:now,
+        companyAt:p.lastDrink===null?null:now,accompanied:false});
+    }
+    if (!stamp(p.earned) || p.earned>WEEK || !stamp(p.anchor) || typeof p.accompanied!=='boolean'
+      || ![p.companyAt,p.fedAt,p.litAt].every(n=>p.stage==='seed'?n===null:stamp(n))
+      || !Array.isArray(p.graduates) || !p.graduates.every(g=>g && validId(g.id) && g.id!==p.id &&
+      g.species==='monstera' && generation(g.generation) && stamp(g.slot) && stamp(g.movedAt) && stamp(g.plantedAt) && g.movedAt>=g.plantedAt)
+      || new Set(p.graduates.map(g=>g.slot)).size!==p.graduates.length
+      || new Set(p.graduates.map(g=>g.id)).size!==p.graduates.length) return null;
     if (!optionalStamp(p.lastFullCare)) p.lastFullCare = null;
     if (!Number.isInteger(p.dewCleared) || p.dewCleared < 0 || p.dewCleared > 20) p.dewCleared = 0;
     if (p.dewRunCleared !== undefined && (!Number.isInteger(p.dewRunCleared) || p.dewRunCleared < 0 || p.dewRunCleared > p.dewCleared)) {
@@ -117,7 +170,7 @@ export function readPlant(text, now = Date.now(), visible = true) {
 }
 
 export function restore(text, now = Date.now(), visible = true) {
-  return readPlant(text, now, visible) ?? newPlant(now);
+  return text === null ? newPlant(now) : readPlant(text, now, visible);
 }
 
 export function takeCutting(saved, stem, now = Date.now()) {
@@ -132,8 +185,18 @@ export function replant(saved, source, now = Date.now()) {
   const cutting = source === 'cutting';
   if (cutting && (!p.jar || now < p.jar.cutAt + ROOT_TIME)) return p;
   const fresh = { ...p, ...newPlant(now), sound: p.sound, book: p.book, jar: p.jar, dewCleared: p.dewCleared };
-  return cutting ? { ...fresh, stage: 'sprout', generation: p.jar.generation, wateredAt: now, lastDrink: now,
+  fresh.graduates=p.graduates; fresh.generation=p.generation+1;
+  return cutting ? { ...sprout(fresh,now), generation: p.jar.generation, wateredAt: now,
     jar: null, message: 'New roots. Family resemblance?' } : fresh;
+}
+
+export function graduate(saved, id, slot, now = Date.now()) {
+  const p = wake(saved,now);
+  if (p.id!==id || p.stage!=='grown' || p.deadAt!==null || !Number.isSafeInteger(slot) || slot<0 ||
+      slot>=6*(1+Math.floor(p.graduates.length/6)) || p.graduates.some(g=>g.slot===slot)) return p;
+  const graduate = {id:p.id,species:'monstera',generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
+  return {...p,...newPlant(now),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
+    dewCleared:p.dewCleared,graduates:[...p.graduates,graduate]};
 }
 
 const happy = {
@@ -162,10 +225,14 @@ export function careStatus(p, action, now = Date.now()) {
     if (soil === 'soggy' && now < p.extraPour + HOUR) return { hint: 'Soil soaked', locked: true };
     return { hint: soil === 'soggy' ? 'Still wet' : 'Soil damp', confirm: true };
   }
-  const labels = { sun: ['Needs light', 'Sunned'], talk: ['Say hello', 'Chatted'], food: ['Ready to eat', 'Fed'] };
-  if (!Object.hasOwn(labels, action)) return { hint: '', locked: true };
-  const done = p.given.includes(action) || (p.stage === 'grown' && p.lastFullCare != null && now < p.lastFullCare + MATURE_CARE_DELAY);
-  return { hint: labels[action][done ? 1 : 0], locked: done };
+  if (action==='talk') return {hint:moodOf(p,now)==='happy'?'Happy · Say hello':'Say hello'};
+  const due = action==='food' ? p.fedAt + FOOD_INTERVAL : p.litAt + LIGHT_INTERVAL;
+  if (!['food','sun'].includes(action)) return {hint:'',locked:true};
+  const label = action==='food'?'Food':'Light';
+  if (now>=due) return {hint:label+' overdue'};
+  const minutes=Math.ceil((due-now)/60000);
+  const left=minutes>=60?Math.ceil(minutes/60)+'h':minutes+'m';
+  return {hint:label+' in '+left,locked:now<due-EARLY_WINDOW};
 }
 
 export function needsPourConfirmation(p, now = Date.now()) {
@@ -176,6 +243,7 @@ export function care(saved, action, now = Date.now(), confirmed = false) {
   let p = wake(saved, now);
   const status = careStatus(p, action, now);
   if (status.locked || (status.confirm && !confirmed)) return p;
+  if (p.stage !== 'seed') p=settle(p,now);
   if (action === 'drain') return { ...p, lastDrink: now, extraPour: null, rotAt: null, message: 'Ahh. My roots can breathe.' };
   if (p.stage === 'seed') return wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now);
   if (action === 'water') {
@@ -184,12 +252,11 @@ export function care(saved, action, now = Date.now(), confirmed = false) {
       return { ...p, rotAt: now, message: 'My roots! Drain my pot.' };
     }
     p = { ...p, lastDrink: now, extraPour: null, message: 'A little sip. Very sophisticated.' };
-    if (p.given.includes(action)) return p;
   }
-  const given = [...p.given, action];
-  if (given.length < ACTIONS.length) return { ...p, given, message: happy[action][(given.length + p.round) % 2] };
-  if (p.stage === 'grown') return { ...p, round: 0, given: [], lastFullCare: now, message: 'Thriving. Obviously. Thank you, gardener.' };
-  return wake({ ...p, given, message: 'All cared for. Growing leaves takes beauty sleep.' }, now);
+  if (action === 'talk') p=company(p,now);
+  if (action === 'food') p={...p,fedAt:now};
+  if (action === 'sun') p={...p,litAt:now};
+  return {...p,given:p.given.includes(action)?p.given:[...p.given,action],message:happy[action][p.generation%2]};
 }
 
 export function countdown(ms) {

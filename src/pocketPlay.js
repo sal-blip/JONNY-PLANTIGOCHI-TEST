@@ -3,7 +3,7 @@ import { useEffect, useReducer } from 'react';
 const keys = ['left','heart','right'];
 export const gameNames = { dew: 'Dew Catch', echo: 'Leaf Echo' };
 export const canPlay = (name, plant) => plant.deadAt === null &&
-  (name === 'dew' ? plant.stage !== 'seed' : name === 'echo' && ['young','grown'].includes(plant.stage));
+  (name === 'dew' ? plant.stage !== 'seed' : name === 'echo' && ['young','split','grown'].includes(plant.stage));
 export const LEVELS = 20;
 export const DEW_CHANCES = 3;
 const tickMs = 50;
@@ -107,15 +107,14 @@ export function playText(g) {
   return 'Your turn · ' + (g.index + 1) + '/3';
 }
 
-export function usePocketPlay(plant,paused,onCheckpoint) {
+export function usePocketPlay(plant,paused,onFinish) {
   const [game, dispatch] = useReducer(stepGame, null);
   const active = game && canPlay(game.name,plant) ? game : null;
   useEffect(() => { if (game && !active) dispatch({type:'exit'}); },[game,active]);
   useEffect(() => {
-    if (active?.name!=='dew') return;
-    if (active.phase==='lost') onCheckpoint(0);
-    if (active.phase==='won') onCheckpoint(active.level);
-  },[active?.name,active?.phase,active?.level,onCheckpoint]);
+    if (!active || !['won','lost','retry'].includes(active.phase)) return;
+    onFinish(active.name,active.phase,active.level);
+  },[active?.name,active?.phase,active?.level,onFinish]);
   useEffect(() => {
     if (!active || paused) return;
     const delay = {fall:tickMs, lost:1800, watch:active.lit ? 850 : 300, retry:1100}[active.phase];
