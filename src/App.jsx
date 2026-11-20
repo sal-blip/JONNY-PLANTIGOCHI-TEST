@@ -17,8 +17,12 @@ const phoneItems = ['install','saves','alerts'];
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
 const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const readSave = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
-function writeSave(value) {
-  try { localStorage.setItem(KEY, JSON.stringify(value)); return true; } catch { return false; }
+function writeSave(value, previous = null) {
+  try {
+    const serialized = JSON.stringify(value);
+    if (serialized !== previous) localStorage.setItem(KEY, serialized);
+    return true;
+  } catch { return false; }
 }
 function initialPlant() {
   const p = restore(readSave(), Date.now(), !document.hidden);
@@ -55,7 +59,7 @@ export default function App() {
   const commit = useCallback((fn, requireStorage = false) => {
     const raw = savedLastChange.current ? readSave() : null;
     const next = fn(raw ? restore(raw,Date.now(),!document.hidden) : current.current);
-    const ok = writeSave(next);
+    const ok = writeSave(next, raw);
     if (!ok && requireStorage) return false;
     savedLastChange.current = ok;
     current.current = next;

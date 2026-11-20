@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef } from 'react';
-import { chainJoints, jointRotation, projectedGravity, restingChain, stepChain } from './chainMotion.js';
+import { EYELET, LINK, RING, dragChain, flickChain, gripChain, outsideLeafPath, partPose, projectedGravity, releaseChain, restingChain, stepChain } from './chainMotion.js';
 import './DeviceShell.css';
 
 const artwork = '/art/device.svg';
@@ -8,110 +8,133 @@ function Part({ name, ...props }) {
   return <use href={`${artwork}#${name}`} {...props} />;
 }
 
-// The eyelet, the curve supported by the front moulding, and the last point of
-// contact with the shoulder are all fixed in the shell's own coordinate space.
-const shoulder = [
-  [208, 146], [197, 154], [183, 162], [168, 170], [152, 177],
-  [136, 182], [121, 185],
-];
+const indices=Array.from({length:RING},(_,i)=>i+1);
+const initial=restingChain();
 
-function Link({ length, narrow }) {
-  return <Part name="chainLink" transform={`translate(0 ${length / 2}) scale(${narrow ? .48 : .81} ${(length + 6.5) / 30})`} />;
+function HardwareParts({layer, hits=false}) {
+  return <g className={hits?'chain-hit-shapes':'device-hardware'}>{indices.map(i=>{
+    const pose=partPose(initial,i);
+    const visible=(layer==='back')===pose.back;
+    return <g key={i} data-chain-part={i} data-side={layer}
+      visibility={visible?'visible':'hidden'} transform={pose.transform}>
+      {i===RING ?
+        <g transform="scale(.76 .75) rotate(-31)">
+          {hits ? <ellipse className="chain-grab" data-grab={i} rx="44" ry="37" strokeWidth="13"/> :
+            <g transform="rotate(31) translate(-146 -67)"><Part name="silver-ring"/></g>}
+        </g> :
+        hits ? <path className="chain-grab" data-grab={i} d={`M0 ${-LINK/2}v${LINK}`} strokeWidth="12" /> :
+          <Part name="chainLink" transform={`scale(${i%2 ? .8 : .49} ${(LINK+6.5)/30})`}/>}
+    </g>;
+  })}</g>;
 }
 
-function Tail({ index = 0 }) {
-  const joint = chainJoints[index];
-  const rotation = jointRotation(joint.rest, index ? chainJoints[index - 1].rest : 0);
-  return (
-    <g data-chain-joint="" transform={`rotate(${rotation})`}>
-      {joint.length ? <>
-        <g transform={`translate(0 ${joint.length})`}><Tail index={index + 1} /></g>
-        <Link length={joint.length} narrow={index % 2 === 0} />
-      </> : <g transform="scale(.76 .75) translate(-151 -29)"><Part name="silver-ring" /></g>}
-    </g>
-  );
-}
-
-function Hardware() {
-  const hardware = useRef(null);
-  useEffect(() => {
-    const svg = hardware.current;
-    const garden = svg?.closest('.garden');
-    if (!garden) return;
-    const joints = svg.querySelectorAll('[data-chain-joint]');
-    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    let chain = restingChain();
-    let gravity = { x: 0, y: 0 };
-    let frame = 0;
-    let lastTime = null;
-
+function useHardware(frontRef) {
+  useEffect(()=>{
+    const svg=frontRef.current, device=svg?.closest('.device'), garden=svg?.closest('.garden');
+    if(!device||!garden)return;
+    const parts=[...device.querySelectorAll('[data-chain-part]')];
+    const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    let chain=restingChain(), gravity=projectedGravity(0,0), frame=0, last=null, pointer=null;
     function paint() {
-      for (let i = 0; i < joints.length; i++) {
-        const rotation = jointRotation(chain[i].angle, i ? chain[i - 1].angle : 0);
-        joints[i].setAttribute('transform', `rotate(${rotation.toFixed(3)})`);
+      const poses=indices.map(i=>partPose(chain,i));
+      for(const el of parts) {
+        const pose=poses[Number(el.dataset.chainPart)-1];
+        el.setAttribute('transform',pose.transform);
+        el.setAttribute('visibility',(el.dataset.side==='back')===pose.back?'visible':'hidden');
       }
     }
-    function reset() {
-      cancelAnimationFrame(frame);
-      frame = 0;
-      lastTime = null;
-      gravity = { x: 0, y: 0 };
-      chain = restingChain();
-      paint();
-    }
+    function stop() {cancelAnimationFrame(frame);frame=0;last=null;}
     function advance(time) {
-      frame = 0;
-      const elapsed = lastTime === null ? 1 / 60 : (time - lastTime) / 1000;
-      lastTime = time;
-      const moving = stepChain(chain, gravity, elapsed);
-      paint();
-      if (moving) frame = requestAnimationFrame(advance);
-      else lastTime = null;
+      frame=0;
+      const moving=stepChain(chain,gravity,last===null?1/60:(time-last)/1000);
+      last=time;paint();
+      if(moving&&!document.hidden&&!reduced?.matches)frame=requestAnimationFrame(advance);
+      else last=null;
     }
-    function orient({ detail }) {
-      if (!detail?.active || document.hidden || reduced?.matches) {
-        reset();
-        return;
-      }
-      const next = projectedGravity(detail.x, detail.y);
-      if (Math.hypot(next.x - gravity.x, next.y - gravity.y) < .012) return;
-      gravity = next;
-      if (!frame) frame = requestAnimationFrame(advance);
+    function wake() {
+      if(!frame&&!document.hidden&&!reduced?.matches)frame=requestAnimationFrame(advance);
     }
-    function visibilityChanged() { if (document.hidden) reset(); }
-    function preferenceChanged() { if (reduced?.matches) reset(); }
-
-    garden.addEventListener('plantigochi-gravity', orient);
-    document.addEventListener('visibilitychange', visibilityChanged);
-    reduced?.addEventListener('change', preferenceChanged);
-    return () => {
-      cancelAnimationFrame(frame);
-      garden.removeEventListener('plantigochi-gravity', orient);
-      document.removeEventListener('visibilitychange', visibilityChanged);
-      reduced?.removeEventListener('change', preferenceChanged);
+    function restore() {stop();chain=restingChain();paint();}
+    function orient({detail}) {
+      if(!detail?.active||document.hidden||reduced?.matches){gravity=projectedGravity(0,0);stop();return;}
+      const next=projectedGravity(detail.x,detail.y,detail.z);
+      if(Math.hypot(next.x-gravity.x,next.y-gravity.y,next.z-gravity.z)<.016)return;
+      gravity=next;chain.quiet=0;wake();
+    }
+    function impulse({detail}) {
+      if(document.hidden||reduced?.matches||!detail)return;
+      flickChain(chain,detail.x,detail.y,detail.z);wake();
+    }
+    function localPoint(event) {
+      const matrix=svg.getScreenCTM();
+      if(!matrix)return null;
+      const point=svg.createSVGPoint();
+      point.x=event.clientX;point.y=event.clientY;
+      return point.matrixTransform(matrix.inverse());
+    }
+    function down(event) {
+      if(pointer||event.button!==0||!event.isPrimary)return;
+      const target=event.target.closest?.('[data-grab], [data-retrieve]');
+      if(!target)return;
+      const point=localPoint(event);
+      if(!point)return;
+      event.preventDefault();event.stopPropagation();
+      const eyelet=target.hasAttribute('data-retrieve');
+      if(eyelet) restore();
+      const index=eyelet?RING:Number(target.dataset.grab);
+      const node=chain.points[index];
+      gripChain(chain,index);
+      pointer={id:event.pointerId,dx:node.x-point.x,dy:node.y-point.y};
+      svg.setPointerCapture(event.pointerId);
+      svg.classList.add('chain-held');
+    }
+    function move(event) {
+      if(!pointer||pointer.id!==event.pointerId)return;
+      const point=localPoint(event);if(!point)return;
+      event.preventDefault();event.stopPropagation();
+      dragChain(chain,point.x+pointer.dx,point.y+pointer.dy,event.timeStamp);
+      paint();wake();
+    }
+    function end(event) {
+      if(!pointer||pointer.id!==event.pointerId)return;
+      const id=pointer.id;pointer=null;
+      releaseChain(chain,event.timeStamp,!!reduced?.matches||event.type!=='pointerup');
+      svg.classList.remove('chain-held');
+      if(svg.hasPointerCapture(id))svg.releasePointerCapture(id);
+      if(reduced?.matches)stop();else wake();
+    }
+    function cancelInteraction() {
+      if(pointer){const id=pointer.id;pointer=null;releaseChain(chain,0,true);
+        if(svg.hasPointerCapture(id))svg.releasePointerCapture(id);}
+      svg.classList.remove('chain-held');stop();
+    }
+    function key(event) {
+      if(!event.target.closest?.('[data-retrieve]')||!['Enter',' '].includes(event.key))return;
+      event.preventDefault();event.stopPropagation();restore();
+    }
+    function visible() {if(document.hidden)cancelInteraction();}
+    function preference() {if(reduced?.matches)cancelInteraction();}
+    device.addEventListener('pointerdown',down);svg.addEventListener('pointermove',move);
+    svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
+    svg.addEventListener('lostpointercapture',end);svg.addEventListener('keydown',key);
+    garden.addEventListener('plantigochi-gravity',orient);garden.addEventListener('plantigochi-chain-flick',impulse);
+    document.addEventListener('visibilitychange',visible);reduced?.addEventListener('change',preference);
+    return ()=>{
+      device.removeEventListener('pointerdown',down);svg.removeEventListener('pointermove',move);
+      svg.removeEventListener('pointerup',end);svg.removeEventListener('pointercancel',end);
+      svg.removeEventListener('lostpointercapture',end);svg.removeEventListener('keydown',key);
+      garden.removeEventListener('plantigochi-gravity',orient);garden.removeEventListener('plantigochi-chain-flick',impulse);
+      document.removeEventListener('visibilitychange',visible);reduced?.removeEventListener('change',preference);cancelInteraction();
     };
-  }, []);
-
-  const [x, y] = shoulder[shoulder.length - 1];
-  return (
-    <g className="device-hardware" ref={hardware}>
-      <g transform={`translate(${x} ${y})`}><Tail /></g>
-      {shoulder.slice(1).map(([endX, endY], i) => {
-        const [startX, startY] = shoulder[i];
-        const dx = endX - startX, dy = endY - startY;
-        const degrees = Math.atan2(-dx, dy) * 180 / Math.PI;
-        return <g key={i} transform={`translate(${startX} ${startY}) rotate(${degrees})`}>
-          <Link length={Math.hypot(dx, dy)} narrow={i % 2 === 1} />
-        </g>;
-      })}
-    </g>
-  );
+  },[frontRef]);
 }
 
 export default function DeviceShell() {
   const id = useId();
+  const frontRef=useRef(null);
+  useHardware(frontRef);
   const ref = name => `url(#${id}-${name})`;
-  return (
+  return (<>
     <svg className="shell device-shell" viewBox="0 0 600 565"
       aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -133,6 +156,7 @@ export default function DeviceShell() {
           <stop offset=".65" stopColor="#cfdfac" stopOpacity="0" />
         </linearGradient>
       </defs>
+      <HardwareParts layer="back"/>
       <Part name="case-surface" />
       <g clipPath={ref('leaf')}>
         <g className="device-shell-light">
@@ -148,8 +172,16 @@ export default function DeviceShell() {
           fill="none" stroke={ref('relief')} strokeWidth="2.7" strokeLinecap="round" opacity=".72" />
       </g>
       <Part name="case-detail" />
-      <Hardware />
-      <Part name="eyelet-pin" />
     </svg>
-  );
+    <svg className="device-chain-front" ref={frontRef} viewBox="0 0 600 565"
+      xmlns="http://www.w3.org/2000/svg" aria-label="Plantigochi keychain">
+      <defs><clipPath id={`${id}-outside`}><path d={outsideLeafPath} clipRule="evenodd" /></clipPath></defs>
+      <HardwareParts layer="front"/>
+      <Part name="eyelet-pin" />
+      <g clipPath={ref('outside')} aria-hidden="true"><HardwareParts layer="back" hits/></g>
+      <g aria-hidden="true"><HardwareParts layer="front" hits/></g>
+      <circle className="chain-eyelet" data-retrieve="" cx={EYELET.x} cy={EYELET.y} r="9"
+        tabIndex="0" role="button" aria-label="Bring the keyring back to the front"/>
+    </svg>
+  </>);
 }

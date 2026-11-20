@@ -1,0 +1,24 @@
+.device .lcd {cursor:default;pointer-events:none}
+.lcd.lcd-menu {
+  display:grid;
+  grid-template: auto minmax(0,1fr) auto / minmax(0,1fr);
+  padding:2.6% 2.25% 1.75%;
+  box-sizing:border-box;
+}
+.lcd-menu .lcd-top {margin:0;gap:2%;font-size:1.85cqw}
+.lcd-page {font-variant-numeric:tabular-nums}
+.lcd-pet {position:relative;min-height:0;display:grid;place-items:center}
+.lcd-pet>.plant-pixel,.lcd-pet>.activity-pixel {position:absolute;inset:0;width:100%;height:100%}
+.lcd-keepsake {position:absolute;right:0;bottom:5%;width:22%;height:55%}
+.lcd-nav {border-top:1px solid #52644285;padding-top:.5cqw;line-height:1.04}
+.lcd-options {display:grid;align-content:start}
+.lcd-row {display:flex;align-items:center;gap:.5cqw;padding:.12cqw .6cqw;font-size:2.28cqw;min-height:2.6cqw}
+.lcd-row.selected {color:#d3deba;background:#3d5039}
+.lcd-cursor {width:1.7cqw;flex:none}
+.lcd-hint {margin:.5cqw .25cqw 0;font-size:1.94cqw;line-height:1.14}
+.lcd-reading .lcd-row {font-size:2.02cqw}
+.dew-chances {display:inline-flex;gap:.4cqw;align-items:center;flex:none}
+.dew-chances svg {display:block;width:1.63cqw;height:2cqw}
+
+.lcd-row-status {margin-left:auto;font-size:1.76cqw;text-align:right}
+.lcd-hint {min-height:2.22cqw}

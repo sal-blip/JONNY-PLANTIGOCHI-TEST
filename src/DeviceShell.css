@@ -17,3 +17,35 @@
     transition: transform 280ms ease-out;
   }
 }
+
+.device-chain-front {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  overflow: visible;
+  pointer-events: none;
+}
+.chain-grab {
+  fill: none;
+  stroke: transparent;
+  stroke-linecap: round;
+  pointer-events: visibleStroke;
+  touch-action: none;
+  cursor: grab;
+}
+.chain-eyelet {
+  fill: transparent;
+  stroke: none;
+  pointer-events: visibleFill;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+.chain-eyelet:focus-visible {
+  stroke: #f4f9d5;
+  stroke-width: 2.5px;
+}
+.chain-held .chain-grab,
+.chain-held .chain-eyelet { cursor: grabbing; }

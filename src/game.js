@@ -28,7 +28,7 @@ export const ROOT_TIME = 12 * HOUR;
 export const healthLabels = { healthy: 'Damp soil', dry: 'Thirsty', critical: 'Very thirsty', soggy: 'Still wet', rootRot: 'Drain pot', dead: 'Pressed leaf' };
 
 export function newPlant(now = Date.now()) {
-  return { version: 2, id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null,
+  return { version: 2, id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
     ...blankHealth, jar: null, book: [], dewCleared: 0 };
 }
@@ -103,6 +103,7 @@ export function readPlant(text, now = Date.now(), visible = true) {
       || typeof p.message !== 'string' || typeof p.sound !== 'boolean') return null;
     if (p.version === 1) return wake({ ...p, version: 2, id: 'legacy-' + p.plantedAt, generation: 1,
       ...blankHealth, lastDrink: p.stage === 'seed' ? null : now, jar: null, book: [], dewCleared: 0 }, now, visible);
+    if (!optionalStamp(p.lastFullCare)) p.lastFullCare = null;
     if (!Number.isInteger(p.dewCleared) || p.dewCleared < 0 || p.dewCleared > 20) p.dewCleared = 0;
     return validGarden(p) ? wake(p, now, visible) : null;
   } catch { return null; }
@@ -135,40 +136,52 @@ const happy = {
   food: ['Itadakimasu! Seconds, please.', 'A snack for a growing icon.'],
 };
 
+export function careStatus(p, action, now = Date.now()) {
+  const soil = condition(p, now);
+  if (soil === 'dead') return { hint: 'Pressed leaf', locked: true };
+  if (p.stage === 'seed') {
+    if (action !== 'water') return { hint: 'At sprout', locked: true };
+    return p.wateredAt === null ? { hint: 'Ready for water' } : { hint: 'Seed watered', locked: true };
+  }
+  if (action === 'drain') {
+    if (soil === 'rootRot') return { hint: 'Root rot · drain now' };
+    if (soil === 'soggy') return { hint: 'Soggy soil' };
+    return { hint: 'Drains well', locked: true };
+  }
+  if (action === 'water') {
+    if (soil === 'rootRot') return { hint: 'Drain first', locked: true };
+    if (soil === 'dry') return { hint: 'Dry soil' };
+    if (soil === 'critical') return { hint: 'Very thirsty' };
+    if (soil === 'soggy' && now < p.extraPour + HOUR) return { hint: 'Soil soaked', locked: true };
+    return { hint: soil === 'soggy' ? 'Still wet' : 'Soil damp', confirm: true };
+  }
+  const labels = { sun: ['Needs light', 'Sunned'], talk: ['Say hello', 'Chatted'], food: ['Ready to eat', 'Fed'] };
+  if (!Object.hasOwn(labels, action)) return { hint: '', locked: true };
+  const done = p.given.includes(action) || (p.stage === 'grown' && p.lastFullCare != null && now < p.lastFullCare + 4 * HOUR);
+  return { hint: labels[action][done ? 1 : 0], locked: done };
+}
+
 export function needsPourConfirmation(p, now = Date.now()) {
-  return p.stage !== 'seed' && ['healthy','soggy'].includes(condition(p, now));
+  return Boolean(careStatus(p, 'water', now).confirm);
 }
 
 export function care(saved, action, now = Date.now(), confirmed = false) {
   let p = wake(saved, now);
-  if (p.deadAt !== null) return p;
-  const soil = condition(p, now);
-  if (action === 'drain') {
-    if (!['soggy','rootRot'].includes(soil)) return p;
-    return { ...p, lastDrink: now, extraPour: null, rotAt: null, message: 'Ahh. My roots can breathe.' };
-  }
-  if (!ACTIONS.includes(action)) return p;
-  if (p.stage === 'seed') {
-    if (action !== 'water') return { ...p, message: 'Let me sprout first, okay?' };
-    if (p.wateredAt !== null) return { ...p, message: 'Still damp. Still napping.' };
-    return wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now);
-  }
+  const status = careStatus(p, action, now);
+  if (status.locked || (status.confirm && !confirmed)) return p;
+  if (action === 'drain') return { ...p, lastDrink: now, extraPour: null, rotAt: null, message: 'Ahh. My roots can breathe.' };
+  if (p.stage === 'seed') return wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now);
   if (action === 'water') {
-    if (soil === 'rootRot') return { ...p, message: 'Drain my pot, please!' };
-    if (needsPourConfirmation(p, now)) {
-      if (!confirmed) return { ...p, message: 'Still wet. Water anyway?' };
+    if (status.confirm) {
       if (p.extraPour === null) return { ...p, extraPour: now, message: 'Squelch. My socks are soaked.' };
-      if (now < p.extraPour + HOUR) return { ...p, message: 'Enough, please. Still dripping!' };
       return { ...p, rotAt: now, message: 'My roots! Drain my pot.' };
     }
     p = { ...p, lastDrink: now, extraPour: null, message: 'A little sip. Very sophisticated.' };
     if (p.given.includes(action)) return p;
   }
-  if (p.given.length === ACTIONS.length) return { ...p, message: 'All cared for. Growing leaves takes beauty sleep.' };
-  if (p.given.includes(action)) return { ...p, message: 'Had that already. Try another little kindness?' };
   const given = [...p.given, action];
   if (given.length < ACTIONS.length) return { ...p, given, message: happy[action][(given.length + p.round) % 2] };
-  if (p.stage === 'grown') return { ...p, round: 0, given: [], message: 'Thriving. Obviously. Thank you, gardener.' };
+  if (p.stage === 'grown') return { ...p, round: 0, given: [], lastFullCare: now, message: 'Thriving. Obviously. Thank you, gardener.' };
   return wake({ ...p, given, message: 'All cared for. Growing leaves takes beauty sleep.' }, now);
 }
 

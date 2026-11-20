@@ -93,3 +93,42 @@ test('Dew Catch checkpoints migrate, round-trip and carry into a new generation'
   assert.equal(readPlant(JSON.stringify(sprouted),2*H).dewCleared,12);
   assert.equal(replant(wake(sprouted,H+DAY),'seed',H+DAY).dewCleared,12);
 });
+
+test('completed and unavailable care are true no-ops, while dry soil can always receive water',()=>{
+  const seed=care(newPlant(0),'water',0);
+  assert.equal(care(seed,'water',1),seed);
+  assert.equal(care(seed,'food',1),seed);
+  const p=sprout(), fed=care(p,'food',H);
+  assert.equal(care(fed,'food',H),fed);
+  assert.equal(care(p,'water',H),p);
+  const soggy=care(p,'water',H,true);
+  assert.equal(care(soggy,'water',H+1,true),soggy);
+  const drained=care(soggy,'drain',H+1);
+  assert.equal(care(drained,'drain',H+2),drained);
+  const complete={...p,given:['water','sun','talk','food']};
+  assert.equal(care(complete,'water',5*H).lastDrink,5*H);
+  const grown=care({...p,stage:'grown',given:['water','sun','talk']},'food',H);
+  assert.equal(care(grown,'food',H+1),grown);
+  assert.deepEqual(readPlant(JSON.stringify(grown),H+1),grown);
+  assert.deepEqual(care(grown,'food',5*H).given,['food']);
+});
+
+test('three cumulative misses end a Dew run across levels and retry starts the failed level fresh',()=>{
+  const key=(g,key)=>stepGame(g,{type:'key',key,dropLane:0});
+  const tick=g=>stepGame(g,{type:'tick',dropLane:0});
+  let dew=key(stepGame(null,{type:'enter',name:'dew',cleared:4}),'heart');
+  const land=(g,lane)=>tick({...g,drops:[{id:25,lane,progress:.999}]});
+  dew=land(dew,0);dew=land(dew,1);dew=land(dew,2);
+  assert.equal(dew.chances,1);
+  while (dew.phase==='fall') dew=land(dew,1);
+  assert.equal(dew.phase,'won');
+  dew=key(dew,'heart');assert.equal(dew.level,6);assert.equal(dew.chances,1);
+  dew=land(dew,1);dew=land(dew,0);
+  assert.equal(dew.phase,'lost');assert.equal(dew.count,1);
+  assert.equal(dew.chances,0);assert.deepEqual(dew.drops,[]);
+  assert.equal(tick(dew),dew);assert.equal(key(dew,'left'),dew);
+  dew=stepGame(dew,{type:'retry',dropLane:2});
+  assert.equal(dew.phase,'fall');assert.equal(dew.level,6);assert.equal(dew.unlocked,6);
+  assert.equal(dew.count,0);assert.equal(dew.chances,3);
+  assert.equal(stepGame(dew,{type:'exit'}),null);
+});

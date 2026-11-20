@@ -25,7 +25,7 @@ export function screenGravity(beta, gamma, angle = 0) {
   const pitch = beta * radians, roll = gamma * radians, rotation = angle * radians;
   const right = Math.cos(pitch) * Math.sin(roll), down = Math.sin(pitch);
   return { x: right * Math.cos(rotation) + down * Math.sin(rotation),
-    y: down * Math.cos(rotation) - right * Math.sin(rotation) };
+    y: down * Math.cos(rotation) - right * Math.sin(rotation), z: -Math.cos(pitch) * Math.cos(roll) };
 }
 
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
@@ -59,10 +59,38 @@ export function useGardenTilt(paused) {
     const el = garden.current;
     if (!el || !listening) return;
     let neutral = null, previousAngle, hadHeading, frame = 0, x = 0, y = 0;
-    let gravity = null, lastSample = null;
+    let gravity = null, lastSample = null, sampleTime = 0, lastFlick = -Infinity, accelerationBaseline = null;
     function emit(detail) { el.dispatchEvent(new CustomEvent('plantigochi-gravity',{detail,bubbles:true})); }
+    function impulse(vector, time) {
+      if (time-lastFlick < 185) return;
+      lastFlick=time;
+      el.dispatchEvent(new CustomEvent('plantigochi-chain-flick',{detail:vector,bubbles:true}));
+    }
+    function motion(event) {
+      if (document.hidden) return;
+      let a=event.acceleration;
+      const valid = value => value && [value.x,value.y,value.z].every(Number.isFinite);
+      if (!valid(a)) {
+        const raw=event.accelerationIncludingGravity;
+        if(!valid(raw)) return;
+        if(!accelerationBaseline) { accelerationBaseline={x:raw.x,y:raw.y,z:raw.z};return; }
+        a={x:0,y:0,z:0};
+        for(const axis of ['x','y','z']) {
+          a[axis]=raw[axis]-accelerationBaseline[axis];
+          accelerationBaseline[axis]+=.19*a[axis];
+        }
+      }
+      if(Math.hypot(a.x,a.y,a.z)<5.5) return;
+      const angle=(window.screen.orientation?.angle ?? window.orientation ?? 0)*radians;
+      // Real device acceleration points opposite to inertial travel. Device
+      // Y points toward the top, while the SVG's Y points toward the bottom.
+      const right=-a.x, down=a.y, strength=26;
+      impulse({x:(right*Math.cos(angle)+down*Math.sin(angle))*strength,
+        y:(down*Math.cos(angle)-right*Math.sin(angle))*strength,z:-a.z*strength},performance.now());
+    }
     function reset() {
       neutral = null; lastSample = null; gravity = null; x = 0; y = 0;
+      sampleTime=0; lastFlick=-Infinity; accelerationBaseline=null;
       cancelAnimationFrame(frame); frame = 0;
       el.style.removeProperty('--tilt-x'); el.style.removeProperty('--tilt-y');
       emit({x:0,y:0,active:false});
@@ -79,7 +107,8 @@ export function useGardenTilt(paused) {
       const hasHeading = Number.isFinite(event.alpha);
       const pose = orientationFrame(event);
       lastSample = {alpha:event.alpha,beta:event.beta,gamma:event.gamma};
-      gravity = screenGravity(event.beta,event.gamma,angle);
+      const previous=gravity, now=performance.now(), seconds=(now-sampleTime)/1000;
+      gravity = screenGravity(event.beta,event.gamma,angle);sampleTime=now;
       if (!neutral || previousAngle !== angle || hadHeading !== hasHeading) {
         x = 0; y = 0;
         if (!frame) frame = requestAnimationFrame(paint);
@@ -87,6 +116,12 @@ export function useGardenTilt(paused) {
         // Some browsers resume an earlier sensor grant without another prompt.
         if (needsPermission) setPermission('granted');
         return;
+      }
+      if(previous && seconds>.004 && seconds<.17) {
+        const dx=gravity.x-previous.x, dy=gravity.y-previous.y, dz=gravity.z-previous.z;
+        const change=Math.hypot(dx,dy,dz);
+        if(change>.12 && change/seconds>3.3)
+          impulse({x:dx*35/seconds,y:dy*35/seconds,z:dz*35/seconds},now);
       }
       const dx = dot(neutral.right, pose.normal), dy = -dot(neutral.up, pose.normal);
       const cos = Math.cos(angle * radians), sin = Math.sin(angle * radians);
@@ -96,8 +131,12 @@ export function useGardenTilt(paused) {
     }
     function visibility() {
       window.removeEventListener('deviceorientation', read);
+      window.removeEventListener('devicemotion', motion);
       reset();
-      if (!document.hidden) window.addEventListener('deviceorientation', read, {passive:true});
+      if (!document.hidden) {
+        window.addEventListener('deviceorientation', read, {passive:true});
+        window.addEventListener('devicemotion', motion, {passive:true});
+      }
     }
     function rotate() { if (lastSample) read(lastSample); }
     window.screen.orientation?.addEventListener?.('change',rotate);
@@ -109,6 +148,7 @@ export function useGardenTilt(paused) {
       window.removeEventListener('orientationchange',rotate);
       document.removeEventListener('visibilitychange', visibility);
       window.removeEventListener('deviceorientation', read);
+      window.removeEventListener('devicemotion', motion);
       reset();
     };
   }, [listening, needsPermission]);
@@ -119,7 +159,10 @@ export function useGardenTilt(paused) {
     if (next && needsPermission && permission !== 'granted') {
       setRequesting(true);
       try {
-        const grant = await window.DeviceOrientationEvent.requestPermission();
+        const grants=[window.DeviceOrientationEvent.requestPermission()];
+        if(typeof window.DeviceMotionEvent?.requestPermission==='function')
+          grants.push(Promise.resolve(window.DeviceMotionEvent.requestPermission()).catch(()=>null));
+        const [grant] = await Promise.all(grants);
         setPermission(grant === 'granted' ? 'granted' : 'denied');
         if (grant !== 'granted') return;
       } catch {

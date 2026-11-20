@@ -51,6 +51,16 @@
     <linearGradient id="gasket" x1=".1" y1="0" x2=".8" y2="1">
       <stop stop-color="#52684d"/><stop offset=".32" stop-color="#657959"/><stop offset=".74" stop-color="#94a178"/><stop offset="1" stop-color="#b9c398"/>
     </linearGradient>
+    <linearGradient id="key-well" x1=".22" y1="0" x2=".72" y2="1">
+      <stop stop-color="#63815b"/><stop offset=".45" stop-color="#8ba778"/>
+      <stop offset=".8" stop-color="#b7ca95"/><stop offset="1" stop-color="#d7e4b3"/>
+    </linearGradient>
+    <g id="physical-key-inset">
+      <circle cy=".8" r="20.5" fill="#b4c997" opacity=".88"/>
+      <circle r="19.8" fill="url(#key-well)" stroke="#8da77b" stroke-width=".8"/>
+      <circle cy=".2" r="17.7" fill="#79936a"/>
+      <path d="M-15.4 12.3 A19.7 19.7 0 0 0 13.6 14.3" fill="none" stroke="#e1eac1" stroke-width=".95" stroke-linecap="round"/>
+    </g>
     <linearGradient id="vein" x1=".1" y1="0" x2=".9" y2="1">
       <stop stop-color="#e0edbd"/><stop offset=".52" stop-color="#bbd39f"/><stop offset="1" stop-color="#98b688"/>
     </linearGradient>
@@ -123,13 +133,21 @@
   </g>
 
   <!-- Recessed LCD component; the glass itself is the game's live DOM. -->
-  <rect x="168" y="211" width="266" height="188" rx="28" fill="#bcd09c" stroke="#b9cf99" stroke-width="1"/>
-  <rect x="170" y="213" width="262" height="184" rx="26" fill="url(#rim)" stroke="#79956c" stroke-width="1.35"/>
-  <rect x="173" y="216" width="256" height="178" rx="23" fill="none" stroke="#b5c99a" stroke-opacity=".74" stroke-width="2"/>
-  <rect x="178.4" y="222" width="245.2" height="165" rx="16" fill="url(#gasket)" stroke="#8d9f79" stroke-width="1"/>
-  <rect x="182.8" y="226.5" width="236.4" height="156" rx="11" fill="#849070"/>
-  <rect x="184" y="228" width="234" height="153" rx="9" fill="#b0b798"/>
-  <path d="M197 395.6 H403" fill="none" stroke="#dce7bd" stroke-linecap="round" stroke-width="1.8"/>
+  <rect x="168" y="183" width="266" height="226" rx="28" fill="#bcd09c" stroke="#b9cf99" stroke-width="1"/>
+  <rect x="170" y="185" width="262" height="222" rx="26" fill="url(#rim)" stroke="#79956c" stroke-width="1.35"/>
+  <rect x="173" y="188" width="256" height="216" rx="23" fill="none" stroke="#b5c99a" stroke-opacity=".74" stroke-width="2"/>
+  <rect x="178.4" y="194" width="245.2" height="203" rx="16" fill="url(#gasket)" stroke="#8d9f79" stroke-width="1"/>
+  <rect x="182.8" y="198.5" width="236.4" height="194" rx="11" fill="#849070"/>
+  <rect id="screen-glass" x="184" y="200" width="234" height="191" rx="9" fill="#b0b798"/>
+  <path d="M197 405.6 H403" fill="none" stroke="#dce7bd" stroke-linecap="round" stroke-width="1.8"/>
+
+  <!-- Molded wells sit behind the four live button faces and follow the leaf contour. -->
+  <g id="physical-key-insets">
+    <use xlink:href="#physical-key-inset" transform="translate(213 432) scale(.9)"/>
+    <use xlink:href="#physical-key-inset" transform="translate(273 444)"/>
+    <use xlink:href="#physical-key-inset" transform="translate(333 444) scale(1.07)"/>
+    <use xlink:href="#physical-key-inset" transform="translate(393 432)"/>
+  </g>
 
   <!-- Lanyard attachment, split ring and links. -->
   <g transform="rotate(-27 208 146)">

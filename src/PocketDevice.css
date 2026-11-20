@@ -1,14 +1,82 @@
-.lcd-hit{position:absolute;inset:0;z-index:4;pointer-events:auto;cursor:pointer;background:transparent;border:0;padding:0}
-.lcd-hit:disabled{cursor:default}
-.lcd-hit:focus-visible{outline:2px solid #526844;outline-offset:-3px}
-.lcd-back{position:absolute;left:1%;top:1%;width:19%;height:24%;z-index:5;pointer-events:auto;border:0;background:none;color:inherit;font:400 3.4cqw/1 Silkscreen,monospace;padding:0;cursor:pointer}
-.lcd-browsing .lcd-top{margin-left:16%}
-.toy-card{position:absolute;inset:21% 5% 21%;display:flex;align-items:center;gap:4%;text-align:left}
-.toy-card>div{flex:1;min-width:0}
-.toy-card strong,.toy-card small{display:block;font-weight:400;line-height:1.16}
-.toy-card strong{font-size:2.55cqw}
-.toy-card small{font-size:1.97cqw;margin-top:.55cqw}
-.toy-glyph{display:grid;place-items:center;width:25%;height:85%;flex:none}
-.toy-glyph svg{max-width:100%;max-height:100%}
-.toy-reading{inset:21% 6% 19%}
-.toy-reading small{font-size:2.06cqw}
+/* All anchors refer to the unscaled 600 × 565 leaf moulding in device.svg. */
+.device .inspect-shell {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: auto;
+  transform: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.device .lcd {
+  left: 30.666667%; /* 184/600 */
+  top: 35.398230%; /* 200/565 */
+  width: 39%;
+  height: 33.805310%; /* 191/565 */
+  border-radius: 3.846154% / 4.712042%;
+  z-index: 2;
+}
+
+.device .lcd::after {
+  background-size: calc(100% / 72) calc(100% / 59);
+}
+
+.device .shell-name {
+  top: 73.05%;
+  pointer-events: none;
+}
+
+/* Only the caps and their disjoint touch areas intercept a tap. */
+.device .toy-keys {
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.device .toy-keys button {
+  position: absolute;
+  left: var(--key-x);
+  top: var(--key-y, 78.584071%);
+  translate: -50% -50%;
+  width: var(--key-size, 5.75%);
+  height: auto;
+  aspect-ratio: 1;
+  pointer-events: auto;
+}
+
+.device .toy-keys button::before {
+  content: "";
+  position: absolute;
+  inset: auto;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: clamp(100%, 44px, 9.9cqw);
+  height: clamp(100%, 44px, 12.2cqw);
+}
+
+.device .toy-keys .toy-back {
+  --key-x: 35.5%;
+  --key-y: 76.460177%;
+  --key-size: 5.17%;
+}
+
+.device .toy-keys button:nth-child(2) {
+  --key-x: 45.5%;
+}
+
+.device .toy-keys .toy-heart {
+  --key-x: 55.5%;
+  --key-size: 6.15%;
+  color: #4c6949;
+  background: linear-gradient(135deg, #e6eecb, #b3c995 76%, #93b282);
+}
+
+.device .toy-keys button:nth-child(4) {
+  --key-x: 65.5%;
+  --key-y: 76.460177%;
+}
