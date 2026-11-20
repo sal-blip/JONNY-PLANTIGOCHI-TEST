@@ -1,5 +1,6 @@
-import {ACTIONS, STAGE_NAMES, ROOT_TIME, HOUR, careStatus, condition, countdown, healthLabels, deathDeadline, nextMilestone} from './game.js';
+import {ACTIONS, STAGE_NAMES, ROOT_TIME, HOUR, careStatus, condition, countdown, healthLabels} from './game.js';
 import {canPlay, dewCheckpoint, LEVELS} from './pocketPlay.js';
+import {foodReadout, growthReadout, waterReadout} from './plantReadout.js';
 
 const card = (label, hint, command, extra) => ({label, hint, command, ...extra});
 const names = {water:'Water', sun:'Sunlight', talk:'Kind words', food:'Plant food', drain:'Drain pot'};
@@ -9,6 +10,7 @@ const guide = [
   ['Thirst','Dry at 4h. Critical at 12h. Water by 24h.'],
   ['Root rot','Two extra wet pours 1h apart. Drain within 12h.'],
   ['Care sets','Water, sun, words and food once per set.'],
+  ['Plant food','Food helps growth. Water keeps your plant alive.'],
   ['Growing up','Young on day 3. Last set on day 5. Grown on day 7.'],
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Leaf Echo','Watch three beats. Copy them with the keys.'],
@@ -38,17 +40,18 @@ export function toyCards(section, plant, now) {
       };
       return Object.entries(toyBranches).map(([id,label])=>card(label,hints[id],id));
     }
-    case 'care':
+    case 'care': {
       if (dead) return [card('Leaf Book','Visit your pressed leaf','book')];
+      const soil=condition(plant,now);
+      const water=waterReadout(plant,now);
+      const food=foodReadout(plant,now);
       return [...ACTIONS,'drain'].map(action=>{
-        const {hint:status,locked,confirm}=careStatus(plant,action,now);
-        const soil=condition(plant,now);
-        let hint=status;
-        if (action==='water' && plant.stage==='seed' && plant.wateredAt!==null) hint='Sprouts in '+countdown(plant.plantedAt+HOUR-now);
-        else if ((action==='water' && ['dry','critical'].includes(soil)) || (action==='drain' && soil==='rootRot')) hint='Time left '+countdown(deathDeadline(plant)-now);
-        else if (confirm) hint='Water again?';
-        return card(names[action],hint,'give:'+action,{locked,status});
+        const {hint,locked}=careStatus(plant,action,now);
+        const detail=action==='food' ? food.detail
+          : action==='water' || (action==='drain' && soil==='rootRot') ? water.detail : hint;
+        return card(names[action],detail,'give:'+action,{locked});
       });
+    }
     case 'pour': return [
       card('Leave it be','Soil is still wet','back'),
       card('Water anyway','Extra water risks rot','pour-extra')];
@@ -62,9 +65,9 @@ export function toyCards(section, plant, now) {
     }
     case 'pause': return [card('Resume','Hold Back for your plant','resume'),card('Leave game','Return to your plant','leave')];
     case 'growth': {
-      const next=nextMilestone(plant);
+      const progress=growthReadout(plant,now);
       const entries=[card(STAGE_NAMES[plant.stage],ageLabel((plant.deadAt??now)-plant.plantedAt)+' old · Gen '+plant.generation,'next')];
-      if (next) entries.push(card(next.label,now>=plant.plantedAt+next.age?'Ready with care':countdown(plant.plantedAt+next.age-now),'next'));
+      if (progress.next) entries.push(card(progress.next,progress.detail,'next'));
       if (!dead && plant.stage!=='seed') entries.push(card('Care set',plant.given.length+' of 4 given','next'));
       return [...entries,...[['Sprout','1 hour'],['Young plant','3 days'],['Final care set','5 days'],['Grown plant','7 days']].map(([name,age])=>card(name,age+' from planting','next'))];
     }

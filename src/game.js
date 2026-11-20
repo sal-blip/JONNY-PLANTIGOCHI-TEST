@@ -3,6 +3,10 @@ import { validPhoto } from './gardenScenes.js';
 export const HOUR = 60 * 60 * 1000;
 export const DAY = 24 * HOUR;
 export const WEEK = 7 * DAY;
+export const WATER_INTERVAL = 4 * HOUR;
+export const MATURE_CARE_DELAY = 4 * HOUR;
+const CRITICAL_WATER_AGE = 12 * HOUR;
+const ROT_RESCUE_WINDOW = 12 * HOUR;
 export const KEY = 'jonny.plantigochi.v1';
 export const ACTIONS = ['water', 'sun', 'talk', 'food'];
 export const STAGES = ['seed', 'sprout', 'young', 'grown'];
@@ -38,19 +42,19 @@ export function condition(p, now = Date.now()) {
   if (p.rotAt !== null) return 'rootRot';
   if (p.lastDrink === null) return 'healthy';
   const elapsed = now - p.lastDrink;
-  if (elapsed >= 12 * HOUR) return 'critical';
-  if (elapsed >= 4 * HOUR) return 'dry';
+  if (elapsed >= CRITICAL_WATER_AGE) return 'critical';
+  if (elapsed >= WATER_INTERVAL) return 'dry';
   return p.extraPour !== null ? 'soggy' : 'healthy';
 }
 
 export function deathDeadline(p) {
   if (p.lastDrink === null || p.deadAt !== null) return null;
-  return p.rotAt === null ? p.lastDrink + DAY : p.rotAt + 12 * HOUR;
+  return p.rotAt === null ? p.lastDrink + DAY : p.rotAt + ROT_RESCUE_WINDOW;
 }
 
 export function criticalReminder(p) {
   if (p.deadAt !== null || p.lastDrink === null) return null;
-  return p.rotAt === null ? p.lastDrink + 12 * HOUR : p.rotAt + 6 * HOUR;
+  return p.rotAt === null ? p.lastDrink + CRITICAL_WATER_AGE : p.rotAt + ROT_RESCUE_WINDOW / 2;
 }
 
 function grow(plant, now) {
@@ -86,8 +90,8 @@ const validLeaf = leaf => leaf && validId(leaf.id) && STAGES.slice(1).includes(l
 function validGarden(p) {
   if (!validId(p.id) || !generation(p.generation) || ![p.lastDrink,p.extraPour,p.rotAt,p.deadAt].every(optionalStamp)) return false;
   if ((p.stage === 'seed') !== (p.lastDrink === null)) return false;
-  if (p.extraPour !== null && (p.lastDrink === null || p.extraPour < p.lastDrink || p.extraPour >= p.lastDrink + 4 * HOUR)) return false;
-  if (p.rotAt !== null && (p.extraPour === null || p.rotAt < p.extraPour + HOUR || p.rotAt >= p.lastDrink + 4 * HOUR)) return false;
+  if (p.extraPour !== null && (p.lastDrink === null || p.extraPour < p.lastDrink || p.extraPour >= p.lastDrink + WATER_INTERVAL)) return false;
+  if (p.rotAt !== null && (p.extraPour === null || p.rotAt < p.extraPour + HOUR || p.rotAt >= p.lastDrink + WATER_INTERVAL)) return false;
   if (p.jar !== null && !(p.jar && stamp(p.jar.cutAt) && generation(p.jar.generation) && ['left','right'].includes(p.jar.stem))) return false;
   if (!Array.isArray(p.book) || !p.book.every(validLeaf) || new Set(p.book.map(leaf => leaf.id)).size !== p.book.length) return false;
   const keepsake = p.book.find(leaf => leaf.id === p.id);
@@ -160,7 +164,7 @@ export function careStatus(p, action, now = Date.now()) {
   }
   const labels = { sun: ['Needs light', 'Sunned'], talk: ['Say hello', 'Chatted'], food: ['Ready to eat', 'Fed'] };
   if (!Object.hasOwn(labels, action)) return { hint: '', locked: true };
-  const done = p.given.includes(action) || (p.stage === 'grown' && p.lastFullCare != null && now < p.lastFullCare + 4 * HOUR);
+  const done = p.given.includes(action) || (p.stage === 'grown' && p.lastFullCare != null && now < p.lastFullCare + MATURE_CARE_DELAY);
   return { hint: labels[action][done ? 1 : 0], locked: done };
 }
 

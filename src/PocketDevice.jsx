@@ -6,6 +6,7 @@ import {DewArt,EchoArt,JarArt,PressedLeaf} from './ActivityArt.jsx';
 import {toyBranches,toyCards,toyTitles} from './GardenLife.jsx';
 import {DEW_CHANCES,LEVELS,gameNames,playText,saveDewCheckpoint,usePocketPlay} from './pocketPlay.js';
 import {care,careStatus,condition,healthLabels,replant,takeCutting,wake} from './game.js';
+import {foodReadout, GROWTH_STEPS, growthReadout, waterReadout} from './plantReadout.js';
 import './PocketDevice.css';
 import './ToyMenu.css';
 
@@ -33,11 +34,23 @@ function Chances({remaining}) {
 }
 
 function MenuItem({item}) {
-  const detail = item.status && item.status !== item.hint
-    ? item.status+' · '+item.hint : item.hint;
   return <div className="lcd-caption">
     <strong className="lcd-choice">{item.label}</strong>
-    {detail && <small className="lcd-hint">{detail}</small>}
+    {item.hint && <small className="lcd-hint">{item.hint}</small>}
+  </div>;
+}
+
+function ReadoutMeter({name, label, detail, tone, value, steps=1}) {
+  return <div className="lcd-meter" data-tone={tone}>
+    <span aria-hidden="true">{name}</span>
+    <span className="lcd-meter-track" role="meter" aria-label={name}
+      aria-valuemin={0} aria-valuemax={steps} aria-valuenow={value} aria-valuetext={detail}>
+      {Array.from({length:steps},(_,i)=>{
+        const fraction=Math.max(0,Math.min(1,value-i));
+        return <i key={i} aria-hidden="true" style={{'--fill':fraction*100+'%'}}/>;
+      })}
+    </span>
+    <span className="lcd-meter-label" aria-hidden="true">{label}</span>
   </div>;
 }
 
@@ -66,6 +79,10 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
   else if (lost) title='Three misses';
   else if (game) title=game.name==='dew'?'Dew Catch '+game.level+'/'+LEVELS:gameNames.echo;
   const ready=playing && game.phase==='ready';
+  const showMeters=!browsing && !game && plant.deadAt===null;
+  const food=showMeters ? foodReadout(plant,now) : null;
+  const growth=showMeters ? growthReadout(plant,now) : null;
+  const water=showMeters ? waterReadout(plant,now) : null;
   const status=game?playText(game):mood+' · ♥ Menu';
   const description=browsing?title+' · '+choice.label+' · '+choice.hint:game?title+' · '+status+' '+(game.name==='dew'?game.chances+' chances':''):'Monstera · '+mood;
   useEffect(()=>{ if(game?.name) heart.current?.focus({preventScroll:true}); },[game?.name]);
@@ -198,15 +215,22 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
       <div className="inspect-shell"><DeviceShell/></div>
       <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} data-branch={branch} role="group" aria-label={description}>
         <span className="lcd-top"><span>{!browsing && <i/>}{title.toUpperCase()}</span>
-          {game?.name==='dew'?<Chances remaining={game.chances}/>:browsing?<span className="lcd-page">{index+1}/{cards.length}</span>:<span className="battery"><b/><b/><b/></span>}
+          {game?.name==='dew' ? <Chances remaining={game.chances}/>
+            : browsing ? <span className="lcd-page">{index+1}/{cards.length}</span>
+            : food ? <span className="lcd-food" data-tone={food.tone}>{food.label}</span>
+            : <span className="battery" aria-hidden="true"><b/><b/><b/></span>}
         </span>
+        {showMeters && <span className="lcd-menu-key" aria-hidden="true">♥ Menu</span>}
         {browsing && <BranchIcons active={branch}/>}
         <span className={game?'lcd-art':'lcd-art lcd-plant'}>
           {game?<GameArt game={game}/>:<PlantPixel stage={plant.stage} condition={soil} reaction={feedback}/>}
           {browsing && choice.jar!==undefined && <span className="lcd-keepsake"><JarArt progress={choice.jar}/></span>}
           {browsing && choice.leaf && <span className="lcd-keepsake"><PressedLeaf stage={choice.leaf}/></span>}
         </span>
-        {browsing?<MenuItem item={choice}/>:<span className="lcd-status">{status}{ready && <small className="lcd-hint">Hold Back to exit</small>}</span>}
+        {browsing ? <MenuItem item={choice}/> : showMeters ? <div className="lcd-readout">
+          <ReadoutMeter name="Growth" label={growth.label} detail={growth.next ? growth.next+' · '+growth.detail : growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>
+          <ReadoutMeter name="Water" label={water.label} detail={water.detail} tone={water.tone} value={water.fraction}/>
+        </div> : <span className="lcd-status">{status}{ready && <small className="lcd-hint">Hold Back to exit</small>}</span>}
       </div>
       <span className="shell-name" aria-hidden="true">PLANTIGOCHI</span>
       <div className="toy-keys" role="group" aria-label="Plantigochi buttons"
