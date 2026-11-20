@@ -27,3 +27,11 @@ Garden progress belongs to its browser origin. Export a backup before moving to 
 | Verified | Mocked native sharing accepted a PNG and the public game URL, respected cancellation, and fell back to manual copy with clipboard access denied. The public preview PNG is 1200 × 630. Worker/API tests covered opt-out, duplicate and expired wakes, overlapping rescue and growth, missing schedules and company cooldown. |
 | Built · device verification pending | Actual receipt on locked iPhone and Android, an actual social app composer, and a social crawler's rendered preview require external device/service checks. No post was sent. |
 | Planned separately | Plant-biodata music player and Overskill hosting migration. |
+
+## Apartment and LCD update
+
+The living room and adjoining plant studio form a continuous 16-bit Canvas scene. Each pair has twelve places to set plants, including an open pot shelf, windowsills, a coffee table and a drawing desk. Plants keep their pot designs when carried across rooms. The calico responds to a tap, and the room follows the phone’s local daylight cycle.
+
+Growth, Water and Mood each have a separate LCD row under the centered plant. At 320 × 568, the three labels, tracks and readings fit without overlap.
+
+Mobile Chromium checks covered picking up and dragging plants, placing them across rooms, cancelling a move, reloading saved positions, exporting a room postcard, and moving a grown plant into its first home. A 45-plant Monstera collection opened eight views. Additional species artwork is future work.

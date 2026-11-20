@@ -36,7 +36,7 @@ test('successive seven-day generations fill a room, graduate once and keep the w
     for(let h=5;h<168;h+=4)for(const action of ['water','sun','food'])p=care(p,action,start+h*H);
     p=wake(p,start+WEEK);assert.equal(p.stage,'grown');
     const slot=generation-1,old=p.id;
-    assert.equal(graduate(p,old,slot+6,start+WEEK),p);
+    assert.equal(graduate(p,old,slot+12,start+WEEK),p);
     p=graduate(p,old,slot,start+WEEK);
     assert.equal(p.stage,'seed');assert.equal(p.generation,generation+1);assert.equal(p.graduates.length,generation);
     if(!first)first=p.graduates[0];
@@ -47,4 +47,26 @@ test('successive seven-day generations fill a room, graduate once and keep the w
   assert.deepEqual(p.graduates[0],first);assert.equal(p.graduates.at(-1).slot,6);
   const again=wake(p,p.plantedAt+300*DAY);assert.equal(again.stage,'seed');
   assert.equal(readPlant(JSON.stringify({...p,graduates:[first,first]})),null);
+});
+
+test('graduates can share a 48-plant apartment, move across views and round-trip without losing their identity',async()=>{
+  const {gardenViews,canPlaceAt}=await import('../src/gardenLayout.js');
+  const {relocateGraduate}=await import('../src/game.js');
+  let p=newPlant(0);
+  assert.equal(gardenViews([]),2);
+  for(let i=0;i<45;i++){
+    const mature={...p,stage:'grown',earned:WEEK,wateredAt:0,lastDrink:WEEK,litAt:WEEK,fedAt:WEEK,companyAt:WEEK};
+    p=graduate(mature,mature.id,i,WEEK);
+    assert.equal(p.graduates.length,i+1);
+  }
+  assert.equal(gardenViews(p.graduates),8);
+  const original=p.graduates[0];
+  const moved=relocateGraduate(p,original.id,0,46);
+  assert.deepEqual(moved.graduates[0],{...original,slot:46});
+  assert.equal(moved.id,p.id);assert.equal(moved.graduates.length,45);
+  assert.deepEqual(readPlant(JSON.stringify(moved),WEEK).graduates,moved.graduates);
+  assert.equal(relocateGraduate(moved,original.id,0,47),moved);
+  assert.equal(relocateGraduate(moved,original.id,46,2),moved);
+  assert.equal(relocateGraduate(moved,original.id,46,48),moved);
+  assert.equal(canPlaceAt(moved.graduates,0),true);
 });

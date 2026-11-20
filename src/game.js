@@ -1,3 +1,4 @@
+import {canPlaceAt} from './gardenLayout.js';
 import { validPhoto } from './gardenScenes.js';
 
 export const HOUR = 60 * 60 * 1000;
@@ -157,7 +158,7 @@ export function readPlant(text, now = Date.now(), visible = true) {
     if (!stamp(p.earned) || p.earned>WEEK || !stamp(p.anchor) || typeof p.accompanied!=='boolean'
       || ![p.companyAt,p.fedAt,p.litAt].every(n=>p.stage==='seed'?n===null:stamp(n))
       || !Array.isArray(p.graduates) || !p.graduates.every(g=>g && validId(g.id) && g.id!==p.id &&
-      g.species==='monstera' && generation(g.generation) && stamp(g.slot) && stamp(g.movedAt) && stamp(g.plantedAt) && g.movedAt>=g.plantedAt)
+      typeof g.species==='string' && /^[a-z][a-z0-9-]{0,47}$/.test(g.species) && generation(g.generation) && stamp(g.slot) && stamp(g.movedAt) && stamp(g.plantedAt) && g.movedAt>=g.plantedAt)
       || new Set(p.graduates.map(g=>g.slot)).size!==p.graduates.length
       || new Set(p.graduates.map(g=>g.id)).size!==p.graduates.length) return null;
     if (!optionalStamp(p.lastFullCare)) p.lastFullCare = null;
@@ -192,11 +193,20 @@ export function replant(saved, source, now = Date.now()) {
 
 export function graduate(saved, id, slot, now = Date.now()) {
   const p = wake(saved,now);
-  if (p.id!==id || p.stage!=='grown' || p.deadAt!==null || !Number.isSafeInteger(slot) || slot<0 ||
-      slot>=6*(1+Math.floor(p.graduates.length/6)) || p.graduates.some(g=>g.slot===slot)) return p;
-  const graduate = {id:p.id,species:'monstera',generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
+  if (p.id!==id || p.stage!=='grown' || p.deadAt!==null || !canPlaceAt(p.graduates,slot)) return p;
+  const graduate = {id:p.id,species:'monstera',potStyle:slot%6,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
   return {...p,...newPlant(now),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
     dewCleared:p.dewCleared,graduates:[...p.graduates,graduate]};
+}
+
+// Check both identity and source against the latest transaction so a stale
+// pointer gesture cannot move a plant someone already rearranged in another tab.
+export function relocateGraduate(p, id, from, to) {
+  const index=p.graduates.findIndex(g=>g.id===id && g.slot===from);
+  if (index < 0 || !canPlaceAt(p.graduates,to)) return p;
+  const graduates=p.graduates.slice();
+  graduates[index]={...graduates[index],slot:to};
+  return {...p,graduates};
 }
 
 const happy = {

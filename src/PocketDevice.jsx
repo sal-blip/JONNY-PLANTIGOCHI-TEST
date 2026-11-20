@@ -107,6 +107,8 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
   else if (lost) title='Three misses';
   else if (game) title=game.name==='dew'?'Dew Catch '+game.level+'/'+LEVELS:gameNames.echo;
   const ready=playing && game.phase==='ready';
+  const ageHours=Math.max(0,Math.floor((now-plant.plantedAt)/HOUR));
+  const ageText=(ageHours>=24?Math.floor(ageHours/24)+'d ':'')+(ageHours%24)+'h';
   const showMeters=!browsing && !game && plant.deadAt===null;
   const food=showMeters ? foodReadout(plant,now) : null;
   const growth=showMeters ? growthReadout(plant,now) : null;
@@ -256,9 +258,9 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
           {browsing && choice.leaf && <span className="lcd-keepsake"><PressedLeaf stage={choice.leaf}/></span>}
         </span>
         {browsing ? <MenuItem item={choice}/> : showMeters ? <div className="lcd-readout">
-          <ReadoutMeter name="Growth" label={Math.floor((now-plant.plantedAt)/HOUR/24)+"d "+Math.floor((now-plant.plantedAt)/HOUR)%24+"h old"} detail={growth.next ? growth.next+' · '+growth.detail : growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>
-          <ReadoutMeter name="Water" label={water.label} detail={water.detail} tone={water.tone} value={water.fraction}/>
-          <ReadoutMeter name="Mood ♥" label={moodOf(plant,now)} detail={moodOf(plant,now)} value={({happy:4,content:3,quiet:2,lonely:1,sleeping:0})[moodOf(plant,now)]} steps={4}/>
+          <ReadoutMeter name="Growth" label={ageText} detail={ageText+' old · '+(growth.next?growth.next+' · ':'')+growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>
+          <ReadoutMeter name="Water" label={water.label==='Seed watered'?'Watered':water.label.replace(/^In /,'')} detail={water.detail} tone={water.tone} value={water.fraction}/>
+          <ReadoutMeter name="Mood" label={moodOf(plant,now)} detail={moodOf(plant,now)} value={({happy:4,content:3,quiet:2,lonely:1,sleeping:0})[moodOf(plant,now)]} steps={4}/>
         </div> : <span className="lcd-status">{status}{ready && <small className="lcd-hint">Hold Back to exit</small>}</span>}
       </div>
       <span className="shell-name" aria-hidden="true">PLANTIGOCHI</span>

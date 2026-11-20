@@ -18,7 +18,9 @@ Stonewashed Pocket uses a [denim photograph](https://www.pexels.com/photo/photo-
 
 ## Living-room garden
 
-Swipe up on the Garden tab or tap it. At full growth choose **Growth → Move to garden**, select one of six pots, and confirm. The graduate settles permanently. The keychain receives a new seed in the same save. More rooms open as pots fill. Graduates require no care. Lighting follows the phone's local time. **Postcard** previews the current room as a PNG for native sharing or download. **Game link** shares the public game.
+Swipe up on the Garden tab or tap it. The collector opens onto a tall pot shelf in the living room. Swipe left to visit the adjoining plant studio, or use the room arrows. At full growth, choose **Growth → Move to garden**, select a spot and confirm. The graduate and new sleeping seed save together. A graduate can move later. Tap it and then an empty spot, or drag it to a shelf, windowsill, coffee table, desk or floor. Hold a dragged plant at an edge to travel to the adjoining view. Cancel returns it to its saved place.
+
+Each two-view apartment has twelve display spots. Filling it opens another pair of views. Slot numbers and graduate IDs survive reloads and backup transfers. The current species is Monstera. The room uses live Canvas 2D game graphics, with its own scene objects, layered plant and cat sprites, and phone-local daylight. The postcard captures those game objects at their saved positions as a shareable PNG.
 
 ## Run locally
 

@@ -10,7 +10,7 @@ import { useGardenSound } from './GardenSound.js';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
-import {wake,graduate} from './game.js';
+import {wake,graduate,relocateGraduate} from './game.js';
 import {useGardenSave} from './useGardenSave.js';
 import Recovery from './Recovery.jsx';
 import Collector from './Collector.jsx';
@@ -197,6 +197,10 @@ function GardenApp({storage,phone}) {
     {room!==null && <Collector plant={plant} moving={room.moving} now={now}
       move={async slot=>{const id=room.moving;const ok=await commit(p=>graduate(p,id,slot,Date.now()));
         return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
+      relocate={async (id,from,to)=>{
+        const ok=await commit(p=>relocateGraduate(p,id,from,to));
+        return ok && current.current.graduates.some(g=>g.id===id && g.slot===to);
+      }}
       startClose={leaveRoom} shareLink={shareGame}/>}
     {!saveOK && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>

@@ -1,91 +1,190 @@
-import React,{useCallback,useEffect,useRef,useState} from 'react';
-import {ArrowUp,ChevronLeft,ChevronRight,Image,Share} from 'lucide-react';
-import {drawRoom,roomPots,ROOM_WIDTH,ROOM_HEIGHT} from './roomArt.js';
+import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import {ArrowUp,ChevronLeft,ChevronRight,Image as ImageIcon,Share,Sprout} from 'lucide-react';
+import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,roomLight} from './roomArt.js';
+import {drawPottedPlant} from './roomPlant.js';
+import {gardenViews,PLACES_PER_VIEW,speciesName,viewName} from './gardenLayout.js';
+import RoomView from './RoomView.jsx';
 import {downloadFile} from './Recovery.jsx';
 import GameLink from './GameLink.jsx';
 
-const titles=['Living room','Window room','Garden room'];
-const roomName=n=>n===0?'Living room':(titles[n%titles.length]+' '+(n+1));
-export default function Collector({plant,moving,now,move,shareLink,startClose}) {
-  const [room,setRoom]=useState(()=>moving?Math.floor(plant.graduates.length/6):0);
+const placeName=slot=>placesFor(Math.floor(slot/PLACES_PER_VIEW)%2)[slot%PLACES_PER_VIEW].name;
+const clamp=(v,max)=>Math.min(max,Math.max(0,v));
+function firstVacant(plants) {
+  const occupied=new Set(plants.map(g=>g.slot));
+  let i=0;while(occupied.has(i))i++;
+  return i;
+}
+
+export default function Collector({plant,moving,now,move,relocate,shareLink,startClose}) {
+  const graduates=plant.graduates;
+  const count=gardenViews(graduates);
+  const [room,setRoom]=useState(()=>moving?Math.floor(firstVacant(graduates)/PLACES_PER_VIEW):0);
+  const page=clamp(room,count-1);
   const [slot,setSlot]=useState(null),[notice,setNotice]=useState('');
-  const [busy,setBusy]=useState(false),[postcard,setPostcard]=useState(null);
-  const mounted=useRef(false);
-  useEffect(()=>{mounted.current=true;return ()=>{mounted.current=false;};},[]);
-  const [arrived,setArrived]=useState(null);
-  const canvas=useRef(null),back=useRef(null), swiped=useRef(null),placing=useRef(false), snapshot=useRef(), panel=useRef(null);
-  const graduate=plant.graduates.find(g=>g.slot===slot);
-  const choosing=moving===plant.id && plant.stage==='grown' && plant.deadAt===null;
-  const last=Math.max(0,Math.ceil(plant.graduates.length/6)-1,choosing?Math.floor(plant.graduates.length/6):0);
-  const page=Math.min(room,last);
-  const date=new Date(now), hour=date.getHours()+date.getMinutes()/60;
-  snapshot.current={hour,roomIndex:page,plants:Array.from({length:6},(_,i)=>plant.graduates.find(g=>g.slot===page*6+i)||null)};
-  const exit=useCallback(()=>{if(!placing.current)startClose();},[startClose]);
-  useEffect(()=>{back.current?.focus();},[]);
+  const [carry,setCarry]=useState(null),[busy,setBusy]=useState(false),[postcard,setPostcard]=useState(null);
+  const [pan,setPan]=useState(null),[ghost,setGhost]=useState(null),[cat,setCat]=useState(false);
+  const [dropOver,setDropOver]=useState(null);
+  const gesture=useRef(null),ignoreClick=useRef(false),edge=useRef(null),catTimer=useRef(null);
+  const stage=useRef(null),back=useRef(null),previewButton=useRef(null),ghostCanvas=useRef(null);
+  const mounted=useRef(false),pending=useRef(false);
+  const collection=useMemo(()=>new Map(graduates.map(p=>[p.slot,p])),[graduates]);
+  const picking=moving===plant.id && plant.stage==='grown' && plant.deadAt===null;
+  const inHand=carry && collection.get(carry.from)?.id===carry.id?collection.get(carry.from):null;
+  const chosen=slot===null?null:collection.get(slot);
+  const clock=new Date(now),hour=clock.getHours()+clock.getMinutes()/60;
+  const potted=useMemo(()=>{
+    const result={};
+    for(let view=Math.max(0,page-1);view<=Math.min(count-1,page+1);view++)
+      result[view]=Array.from({length:PLACES_PER_VIEW},(_,i)=>collection.get(view*PLACES_PER_VIEW+i));
+    return result;
+  },[collection,count,page]);
   useEffect(()=>{
-    const ctx=canvas.current;
-    if(!ctx)return;
-    const reduce=matchMedia('(prefers-reduced-motion: reduce)');
-    const paint=()=>{if(!document.hidden)drawRoom(ctx,{...snapshot.current,time:performance.now(),reducedMotion:reduce.matches});};
-    paint();const id=setInterval(paint,160);
-    return ()=>clearInterval(id);
+    mounted.current=true;back.current?.focus();
+    return ()=>{mounted.current=false;clearTimeout(edge.current);clearTimeout(catTimer.current);};
   },[]);
   useEffect(()=>{
-    if(postcard)panel.current?.focus();
-    return ()=>{if(postcard?.url)URL.revokeObjectURL(postcard.url);};
-  },[postcard]);
-  async function place() {
-    if(placing.current)return;
-    placing.current=true;setBusy(true);
-    try {
-      if(await move(slot)){setArrived(slot);setNotice('Home at last. A new seed is waiting in your keychain.');}
-      else setNotice('The garden changed or could not be saved. Choose an available pot and try again.');
-    } finally {placing.current=false;setBusy(false);}
+    if(carry && !inHand && !pending.current){setCarry(null);setGhost(null);setNotice('This plant has moved. Pick it up again.');}
+  },[carry,inHand]);
+  useEffect(()=>()=>{if(postcard?.url)URL.revokeObjectURL(postcard.url);},[postcard]);
+  useEffect(()=>{
+    if(!ghostCanvas.current || !inHand)return;
+    const ctx=ghostCanvas.current.getContext('2d');
+    ctx.clearRect(0,0,76,82);
+    drawPottedPlant(ctx,{x:38,y:74,size:1.28,plant:inHand,night:1-roomLight(hour).day,reducedMotion:true});
+  },[Boolean(ghost),inHand,hour]);
+
+  const travel=useCallback(n=>{
+    setRoom(clamp(n,count-1));setSlot(null);setNotice('');setPan(null);setDropOver(null);
+  },[count]);
+  function returnCard(){setPostcard(null);requestAnimationFrame(()=>previewButton.current?.focus());}
+  function cancelCarry(){setCarry(null);setSlot(null);setGhost(null);setDropOver(null);setNotice('');}
+  function pickUp(p){setCarry({id:p.id,from:p.slot});setSlot(null);setNotice('');}
+  async function putDown(target,source) {
+    if(pending.current || target===null || collection.has(target))return;
+    pending.current=true;setBusy(true);
+    try{
+      const ok=source ? await relocate(source.id,source.from,target) : await move(target);
+      if(!mounted.current)return;
+      setCarry(null);setSlot(ok?target:null);
+      setNotice(ok?(source?'Moved to '+placeName(target).toLowerCase()+'.':'Home at last. A new seed is waiting in the keychain.'):'That spot or plant changed. Choose again.');
+    } finally {pending.current=false;if(mounted.current)setBusy(false);}
   }
-  async function prepare() {
+  function choose(target){
+    if(pending.current || ignoreClick.current)return;
+    const occupant=collection.get(target);
+    if(inHand){
+      if(!occupant){void putDown(target,carry);return;}
+      if(occupant.id===inHand.id){cancelCarry();return;}
+      setNotice('That spot is occupied. Choose a free spot.');return;
+    }
+    setSlot(target);setNotice('');
+    if(occupant && !picking)pickUp(occupant);
+  }
+  function onCat(){
+    if(ignoreClick.current || picking || inHand)return;
+    clearTimeout(catTimer.current);setCat(true);setNotice('The cat blinks hello.');
+    catTimer.current=setTimeout(()=>{setCat(false);setNotice(n=>n==='The cat blinks hello.'?'':n);},2100);
+  }
+  function hit(x,y){
+    const btn=document.elementFromPoint(x,y)?.closest('[data-slot]');
+    return btn && stage.current.contains(btn) ? Number(btn.dataset.slot) : null;
+  }
+  function start(e){
+    if(!e.isPrimary || e.button!==0 || busy)return;
+    ignoreClick.current=false;
+    const target=e.target.closest('[data-slot]');
+    gesture.current={pointer:e.pointerId,x:e.clientX,y:e.clientY,plant:target && collection.get(Number(target.dataset.slot)),mode:null,edge:0};
+  }
+  function clearEdge(){clearTimeout(edge.current);edge.current=null;}
+  function onMotion(e){
+    const g=gesture.current;if(!g || g.pointer!==e.pointerId)return;
+    const dx=e.clientX-g.x,dy=e.clientY-g.y,bounds=stage.current.getBoundingClientRect();
+    if(!g.mode){
+      if(Math.max(Math.abs(dx),Math.abs(dy))<7)return;
+      g.mode=!picking && g.plant && (!inHand || g.plant.id===inHand.id)?'plant':Math.abs(dx)>Math.abs(dy)?'pan':'vertical';
+      stage.current.setPointerCapture(e.pointerId);ignoreClick.current=true;
+      if(g.mode==='plant')pickUp(g.plant);
+    }
+    if(g.mode==='plant'){
+      setGhost({x:e.clientX,y:e.clientY});setDropOver(hit(e.clientX,e.clientY));
+      const direction=e.clientX<bounds.left+26 && page>0?-1:e.clientX>bounds.right-26 && page<count-1?1:0;
+      if(g.edge!==direction){clearEdge();g.edge=direction;if(direction)edge.current=setTimeout(()=>travel(page+direction),430);}
+    } else if(g.mode==='pan'){
+      const distance=(page===0&&dx>0)||(page===count-1&&dx<0)?dx*.16:dx;
+      setPan(Math.min(bounds.width,Math.max(-bounds.width,distance)));
+    }
+  }
+  function end(e,cancelled=false){
+    const g=gesture.current;if(!g || g.pointer!==e.pointerId)return;
+    gesture.current=null;clearEdge();
+    if(!g.mode)return;
+    const dx=e.clientX-g.x,dy=e.clientY-g.y;
+    setPan(null);setGhost(null);setDropOver(null);
+    if(stage.current.hasPointerCapture(e.pointerId))stage.current.releasePointerCapture(e.pointerId);
+    if(g.mode==='plant'){
+      const dest=cancelled?null:hit(e.clientX,e.clientY);
+      if(dest!==null && !collection.has(dest))void putDown(dest,{id:g.plant.id,from:g.plant.slot});
+      else cancelCarry();
+    } else if(!cancelled && g.mode==='pan' && Math.abs(dx)>Math.min(52,stage.current.clientWidth*.15))travel(page+(dx<0?1:-1));
+    else if(!cancelled && g.mode==='vertical' && dy>74 && !inHand)startClose();
+    setTimeout(()=>{ignoreClick.current=false;},0);
+  }
+  async function prepare(){
     setBusy(true);setNotice('');
-    try {
-      const image=document.createElement('canvas');image.width=ROOM_WIDTH*4;image.height=ROOM_HEIGHT*4;
-      drawRoom(image,{...snapshot.current,time:0,reducedMotion:true});
+    try{
+      const image=document.createElement('canvas');image.width=ROOM_WIDTH*3;image.height=ROOM_HEIGHT*3;
+      drawRoom(image,{hour,plants:potted[page],roomIndex:page,time:0,reducedMotion:true});
       const blob=await new Promise(resolve=>image.toBlob(resolve,'image/png'));
       if(!blob)throw Error();
-      const file=new File([blob],'plantigochi-living-room.png',{type:'image/png'});
+      const file=new File([blob],'plantigochi-'+viewName(page).toLowerCase().replaceAll(' ','-')+'.png',{type:'image/png'});
       if(mounted.current)setPostcard({url:URL.createObjectURL(blob),file});
-    } catch {setNotice('Could not prepare the postcard. Try again.');}
-    finally {setBusy(false);}
+    }catch{setNotice('Could not prepare the postcard. Try again.');}
+    finally{if(mounted.current)setBusy(false);}
   }
-  async function sendCard() {
-    try {await navigator.share({files:[postcard.file],title:'My Plantigochi garden'});}
-    catch(err){if(err.name!=='AbortError')setNotice('Choose Save image to share this postcard.');}
+  async function shareCard(){
+    try{await navigator.share({files:[postcard.file],title:'My Plantigochi garden'});}
+    catch(error){if(error.name!=='AbortError')setNotice('Save the image to share this postcard.');}
   }
-  function changePage(n){setRoom(n);setSlot(null);setNotice('');setArrived(null);}
-  return <section className="collector" aria-label="Collector garden"
-    onKeyDown={e=>{if(e.key==='Escape'){if(postcard)setPostcard(null);else exit();}}}
-    onTouchStart={e=>{swiped.current=e.touches[0]?.clientY;}}
-    onTouchEnd={e=>{if(!postcard && swiped.current!=null && e.changedTouches[0].clientY-swiped.current>75)exit();swiped.current=null;}}>
-    <header className="room-header"><div><span>PLANTIGOCHI</span><h1>{roomName(page)}</h1></div>
-      <button ref={back} onClick={exit} aria-label="Back to Plantigochi"><ArrowUp/> Keychain</button></header>
-    <div className="room-center"><div className="room-picture" style={{aspectRatio:ROOM_WIDTH+'/'+ROOM_HEIGHT}}>
-      <canvas ref={canvas} width={ROOM_WIDTH} height={ROOM_HEIGHT} role="img" aria-label="Pixel-art living room with a picture window and six plant pots"/>
-      <div className="pot-spots">{roomPots.map(({x,y},i)=>{
-        const n=page*6+i, p=snapshot.current.plants[i];
-        return <button key={n} className={(choosing && !p?'vacant ':'')+(slot===n?'selected ':'')+(arrived===n?'settled':'')}
-          style={{left:x*100+'%',top:y*100+'%'}} aria-pressed={slot===n} aria-label={'Pot '+(i+1)+(p?' · Monstera generation '+p.generation:' · Empty')}
-          onClick={()=>{setSlot(n);setNotice('');}}/>;
-      })}</div>
+  const message=notice || (inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):speciesName(inHand)+' · Gen '+inHand.generation+' · Choose a free spot.'):
+    picking?(slot!==null&&!chosen?'Settle here on the '+placeName(slot).toLowerCase()+'?':'Choose a spot for your grown plant.'):
+    slot!==null?(chosen?speciesName(chosen)+' · Gen '+chosen.generation+' · '+new Date(chosen.movedAt).toLocaleDateString():placeName(slot)+' · Open'):
+    graduates.length?'Tap or drag a plant to move it.':'Grow a Monstera to make it at home here.');
+  return <section className="collector" aria-label="Collector garden" onKeyDown={e=>{
+    if(postcard||busy || e.altKey || e.metaKey || e.ctrlKey)return;
+    if(e.key==='Escape'){e.preventDefault();if(inHand)cancelCarry();else startClose();}
+    if(['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();travel(page+(e.key==='ArrowLeft'?-1:1));}
+  }}>
+    <header className="room-header">
+      <div className="room-heading"><span className="collection-total"><Sprout aria-hidden="true"/>{graduates.length} {graduates.length===1?'plant':'plants'}</span>
+        <h1>{viewName(page)}</h1></div>
+      <button ref={back} onClick={()=>!pending.current && startClose()} aria-label="Back to Plantigochi"><ArrowUp/> Keychain</button>
+    </header>
+    <div className="room-center"><div className="room-picture" ref={stage}
+      style={{'--room-aspect':ROOM_WIDTH/ROOM_HEIGHT}}
+      onPointerDown={start} onPointerMove={onMotion} onPointerUp={e=>end(e)} onPointerCancel={e=>end(e,true)}
+      onClickCapture={e=>{if(ignoreClick.current){e.preventDefault();e.stopPropagation();}}}>
+      <div className={'room-strip'+(pan!==null?' panning':'')} style={{transform:'translateX(calc('+(-page*100)+'% + '+(pan??0)+'px))'}}>
+        {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k===page} plants={potted[k]} hour={hour}
+          placing={picking||Boolean(inHand)} carry={carry} selected={dropOver??slot} choose={choose} cat={cat} petCat={onCat}/>)}
+      </div>
     </div></div>
     <footer className="room-footer">
-      <div className="room-line"><span role="status">{notice || (graduate?'Monstera · Gen '+graduate.generation+' · '+new Date(graduate.movedAt).toLocaleDateString():choosing?(slot!==null?'Settle your Monstera in pot '+(slot%6+1)+'?':'Choose an empty pot for your Monstera.'):slot!==null?'Empty pot · Ready for a graduate':plant.graduates.length+' collected')}</span>
-      {choosing && slot!==null && !graduate && <button onClick={place} disabled={busy}>Move in</button>}</div>
-      <nav aria-label="Room actions">{last>0 && <div className="room-pager"><button disabled={page===0} onClick={()=>changePage(page-1)} aria-label="Previous room"><ChevronLeft/></button>
-        {page+1}/{last+1}<button disabled={page===last} onClick={()=>changePage(page+1)} aria-label="Next room"><ChevronRight/></button></div>}
-        <button onClick={shareLink}><Share/> Game link</button><button disabled={busy} onClick={prepare}><Image/> Postcard</button></nav>
+      <nav className="room-browser" aria-label="Explore the apartment"><button aria-label="Previous room" disabled={page===0||busy} onClick={()=>travel(page-1)}><ChevronLeft/></button>
+        <span>Room {page+1} <i>/</i> {count}</span>
+        <button aria-label="Next room" disabled={page===count-1||busy} onClick={()=>travel(page+1)}><ChevronRight/></button></nav>
+      <div className="room-line"><span role="status">{message}</span>
+        {inHand && <button onClick={cancelCarry} disabled={busy}>Cancel move</button>}
+        {picking && slot!==null && !chosen && <button onClick={()=>putDown(slot,null)} disabled={busy}>Move in</button>}
+      </div>
+      <nav className="room-tools" aria-label="Room actions"><button onClick={shareLink}><Share/> Game link</button>
+        <button ref={previewButton} disabled={busy} onClick={prepare}><ImageIcon/> Postcard</button></nav>
     </footer>
-    {postcard && <dialog className="postcard" ref={el=>{if(el&&!el.open)el.showModal();}} onCancel={e=>{e.preventDefault();setPostcard(null);}}>
-      <div ref={panel} tabIndex={-1}><h2>Garden postcard</h2><img src={postcard.url} alt={'Your '+roomName(page)+' postcard'}/>
-        <div>{navigator.canShare?.({files:[postcard.file]}) && <button onClick={sendCard}>Share image</button>}
-          <button onClick={()=>downloadFile(postcard.file,postcard.file.name)}>Save image</button><GameLink/>
-          <button onClick={()=>setPostcard(null)}>Back to room</button></div><p role="status">{notice}</p></div>
+    {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width="76" height="82" aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
+    {postcard && <dialog className="postcard" aria-label="Garden postcard" ref={el=>{if(el&&!el.open)el.showModal();}} onCancel={e=>{e.preventDefault();returnCard();}}>
+      <h2>Garden postcard</h2><img src={postcard.url} alt={'Your '+viewName(page)+' postcard'}/>
+      <div>{navigator.canShare?.({files:[postcard.file]}) && <button onClick={shareCard}>Share image</button>}
+        <button onClick={()=>downloadFile(postcard.file,postcard.file.name)}>Save image</button><GameLink/>
+        <button onClick={returnCard}>Back to room</button></div><p role="status">{notice}</p>
     </dialog>}
   </section>;
 }
