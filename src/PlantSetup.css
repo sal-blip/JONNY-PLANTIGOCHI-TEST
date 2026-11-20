@@ -8,6 +8,7 @@
 .seed-portrait{width:100%;height:min(32dvh,240px);border-radius:22px;display:grid;place-items:center;background:linear-gradient(130deg,#e1ecde,#edf1d7 60%,#eedfb7)}
 .seed-portrait .plant-pixel{height:76%;width:92%;color:#38523c}
 .seed-letter h1,.name-layout h1{font:680 clamp(30px,5.7vmin,52px)/1.02 var(--display);letter-spacing:-.05em}
+.seed-letter h1:focus{outline:none}
 .seed-letter p,.name-instructions{max-width:43ch;line-height:1.4;font-size:clamp(15px,2.2vmin,18px)}
 .seed-actions{display:flex;gap:15px;align-items:center;flex-wrap:wrap}
 .seed-actions button,.lesson-done{padding:10px 16px;border:0;border-radius:22px;font-weight:650;color:#fffbee;background:#264332;min-height:42px}
@@ -16,8 +17,9 @@
 .name-layout{height:100%;width:min(100%,780px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;justify-items:center;align-items:center;gap:8px;padding-block:clamp(4px,3vh,30px);text-align:center}
 .name-layout header{display:flex;align-items:center;justify-content:center;gap:8px}
 .name-layout header svg{width:24px;height:24px;fill:#dbedbf}
-.name-device-space{width:100%;height:100%;min-height:0;display:grid;place-items:center;container-type:size}
-.name-device-space .name-device{width:min(116cqw,106cqh,650px)}
+.name-device-space{width:100%;height:100%;min-height:0;display:grid;grid-template:minmax(0,1fr) / minmax(0,1fr);place-items:center;container-type:size}
+/* Center the visible leaf, whose midpoint is (302,313) in the 600 × 565 artwork. */
+.name-device-space .name-device{width:min(116cqw,106cqh,650px);translate:-.3% -5.4%}
 .name-device .name-lcd{align-items:center;justify-content:center;gap:8%;text-align:center;color:#27433c;font-family:Silkscreen,monospace}
 .name-lcd small{font-size:1.8cqw}.name-lcd strong{font-size:3.1cqw;max-width:98%}
 .name-dial{font-size:2.45cqw;background:#deedbcbf;padding:4% 2%;width:100%;border-block:1px solid #72947a}

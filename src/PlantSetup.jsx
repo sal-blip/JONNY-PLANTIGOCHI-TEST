@@ -20,6 +20,7 @@ function AlertChoices({alerts,offer,answer}){
 
 export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answer}){
   const file=useRef(null),[candidate,setCandidate]=useState(null),[notice,setNotice]=useState('');
+  const heading=useRef(null);
   async function choose(e){
     const f=e.target.files?.[0];e.target.value='';
     if(!f)return;
@@ -32,13 +33,14 @@ export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answe
   const inviting=Boolean(offer && !candidate);
   const blocked=inviting && alerts.denied;
   const title=candidate?'Bring your garden home':offer===2?'Get plant alerts?':'Welcome to your pocket garden';
+  useLayoutEffect(()=>{heading.current?.focus({preventScroll:true});},[title]);
   let copy='A sleepy Monstera is waiting. Give it a name, then use the heart on your keychain to give it its first drink.';
   if(candidate)copy=candidate.name+' · Generation '+candidate.generation+' · '+candidate.graduates.length+' collected';
   else if(inviting)copy=blocked?'Plant alerts are blocked on this device. To receive care reminders, allow notifications for Plantigochi in your device settings.'
     :'Your plant keeps growing while you’re away. Get a heads-up when your seed is ready to sprout or your Monstera gets very thirsty.';
   return <main className="seed-setup"><section className="seed-letter">
     <div className="seed-portrait"><PlantPixel stage={plant?.stage || 'seed'}/></div>
-    <h1>{title}</h1>
+    <h1 ref={heading} tabIndex="-1">{title}</h1>
     <p>{copy}</p>
     <div className="seed-actions">{candidate?<><button onClick={()=>replace(candidate)}>Restore this garden</button>
       <button onClick={()=>{setCandidate(null);if(offer)void answer(true);else setup('name');}}>Start fresh instead</button></>:

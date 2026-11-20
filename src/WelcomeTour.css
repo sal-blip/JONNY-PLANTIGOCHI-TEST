@@ -97,3 +97,30 @@
  .tour-install .primary-btn{min-height:29px;padding:6px 10px}.tour-words h1 em{display:inline}
 }
 @media(prefers-reduced-motion:reduce){.tour-splash{display:none}}
+
+/* Keep the header and navigation anchored while the illustrated card changes. */
+:root[data-onboarding-motion]{background:#f5f2e4}
+:root[data-onboarding-motion="forward"]{--card-enter:16px;--card-leave:-12px}
+:root[data-onboarding-motion="backward"]{--card-enter:-16px;--card-leave:12px}
+:root:is([data-onboarding-motion="forward"],[data-onboarding-motion="backward"]) .tour-story{view-transition-name:welcome-card}
+:root:is([data-onboarding-motion="forward"],[data-onboarding-motion="backward"]) .tour-words{view-transition-name:welcome-copy}
+:root[data-onboarding-motion]::view-transition{pointer-events:none}
+:root[data-onboarding-motion]::view-transition-group(*){animation-duration:340ms}
+:root[data-onboarding-motion]::view-transition-image-pair(*){isolation:isolate}
+:root[data-onboarding-motion]::view-transition-old(*),:root[data-onboarding-motion]::view-transition-new(*){mix-blend-mode:plus-lighter}
+:root[data-onboarding-motion]::view-transition-old(welcome-card){animation:tour-card-leave 340ms ease-in-out both}
+:root[data-onboarding-motion]::view-transition-new(welcome-card){animation:tour-card-enter 340ms ease-in-out both}
+:root[data-onboarding-motion]::view-transition-old(welcome-copy){animation:tour-copy-leave 340ms ease-out both}
+:root[data-onboarding-motion]::view-transition-new(welcome-copy){animation:tour-copy-enter 340ms ease-out both}
+:root[data-onboarding-motion="scene"]::view-transition-old(root){animation:onboarding-dissolve-out 360ms ease-in-out both}
+:root[data-onboarding-motion="scene"]::view-transition-new(root){animation:onboarding-dissolve-in 360ms ease-in-out both}
+.tour-dots i{transition:width .24s ease,background-color .24s ease}
+@keyframes tour-card-leave{to{opacity:0;transform:translateX(var(--card-leave))}}
+@keyframes tour-card-enter{from{opacity:0;transform:translateX(var(--card-enter))}}
+@keyframes tour-copy-leave{0%{opacity:1}45%,100%{opacity:0;transform:translateX(var(--card-leave))}}
+@keyframes tour-copy-enter{0%,40%{opacity:0;transform:translateX(var(--card-enter))}100%{opacity:1;transform:none}}
+@keyframes onboarding-dissolve-out{to{opacity:0;filter:blur(2px)}}
+@keyframes onboarding-dissolve-in{from{opacity:0;filter:blur(2px)}}
+@media(prefers-reduced-motion:reduce){
+  :root::view-transition-group(*),:root::view-transition-old(*),:root::view-transition-new(*){animation-duration:0s!important}
+}

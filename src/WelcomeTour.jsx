@@ -3,6 +3,7 @@ import {Leaf} from 'lucide-react';
 import InstallHelp from './InstallHelp.jsx';
 import {exportGardenRaw} from './useGardenSave.js';
 import {downloadFile} from './Recovery.jsx';
+import {transitionOnboarding} from './OnboardingTransition.jsx';
 import './WelcomeTour.css';
 
 const cards=[
@@ -31,7 +32,7 @@ function TourArt({step}){
 export default function WelcomeTour({phone,onBegin,onClose,issue}){
   const [step,setStep]=useState(0);
   const [splash,setSplash]=useState(()=>!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const heading=useRef(null), dialog=useRef(null), touch=useRef(null);
+  const heading=useRef(null), dialog=useRef(null), touch=useRef(null), requested=useRef(0);
   const [canExport,setCanExport]=useState(false);
   const [exportError,setExportError]=useState('');
   const installed=phone.standalone;
@@ -65,8 +66,11 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
   },[splash]);
 
   function go(next){
-    if(next<0 || next>last || next===step)return;
-    setSplash(false);setStep(next);
+    if(next<0 || next>last || next===requested.current)return;
+    requested.current=next;
+    transitionOnboarding(()=>{
+      if(requested.current===next){setSplash(false);setStep(next);}
+    },next>step?'forward':'backward');
   }
   function keys(e){
     if(e.altKey || e.metaKey || e.ctrlKey || e.target.matches('input,textarea'))return;

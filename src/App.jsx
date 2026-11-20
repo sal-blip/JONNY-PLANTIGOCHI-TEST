@@ -13,6 +13,7 @@ import PocketDevice from './PocketDevice.jsx';
 import {wake,graduate,relocateGraduate} from './game.js';
 import {useGardenSave} from './useGardenSave.js';
 import WelcomeTour from './WelcomeTour.jsx';
+import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.jsx';
 import {SetupWelcome,NameEditor} from './PlantSetup.jsx';
 import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
@@ -77,12 +78,22 @@ function InstalledSession({phone,storage,careMessage,alertVisitId}){
   },[needsVisit,alertVisit,alerts.enabled,alertVisitId]);
   const offer=alerts.capable && !alerts.enabled && invite?.visit===alertVisitId && !invite.closed ? invite.round : null;
   const answer=defer=>alertVisit(alertVisitId,defer?'defer':'finish');
-  if(storage.phase==='tour')return <WelcomeTour phone={phone} issue={storage.issue} onBegin={()=>storage.setup('welcome')}/>;
-  if(needsVisit && !storage.issue && !alerts.enabled)return <main aria-busy="true" aria-label="Opening your garden"/>;
-  if(storage.phase==='welcome' || offer)return <SetupWelcome {...storage} alerts={alerts} offer={offer} answer={answer}/>;
-  if(storage.phase==='name')return <NameEditor initial={storage.draft} onDraft={d=>storage.setup('name',d)}
-    onSave={name=>storage.setup('water',name)} onCancel={()=>storage.setup('welcome')} issue={storage.issue}/>;
-  return <GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}/>;
+  let scene=phase, screen;
+  if(phase==='tour'){
+    screen=<WelcomeTour phone={phone} issue={storage.issue} onBegin={()=>storage.setup('welcome')}/>;
+  }else if(needsVisit && !storage.issue && !alerts.enabled){
+    scene=null;
+    screen=<main aria-busy="true" aria-label="Opening your garden"/>;
+  }else if(phase==='welcome' || offer){
+    scene=offer?'alert-invite':'welcome';
+    screen=<SetupWelcome {...storage} alerts={alerts} offer={offer} answer={answer}/>;
+  }else if(phase==='name'){
+    screen=<NameEditor initial={storage.draft} onDraft={d=>storage.setup('name',d)}
+      onSave={name=>storage.setup('water',name)} onCancel={()=>storage.setup('welcome')} issue={storage.issue}/>;
+  }else{
+    screen=<GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}/>;
+  }
+  return <OnboardingTransition scene={scene}>{screen}</OnboardingTransition>;
 }
 function GardenApp({storage,phone,careMessage,alerts}) {
   const {plant,current,commit,replace,issue}=storage;
@@ -166,8 +177,10 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       if (phone.installState === 'available') void phone.promptInstall();
     }
     restoreFocus.current = id==='rename' ? document.querySelector('.camera .toy-heart') : id === 'share' ? shareButton.current : menuButton.current;
-    setPage(id);
+    if(id==='welcome' || id==='rename')transitionOnboarding(()=>setPage(id));
+    else setPage(id);
   }
+  const closeOnboarding=()=>transitionOnboarding(()=>setPage(null));
   async function shareGame() {
     if (sharing) return;
     if (typeof navigator.share === 'function') {
@@ -262,9 +275,9 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     </div>}
     {page === 'photo' && <PhotoBackground photo={draftPhoto} update={setDraftPhoto} layer={scenery} apply={savePhoto}
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
-    {page === 'welcome' && <WelcomeTour phone={phone} onClose={()=>setPage(null)}/>}
-    {page === 'rename' && <NameEditor rename original={plant.name} onCancel={()=>setPage(null)} issue={issue}
-      onSave={async name=>{if(await commit(p=>({...p,name})))setPage(null);}}/>}
+    {page === 'welcome' && <WelcomeTour phone={phone} onClose={closeOnboarding}/>}
+    {page === 'rename' && <NameEditor rename original={plant.name} onCancel={closeOnboarding} issue={issue}
+      onSave={async name=>{if(await commit(p=>({...p,name})))closeOnboarding();}}/>}
     {page && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
       {page === 'menu' && <MenuItems items={phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}

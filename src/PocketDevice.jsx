@@ -63,6 +63,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
   const [closeUp,setCloseUp]=useState(false), [feedback,setFeedback]=useState(null);
   const retreat=useRef(null), held=useRef(null), pressed=useRef(null), speech=useRef(null), heart=useRef(null);
   const backHold=useRef(null), suppressBackClick=useRef(false);
+  const lessonDone=useRef(null), priorLesson=useRef(null);
   const screen=path.at(-1), paused=screen?.id==='pause';
   const previous=useRef({id:plant.id,stage:plant.stage,dead:plant.deadAt});
   const serial=useRef(0);
@@ -243,12 +244,20 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
   },[resting]);
   useEffect(()=>()=>clearTimeout(speech.current),[]);
 
-  useEffect(()=>{if(lesson==='watered')leaveGame();},[lesson]);
+  useEffect(()=>{
+    if(lesson==='watered'){
+      leaveGame();
+      lessonDone.current?.focus({preventScroll:true});
+    }else if(lesson==='water' || priorLesson.current==='watered'){
+      heart.current?.focus({preventScroll:true});
+    }
+    priorLesson.current=lesson;
+  },[lesson]);
   const near=resting && (closeUp || Boolean(section) || Boolean(game));
   return <>{lesson && <aside className="water-lesson" aria-live="polite">
       <strong>{lesson==='watered'?'First drink saved':'A first drink for '+plant.name}</strong>
       {lesson==='watered'?<><p>{plant.stage==='seed'?'Your seed sprouts when it is an hour old.':'Your seed has sprouted.'}</p>
-        <button className="lesson-done" onClick={finishLesson}>Meet my plant</button></>:
+        <button ref={lessonDone} className="lesson-done" onClick={finishLesson}>Meet my plant</button></>:
         <p>{!section?'Press the heart to open your toy menu.':section==='home'?'Press the heart to choose Care.':'Press the heart to choose Water.'}</p>}
     </aside>}<div className={'inspect-view'+(near?' close-up':'')}>
     <div className="device">
