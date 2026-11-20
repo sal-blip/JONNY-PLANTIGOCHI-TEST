@@ -61,7 +61,29 @@ function woodenClick(ctx, care, variant) {
   return buffer;
 }
 
+// A breath-shaped train of low pulses. Its soft upper harmonics carry the
+// purr on small phone speakers even when they roll off the fundamental.
+function catPurr(ctx){
+  const rate=16000,seconds=1.65,buf=ctx.createBuffer(1,Math.ceil(rate*seconds),rate);
+  const data=buf.getChannelData(0),random=noise(3817);
+  let phase=0,breathNoise=0;
+  for(let i=0;i<data.length;i++){
+    const t=i/rate;
+    phase+=(25+.9*sine(t*.8))/rate;
+    const breath=.55+.45*Math.abs(sine(t*.57+.09));
+    const pulse=Math.pow(.5+.5*sine(phase),2);
+    const envelope=Math.min(1,t/.10,(seconds-t)/.26)*breath;
+    breathNoise+=.075*(random()-breathNoise);
+    data[i]=envelope*(.045*sine(phase*3)+pulse*(.068*sine(phase*5)+.032*sine(phase*7)+.12*breathNoise));
+  }
+  return buf;
+}
+
 export function playButton(ctx, bus, kind = 'tap', variation = 0) {
+  if(kind==='purr'){
+    oneShot(ctx,bus,bufferFor(ctx,'cat-purr',()=>catPurr(ctx)));
+    return;
+  }
   const variant = Math.abs(Math.trunc(Number(variation) || 0)) % 5;
   const care = kind === 'care';
   oneShot(ctx, bus, bufferFor(ctx, 'button-' + care + '-' + variant, () => woodenClick(ctx, care, variant)));

@@ -18,6 +18,7 @@ import {SetupWelcome,NameEditor} from './PlantSetup.jsx';
 import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
 import Collector from './Collector.jsx';
+import {useGardenPassage} from './useGardenPassage.js';
 import './collector.css';
 
 const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts'};
@@ -99,12 +100,9 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   const {plant,current,commit,replace,issue}=storage;
   const saveOK=!issue;
   const lesson=storage.phase==='water' || storage.phase==='watered' ? storage.phase : null;
-  const [room,setRoom]=useState(null);
-  const [leaving,setLeaving]=useState(false);
-  const leaveRoom=useCallback(()=>{setLeaving(true);},[]);
-  useEffect(()=>{if(!leaving)return;const timer=setTimeout(()=>{setRoom(null);setLeaving(false);requestAnimationFrame(()=>gardenTab.current?.focus());},reducedMotion()?0:550);return ()=>clearTimeout(timer);},[leaving]);
+  const passage=useGardenPassage();
+  const {room,reset:resetPassage}=passage;
   const [careTarget,setCareTarget]=useState(null);
-  const gardenTab=useRef(null), swipe=useRef(null);
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
   const [sharing, setSharing] = useState(false);
@@ -135,13 +133,13 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       const p=wake(current.current);
       if(p.deadAt!==null || p.stage==='seed')return;
       if(action==='drain'?p.rotAt===null:action==='water'?p.rotAt!==null||Date.now()<p.lastDrink+12*3600000:true)return;
-      setIntro(false);setPage(null);setRoom(null);setCareTarget({action,seq:Date.now()});
+      setIntro(false);setPage(null);resetPassage();setCareTarget({action,seq:Date.now()});
     }
     const url=new URL(location.href);
     const action=careMessage?.action ?? url.searchParams.get('care');
     if(url.searchParams.has('care')){url.searchParams.delete('care');history.replaceState(null,'',url);}
     if(action)rescue(action);
-  },[current,careMessage]);
+  },[current,careMessage,resetPassage]);
 
   useEffect(() => {
     let active = true;
@@ -181,7 +179,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     else setPage(id);
   }
   const closeOnboarding=()=>transitionOnboarding(()=>setPage(null));
-  async function shareGame() {
+  async function shareGame(fallback) {
     if (sharing) return;
     if (typeof navigator.share === 'function') {
       setSharing(true);
@@ -194,7 +192,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
         setSharing(false);
       }
     }
-    open('share');
+    if(typeof fallback==='function')fallback();else open('share');
   }
   function toggleSound() {
     const enabled = !current.current.sound;
@@ -230,16 +228,19 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   const introAudible = plant.sound && running;
   const parent = page === 'reset' ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
-  return <main ref={tilt.garden} className={'garden scene-' + scene + (room!==null && !leaving?' visiting-room':'')+(leaving?' leaving-room':'') + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
+  return <main ref={tilt.garden} className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
     const button = event.target.closest?.('button');
     if (plant.sound && button && !button.disabled && !button.dataset.audio) void play('tap');
   }}>
-    <div className="pocket-floor" inert={room!==null?'':undefined} aria-hidden={room!==null||undefined}>
+    <div className="room-track" ref={passage.track} onPointerMove={passage.drag}
+      onPointerUp={e=>passage.release(e)} onPointerCancel={e=>passage.release(e,true)} onLostPointerCapture={e=>{if(e.target===e.currentTarget)passage.release(e,true);}}>
+    <div className="pocket-floor" inert={room!==null?'':undefined} aria-hidden={room!==null||undefined}
+      onPointerDown={!lesson && !intro && !page && !sharing?passage.start:undefined}>
     <div key={photo ? 'photo' : scene} ref={scenery} className="scenery" style={photo ? undefined : {backgroundImage:'url(/scenes/' + scene + '.webp)'}} aria-hidden="true">
       {photo && <img className="custom-photo" src={photo.src} style={photoStyle(photo)} alt="" draggable="false"/>}
     </div>
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
-      <PocketDevice lesson={lesson} finishLesson={()=>storage.setup('game')} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={()=>setRoom({moving:plant.id})} resting={!intro && !page && !sharing && room===null} commit={commit} sound={play}/>
+      <PocketDevice lesson={lesson} finishLesson={()=>storage.setup('game')} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={()=>passage.enter(plant.id)} resting={!intro && !page && !sharing && room===null} commit={commit} sound={play}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo' || !!lesson} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
@@ -251,20 +252,19 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
       <small className="garden-credit">© 2026 Waz Lab</small>
     </div>
-    {!lesson && !intro && !page && <button className="garden-pull" ref={gardenTab}
-      onPointerDown={e=>{swipe.current=e.clientY;e.currentTarget.setPointerCapture(e.pointerId);}}
-      onPointerCancel={()=>{swipe.current=null;}}
-      onPointerUp={e=>{if(swipe.current!==null && swipe.current-e.clientY>30)setRoom({});swipe.current=null;}}
-      onClick={()=>setRoom({})}>⌃ Garden</button>}
+    {!lesson && !intro && !page && <button className="garden-pull" ref={passage.handle}
+      aria-label="Open garden" onClick={passage.activate}><i aria-hidden="true"/>Garden</button>}
     </div>
-    {room!==null && <Collector plant={plant} moving={room.moving} now={now}
+    <div className="room-floor" inert={!passage.inside?'':undefined} aria-hidden={!passage.inside||undefined}>
+    {room!==null && <Collector active={passage.inside} plant={plant} moving={room.moving} now={now}
       move={async slot=>{const id=room.moving;const ok=await commit(p=>graduate(p,id,slot,Date.now()));
         return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
       relocate={async (id,from,to)=>{
         const ok=await commit(p=>relocateGraduate(p,id,from,to));
         return ok && current.current.graduates.some(g=>g.id===id && g.slot===to);
       }}
-      startClose={leaveRoom} shareLink={shareGame}/>}
+      startClose={passage.leave} shareLink={shareGame} purr={()=>{if(plant.sound)play('purr');}}/>}
+    </div></div>
     {!saveOK && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>
       <div className="intro-shade" aria-hidden="true"/>

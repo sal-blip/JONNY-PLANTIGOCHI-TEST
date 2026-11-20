@@ -98,16 +98,77 @@ function slat(b,x,y,h,w=5){
   b.r(x+1,y+1,1,h-3,wood.lit);b.r(x+w-2,y+2,1,h-3,wood.shade);
 }
 
+function floorboardRow(b,camera,j,y,h){
+  const {r,l}=b;
+  const seg=91+j*11,offset=(j*71)%seg;
+  for(let n=-1;n<11;n++){
+    const x=n*seg+offset;if(x+seg<camera||x>camera+402)continue;
+    const planks=['#b88861','#c3986a','#c18e63','#cda175','#b98d64'];
+    r(x,y,seg,h,planks[hash(n+100*j)%planks.length]);
+    r(x,y,seg,1,'#88634e');r(x,y+1,seg,1,'#dcb187');
+    const drift=Math.round((x-370)*h/580);
+    l(x,y,x+drift,y+h-1,'#8e684d');l(x+1,y+2,x+drift+1,y+h-1,'#d9b087');
+    for(let k=0;k<8;k++){
+      const gx=x+hash(n*300+j*23+k)%seg,gy=y+3+hash(n*19+k*97+j)%(h-3);
+      l(gx,gy,Math.min(x+seg-4,gx+5+hash(k+n*3)%20),gy,k%3===0?'#d3a77a':'#b18763');
+    }
+    if(j>2&&hash(n+7*j)%3===0){
+      const gx=x+seg*.68,gy=y+h*.63;
+      l(gx-7,gy,gx-2,gy-1,'#a97955');l(gx-1,gy-1,gx+5,gy,'#a97955');
+      r(gx-1,gy,3,1,'#ae7d55');
+    }
+  }
+}
+
+// Plank edges share the same vanishing point across both rooms and across the
+// original ceiling line. Cross beams grow farther apart toward the viewer.
+function ceiling(b,camera,top,bottom){
+  const {r,l,p}=b;
+  const project=(x,y)=>Math.round(x+(x-400)*(-y/540)+y*.22);
+  r(camera,top,BASE_WIDTH,bottom-top,'#c8ab85');
+  for(let x=-168;x<=968;x+=56){
+    const left=project(x,top),right=project(x+56,top),end=project(x,bottom);
+    p([left,top,right+1,top,project(x+56,bottom)+1,bottom,end,bottom],
+      ['#c9aa84','#cdb28b','#c5aa85','#ceb28b'][hash(x)%4]);
+    l(left,top,end,bottom,'#a38a6c');l(left+1,top,end+1,bottom,'#e1c59b');
+    for(let y=Math.floor(top/21)*21;y<bottom;y+=21){
+      const gx=x+5+hash(x+y)%42,stop=Math.min(bottom,y+4+hash(y+x+9)%13);
+      l(project(gx,y),y,project(gx,stop),stop,'#c1a37e');
+    }
+  }
+  for(let y=-46,step=80;y>top-20;y-=step,step=Math.round(step*1.37)){
+    const h=Math.round(4+Math.abs(y)*.024);
+    r(camera,y,BASE_WIDTH,h+3,'#b29a77');r(camera,y,BASE_WIDTH,h,'#987454');
+    r(camera,y,BASE_WIDTH,2,'#c19a6d');r(camera,y+h-2,BASE_WIDTH,2,'#816247');
+  }
+}
+
+export function drawRoomDepth(canvas,view,light,above){
+  const ctx=canvas.getContext('2d');if(!ctx)return;
+  const camera=view*BASE_WIDTH,below=canvas.height-BASE_HEIGHT-above;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const b=tools(ctx,palette(light.day,light.warmth));
+  ctx.save();ctx.translate(-camera,above);
+  if(above>0)ceiling(b,camera,-above,0);
+  if(below>0){
+    ctx.save();ctx.beginPath();ctx.rect(camera,BASE_HEIGHT,BASE_WIDTH,below);ctx.clip();
+    let y=306,h=31;
+    for(let row=6;y<BASE_HEIGHT+below;row++){
+      floorboardRow(b,camera,row,y,h);y+=h;h=Math.min(78,Math.round(h*1.22));
+    }
+    // A little more shadow in the foreground keeps the light at the windows.
+    const shade=ctx.createLinearGradient(0,BASE_HEIGHT,0,BASE_HEIGHT+below);
+    shade.addColorStop(0,'rgba(69,46,40,0)');shade.addColorStop(1,'rgba(69,46,40,.16)');
+    ctx.fillStyle=shade;ctx.fillRect(camera,BASE_HEIGHT,BASE_WIDTH,below);ctx.restore();
+  }
+  ctx.restore();
+}
+
 function structure(ctx,b,day,warmth,hour,camera){
   const {r,l,p}=b,end=Math.min(800,camera+420);
   r(camera,0,400,320,'#e7d8ad');
   // The staggered ceiling joints and beams establish the camera's depth.
-  r(camera,0,400,21,'#bd9b76');
-  for(let x=(Math.floor(camera/56)-2)*56;x<end+60;x+=56){
-    p([x,0,x+4,0,x+35,21,x+31,21],wood.shade);
-    l(x+4,0,x+35,20,'#e2bd8d');
-    for(let i=0;i<4;i++)l(x+10+i*9,0,x+25+i*9,12,'#c5a37c');
-  }
+  ceiling(b,camera,0,21);
   r(camera,21,400,7,wood.dark);r(camera,21,400,1,wood.gold);
   r(camera,23,400,2,wood.mid);r(camera,28,400,2,'#bda780');r(camera,30,400,2,'#dbc69d');
   r(camera,32,400,139,'#eadbb7');r(camera,171,400,40,'#b1b49a');
@@ -136,28 +197,8 @@ function structure(ctx,b,day,warmth,hour,camera){
   }
   // Wide boards recede toward a point beyond the back wall. Each plank has
   // its own end joint and growth rings, rather than a flat crosshatch.
-  const rows=[214,222,232,245,261,281,306,320];
-  for(let j=0;j<rows.length-1;j++){
-    const y=rows[j],h=rows[j+1]-y;
-    const seg=91+j*11,offset=(j*71)%seg;
-    for(let n=-1;n<11;n++){
-      const x=n*seg+offset;if(x+seg<camera||x>camera+402)continue;
-      const planks=['#b88861','#c3986a','#c18e63','#cda175','#b98d64'];
-      r(x,y,seg,h,planks[hash(n+100*j)%planks.length]);
-      r(x,y,seg,1,'#88634e');r(x,y+1,seg,1,'#dcb187');
-      const drift=Math.round((x-370)*h/580);
-      l(x,y,x+drift,y+h-1,'#8e684d');l(x+1,y+2,x+drift+1,y+h-1,'#d9b087');
-      for(let k=0;k<8;k++){
-        const gx=x+hash(n*300+j*23+k)%seg,gy=y+3+hash(n*19+k*97+j)%(h-3);
-        l(gx,gy,Math.min(x+seg-4,gx+5+hash(k+n*3)%20),gy,k%3===0?'#d3a77a':'#b18763');
-      }
-      if(j>2&&hash(n+7*j)%3===0){
-        const gx=x+seg*.68,gy=y+h*.63;
-        l(gx-7,gy,gx-2,gy-1,'#a97955');l(gx-1,gy-1,gx+5,gy,'#a97955');
-        r(gx-1,gy,3,1,'#ae7d55');
-      }
-    }
-  }
+  const rows=[214,222,232,245,261,281,306,337];
+  for(let j=0;j<rows.length-1;j++)floorboardRow(b,camera,j,rows[j],rows[j+1]-rows[j]);
   if(day>.25){
     const cast='rgba(255,225,155,'+(.11*day+warmth*.10)+')',shear=(hour-12)*2;
     // Sash shadows remain between four separately projected panes.
