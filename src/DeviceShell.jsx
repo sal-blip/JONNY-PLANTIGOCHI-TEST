@@ -19,7 +19,7 @@ function HardwareParts({layer, hits=false}) {
       visibility={visible?'visible':'hidden'} transform={pose.transform}>
       {i===RING ?
         <g transform="scale(.76 .75) rotate(-31)">
-          {hits ? <ellipse className="chain-grab" data-grab={i} rx="44" ry="37" strokeWidth="13"/> :
+          {hits ? <ellipse className="chain-grab ring-grab" data-grab={i} rx="44" ry="37" strokeWidth="13"/> :
             <g transform="rotate(31) translate(-146 -67)"><Part name="silver-ring"/></g>}
         </g> :
         hits ? <path className="chain-grab" data-grab={i} d={`M0 ${-LINK/2}v${LINK}`} strokeWidth="12" /> :
@@ -34,13 +34,15 @@ function useHardware(frontRef) {
     if(!device||!garden)return;
     const parts=[...device.querySelectorAll('[data-chain-part]')];
     const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    let chain=restingChain(), gravity=projectedGravity(0,0), frame=0, last=null, pointer=null;
+    let chain=restingChain(), gravity=projectedGravity(0,1,0), frame=0, last=null, pointer=null;
+    let usingSensors=false;
     function paint() {
       const poses=indices.map(i=>partPose(chain,i));
       for(const el of parts) {
         const pose=poses[Number(el.dataset.chainPart)-1];
-        el.setAttribute('transform',pose.transform);
-        el.setAttribute('visibility',(el.dataset.side==='back')===pose.back?'visible':'hidden');
+        const visibility=(el.dataset.side==='back')===pose.back?'visible':'hidden';
+        if(el.getAttribute('visibility')!==visibility) el.setAttribute('visibility',visibility);
+        if(visibility==='visible' && el.getAttribute('transform')!==pose.transform) el.setAttribute('transform',pose.transform);
       }
     }
     function stop() {cancelAnimationFrame(frame);frame=0;last=null;}
@@ -56,10 +58,10 @@ function useHardware(frontRef) {
     }
     function restore() {stop();chain=restingChain();paint();}
     function orient({detail}) {
-      if(!detail?.active||document.hidden||reduced?.matches){gravity=projectedGravity(0,0);stop();return;}
+      if(!detail?.active||document.hidden||reduced?.matches){usingSensors=false;gravity=projectedGravity(0,1,0);stop();return;}
       const next=projectedGravity(detail.x,detail.y,detail.z);
-      if(Math.hypot(next.x-gravity.x,next.y-gravity.y,next.z-gravity.z)<.016)return;
-      gravity=next;chain.quiet=0;wake();
+      if(usingSensors && Math.hypot(next.x-gravity.x,next.y-gravity.y,next.z-gravity.z)<.016)return;
+      usingSensors=true;gravity=next;chain.quiet=0;wake();
     }
     function impulse({detail}) {
       if(document.hidden||reduced?.matches||!detail)return;
@@ -83,8 +85,8 @@ function useHardware(frontRef) {
       if(eyelet) restore();
       const index=eyelet?RING:Number(target.dataset.grab);
       const node=chain.points[index];
-      gripChain(chain,index);
-      pointer={id:event.pointerId,dx:node.x-point.x,dy:node.y-point.y};
+      gripChain(chain,index,event.timeStamp);
+      pointer={id:event.pointerId,dx:node.x-point.x,dy:node.y-point.y,clientX:event.clientX,clientY:event.clientY};
       svg.setPointerCapture(event.pointerId);
       svg.classList.add('chain-held');
     }
@@ -92,11 +94,14 @@ function useHardware(frontRef) {
       if(!pointer||pointer.id!==event.pointerId)return;
       const point=localPoint(event);if(!point)return;
       event.preventDefault();event.stopPropagation();
+      pointer.clientX=event.clientX;pointer.clientY=event.clientY;
       dragChain(chain,point.x+pointer.dx,point.y+pointer.dy,event.timeStamp);
       paint();wake();
     }
     function end(event) {
       if(!pointer||pointer.id!==event.pointerId)return;
+      // Mobile browsers can report the last stretch of a swipe only on lift.
+      if(event.type==='pointerup' && (event.clientX!==pointer.clientX || event.clientY!==pointer.clientY)) move(event);
       const id=pointer.id;pointer=null;
       releaseChain(chain,event.timeStamp,!!reduced?.matches||event.type!=='pointerup');
       svg.classList.remove('chain-held');

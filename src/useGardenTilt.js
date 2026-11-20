@@ -52,6 +52,7 @@ export function useGardenTilt(paused) {
     const media = window.matchMedia?.(motionQuery);
     const change = event => setReduced(event.matches);
     media?.addEventListener('change', change);
+    if (media) setReduced(media.matches);
     return () => media?.removeEventListener('change', change);
   }, []);
 
@@ -59,7 +60,7 @@ export function useGardenTilt(paused) {
     const el = garden.current;
     if (!el || !listening) return;
     let neutral = null, previousAngle, hadHeading, frame = 0, x = 0, y = 0;
-    let gravity = null, lastSample = null, sampleTime = 0, lastFlick = -Infinity, accelerationBaseline = null;
+    let gravity = null, lastSample = null, flickReference = null, lastFlick = -Infinity, accelerationBaseline = null;
     function emit(detail) { el.dispatchEvent(new CustomEvent('plantigochi-gravity',{detail,bubbles:true})); }
     function impulse(vector, time) {
       if (time-lastFlick < 185) return;
@@ -90,7 +91,7 @@ export function useGardenTilt(paused) {
     }
     function reset() {
       neutral = null; lastSample = null; gravity = null; x = 0; y = 0;
-      sampleTime=0; lastFlick=-Infinity; accelerationBaseline=null;
+      flickReference=null; lastFlick=-Infinity; accelerationBaseline=null;
       cancelAnimationFrame(frame); frame = 0;
       el.style.removeProperty('--tilt-x'); el.style.removeProperty('--tilt-y');
       emit({x:0,y:0,active:false});
@@ -107,21 +108,25 @@ export function useGardenTilt(paused) {
       const hasHeading = Number.isFinite(event.alpha);
       const pose = orientationFrame(event);
       lastSample = {alpha:event.alpha,beta:event.beta,gamma:event.gamma};
-      const previous=gravity, now=performance.now(), seconds=(now-sampleTime)/1000;
-      gravity = screenGravity(event.beta,event.gamma,angle);sampleTime=now;
+      const now=Number.isFinite(event.timeStamp)?event.timeStamp:performance.now();
+      gravity = screenGravity(event.beta,event.gamma,angle);
       if (!neutral || previousAngle !== angle || hadHeading !== hasHeading) {
         x = 0; y = 0;
         if (!frame) frame = requestAnimationFrame(paint);
         neutral = pose; previousAngle = angle; hadHeading = hasHeading;
+        flickReference={...gravity,time:now};
         // Some browsers resume an earlier sensor grant without another prompt.
         if (needsPermission) setPermission('granted');
         return;
       }
-      if(previous && seconds>.004 && seconds<.17) {
-        const dx=gravity.x-previous.x, dy=gravity.y-previous.y, dz=gravity.z-previous.z;
-        const change=Math.hypot(dx,dy,dz);
-        if(change>.12 && change/seconds>3.3)
-          impulse({x:dx*35/seconds,y:dy*35/seconds,z:dz*35/seconds},now);
+      // Measure angular travel over a short interval. At 120 Hz even a
+      // brisk wrist movement produces only a few degrees in any one event.
+      const seconds=(now-flickReference.time)/1000;
+      if(seconds>=.032) {
+        const dx=gravity.x-flickReference.x, dy=gravity.y-flickReference.y, dz=gravity.z-flickReference.z;
+        if(seconds<.17 && Math.hypot(dx,dy,dz)/seconds>3.3)
+          impulse({x:dx*35/seconds,y:dy*35/seconds,z:dz*35/seconds},performance.now());
+        flickReference={...gravity,time:now};
       }
       const dx = dot(neutral.right, pose.normal), dy = -dot(neutral.up, pose.normal);
       const cos = Math.cos(angle * radians), sin = Math.sin(angle * radians);

@@ -52,7 +52,7 @@ export function restingChain() {
     const prev=points[i-1], a=restAngles[i-1]*Math.PI/180;
     points.push(node(prev.x+lengthAt(i)*Math.sin(a),prev.y+lengthAt(i)*Math.cos(a),EYELET.z));
   }
-  return {points, grip:null, side:1, quiet:0};
+  return {points, grip:null, toss:null, side:1, quiet:0};
 }
 
 export function projectedGravity(x,y,z=-1) {
@@ -115,11 +115,12 @@ function constrain(chain,passes) {
   }
 }
 
-export function gripChain(chain,index) {
+export function gripChain(chain,index,at=0) {
   if(index<1||index>RING) return;
   const p=chain.points[index],distance=leafContact(p.x,p.y).distance;
   chain.grip={index,side:p.z<0?-1:1,peak:distance,startDistance:distance,armed:false,turned:false,
-    target:{x:p.x,y:p.y,z:p.z}, vx:0,vy:0,time:null};
+    target:{x:p.x,y:p.y,z:p.z}, samples:[{x:p.x,y:p.y,at}]};
+  chain.toss=null;
   chain.quiet=0;
 }
 
@@ -163,10 +164,17 @@ export function dragChain(chain,x,y,at) {
     }
   }
   const sx=target.x-grip.target.x,sy=target.y-grip.target.y;
-  const seconds=grip.time==null?1/60:limit((at-grip.time)/1000,.005,.08);
-  grip.vx=limit(.3*grip.vx+.7*sx/seconds,-1000,1000);
-  grip.vy=limit(.3*grip.vy+.7*sy/seconds,-1000,1000);
-  grip.target=target;grip.time=at;
+  // Use the finger path, even when the tether has reached its full length.
+  // Averaging recent travel also handles the small duplicate moves before lift.
+  const samples=grip.samples;
+  const previous=samples.at(-1);
+  if(at-previous.at>100) {
+    samples.length=0;
+    samples.push({...previous,at:at-50});
+  }
+  samples.push({x,y,at});
+  while(samples.length>2 && samples[1].at<at-80) samples.shift();
+  grip.target=target;
   // A short drag translates the whole reachable neighbourhood before the
   // pins tighten. This also gives reduced-motion users direct manipulation.
   for(let i=1;i<=RING;i++) {
@@ -179,13 +187,22 @@ export function dragChain(chain,x,y,at) {
 
 export function releaseChain(chain,at,reduced=false) {
   const grip=chain.grip;if(!grip)return;
-  const recent=grip.time!=null&&at-grip.time<115;
+  const first=grip.samples[0],last=grip.samples.at(-1);
+  const age=Math.max(0,at-last.at);
+  const seconds=Math.max(.012,(last.at-first.at)/1000);
+  const scale=reduced?0:limit(1-Math.max(0,age-35)/80,0,1)/seconds;
+  let vx=(last.x-first.x)*scale,vy=(last.y-first.y)*scale;
+  const speed=Math.hypot(vx,vy);
+  const gain=Math.min(1.12,1200/(speed||1));
+  vx*=gain;vy*=gain;
   chain.grip=null;
   for(let i=1;i<=RING;i++) {
-    const p=chain.points[i],share=Math.max(0,1-Math.abs(grip.index-i)*.17);
-    p.vx=!reduced&&recent?grip.vx*share:0;p.vy=!reduced&&recent?grip.vy*share:0;
-    p.vz=!reduced&&recent&&Math.hypot(grip.vx,grip.vy)>350?grip.side*85*share:0;
+    const p=chain.points[i];
+    const share=i<=grip.index ? i/grip.index : 1/(1+.12*(i-grip.index));
+    p.vx=vx*share;p.vy=vy*share;p.vz=0;
   }
+  // An outward toss can carry loose hardware around the lip after release.
+  chain.toss=speed>260 ? {index:grip.index,side:grip.side,remaining:.22} : null;
   chain.quiet=0;
 }
 
@@ -201,6 +218,22 @@ export function flickChain(chain,x,y,z=0) {
   chain.quiet=0;
 }
 
+function turnAtRim(chain,h) {
+  const toss=chain.toss;
+  if(!toss)return;
+  toss.remaining-=h;
+  if(toss.remaining<=0) {chain.toss=null;return;}
+  const p=chain.points[toss.index], contact=leafContact(p.x,p.y);
+  if(contact.distance<radiusAt(toss.index)+2 || p.vx*contact.nx+p.vy*contact.ny<110)return;
+  chain.side=-toss.side;
+  for(let i=toss.index;i>0;i--) {
+    const q=chain.points[i];
+    if(leafContact(q.x,q.y).distance<=radiusAt(i)+1)break;
+    q.vz=chain.side*250;
+  }
+  chain.toss=null;
+}
+
 export function stepChain(chain,gravity,elapsed) {
   if(!Number.isFinite(elapsed)||elapsed<=0) return true;
   const dt=Math.min(dtLimit,elapsed),steps=Math.ceil(dt*100),h=dt/steps;
@@ -208,10 +241,11 @@ export function stepChain(chain,gravity,elapsed) {
   let speed=0;
   for(let k=0;k<steps;k++) {
     speed=0;
+    turnAtRim(chain,h);
     for(let i=1;i<=RING;i++) {
       const p=chain.points[i];p.oldX=p.x;p.oldY=p.y;p.oldZ=p.z;
       if(i===chain.grip?.index)continue;
-      const drag=Math.exp(-(i===RING?2.5:3.4)*h);
+      const drag=Math.exp(-(i===RING?2.0:2.9)*h);
       p.vx=(p.vx+force*gravity.x*h)*drag;p.vy=(p.vy+force*gravity.y*h)*drag;
       const plane=chain.side>0?15.5:-15.5;
       p.vz=(p.vz+((plane-p.z)*28+(gravity.z??-1)*12)*h)*Math.exp(-5.3*h);

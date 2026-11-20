@@ -49,3 +49,10 @@
 }
 .chain-held .chain-grab,
 .chain-held .chain-eyelet { cursor: grabbing; }
+
+.device-chain-front {touch-action:none}
+.ring-grab {fill:transparent;pointer-events:visible}
+@media (any-pointer:coarse) {
+  .chain-grab {vector-effect:non-scaling-stroke;stroke-width:20px}
+  .ring-grab {stroke-width:14px}
+}

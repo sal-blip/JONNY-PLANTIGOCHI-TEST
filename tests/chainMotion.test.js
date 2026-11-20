@@ -114,3 +114,37 @@ test('a delayed animation frame has bounded integration time',()=>{
   stepChain(b,gravity,.05);
   assert.deepEqual(a,b);
 });
+
+test('a quick swipe after holding still keeps its momentum through duplicate lift coordinates',()=>{
+  const chain=restingChain(),p=ring(chain);
+  const {x,y}=p;
+  gripChain(chain,RING,0);
+  dragChain(chain,x+18,y,700);
+  dragChain(chain,x+43,y,724);
+  for(const at of [727,730,733,736]) dragChain(chain,x+43,y,at);
+  releaseChain(chain,740);
+  assert.ok(p.vx>360);
+  const left=p.x;
+  for(let i=0;i<5;i++) stepChain(chain,flat,1/60);
+  assert.ok(p.x>left+10);
+});
+
+test('an outward finger flick can tuck the ring behind the leaf without a return drag',()=>{
+  const chain=restingChain(),p=ring(chain), {x,y}=p;
+  gripChain(chain,RING,100);
+  for(let i=1;i<=4;i++) dragChain(chain,x+(55-x)*i/4,y+(180-y)*i/4,100+i*15);
+  releaseChain(chain,167);
+  const upright=projectedGravity(0,1,0);
+  for(let i=0;i<150;i++) stepChain(chain,upright,1/60);
+  assert.ok(p.z<0 && partPose(chain,RING).back);
+  assert.deepEqual([chain.points[0].x,chain.points[0].y,chain.points[0].z],[EYELET.x,EYELET.y,EYELET.z]);
+});
+
+test('holding at the end of a swipe does not throw the ring on release',()=>{
+  const chain=restingChain(),p=ring(chain);
+  gripChain(chain,RING,100);
+  dragChain(chain,p.x+36,p.y-18,145);
+  releaseChain(chain,320);
+  assert.equal(Math.hypot(p.vx,p.vy,p.vz),0);
+  assert.equal(chain.toss,null);
+});
