@@ -5,7 +5,8 @@ export function createInstallPrompt(browser) {
   let invitation = null;
   let state = 'manual';
 
-  const getState = () => display?.matches || browser.navigator.standalone === true ? 'installed' : state;
+  const isStandalone = () => Boolean(display?.matches || browser.navigator.standalone === true);
+  const getState = () => isStandalone() ? 'installed' : state;
   function notify() { for (const update of subscribers) update(); }
   function setState(next) { state = next; notify(); }
 
@@ -36,7 +37,7 @@ export function createInstallPrompt(browser) {
   }
 
   return {
-    getState, prompt,
+    getState, isStandalone, prompt,
     subscribe(update) {
       subscribers.add(update);
       return () => subscribers.delete(update);

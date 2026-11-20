@@ -73,7 +73,7 @@ export function toyCards(section, plant, now) {
         if(blockers)entries.push(card('Growth needs',blockers.replace('Needs ',''),'care'));
       }
       if (!dead && plant.stage==='grown') entries.unshift(card('Move to garden','Choose a permanent pot','graduate'));
-      return [...entries,...[['Sprout','1 hour'],['Young plant','3 days'],['First split','5 days'],['Grown plant','7 days']].map(([name,age])=>card(name,age+' growing time','next'))];
+      return [...entries,...(dead?[]:[card('Rename plant',plant.name || 'Monstera','rename')]),...[['Sprout','1 hour'],['Young plant','3 days'],['First split','5 days'],['Grown plant','7 days']].map(([name,age])=>card(name,age+' growing time','next'))];
     }
     case 'jar': {
       if (!plant.jar) {
@@ -84,8 +84,8 @@ export function toyCards(section, plant, now) {
         ...(dead && rooted?[card('Pot cutting','Start generation '+plant.jar.generation,'new:cutting')]:[])];
     }
     case 'book': {
-      const leaves=plant.book.slice().reverse().map(leaf=>card('Gen '+leaf.generation+' · '+STAGE_NAMES[leaf.stage],
-        ageLabel(leaf.diedAt-leaf.plantedAt)+' old · '+leaf.cause,'next',{leaf:leaf.stage}));
+      const leaves=plant.book.slice().reverse().map(leaf=>card((leaf.name || 'Monstera')+' · Gen '+leaf.generation,
+        STAGE_NAMES[leaf.stage]+' · '+ageLabel(leaf.diedAt-leaf.plantedAt)+' · '+leaf.cause,'next',{leaf:leaf.stage}));
       if (!leaves.length) leaves.push(card('Empty book','Your keepsakes go here',null));
       if (dead) {
         leaves.push(card('Plant a seed','Start a new Monstera','new:seed'));

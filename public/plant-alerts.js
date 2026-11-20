@@ -59,12 +59,23 @@ async function notifyGarden(event) {
 function queue(event,data){pending=pending.catch(()=>{}).then(()=>notifyGarden(data));event.waitUntil(pending);}
 self.addEventListener('push',event=>queue(event));
 self.addEventListener('message',event=>{if(event.data?.type==='milestone')queue(event,event.data);});
+function isInstalledWindow(client){
+  return new Promise(resolve=>{
+    const channel=new MessageChannel();
+    const finish=value=>{clearTimeout(timer);channel.port1.close();resolve(value===true);};
+    const timer=setTimeout(()=>finish(false),350);
+    channel.port1.onmessage=e=>finish(e.data);
+    try{client.postMessage({type:'plant-window-mode'},[channel.port2]);}catch{finish(false);}
+  });
+}
 self.addEventListener('notificationclick',event=>{
   event.notification.close();
   event.waitUntil((async()=>{
     const action=event.notification.data?.action;
     const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
-    const garden=windows.find(c=>new URL(c.url).origin===self.location.origin);
+    const candidates=windows.filter(c=>new URL(c.url).origin===self.location.origin);
+    const installed=await Promise.all(candidates.map(isInstalledWindow));
+    const garden=candidates.find((_,i)=>installed[i]);
     if(garden){await garden.focus();if(action)garden.postMessage({type:'plant-care',action});return;}
     return self.clients.openWindow(action==='drain'||action==='water'?'/?care='+action:'/');
   })());

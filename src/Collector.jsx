@@ -147,9 +147,9 @@ export default function Collector({plant,moving,now,move,relocate,shareLink,star
     try{await navigator.share({files:[postcard.file],title:'My Plantigochi garden'});}
     catch(error){if(error.name!=='AbortError')setNotice('Save the image to share this postcard.');}
   }
-  const message=notice || (inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):speciesName(inHand)+' · Gen '+inHand.generation+' · Choose a free spot.'):
+  const message=notice || (inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):(inHand.name || speciesName(inHand))+' · Gen '+inHand.generation+' · Choose a free spot.'):
     picking?(slot!==null&&!chosen?'Settle here on the '+placeName(slot).toLowerCase()+'?':'Choose a spot for your grown plant.'):
-    slot!==null?(chosen?speciesName(chosen)+' · Gen '+chosen.generation+' · '+new Date(chosen.movedAt).toLocaleDateString():placeName(slot)+' · Open'):
+    slot!==null?(chosen?(chosen.name || speciesName(chosen))+' · Gen '+chosen.generation+' · '+new Date(chosen.movedAt).toLocaleDateString():placeName(slot)+' · Open'):
     graduates.length?'Tap or drag a plant to move it.':'Grow a Monstera to make it at home here.');
   return <section className="collector" aria-label="Collector garden" onKeyDown={e=>{
     if(postcard||busy || e.altKey || e.metaKey || e.ctrlKey)return;

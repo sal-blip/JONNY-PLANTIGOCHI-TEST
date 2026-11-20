@@ -58,7 +58,7 @@ function GameArt({game}) {
   return <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>;
 }
 
-export default function PocketDevice({plant,now,resting,commit,sound,openMove,careTarget}) {
+export default function PocketDevice({plant,now,resting,commit,sound,openMove,careTarget,rename,lesson,finishLesson}) {
   const [path,setPath]=useState([]);
   const [closeUp,setCloseUp]=useState(false), [feedback,setFeedback]=useState(null);
   const retreat=useRef(null), held=useRef(null), pressed=useRef(null), speech=useRef(null), heart=useRef(null);
@@ -102,7 +102,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
   const cards=browsing?toyCards(section,plant,now):[];
   const index=Math.min(screen?.index??0,cards.length-1), choice=cards[index];
   const branch=browsing?(section==='home'?choice.command:parentBranch[section]??section):undefined;
-  let title='Monstera';
+  let title=plant.name || 'Monstera';
   if (browsing) title=parentBranch[section]?toyTitles[branch]+' · '+toyTitles[section]:toyTitles[section];
   else if (lost) title='Three misses';
   else if (game) title=game.name==='dew'?'Dew Catch '+game.level+'/'+LEVELS:gameNames.echo;
@@ -114,7 +114,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
   const growth=showMeters ? growthReadout(plant,now) : null;
   const water=showMeters ? waterReadout(plant,now) : null;
   const status=game?playText(game):mood+' · ♥ Menu';
-  const description=browsing?title+' · '+choice.label+' · '+choice.hint:game?title+' · '+status+' '+(game.name==='dew'?game.chances+' chances':''):'Monstera · '+mood;
+  const description=browsing?title+' · '+choice.label+' · '+choice.hint:game?title+' · '+status+' '+(game.name==='dew'?game.chances+' chances':''):title+' · '+mood;
   useEffect(()=>{ if(game?.name) heart.current?.focus({preventScroll:true}); },[game?.name]);
 
   function go(id,initial=0) {
@@ -152,6 +152,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
     if (cmd==='back' || cmd==='resume') back();
     else if (cmd==='next') browse(1);
     else if (cmd==='leave') leaveGame();
+    else if (cmd==='rename') rename();
     else if (cmd==='graduate') openMove();
     else if (cmd==='pour-extra') return give('water',true);
     else {
@@ -170,6 +171,9 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
   }
   function press(key) {
     if (!resting) return;
+    if(lesson==='watered')return;
+    // During the first drink the same heart presses run the normal Care and Water commands.
+    if(lesson==='water' && key!=='heart' && key!=='back')return;
     let voice='tap';
     if (key==='back') back();
     else if (playing) activity.key(key);
@@ -239,8 +243,14 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
   },[resting]);
   useEffect(()=>()=>clearTimeout(speech.current),[]);
 
+  useEffect(()=>{if(lesson==='watered')leaveGame();},[lesson]);
   const near=resting && (closeUp || Boolean(section) || Boolean(game));
-  return <div className={'inspect-view'+(near?' close-up':'')}>
+  return <>{lesson && <aside className="water-lesson" aria-live="polite">
+      <strong>{lesson==='watered'?'First drink saved':'A first drink for '+plant.name}</strong>
+      {lesson==='watered'?<><p>{plant.stage==='seed'?'Your seed sprouts when it is an hour old.':'Your seed has sprouted.'}</p>
+        <button className="lesson-done" onClick={finishLesson}>Meet my plant</button></>:
+        <p>{!section?'Press the heart to open your toy menu.':section==='home'?'Press the heart to choose Care.':'Press the heart to choose Water.'}</p>}
+    </aside>}<div className={'inspect-view'+(near?' close-up':'')}>
     <div className="device">
       <div className="inspect-shell"><DeviceShell/></div>
       <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} data-branch={branch} role="group" aria-label={description}>
@@ -287,9 +297,9 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
         }}>
         <button className="toy-back" data-audio="toy" aria-label="Back on toy" title="Back · Hold to return to plant" aria-description="Hold to return to your plant." onContextMenu={e=>e.preventDefault()} onClick={()=>press('back')}><CornerUpLeft/></button>
         <button data-audio="toy" aria-label={playing?'Play left':'Previous toy item'} title="Previous" onClick={()=>press('left')}><ChevronLeft/></button>
-        <button ref={heart} data-audio="toy" className="accept toy-heart" aria-label={playing?'Play heart':choice?'Choose '+choice.label:'Open toy menu'} title="Choose" aria-disabled={Boolean(choice && (choice.locked || !choice.command))} onClick={()=>press('heart')}><Heart/></button>
+        <button ref={heart} data-audio="toy" className={'accept toy-heart'+(lesson==='water'?' teaching-heart':'')} aria-label={playing?'Play heart':choice?'Choose '+choice.label:'Open toy menu'} title="Choose" aria-disabled={Boolean(choice && (choice.locked || !choice.command))} onClick={()=>press('heart')}><Heart/></button>
         <button data-audio="toy" aria-label={playing?'Play right':'Next toy item'} title="Next" onClick={()=>press('right')}><ChevronRight/></button>
       </div>
       <span className="sr-only" role="status">{description}</span>
-    </div></div>;
+    </div></div></>;
 }

@@ -2,7 +2,8 @@ import {useCallback,useEffect,useRef,useState} from 'react';
 import {reminderSchedule} from './reminderSchedule.js';
 import {STAGES,STAGE_NAMES} from './game.js';
 
-const KEY='plantigochi.alert-device.v1';
+import {exportGardenRaw} from './useGardenSave.js';
+import {alertKey as KEY,withReminderLock} from './alertCleanup.js';
 function device() {try{return JSON.parse(localStorage.getItem(KEY))||{};}catch{return {};}}
 function persist(d){localStorage.setItem(KEY,JSON.stringify(d));}
 function supported(){return window.isSecureContext && 'Notification' in window && 'PushManager' in window && 'serviceWorker' in navigator;}
@@ -30,7 +31,9 @@ export function usePlantAlerts(plant,offline) {
     let active=true;
     const run=async()=>{
       if(!active)return;
-      const d=device(),cache=await caches.open('plantigochi-notices');
+      const d=device();
+      if(!d.token || d.token!==settings.token || Boolean(d.enabled)!==Boolean(settings.enabled))return;
+      const cache=await caches.open('plantigochi-notices');
       const data=JSON.parse(schedule);
       const lastNudge=Number(await (await cache.match('/notice-company-time'))?.text()) || 0;
       if(data.companyDue && lastNudge){
@@ -39,7 +42,7 @@ export function usePlantAlerts(plant,offline) {
       }
       if(!active)return;
       await cache.put('/notice-schedule',Response.json(enabled?data:{disabled:true}));
-      if(!d.token || !navigator.onLine)return;
+      if(!navigator.onLine)return;
       if(!enabled){
         if(d.pendingDelete || d.enabled){
           await api('DELETE',d.token);const current=device();
@@ -59,27 +62,32 @@ export function usePlantAlerts(plant,offline) {
       await api('PUT',d.token,{endpoint:sub.endpoint,due:future(data.due),criticalDue:future(data.criticalDue),companyDue:future(data.companyDue)});
       if(active){lastSync.current=signature;setNotice('');}
     };
-    work.current=work.current.catch(()=>{}).then(()=>navigator.locks?navigator.locks.request('plantigochi-reminders',run):run()).catch(()=>{if(active)setNotice('Reminders will sync when the connection returns.');});
+    work.current=work.current.catch(()=>{}).then(()=>withReminderLock(run)).catch(()=>{if(active)setNotice('Reminders will sync when the connection returns.');});
     return ()=>{active=false;};
-  },[schedule,enabled,retry,capability,offline,settings.pendingDelete]);
+  },[schedule,enabled,retry,capability,offline,settings.pendingDelete,settings.token,settings.enabled]);
   async function toggle(){
     if(lock.current||!capability||offline!=='ready')return;
     lock.current=true;setBusy(true);setNotice('');
     try {
-      const d=device();
-      if(enabled){
-        const off={...d,enabled:false,pendingDelete:true};persist(off);setSettings(off);
-        const cache=await caches.open('plantigochi-notices');await cache.put('/notice-schedule',Response.json({disabled:true}));
-        const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub)await sub.unsubscribe();
-      }else{
-        if(await Notification.requestPermission()!=='granted'){setNotice('Allow notifications in the device settings to enable reminders.');return;}
-        const res=await fetch('/api/alerts/key',{cache:'no-store'});if(!res.ok)throw Error();
-        const {publicKey}=await res.json();const key=Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
-        const reg=await navigator.serviceWorker.ready;
-        if(!await reg.pushManager.getSubscription())await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
-        const next={...d,enabled:true,pendingDelete:false,token:d.token||Array.from(crypto.getRandomValues(new Uint8Array(32)),n=>n.toString(16).padStart(2,'0')).join('')};
-        persist(next);lastSync.current='';setSettings(next);
+      if(!enabled && await Notification.requestPermission()!=='granted'){
+        setNotice('Allow notifications in the device settings to enable reminders.');return;
       }
+      await withReminderLock(async()=>{
+        if(JSON.parse(await exportGardenRaw())?.id!==plant.id)return;
+        const d=device();
+        if(enabled){
+          const off={...d,enabled:false,pendingDelete:true};persist(off);setSettings(off);
+          const cache=await caches.open('plantigochi-notices');await cache.put('/notice-schedule',Response.json({disabled:true}));
+          const reg=await navigator.serviceWorker.ready;const sub=await reg.pushManager.getSubscription();if(sub)await sub.unsubscribe();
+        }else{
+          const res=await fetch('/api/alerts/key',{cache:'no-store'});if(!res.ok)throw Error();
+          const {publicKey}=await res.json();const key=Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+          const reg=await navigator.serviceWorker.ready;
+          if(!await reg.pushManager.getSubscription())await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+          const next={...d,enabled:true,pendingDelete:false,token:d.token||Array.from(crypto.getRandomValues(new Uint8Array(32)),n=>n.toString(16).padStart(2,'0')).join('')};
+          persist(next);lastSync.current='';setSettings(next);
+        }
+      });
     }catch{setNotice('Could not update alerts. Reopen the installed app while online and try again.');}
     finally{lock.current=false;setBusy(false);}
   }
@@ -88,6 +96,6 @@ export function usePlantAlerts(plant,offline) {
     if(!enabled || prev.id!==plant.id || plant.deadAt!==null || STAGES.indexOf(plant.stage)<=STAGES.indexOf(prev.stage))return;
     navigator.serviceWorker.ready.then(reg=>reg.active?.postMessage({type:'milestone',id:plant.id,stage:plant.stage,label:STAGE_NAMES[plant.stage]})).catch(()=>{});
   },[plant,enabled]);
-  const toggleCompany=()=>{try{const d=device();const next={...d,company:!d.company};persist(next);setSettings(next);}catch{setNotice('Could not save the company reminder setting.');}};
+  const toggleCompany=()=>{try{const d=device();if(!d.enabled || d.token!==settings.token)return;const next={...d,company:!d.company};persist(next);setSettings(next);}catch{setNotice('Could not save the company reminder setting.');}};
   return {enabled,busy,notice,toggle,capable:capability,denied,company:!!settings.company,toggleCompany};
 }

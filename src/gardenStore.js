@@ -3,7 +3,7 @@ import {KEY, newPlant, readPlant} from './game.js';
 const databaseName = 'plantigochi.pocket.garden';
 const storeName = 'garden';
 const currentKey = 'current';
-const welcomeKey = 'welcome-seen';
+const setupKey = 'setup';
 
 export class SaveIssue extends Error {
   constructor(message,raw=null) { super(message); this.raw=raw; }
@@ -24,59 +24,91 @@ function openDB() {
   });
 }
 export function gardenStore(legacyStorage, visible) {
-  let db;
-  async function transaction(mode, apply, lookup = records => records.get(currentKey)) {
-    db ??= await openDB();
+  let database;
+  async function transaction(mode, apply) {
+    database ??= openDB().catch(error=>{database=null;throw error;});
+    const db=await database;
     return new Promise((resolve,reject)=>{
-      const tx=db.transaction(storeName,mode);
-      const records=tx.objectStore(storeName);
-      const read=lookup(records);
+      const tx=db.transaction(storeName,mode), records=tx.objectStore(storeName);
+      const current=records.get(currentKey), setup=records.get(setupKey);
       let result, fault;
-      read.onsuccess=()=>{
-        try {result=apply(records,read.result);} catch(error){ fault=error;tx.abort(); }
+      setup.onsuccess=()=>{
+        try {result=apply(records,current.result,setup.result || {epoch:null});}
+        catch(error){fault=error;fault.epoch=setup.result?.epoch ?? null;tx.abort();}
       };
       tx.oncomplete=()=>resolve(result);
       tx.onabort=()=>reject(fault || tx.error || new Error('Save interrupted'));
-      tx.onerror=()=>{};
     });
   }
   const decode=raw=>loadSnapshot(raw,Date.now(),visible());
-  const write=(records,p)=>{records.put(JSON.stringify(p),currentKey);return p;};
-  const read=()=>transaction('readwrite',(records,raw)=>{
-    const p=decode(raw);
-    if(JSON.stringify(p)!==raw)write(records,p);
-    return p;
-  });
+  function snapshot(records,raw,setup) {
+    const migrating=raw===undefined && !setup.epoch;
+    if(migrating)raw=legacyStorage().getItem(KEY) ?? undefined;
+    const plant=raw===undefined?null:decode(raw);
+    if(plant) {
+      const text=JSON.stringify(plant);
+      if(migrating || text!==raw)
+        records.put(text,currentKey);
+    }
+    const phase=setup.phase || (plant?'game':'welcome');
+    const allowed=plant?['game','water','watered']:['welcome','name','tour'];
+    if(!allowed.includes(phase))throw new SaveIssue('The setup record needs recovery.',raw ?? null);
+    return {plant,phase,epoch:setup.epoch,draft:setup.draft || ''};
+  }
+  function change(expected, operation){
+    return transaction('readwrite',(records,raw,setup)=>{
+      if(setup.epoch!==expected.epoch)throw new SaveIssue('This garden changed in another window.');
+      return operation(records,raw,setup);
+    });
+  }
+  function save(records,plant,setup){
+    if(plant)records.put(JSON.stringify(plant),currentKey);
+    records.put(setup,setupKey);
+    return {plant,phase:setup.phase,epoch:setup.epoch,draft:setup.draft || ''};
+  }
   return {
-    read,
-    hasVisited() {
-      return transaction('readonly',(_,keys)=>keys.includes(currentKey) || keys.includes(welcomeKey) ||
-        legacyStorage().getItem(KEY)!==null, records=>records.getAllKeys());
-    },
-    rememberWelcome() {
-      return transaction('readwrite',records=>{records.put(true,welcomeKey);},records=>records.getKey(welcomeKey));
-    },
-    async initialize() {
-      await transaction('readwrite',(records,stored)=>{
-        if(stored!==undefined) {const p=decode(stored);if(JSON.stringify(p)!==stored)write(records,p);return;}
-        const legacy=legacyStorage().getItem(KEY);
-        write(records,legacy===null?newPlant():decode(legacy));
-      });
-      return read();
-    },
-    update(fn) {
-      return transaction('readwrite',(records,raw)=>{
-        const previous=decode(raw);
-        const next=fn(previous);
-        if (next!==previous || JSON.stringify(next)!==raw) write(records,next);
-        return next;
+    read:()=>transaction('readwrite',snapshot),
+    exportRaw:()=>transaction('readonly',(_,raw,setup)=>raw ?? (setup.epoch?null:legacyStorage().getItem(KEY))),
+    setup(expected,next,draft=''){
+      return change(expected,(records,raw,setup)=>{
+        const current=snapshot(records,raw,setup);
+        if(current.phase!==expected.phase)return current;
+        let plant=current.plant;
+        switch(current.phase+'-'+next){
+          case 'tour-welcome': case 'welcome-name': case 'name-welcome': case 'name-name': break;
+          case 'name-water': plant=newPlant(Date.now(),draft);break;
+          case 'watered-game': break;
+          default:throw new SaveIssue('Open the current setup step and try again.');
+        }
+        return save(records,plant,{epoch:setup.epoch,phase:next,...(next==='name'?{draft}:{})});
       });
     },
-    replace(backup) {
-      return transaction('readwrite',(records,raw)=>{
-        if (raw!==undefined) records.put(raw,'before-restore');
-        const next=decode(JSON.stringify(backup));
-        return write(records,next);
+    update(expected,fn){
+      return change(expected,(records,raw,setup)=>{
+        const current=snapshot(records,raw,setup);
+        if(!current.plant || current.plant.id!==expected.plant?.id)return current;
+        const plant=fn(current.plant);
+        const phase=current.phase==='water' && plant.wateredAt!==null?'watered':current.phase;
+        if(plant===current.plant && phase===current.phase)return current;
+        return save(records,plant,{epoch:setup.epoch,phase});
+      });
+    },
+    replace(expected,backup){
+      return change(expected,(records,raw,setup)=>{
+        if(raw!==undefined)records.put(raw,'before-restore');
+        return save(records,decode(JSON.stringify(backup)),{epoch:setup.epoch,phase:'game'});
+      });
+    },
+    reset(expected,onClear){
+      return change(expected,(records,raw)=>{
+        if(!raw || JSON.parse(raw).id!==expected.plant?.id)throw new SaveIssue('Reopen Settings to reset the current garden.');
+        const storage=legacyStorage();
+        onClear(storage);
+        storage.removeItem(KEY);
+        storage.removeItem('plantigochi.tilt');
+        storage.removeItem('plantigochi-save-signal');
+        records.clear();
+        return save(records,null,{epoch:crypto.randomUUID(),phase:'tour'});
       });
     },
   };

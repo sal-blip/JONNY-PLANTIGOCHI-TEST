@@ -95,3 +95,29 @@ test('the service worker shows the right care warning and suppresses duplicate a
   await cache.put('/notice-schedule',Response.json({...company,companyAt:now-10*HOUR}));await push();assert.equal(shown.length,3);
   await cache.put('/notice-schedule',Response.json({disabled:true}));await push();assert.equal(shown.length,3);
 });
+
+test('care alerts focus the installed garden even with a browser tab open',async()=>{
+  const {runInNewContext}=await import('node:vm');
+  let handle, windows, opened;
+  const messages=[];
+  const client=(name,installed)=>({
+    url:'https://garden.example/',
+    postMessage(data,ports){
+      if(ports){ports[0].postMessage(installed);ports[0].close();}
+      else messages.push([name,data.action]);
+    },
+    async focus(){messages.push([name,'focus']);},
+  });
+  const self={location:{origin:'https://garden.example'},clients:{
+    matchAll:async()=>windows,openWindow:async url=>{opened=url;},
+  },addEventListener(name,fn){if(name==='notificationclick')handle=fn;}};
+  runInNewContext(fs.readFileSync('public/plant-alerts.js','utf8'),{self,URL,MessageChannel,setTimeout,clearTimeout});
+  const click=()=>new Promise((resolve,reject)=>handle({notification:{data:{action:'water'},close(){}},
+    waitUntil:p=>p.then(resolve,reject)}));
+  windows=[client('tab',false),client('app',true)];
+  await click();
+  assert.deepEqual(messages,[['app','focus'],['app','water']]);
+  windows=[client('tab',false)];
+  await click();
+  assert.equal(opened,'/?care=water');
+});

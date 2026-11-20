@@ -1,13 +1,15 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Leaf} from 'lucide-react';
 import InstallHelp from './InstallHelp.jsx';
+import {exportGardenRaw} from './useGardenSave.js';
+import {downloadFile} from './Recovery.jsx';
 import './WelcomeTour.css';
 
 const cards=[
   {lead:'Meet your',name:'Plantigochi',copy:'A tiny Monstera to raise, right on your phone.'},
   {lead:'Watch it',name:'grow',copy:'Water it, play together, and watch new leaves unfold over a week of good care.'},
   {lead:'Give it',name:'a home',copy:'Move grown plants into your garden, arrange them your way, and start again with a new seed.'},
-  {lead:'Add to your',name:'Home Screen',copy:'Open your pocket garden with a tap.'},
+  {lead:'Add to your',name:'Home Screen',copy:'Install to play. Already installed? Open the Plantigochi icon.'},
 ];
 const last=cards.length-1;
 const titleOf=card=>card.lead+' '+card.name;
@@ -26,20 +28,33 @@ function TourArt({step}){
   }
 }
 
-export default function WelcomeTour({phone,onPlay,remember,replay=false}){
+export default function WelcomeTour({phone,onBegin,onClose,issue}){
   const [step,setStep]=useState(0);
   const [splash,setSplash]=useState(()=>!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const heading=useRef(null), dialog=useRef(null), touch=useRef(null), navigation=useRef(0);
-  const card=cards[step], playLabel=replay?'Back to game':'Play in browser';
+  const heading=useRef(null), dialog=useRef(null), touch=useRef(null);
+  const [canExport,setCanExport]=useState(false);
+  const [exportError,setExportError]=useState('');
+  const installed=phone.standalone;
+  const card=step===last && installed?{lead:'Your pocket',name:'garden',copy:'Your seed is ready to meet you.'}:cards[step];
   useLayoutEffect(()=>{
     const el=dialog.current;
     if(el && !el.open)el.showModal();
     return ()=>{if(el?.open)el.close();};
   },[]);
   useLayoutEffect(()=>{heading.current?.focus({preventScroll:true});},[step]);
-  useEffect(()=>()=>{
-    navigation.current++;
-  },[]);
+  useEffect(()=>{
+    if(installed || step!==last)return;
+    let active=true;
+    exportGardenRaw().then(raw=>{if(active)setCanExport(raw!=null);}).catch(()=>{});
+    return ()=>{active=false;};
+  },[installed,step]);
+  async function exportExisting(){
+    try {
+      const raw=await exportGardenRaw();
+      if(raw==null){setCanExport(false);return;}
+      downloadFile(new Blob([raw],{type:'application/json'}),'plantigochi-backup.json');
+    }catch{setExportError('Could not read this browser garden. Try again.');}
+  }
   useEffect(()=>{
     if(!splash)return;
     const stop=()=>setSplash(false);
@@ -49,29 +64,16 @@ export default function WelcomeTour({phone,onPlay,remember,replay=false}){
     return ()=>{clearTimeout(timer);motion.removeEventListener('change',stop);};
   },[splash]);
 
-  function recordVisit(){
-    // Standalone mode can still bypass the tour when browser storage is unavailable.
-    return remember?.().catch(()=>{});
-  }
-  async function go(next){
+  function go(next){
     if(next<0 || next>last || next===step)return;
-    const intent=++navigation.current;
-    setSplash(false);
-    // Commit the marker before the card can hand control to a browser installer.
-    if(next===last)await recordVisit();
-    if(intent===navigation.current)setStep(next);
-  }
-  async function play(){
-    const intent=++navigation.current;
-    await recordVisit();
-    if(intent===navigation.current)onPlay();
+    setSplash(false);setStep(next);
   }
   function keys(e){
     if(e.altKey || e.metaKey || e.ctrlKey || e.target.matches('input,textarea'))return;
     if(e.key==='ArrowRight' || e.key==='ArrowLeft'){
       e.preventDefault();go(step+(e.key==='ArrowRight'?1:-1));
     }else if(e.key==='Escape'){
-      e.preventDefault();if(splash)setSplash(false);else play();
+      e.preventDefault();if(splash)setSplash(false);else onClose?.();
     }
   }
   const content=<div className={'tour-sheet tour-page-'+step} onKeyDown={keys}
@@ -82,7 +84,7 @@ export default function WelcomeTour({phone,onPlay,remember,replay=false}){
       if(Math.abs(dx)>42 && Math.abs(dx)>Math.abs(dy)*1.4)go(step+(dx<0?1:-1));}}>
     <header className="tour-header">
       <span className="tour-brand"><Leaf aria-hidden="true"/>Plantigochi</span>
-      {step!==last && <button className="tour-skip" onClick={play}>{playLabel}</button>}
+      {onClose && <button className="tour-skip" onClick={onClose}>Back to game</button>}
     </header>
     <div className="tour-story">
       <div className="tour-art" key={'art'+step}>
@@ -94,10 +96,10 @@ export default function WelcomeTour({phone,onPlay,remember,replay=false}){
       <div className="tour-words">
         <h1 ref={heading} tabIndex="-1" id="welcome-title">{card.lead} <em>{card.name}</em></h1>
         <p className="tour-caption">{card.copy}</p>
-        {step===last ? <div className="tour-install"><InstallHelp tour phone={phone}/></div> :
+        {step===last ? <div className="tour-install">{installed ? <button className="tour-primary" onClick={onBegin || onClose}>{onBegin?'Begin setup':'Back to game'}</button> : <InstallHelp tour phone={phone}/>}</div> :
           <div className="tour-actions">
-            <button className="tour-primary" onClick={()=>go(step+1)}>{['Take a peek','Next','Get Plantigochi'][step]}</button>
-            {step===0 && <button className="tour-secondary" onClick={()=>go(last)}>Get Plantigochi</button>}
+            <button className="tour-primary" onClick={()=>go(step+1)}>{['Take a peek','Next',installed?'Continue':'Get Plantigochi'][step]}</button>
+            {step===0 && !installed && <button className="tour-secondary" onClick={()=>go(last)}>Get Plantigochi</button>}
           </div>}
       </div>
     </div>
@@ -106,10 +108,11 @@ export default function WelcomeTour({phone,onPlay,remember,replay=false}){
       <nav className="tour-dots" aria-label="Welcome screens">{cards.map((c,i)=>
         <button key={c.name} aria-label={'Show '+titleOf(c)} aria-current={step===i?'step':undefined}
           onClick={()=>go(i)}><i/></button>)}</nav>
-      {step===last && <button className="tour-skip" onClick={play}>{playLabel}</button>}
+      {step===last && canExport && <button className="tour-skip" onClick={exportExisting}>Export existing garden</button>}
+      {(exportError || issue) && <span role="alert">{exportError || issue}</span>}
     </footer>
   </div>;
-  return replay ? <dialog className="welcome-modal" ref={dialog} aria-labelledby="welcome-title"
-    onCancel={e=>{e.preventDefault();play();}}>{content}</dialog> :
+  return onClose ? <dialog className="welcome-modal" ref={dialog} aria-labelledby="welcome-title"
+    onCancel={e=>{e.preventDefault();onClose();}}>{content}</dialog> :
     <main className="welcome-tour" aria-labelledby="welcome-title">{content}</main>;
 }

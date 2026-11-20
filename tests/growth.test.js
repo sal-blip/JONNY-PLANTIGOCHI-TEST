@@ -54,3 +54,18 @@ test('malformed saves recover and the timer clamps at zero', () => {
   assert.equal(countdown(HOUR-1000),'00:59:59');
   assert.equal(countdown(3*DAY+2*HOUR+60000),'3d 2h 1m');
 });
+
+test('a name follows its plant through a backup, graduation or death',async()=>{
+  const {graduate,plantName}=await import('../src/game.js');
+  const seed=newPlant(0,'Aki');
+  const sprout=wake(care(seed,'water',1),HOUR);
+  const dead=wake(sprout,HOUR+DAY);
+  assert.equal(dead.book[0].name,'Aki');
+  const grown={...sprout,stage:'grown',earned:WEEK};
+  const next=graduate(grown,grown.id,0,HOUR+1);
+  assert.equal(next.name,'Monstera');
+  assert.equal(restore(JSON.stringify(next),HOUR+2).graduates[0].name,'Aki');
+  assert.equal(plantName(' bad! '),'Monstera');
+  const old={...seed};delete old.name;
+  assert.equal(restore(JSON.stringify(old),1).name,'Monstera');
+});

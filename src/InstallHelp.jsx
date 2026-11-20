@@ -9,7 +9,7 @@ export default function InstallHelp({phone, tour=false}) {
   const embedded=window.self!==window.top || /ChatGPT|FBAN|FBAV|Instagram|; wv\)/i.test(ua) ||
     (ios && !/Safari|CriOS|FxiOS|EdgiOS/.test(ua));
   switch(phone.installState){
-    case 'installed': return <p role="status">Plantigochi is installed on this device.</p>;
+    case 'installed': return <p role="status">Plantigochi is installed. Open its icon to play.</p>;
     case 'accepted': return <p role="status">Installation accepted. Open the Plantigochi icon when it appears.</p>;
     case 'prompting': return <p role="status">Choose Install in your browser’s prompt.</p>;
     case 'available': return <>

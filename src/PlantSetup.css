@@ -1,0 +1,39 @@
+.seed-setup{
+ --paper:#f5f2e4;--green:#263f32;
+ position:fixed;inset:0;display:grid;place-items:center;margin:0;border:0;width:100%;height:100%;height:100dvh;
+ max-width:none;max-height:none;overflow:hidden;color:var(--green);background:var(--paper);
+ padding:max(12px,env(safe-area-inset-top)) max(18px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(18px,env(safe-area-inset-left))
+}
+.seed-letter{width:min(100%,470px);display:grid;justify-items:start;gap:clamp(9px,2vh,19px)}
+.seed-portrait{width:100%;height:min(32dvh,240px);border-radius:22px;display:grid;place-items:center;background:linear-gradient(130deg,#e1ecde,#edf1d7 60%,#eedfb7)}
+.seed-portrait .plant-pixel{height:76%;width:92%;color:#38523c}
+.seed-letter h1,.name-layout h1{font:680 clamp(30px,5.7vmin,52px)/1.02 var(--display);letter-spacing:-.05em}
+.seed-letter p,.name-instructions{max-width:43ch;line-height:1.4;font-size:clamp(15px,2.2vmin,18px)}
+.seed-actions{display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+.seed-actions button,.lesson-done{padding:10px 16px;border:0;border-radius:22px;font-weight:650;color:#fffbee;background:#264332;min-height:42px}
+.seed-actions button+button{color:#2e503b;background:transparent;text-decoration:underline;text-underline-offset:4px}
+.name-modal::backdrop{background:#f5f2e4}
+.name-layout{height:100%;width:min(100%,780px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;justify-items:center;align-items:center;gap:8px;padding-block:clamp(4px,3vh,30px);text-align:center}
+.name-layout header{display:flex;align-items:center;justify-content:center;gap:8px}
+.name-layout header svg{width:24px;height:24px;fill:#dbedbf}
+.name-device-space{width:100%;height:100%;min-height:0;display:grid;place-items:center;container-type:size}
+.name-device-space .name-device{width:min(116cqw,106cqh,650px)}
+.name-device .name-lcd{align-items:center;justify-content:center;gap:8%;text-align:center;color:#27433c;font-family:Silkscreen,monospace}
+.name-lcd small{font-size:1.8cqw}.name-lcd strong{font-size:3.1cqw;max-width:98%}
+.name-dial{font-size:2.45cqw;background:#deedbcbf;padding:4% 2%;width:100%;border-block:1px solid #72947a}
+.water-lesson{position:absolute;z-index:8;top:max(10px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);text-align:center;
+ width:max-content;max-width:calc(100% - 24px);border:1px solid #b7c6a7;border-radius:18px;padding:10px 17px;color:#243d2f;background:#f7f6e9f2;box-shadow:0 4px 18px #1b362520}
+.water-lesson strong{font:680 19px/1.15 var(--display)}.water-lesson p{font-size:15px;line-height:1.3;margin-top:3px}.lesson-done{margin-top:6px;min-height:34px;padding:7px 13px}
+.device .teaching-heart{outline:3px solid #ffe391;outline-offset:3px;box-shadow:0 0 0 7px #e8d78b70}
+.reset-panel{display:grid;gap:14px}.reset-panel h2{font:650 23px/1.1 var(--display)}.reset-step{font-size:14px}
+.reset-panel label{display:grid;gap:6px;font-weight:650}.reset-panel input{font:inherit;border:1px solid #718875;border-radius:7px;padding:9px;background:#fffaf0;color:#20382b;width:100%}
+.reset-panel .text-action{text-align:left;text-decoration:underline;padding:0;font-weight:650}
+.reset-panel .erase-button{color:#8b332b}.reset-panel button:disabled{opacity:.45}.reset-panel .save-buttons{justify-content:space-between}
+.garden-corners[hidden]{display:none}
+@media(max-height:480px) and (orientation:landscape){
+ .seed-letter{grid-template-columns:minmax(140px,.75fr) 1fr;width:min(96%,720px);align-items:center;column-gap:22px}
+ .seed-portrait{grid-row:1/5;height:62dvh}.seed-letter h1{font-size:27px}.seed-letter p{font-size:15px}
+ .name-layout{grid-template-columns:1fr 1.3fr;grid-template-rows:1fr 1fr}.name-layout header{align-self:end}
+ .name-device-space{grid-column:2;grid-row:1/3}.name-instructions{align-self:start}.name-device-space .name-device{width:min(103cqw,106cqh)}
+ .water-lesson{top:8px;left:8px;transform:none;max-width:24vw;padding:8px}.water-lesson strong{font-size:16px}.water-lesson p{font-size:14px}
+}

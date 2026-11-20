@@ -36,7 +36,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, recover
   const offlineText = {
     ready: 'Ready for offline play',
     preparing: 'Preparing offline play…',
-    unavailable: 'Open online to play in this browser',
+    unavailable: 'Open the app online to prepare offline play',
   }[phone.offline];
   return <>
     {page === 'install' && <section className="phone-section">

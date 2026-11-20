@@ -33,8 +33,10 @@ const blankHealth = { lastDrink: null, extraPour: null, rotAt: null, deadAt: nul
 export const ROOT_TIME = 12 * HOUR;
 export const healthLabels = { healthy: 'Damp soil', dry: 'Thirsty', critical: 'Very thirsty', soggy: 'Still wet', rootRot: 'Drain pot', dead: 'Pressed leaf' };
 
-export function newPlant(now = Date.now()) {
-  return { version: 3, earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
+export const plantName = name => typeof name === 'string' && /^[A-Za-z -]{1,12}$/.test(name) && name.trim() ? name.trim() : 'Monstera';
+
+export function newPlant(now = Date.now(), name = 'Monstera') {
+  return { version: 3, name:plantName(name), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
     ...blankHealth, jar: null, book: [], dewCleared: 0 };
 }
@@ -111,7 +113,7 @@ export function wake(p, now = Date.now(), visible = true) {
   }
   if (now < deadline) return p;
   const cause = p.rotAt === null ? 'Thirst' : 'Root rot';
-  const leaf = {id:p.id,stage:p.stage,generation:p.generation,plantedAt:p.plantedAt,diedAt:deadline,cause};
+  const leaf = {id:p.id,name:plantName(p.name),stage:p.stage,generation:p.generation,plantedAt:p.plantedAt,diedAt:deadline,cause};
   return {...settle(p,deadline),deadAt:deadline,book:[...p.book,leaf],message:'A leaf for your book.'};
 }
 export function company(p, now = Date.now()) {
@@ -166,7 +168,10 @@ export function readPlant(text, now = Date.now(), visible = true) {
     if (p.dewRunCleared !== undefined && (!Number.isInteger(p.dewRunCleared) || p.dewRunCleared < 0 || p.dewRunCleared > p.dewCleared)) {
       p.dewRunCleared = 0;
     }
-    return validGarden(p) ? wake(p, now, visible) : null;
+    if (!validGarden(p)) return null;
+    p.name=plantName(p.name);
+    for (const item of [...p.book,...p.graduates]) item.name=plantName(item.name);
+    return wake(p, now, visible);
   } catch { return null; }
 }
 
@@ -194,7 +199,7 @@ export function replant(saved, source, now = Date.now()) {
 export function graduate(saved, id, slot, now = Date.now()) {
   const p = wake(saved,now);
   if (p.id!==id || p.stage!=='grown' || p.deadAt!==null || !canPlaceAt(p.graduates,slot)) return p;
-  const graduate = {id:p.id,species:'monstera',potStyle:slot%6,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
+  const graduate = {id:p.id,name:plantName(p.name),species:'monstera',potStyle:slot%6,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
   return {...p,...newPlant(now),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
     dewCleared:p.dewCleared,graduates:[...p.graduates,graduate]};
 }

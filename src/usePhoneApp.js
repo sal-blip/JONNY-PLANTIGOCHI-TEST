@@ -5,6 +5,7 @@ const install = createInstallPrompt(window);
 
 export function usePhoneApp() {
   const installState = useSyncExternalStore(install.subscribe, install.getState);
+  const standalone = useSyncExternalStore(install.subscribe, install.isStandalone);
   const [offline, setOffline] = useState('preparing');
 
   useEffect(() => {
@@ -28,7 +29,11 @@ export function usePhoneApp() {
       } catch { status('unavailable'); }
     }
     void prepareOffline();
-    return () => { active = false; };
+    function identifyWindow(event){
+      if(event.data?.type==='plant-window-mode')event.ports[0]?.postMessage(install.isStandalone());
+    }
+    navigator.serviceWorker?.addEventListener('message',identifyWindow);
+    return () => { active = false;navigator.serviceWorker?.removeEventListener('message',identifyWindow); };
   }, []);
-  return { installState, installed:installState === 'installed', promptInstall:install.prompt, offline };
+  return { standalone, installState, installed:installState === 'installed', promptInstall:install.prompt, offline };
 }

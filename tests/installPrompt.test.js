@@ -48,3 +48,16 @@ test('appinstalled takes precedence over a pending choice and standalone mode su
   tab.display.dispatchEvent(new Event('change'));
   assert.equal(changes,1);
 });
+
+test('install acceptance in a browser window never grants gameplay',async()=>{
+  const {browser,install,offer,display}=setup();
+  offer(()=>{},'accepted');
+  await install.prompt();
+  assert.equal(install.isStandalone(),false);
+  browser.dispatchEvent(new Event('appinstalled'));
+  assert.equal(install.getState(),'installed');
+  assert.equal(install.isStandalone(),false);
+  display.matches=true;
+  assert.equal(install.isStandalone(),true);
+  assert.equal(setup(true).install.isStandalone(),true);
+});
