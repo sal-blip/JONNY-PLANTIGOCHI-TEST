@@ -40,6 +40,18 @@ export default function App() {
 }
 function InstalledGame({phone}){
   const storage=useGardenSave();
+  const [alertVisitId,setAlertVisitId]=useState(()=>crypto.randomUUID());
+  useEffect(()=>{
+    // Some installed apps reuse a document for a later icon launch. Focus and
+    // visibility can also change during a permission dialog, so ignore those.
+    if(!window.launchQueue)return;
+    let initial=true;
+    window.launchQueue.setConsumer(()=>{
+      if(initial)initial=false;
+      else setAlertVisitId(crypto.randomUUID());
+    });
+    return ()=>window.launchQueue.setConsumer(()=>{});
+  },[]);
   const [careMessage,setCareMessage]=useState(null);
   useEffect(()=>{
     function rescue(e){
@@ -50,13 +62,29 @@ function InstalledGame({phone}){
   },[]);
   if(!storage.phase && storage.issue)return <Recovery {...storage}/>;
   if(!storage.phase)return <main aria-busy="true" aria-label="Opening your garden"/>;
+  return <InstalledSession alertVisitId={alertVisitId} key={storage.epoch || 'original'} storage={storage} phone={phone} careMessage={careMessage}/>;
+}
+function InstalledSession({phone,storage,careMessage,alertVisitId}){
+  const alerts=usePlantAlerts(storage.plant,phone.offline,storage.epoch);
+  const {invite,alertVisit,phase}=storage;
+  const fresh=!invite && phase==='welcome';
+  const returning=invite?.round===1 && invite.visit!==alertVisitId;
+  const needsVisit=alerts.capable && !alerts.verifying && phase!=='tour' && (
+    fresh || returning || (alerts.enabled && invite?.closed)
+  );
+  useEffect(()=>{
+    if(needsVisit)void alertVisit(alertVisitId,'open',alerts.enabled);
+  },[needsVisit,alertVisit,alerts.enabled,alertVisitId]);
+  const offer=alerts.capable && !alerts.enabled && invite?.visit===alertVisitId && !invite.closed ? invite.round : null;
+  const answer=defer=>alertVisit(alertVisitId,defer?'defer':'finish');
   if(storage.phase==='tour')return <WelcomeTour phone={phone} issue={storage.issue} onBegin={()=>storage.setup('welcome')}/>;
-  if(storage.phase==='welcome')return <SetupWelcome {...storage}/>;
+  if(needsVisit && !storage.issue && !alerts.enabled)return <main aria-busy="true" aria-label="Opening your garden"/>;
+  if(storage.phase==='welcome' || offer)return <SetupWelcome {...storage} alerts={alerts} offer={offer} answer={answer}/>;
   if(storage.phase==='name')return <NameEditor initial={storage.draft} onDraft={d=>storage.setup('name',d)}
     onSave={name=>storage.setup('water',name)} onCancel={()=>storage.setup('welcome')} issue={storage.issue}/>;
-  return <GardenApp key={storage.epoch || 'original'} storage={storage} phone={phone} careMessage={careMessage}/>;
+  return <GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}/>;
 }
-function GardenApp({storage,phone,careMessage}) {
+function GardenApp({storage,phone,careMessage,alerts}) {
   const {plant,current,commit,replace,issue}=storage;
   const saveOK=!issue;
   const lesson=storage.phase==='water' || storage.phase==='watered' ? storage.phase : null;
@@ -66,7 +94,6 @@ function GardenApp({storage,phone,careMessage}) {
   useEffect(()=>{if(!leaving)return;const timer=setTimeout(()=>{setRoom(null);setLeaving(false);requestAnimationFrame(()=>gardenTab.current?.focus());},reducedMotion()?0:550);return ()=>clearTimeout(timer);},[leaving]);
   const [careTarget,setCareTarget]=useState(null);
   const gardenTab=useRef(null), swipe=useRef(null);
-  const alerts = usePlantAlerts(plant, phone.offline);
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
   const [sharing, setSharing] = useState(false);

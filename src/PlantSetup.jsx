@@ -6,7 +6,19 @@ import {readPlant} from './game.js';
 import {backupLimit} from './gardenScenes.js';
 import './PlantSetup.css';
 
-export function SetupWelcome({setup,replace,issue}){
+function AlertChoices({alerts,offer,answer}){
+  async function turnOn(){
+    const result=await alerts.enable();
+    if(result==='enabled' || result==='dismissed')await answer(result==='dismissed');
+  }
+  if(alerts.denied)return <button onClick={()=>answer(false)}>Continue</button>;
+  return <>
+    <button disabled={alerts.busy || !alerts.canEnable} onClick={turnOn}>{alerts.busy?'Turning on alerts…':'Turn on plant alerts'}</button>
+    <button disabled={alerts.busy} onClick={()=>answer(true)}>{offer===1?'Maybe later':'Not now'}</button>
+  </>;
+}
+
+export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answer}){
   const file=useRef(null),[candidate,setCandidate]=useState(null),[notice,setNotice]=useState('');
   async function choose(e){
     const f=e.target.files?.[0];e.target.value='';
@@ -17,13 +29,25 @@ export function SetupWelcome({setup,replace,issue}){
       setCandidate(plant);setNotice('');
     }catch{setCandidate(null);setNotice('Choose a valid Plantigochi backup.');}
   }
+  const inviting=Boolean(offer && !candidate);
+  const blocked=inviting && alerts.denied;
+  const title=candidate?'Bring your garden home':offer===2?'Get plant alerts?':'Welcome to your pocket garden';
+  let copy='A sleepy Monstera is waiting. Give it a name, then use the heart on your keychain to give it its first drink.';
+  if(candidate)copy=candidate.name+' · Generation '+candidate.generation+' · '+candidate.graduates.length+' collected';
+  else if(inviting)copy=blocked?'Plant alerts are blocked on this device. To receive care reminders, allow notifications for Plantigochi in your device settings.'
+    :'Your plant keeps growing while you’re away. Get a heads-up when your seed is ready to sprout or your Monstera gets very thirsty.';
   return <main className="seed-setup"><section className="seed-letter">
-    <div className="seed-portrait"><PlantPixel stage="seed"/></div>
-    <h1>{candidate?'Bring your garden home':'Welcome to your pocket garden'}</h1>
-    <p>{candidate?candidate.name+' · Generation '+candidate.generation+' · '+candidate.graduates.length+' collected':'A sleepy Monstera is waiting. Give it a name, then use the heart on your keychain to give it its first drink.'}</p>
+    <div className="seed-portrait"><PlantPixel stage={plant?.stage || 'seed'}/></div>
+    <h1>{title}</h1>
+    <p>{copy}</p>
     <div className="seed-actions">{candidate?<><button onClick={()=>replace(candidate)}>Restore this garden</button>
-      <button onClick={()=>{setCandidate(null);setup('name');}}>Start fresh instead</button></>:
-      <><button onClick={()=>setup('name')}>Name your seed</button><button onClick={()=>file.current.click()}>Restore a garden</button></>}</div>
+      <button onClick={()=>{setCandidate(null);if(offer)void answer(true);else setup('name');}}>Start fresh instead</button></>:
+      inviting?<AlertChoices alerts={alerts} offer={offer} answer={answer}/>:
+      <button onClick={()=>setup('name')}>Name your seed</button>}
+      {!candidate && phase==='welcome' && <button disabled={inviting && alerts.busy} onClick={()=>file.current.click()}>Restore a garden</button>}
+    </div>
+    {inviting && !blocked && <small className="alert-invite-status" role="status">{alerts.notice || (!navigator.onLine?
+      'You can continue offline and turn on alerts when you reconnect.':!alerts.canEnable?'Preparing plant alerts…':'')}</small>}
     <input ref={file} hidden type="file" accept=".json,application/json" aria-label="Garden backup" onChange={choose}/>
     {(notice||issue) && <p role="alert">{notice || issue}</p>}
   </section></main>;

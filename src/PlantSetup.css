@@ -37,3 +37,6 @@
  .name-device-space{grid-column:2;grid-row:1/3}.name-instructions{align-self:start}.name-device-space .name-device{width:min(103cqw,106cqh)}
  .water-lesson{top:8px;left:8px;transform:none;max-width:24vw;padding:8px}.water-lesson strong{font-size:16px}.water-lesson p{font-size:14px}
 }
+.seed-actions button:disabled{opacity:.5}
+.alert-invite-status{line-height:1.35;font-size:14px}.alert-invite-status:empty{display:none}
+@media(max-height:610px) and (orientation:portrait){.seed-portrait{height:min(24dvh,135px)}.seed-actions{row-gap:3px}}

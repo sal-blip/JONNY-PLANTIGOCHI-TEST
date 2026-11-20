@@ -1,3 +1,4 @@
+import {beginAlertVisit,answerAlertInvite} from './alertInvitation.js';
 import {KEY, newPlant, readPlant} from './game.js';
 
 const databaseName = 'plantigochi.pocket.garden';
@@ -53,7 +54,7 @@ export function gardenStore(legacyStorage, visible) {
     const phase=setup.phase || (plant?'game':'welcome');
     const allowed=plant?['game','water','watered']:['welcome','name','tour'];
     if(!allowed.includes(phase))throw new SaveIssue('The setup record needs recovery.',raw ?? null);
-    return {plant,phase,epoch:setup.epoch,draft:setup.draft || ''};
+    return {plant,phase,epoch:setup.epoch,draft:setup.draft || '',invite:setup.invite || null};
   }
   function change(expected, operation){
     return transaction('readwrite',(records,raw,setup)=>{
@@ -64,11 +65,27 @@ export function gardenStore(legacyStorage, visible) {
   function save(records,plant,setup){
     if(plant)records.put(JSON.stringify(plant),currentKey);
     records.put(setup,setupKey);
-    return {plant,phase:setup.phase,epoch:setup.epoch,draft:setup.draft || ''};
+    return {plant,phase:setup.phase,epoch:setup.epoch,draft:setup.draft || '',invite:setup.invite || null};
   }
   return {
     read:()=>transaction('readwrite',snapshot),
     exportRaw:()=>transaction('readonly',(_,raw,setup)=>raw ?? (setup.epoch?null:legacyStorage().getItem(KEY))),
+    mayChangeAlerts(epoch,plantId){
+      return transaction('readonly',(_,raw,setup)=>setup.epoch===epoch &&
+        (raw===undefined ? !plantId && ['welcome','name'].includes(setup.phase || 'welcome') : JSON.parse(raw).id===plantId));
+    },
+    alertVisit(expected,visit,action,enabled=false){
+      return change(expected,(records,raw,setup)=>{
+        const current=snapshot(records,raw,setup);
+        const prior=current.invite;
+        const invite=action==='open' ? beginAlertVisit(prior,visit,current.phase==='welcome',enabled)
+          : answerAlertInvite(prior,visit,action==='defer');
+        if(invite===prior)return current;
+        const phase=action!=='open' && current.phase==='welcome'?'name':current.phase;
+        records.put({...setup,phase,invite},setupKey);
+        return {...current,phase,invite};
+      });
+    },
     setup(expected,next,draft=''){
       return change(expected,(records,raw,setup)=>{
         const current=snapshot(records,raw,setup);
@@ -80,7 +97,7 @@ export function gardenStore(legacyStorage, visible) {
           case 'watered-game': break;
           default:throw new SaveIssue('Open the current setup step and try again.');
         }
-        return save(records,plant,{epoch:setup.epoch,phase:next,...(next==='name'?{draft}:{})});
+        return save(records,plant,{epoch:setup.epoch,invite:setup.invite,phase:next,...(next==='name'?{draft}:{})});
       });
     },
     update(expected,fn){
@@ -90,7 +107,7 @@ export function gardenStore(legacyStorage, visible) {
         const plant=fn(current.plant);
         const phase=current.phase==='water' && plant.wateredAt!==null?'watered':current.phase;
         if(plant===current.plant && phase===current.phase)return current;
-        return save(records,plant,{epoch:setup.epoch,phase});
+        return save(records,plant,{epoch:setup.epoch,phase,invite:setup.invite});
       });
     },
     replace(expected,backup){

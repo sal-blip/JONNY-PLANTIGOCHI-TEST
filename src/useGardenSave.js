@@ -5,6 +5,7 @@ import {retireAlerts,finishAlertCleanup,withReminderLock} from './alertCleanup.j
 
 const store=gardenStore(()=>localStorage,()=>!document.hidden);
 export const exportGardenRaw=store.exportRaw;
+export const mayChangeAlerts=store.mayChangeAlerts;
 export function useGardenSave() {
   const [view,setView]=useState(null), current=useRef(null);
   const [issue,setIssue]=useState(''), [raw,setRaw]=useState(null), faultyEpoch=useRef(null);
@@ -59,11 +60,12 @@ export function useGardenSave() {
   const epoch=view?.epoch ?? faultyEpoch.current, id=view?.plant?.id;
   const commit=useCallback(fn=>save(()=>store.update({epoch,plant:{id}},fn)),[save,epoch,id]);
   const replace=backup=>save(()=>store.replace({epoch},backup));
+  const alertVisit=useCallback((visit,action,enabled)=>save(()=>store.alertVisit({epoch},visit,action,enabled)),[save,epoch]);
   const setup=(next,draft)=>save(()=>store.setup(view,next,draft));
   const reset=async()=>{
     const ok=await save(()=>withReminderLock(()=>store.reset(view,retireAlerts)));
     if(ok)void finishAlertCleanup();
     return ok;
   };
-  return {...view,plant:view?.plant || null,current,issue,raw,commit,replace,setup,reset};
+  return {...view,plant:view?.plant || null,current,issue,raw,commit,replace,setup,reset,alertVisit};
 }
