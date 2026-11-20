@@ -12,7 +12,7 @@ const guide = [
   ['Growing up','Young on day 3. Last set on day 5. Grown on day 7.'],
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Leaf Echo','Watch three beats. Copy them with the keys.'],
-  ['Taking a break','Press Back to pause a game.'],
+  ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
   ['Cutting jar','Roots in 12h. Pot after the parent dies.'],
 ];
 export const toyTitles = {home:'Plant menu', care:'Care', play:'Play', growth:'Growth', jar:'Cutting jar', book:'Leaf Book', guide:'Field guide', pour:'Still wet?', pause:'Paused'};
@@ -55,7 +55,7 @@ export function toyCards(section, plant, now) {
         card('Dew Catch',canPlay('dew',plant)?hint:'After sprouting','game:dew',{locked:!canPlay('dew',plant)}),
         card('Leaf Echo',canPlay('echo',plant)?'Copy three beats':'At young stage','game:echo',{locked:!canPlay('echo',plant)})];
     }
-    case 'pause': return [card('Resume','Return to the game','resume'),card('Leave game','Keep cleared levels','leave')];
+    case 'pause': return [card('Resume','Hold Back for your plant','resume'),card('Leave game','Return to your plant','leave')];
     case 'growth': {
       const next=nextMilestone(plant);
       const entries=[card(STAGE_NAMES[plant.stage],ageLabel((plant.deadAt??now)-plant.plantedAt)+' old · Gen '+plant.generation,'next')];

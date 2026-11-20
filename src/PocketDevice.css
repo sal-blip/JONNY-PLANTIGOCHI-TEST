@@ -60,6 +60,8 @@
 }
 
 .device .toy-keys .toy-back {
+  touch-action: none;
+  -webkit-touch-callout: none;
   --key-x: 35.5%;
   --key-y: 76.460177%;
   --key-size: 5.17%;
