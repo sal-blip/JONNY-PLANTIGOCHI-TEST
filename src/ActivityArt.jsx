@@ -11,10 +11,10 @@ function laneX(value) {
   return laneCenters[value] ?? laneCenters[1];
 }
 
-function Canvas({ children, square = false }) {
+function Canvas({ children, square = false, viewBox = square ? "0 0 36 36" : "0 0 96 44" }) {
   return (
     <svg className={square ? "activity-pixel activity-pixel-square" : "activity-pixel"}
-      viewBox={square ? "0 0 36 36" : "0 0 96 44"}
+      viewBox={viewBox}
       aria-hidden="true" focusable="false" shapeRendering="crispEdges">
       {children}
     </svg>
@@ -66,9 +66,11 @@ function Catcher({ x, happy }) {
   );
 }
 
-export function DewArt({ lane = 1, dropLane = 1, progress = 0, result = null }) {
+export function DewArt({ lane = 1, drops, dropLane = 1, progress = 0, result = null }) {
   const catcherX = laneX(lane);
   const dropletX = laneX(dropLane);
+  // An explicit empty frame can occur between waves; render just the catcher.
+  const falling = Array.isArray(drops) ? drops : result ? [] : [{ id: "solo", lane: dropLane, progress }];
   const landed = result === "catch" || result === "win";
   return (
     <Canvas>
@@ -79,7 +81,10 @@ export function DewArt({ lane = 1, dropLane = 1, progress = 0, result = null }) 
       <g opacity=".65">
         {laneCenters.map(x => <path key={x} transform={`translate(${x} 2)`} d="M-4 0h3v1h2V0h3v1H2v1H1v1h-2V2h-1V1h-2z" />)}
       </g>
-      {!result && <Droplet x={dropletX} y={6 + Math.round(safeProgress(progress) * 19)} />}
+      {falling.map(drop => <Droplet key={drop.id} x={laneX(drop.lane)} y={6 + Math.round(safeProgress(drop.progress) * 19)} />)}
+      {landed && <g className="activity-dew-splash" transform={`translate(${catcherX} 30)`}>
+        <path d="M-11-3h2v1h2v2h-2v-1h-2z M9-4h2v2H9v1H7v-2h2z M-14-5h2v2h-2z M13-6h2v2h-2z" />
+      </g>}
       {landed && <g className="activity-pixel-flash"><Glint x={catcherX - 12} y={22} /><Glint x={catcherX + 8} y={19} /><path opacity=".66" d={`M${catcherX-2} 25h1v2h-1z M${catcherX+2} 22h1v2h-1z`} /></g>}
       {result === "miss" && <g transform={`translate(${dropletX} 38)`}><path d="M-9-4h1v1h1v1h-2z M-4-2h2v1h-2z M3-1h2v1H3z M7-3h1v-1h1v2H7z M-5 1H5v1H-5z" /></g>}
       <g className={result === 'win' ? 'activity-shake' : undefined}><Catcher x={catcherX} happy={landed} /></g>
@@ -166,6 +171,164 @@ export function PressedLeaf({ stage = "seed" }) {
         <g transform={grown ? "translate(6 5) scale(1.2)" : "translate(7 7) scale(1.1)"}><Blade split={grown} /></g>
         <path d={grown ? "M18 24h2v3h-2v2h-2v2h-3v-1h2v-2h2v-2h1z" : "M18 24h2v3h-1v2h-2v1h-2v-1h1v-2h2z"} />
       </g>}
+    </Canvas>
+  );
+}
+
+const menuSprites = {
+  care: [
+    ".............####",
+    "............#:::+#",
+    ".........####...#+#",
+    "........##++###..+#",
+    ".......#+:::::#####",
+    ".###...#:----:+##",
+    "#::##..#:-----:+#",
+    ".#:-:###:--++-:+#",
+    "..##:--#:-++++:+#",
+    "....##---:++++:+#",
+    "......##--:++::+#",
+    ".......#:::::++#",
+    ".#..#...#######",
+    "#..#",
+  ],
+  play: [
+    "......###....###",
+    "....################",
+    "...#::------------:+#",
+    "..#::--------------:+#",
+    ".#:---##-------##---:#",
+    ".#---####----------:+#",
+    "#-----##----##-----:+#",
+    "#---------------::-:+#",
+    "#:::---########+::::+#",
+    ".#+:::#........#::++#",
+    "..####..........####",
+  ],
+  growth: [
+    ".............####",
+    "...........##---#",
+    "..........#:--:+#",
+    "..#####..#:--:+#",
+    "..#::--##:-:+##",
+    "...#:---#:###..#",
+    "....##+::##...###",
+    "......##:#.....#",
+    "........##",
+    ".........#",
+    "....###########",
+    "....#:::--:-:+#",
+    ".....#########",
+    "......#:---+#",
+    "......######",
+  ],
+  jar: [
+    "......###...####",
+    "......#:##.#::+#",
+    ".......#:+#--+#",
+    "........##:+##",
+    "..........##",
+    ".....##########",
+    ".....#-::##-::#",
+    ".....###::--###",
+    "....#----#----:#",
+    "....#-::#--::--#",
+    "....#++:-:++-:+#",
+    "....#--#::-----#",
+    "....#-#--#--:-:#",
+    "....#:---+#..:+#",
+    ".....#++++++++#",
+    "......########",
+  ],
+  book: [
+    "..#####.....#####",
+    ".#::---##.##---::#",
+    "#:-------#-------:#",
+    "#--++++--#--+++--:#",
+    "#------:-#-------:#",
+    "#-+++----#-++-++-:#",
+    "#------:-#-------:#",
+    "#-++++---#--+++--:#",
+    "#--------#-------:#",
+    "#--####--#--####-:#",
+    "###++++##+##++++###",
+    "...+++++##+++++",
+  ],
+  guide: [
+    "...############",
+    "..#::--------:+#",
+    ".#::---####---:+#",
+    ".#:---#---:#---+#",
+    ".#----#---:#---+#",
+    ".#-------:#----+#",
+    ".#------##-----+#",
+    ".#------#------+#",
+    ".#-------------+#",
+    ".#------#------+#",
+    "..#::-------::+#",
+    "...###--######",
+    "....#-##",
+    "....##",
+  ],
+  return: [
+    "......##",
+    ".....#+#",
+    "....#--#.....###",
+    "...#---#.....#:#",
+    "..#----#######:#",
+    ".#-------------#",
+    "..#----::::::::#",
+    "...#---########",
+    "....#--#",
+    ".....#+#",
+    "......##",
+  ],
+  home: [
+    "........##",
+    ".......#::#",
+    "......#:--:#",
+    ".....#:----:#",
+    "....#:------:#",
+    "...#:--------:#",
+    "..#:----------:#",
+    ".###:----+---:###",
+    "...#:---++---:#",
+    "...#:---:+---:#",
+    "...#:---+:-:-:#",
+    "...#:--------:#",
+    "...############",
+  ],
+};
+
+// Each row encodes square LCD dots. Grouping equal densities keeps an entire
+// icon to four paths regardless of the number of inked pixels.
+function drawMenuSprite(rows) {
+  const paths = { "#": "", "+": "", ":": "", "-": "" };
+  const firstPixel = Math.min(...rows.map(row => row.search(/[#+:\-]/)));
+  const lastPixel = Math.max(...rows.map(row => row.replace(/\.+$/, "").length - 1));
+  const spriteWidth = lastPixel - firstPixel + 1;
+  const left = Math.floor((24 - spriteWidth) / 2) - firstPixel;
+  const top = Math.floor((22 - rows.length) / 2);
+  rows.forEach((row, y) => {
+    for (const run of row.matchAll(/([#+:\-])\1*/g)) {
+      const width = run[0].length;
+      paths[run[1]] += `M${left + run.index} ${top + y}h${width}v1h-${width}z`;
+    }
+  });
+  return paths;
+}
+
+const menuInk = { "#": 1, "+": .68, ":": .4, "-": .16 };
+const menuDrawings = Object.fromEntries(
+  Object.entries(menuSprites).map(([kind, rows]) => [kind, drawMenuSprite(rows)])
+);
+
+export function MenuGlyph({ kind }) {
+  const drawing = menuDrawings[kind];
+  if (!drawing) return null;
+  return (
+    <Canvas square viewBox="0 0 24 22">
+      {Object.entries(drawing).map(([shade, path]) => <path key={shade} d={path} opacity={menuInk[shade]} />)}
     </Canvas>
   );
 }

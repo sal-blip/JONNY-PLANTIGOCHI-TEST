@@ -4,20 +4,60 @@ const keys = ['left','heart','right'];
 export const gameNames = { dew: 'Dew Catch', echo: 'Leaf Echo' };
 export const canPlay = (name, plant) => plant.deadAt === null &&
   (name === 'dew' ? plant.stage !== 'seed' : name === 'echo' && ['young','grown'].includes(plant.stage));
+export const LEVELS = 20;
+const tickMs = 50;
+const randomLane = () => Math.floor(Math.random()*3);
+const highestLevel = cleared => Math.min(LEVELS,(cleared || 0)+1);
 
-function randomLane() { return Math.floor(Math.random() * 3); }
-const makeSequence = () => Array.from({length:3}, () => keys[randomLane()]);
+export function dewRules(level) {
+  const step = level - 1;
+  const fallMs = 2000 - step * 60;
+  return { goal:level+2, fallMs, spacingMs:Math.round(fallMs*(1.12-0.04*step)) };
+}
+
+function startDew(g, lane, level = g.level) {
+  return {...g,level,phase:'fall',lane:1,count:0,elapsed:0,nextId:1,feedbackUntil:0,result:null,
+    drops:[{id:0,lane,progress:0}],nextDropAt:dewRules(level).spacingMs};
+}
+
+function fall(g, lane) {
+  const {goal,fallMs,spacingMs} = dewRules(g.level);
+  const elapsed = g.elapsed + tickMs;
+  let {count,result,feedbackUntil,nextDropAt,nextId} = g;
+  const drops = [];
+  for (const drop of g.drops) {
+    const progress = drop.progress + tickMs/fallMs;
+    if (progress < 1 - 1e-8) { drops.push({...drop,progress}); continue; }
+    const caught = drop.lane === g.lane;
+    if (caught) count++;
+    result = caught ? 'catch' : 'miss';
+    feedbackUntil = elapsed + 240;
+  }
+  if (count >= goal) return {...g,phase:'won',count:goal,drops:[],result:'win'};
+  if (elapsed >= nextDropAt) {
+    drops.push({id:nextId++,lane,progress:0});
+    nextDropAt += spacingMs;
+  }
+  return {...g,elapsed,count,drops,feedbackUntil,nextDropAt,nextId,result:elapsed<feedbackUntil ? result : null};
+}
 
 export function stepGame(g, event) {
   if (event.type === 'exit') return null;
-  if (event.type === 'enter') return { name:event.name, phase:'ready', lane:1, count:0, progress:0 };
+  if (event.type === 'enter') return {name:event.name,phase:'ready',lane:1,count:0,drops:[],
+    level:highestLevel(event.cleared),unlocked:highestLevel(event.cleared)};
   if (!g) return null;
   if (event.type === 'key') {
     if (g.phase === 'ready' || g.phase === 'won') {
-      if (event.key !== 'heart') return g;
-      return g.name === 'dew'
-        ? { ...g, phase:'fall', lane:1, count:0, progress:0, dropLane:event.dropLane, result:null }
-        : { ...g, phase:'watch', sequence:event.sequence, index:0, lit:true };
+      if (event.key !== 'heart') {
+        if (g.name !== 'dew' || g.phase !== 'ready') return g;
+        return {...g,level:Math.max(1,Math.min(g.unlocked,g.level+(event.key==='left'?-1:1)))};
+      }
+      if (g.name === 'dew') {
+        if (g.phase === 'won' && g.level===LEVELS) return {...g,phase:'ready',unlocked:LEVELS};
+        const level = g.phase==='won' ? g.level+1 : g.level;
+        return startDew({...g,unlocked:Math.max(g.unlocked,level)},event.dropLane,level);
+      }
+      return { ...g, phase:'watch', sequence:event.sequence, index:0, lit:true };
     }
     if (g.name === 'dew' && g.phase === 'fall') {
       const dx = event.key === 'left' ? -1 : event.key === 'right' ? 1 : 0;
@@ -30,13 +70,7 @@ export function stepGame(g, event) {
     }
     return g;
   }
-  if (g.phase === 'fall') {
-    const progress = Math.min(1,g.progress + 0.05);
-    if (progress < 1) return { ...g, progress };
-    const caught = g.lane === g.dropLane, count = g.count + Number(caught);
-    return { ...g, progress, count, phase:count === 3 ? 'won' : 'splash', result:count === 3 ? 'win' : caught ? 'catch' : 'miss' };
-  }
-  if (g.phase === 'splash') return { ...g, phase:'fall', progress:0, result:null, dropLane:event.dropLane };
+  if (g.phase === 'fall') return fall(g,event.dropLane);
   if (g.phase === 'retry') return { ...g, phase:'watch', index:0, lit:true };
   if (g.phase === 'watch') {
     if (g.lit) return { ...g, lit:false };
@@ -47,25 +81,28 @@ export function stepGame(g, event) {
 }
 
 export function playText(g) {
-  if (g.phase === 'ready') return '♥ to start';
-  if (g.phase === 'won') return g.name === 'dew' ? 'Dew shower! ♥ again' : 'You got me! ♥ again';
-  if (g.name === 'dew') return g.phase === 'splash' && g.result === 'miss' ? 'Splash! Try again' : g.count + '/3 drops';
+  if (g.phase === 'ready') return g.name==='dew' && g.unlocked>1 ? '◂ Lv '+g.level+' ▸  ♥ Start' : '♥ to start';
+  if (g.phase === 'won') return g.name === 'dew' ? (g.level===LEVELS ? '20 cleared! ♥ Replay' : 'Clear! ♥ Next') : 'You got me! ♥ again';
+  if (g.name === 'dew') return g.count+'/'+dewRules(g.level).goal+' drops';
   if (g.phase === 'watch') return g.lit ? 'Watch · ' + g.sequence[g.index] : 'Watch…';
   if (g.phase === 'retry') return 'Hehe. Watch again!';
   return 'Your turn · ' + (g.index + 1) + '/3';
 }
 
-export function usePocketPlay(plant) {
+export function usePocketPlay(plant,paused,onClear) {
   const [game, dispatch] = useReducer(stepGame, null);
   const active = game && canPlay(game.name,plant) ? game : null;
-  useEffect(() => { if (game && !active) dispatch({ type:'exit' }); }, [game,active]);
+  useEffect(() => { if (game && !active) dispatch({type:'exit'}); },[game,active]);
   useEffect(() => {
-    if (!active) return;
-    const delay = {fall:95, splash:750, watch:active.lit ? 850 : 300, retry:1100}[active.phase];
+    if (active?.name==='dew' && active.phase==='won' && active.level>plant.dewCleared) onClear(active.level);
+  },[active?.name,active?.phase,active?.level,plant.dewCleared,onClear]);
+  useEffect(() => {
+    if (!active || paused) return;
+    const delay = {fall:tickMs, watch:active.lit ? 850 : 300, retry:1100}[active.phase];
     if (!delay) return;
-    const timer = setInterval(() => { if (!document.hidden) dispatch({ type:'tick',dropLane:randomLane() }); },delay);
+    const timer = setInterval(() => { if (!document.hidden) dispatch({type:'tick',dropLane:randomLane()}); },delay);
     return () => clearInterval(timer);
-  }, [active?.name,active?.phase,active?.lit]);
-  return { game:active, enter:name => { if (canPlay(name,plant)) dispatch({type:'enter',name}); },
-    exit:() => dispatch({type:'exit'}), key:key => dispatch({type:'key',key,dropLane:randomLane(),sequence:makeSequence()}) };
+  },[active?.name,active?.phase,active?.lit,paused]);
+  return { game:active, enter:name => { if (canPlay(name,plant)) dispatch({type:'enter',name,cleared:plant.dewCleared}); },
+    exit:()=>dispatch({type:'exit'}), key:key=>dispatch({type:'key',key,dropLane:randomLane(),sequence:Array.from({length:3},()=>keys[randomLane()])}) };
 }

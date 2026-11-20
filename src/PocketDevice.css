@@ -1,0 +1,14 @@
+.lcd-hit{position:absolute;inset:0;z-index:4;pointer-events:auto;cursor:pointer;background:transparent;border:0;padding:0}
+.lcd-hit:disabled{cursor:default}
+.lcd-hit:focus-visible{outline:2px solid #526844;outline-offset:-3px}
+.lcd-back{position:absolute;left:1%;top:1%;width:19%;height:24%;z-index:5;pointer-events:auto;border:0;background:none;color:inherit;font:400 3.4cqw/1 Silkscreen,monospace;padding:0;cursor:pointer}
+.lcd-browsing .lcd-top{margin-left:16%}
+.toy-card{position:absolute;inset:21% 5% 21%;display:flex;align-items:center;gap:4%;text-align:left}
+.toy-card>div{flex:1;min-width:0}
+.toy-card strong,.toy-card small{display:block;font-weight:400;line-height:1.16}
+.toy-card strong{font-size:2.55cqw}
+.toy-card small{font-size:1.97cqw;margin-top:.55cqw}
+.toy-glyph{display:grid;place-items:center;width:25%;height:85%;flex:none}
+.toy-glyph svg{max-width:100%;max-height:100%}
+.toy-reading{inset:21% 6% 19%}
+.toy-reading small{font-size:2.06cqw}

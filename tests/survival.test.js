@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {HOUR as H,DAY,ROOT_TIME,care,condition,criticalReminder,deathDeadline,newPlant,readPlant,replant,takeCutting,wake} from '../src/game.js';
-import {stepGame,canPlay} from '../src/pocketPlay.js';
+import {stepGame,canPlay,dewRules,LEVELS} from '../src/pocketPlay.js';
 
 const sprout=()=>wake(care(newPlant(0),'water',0),H);
 test('first sight starts the clock; thirst, rescue and death use real deadlines',()=>{
@@ -51,13 +51,45 @@ test('Dew Catch and Leaf Echo handle misses, wins, replays and stage locks',()=>
   const key=(g,key)=>stepGame(g,{type:'key',key,dropLane:0,sequence:['left','heart','right']});
   const tick=g=>stepGame(g,{type:'tick',dropLane:0});
   let dew=key(enter('dew'),'heart');
-  const fall=()=>{while(dew.phase==='fall') dew=tick(dew);};
-  fall();assert.equal(dew.result,'miss');dew=tick(dew);dew=key(dew,'left');
-  for(let i=0;i<3;i++){fall();if(i<2) dew=tick(dew);}
-  assert.equal(dew.phase,'won');assert.equal(key(dew,'heart').count,0);
+  for(let i=0;i<40;i++) dew=tick(dew);
+  assert.equal(dew.result,'miss');dew=key(dew,'left');
+  for(let i=0;i<400 && dew.phase==='fall';i++) dew=tick(dew);
+  assert.equal(dew.phase,'won');assert.equal(key(dew,'heart').level,2);
   let echo=key(enter('echo'),'heart');
   const watch=()=>{while(echo.phase==='watch') echo=tick(echo);};watch();
   echo=key(echo,'right');assert.equal(echo.phase,'retry');echo=tick(echo);watch();
   for(const k of ['left','heart','right']) echo=key(echo,k);
   assert.equal(echo.phase,'won');assert.equal(stepGame(echo,{type:'exit'}),null);
+});
+
+test('twenty Dew Catch levels increase goal, speed and drop density and finish at 20',()=>{
+  let game=stepGame(null,{type:'enter',name:'dew',cleared:0}),overlap=0;
+  for(let level=1;level<=LEVELS;level++){
+    game=stepGame(game,{type:'key',key:'heart',dropLane:1});
+    assert.equal(game.level,level);
+    const rules=dewRules(level);
+    if(level>1){
+      const prev=dewRules(level-1);
+      assert.ok(rules.goal>prev.goal && rules.fallMs<prev.fallMs && rules.spacingMs<prev.spacingMs);
+    }
+    for(let tick=0;game.phase==='fall'&&tick<3000;tick++){
+      game=stepGame(game,{type:'tick',dropLane:1});
+      overlap=Math.max(overlap,game.drops.length);
+    }
+    assert.equal(game.phase,'won');assert.equal(game.count,rules.goal);
+  }
+  assert.ok(overlap>=3);
+  game=stepGame(game,{type:'key',key:'heart',dropLane:1});
+  assert.equal(game.phase,'ready');assert.equal(game.level,20);
+  for(let i=0;i<25;i++) game=stepGame(game,{type:'key',key:'left'});
+  assert.equal(game.level,1);
+  const resumed=stepGame(null,{type:'enter',name:'dew',cleared:9});
+  assert.equal(resumed.level,10);assert.equal(stepGame(resumed,{type:'key',key:'right'}).level,10);
+});
+test('Dew Catch checkpoints migrate, round-trip and carry into a new generation',()=>{
+  const first=newPlant(0);delete first.dewCleared;
+  assert.equal(readPlant(JSON.stringify(first),H).dewCleared,0);
+  const sprouted={...sprout(),dewCleared:12};
+  assert.equal(readPlant(JSON.stringify(sprouted),2*H).dewCleared,12);
+  assert.equal(replant(wake(sprouted,H+DAY),'seed',H+DAY).dewCleared,12);
 });

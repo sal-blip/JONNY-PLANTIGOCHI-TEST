@@ -7,36 +7,6 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .device-hinge {
-    transform-box: view-box;
-    transition-property: transform;
-    transition-timing-function: cubic-bezier(.23, .78, .28, 1.09);
-  }
-
-  .device-hinge-eyelet {
-    transform-origin: 208px 145px;
-    transform: rotate(calc(var(--tilt-x, 0) * 10deg + var(--tilt-y, 0) * 3deg));
-    transition-duration: 240ms;
-  }
-
-  .device-hinge-mid {
-    transform-origin: 196.5px 128.1px;
-    transform: rotate(calc(var(--tilt-x, 0) * 9deg + var(--tilt-y, 0) * 2deg));
-    transition-duration: 330ms;
-  }
-
-  .device-hinge-upper {
-    transform-origin: 187px 113.5px;
-    transform: rotate(calc(var(--tilt-x, 0) * 7deg + var(--tilt-y, 0) * 2deg));
-    transition-duration: 410ms;
-  }
-
-  .device-hinge-ring {
-    transform-origin: 170px 87px;
-    transform: rotate(calc(var(--tilt-x, 0) * 6deg + var(--tilt-y, 0) * 3deg));
-    transition-duration: 470ms;
-  }
-
   .device-shell-light {
     transform: translate(calc(var(--tilt-x, 0) * -36px), calc(var(--tilt-y, 0) * -25px));
     transition: transform 240ms ease-out;

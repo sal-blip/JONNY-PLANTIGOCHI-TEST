@@ -30,7 +30,7 @@ export const healthLabels = { healthy: 'Damp soil', dry: 'Thirsty', critical: 'V
 export function newPlant(now = Date.now()) {
   return { version: 2, id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null,
     stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
-    ...blankHealth, jar: null, book: [] };
+    ...blankHealth, jar: null, book: [], dewCleared: 0 };
 }
 
 export function condition(p, now = Date.now()) {
@@ -102,7 +102,8 @@ export function readPlant(text, now = Date.now(), visible = true) {
       || !Array.isArray(p.given) || !p.given.every(a => ACTIONS.includes(a)) || new Set(p.given).size !== p.given.length
       || typeof p.message !== 'string' || typeof p.sound !== 'boolean') return null;
     if (p.version === 1) return wake({ ...p, version: 2, id: 'legacy-' + p.plantedAt, generation: 1,
-      ...blankHealth, lastDrink: p.stage === 'seed' ? null : now, jar: null, book: [] }, now, visible);
+      ...blankHealth, lastDrink: p.stage === 'seed' ? null : now, jar: null, book: [], dewCleared: 0 }, now, visible);
+    if (!Number.isInteger(p.dewCleared) || p.dewCleared < 0 || p.dewCleared > 20) p.dewCleared = 0;
     return validGarden(p) ? wake(p, now, visible) : null;
   } catch { return null; }
 }
@@ -122,7 +123,7 @@ export function replant(saved, source, now = Date.now()) {
   if (p.deadAt === null || !['cutting','seed'].includes(source)) return p;
   const cutting = source === 'cutting';
   if (cutting && (!p.jar || now < p.jar.cutAt + ROOT_TIME)) return p;
-  const fresh = { ...p, ...newPlant(now), sound: p.sound, book: p.book, jar: p.jar };
+  const fresh = { ...p, ...newPlant(now), sound: p.sound, book: p.book, jar: p.jar, dewCleared: p.dewCleared };
   return cutting ? { ...fresh, stage: 'sprout', generation: p.jar.generation, wateredAt: now, lastDrink: now,
     jar: null, message: 'New roots. Family resemblance?' } : fresh;
 }

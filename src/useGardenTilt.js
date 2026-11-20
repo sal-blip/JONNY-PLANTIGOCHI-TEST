@@ -19,6 +19,15 @@ function orientationFrame({alpha, beta, gamma}) {
   };
 }
 
+// Device X points right and device Y points toward the top edge. Project
+// world-down onto the display from pitch and roll; compass heading cancels out.
+export function screenGravity(beta, gamma, angle = 0) {
+  const pitch = beta * radians, roll = gamma * radians, rotation = angle * radians;
+  const right = Math.cos(pitch) * Math.sin(roll), down = Math.sin(pitch);
+  return { x: right * Math.cos(rotation) + down * Math.sin(rotation),
+    y: down * Math.cos(rotation) - right * Math.sin(rotation) };
+}
+
 function dot(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
 function bounded(value) {
   const scaled = value / fullTilt;
@@ -50,13 +59,17 @@ export function useGardenTilt(paused) {
     const el = garden.current;
     if (!el || !listening) return;
     let neutral = null, previousAngle, hadHeading, frame = 0, x = 0, y = 0;
+    let gravity = null, lastSample = null;
+    function emit(detail) { el.dispatchEvent(new CustomEvent('plantigochi-gravity',{detail,bubbles:true})); }
     function reset() {
-      neutral = null;
+      neutral = null; lastSample = null; gravity = null; x = 0; y = 0;
       cancelAnimationFrame(frame); frame = 0;
       el.style.removeProperty('--tilt-x'); el.style.removeProperty('--tilt-y');
+      emit({x:0,y:0,active:false});
     }
     function paint() {
       frame = 0;
+      if (gravity) emit({...gravity,active:true});
       el.style.setProperty('--tilt-x', x.toFixed(3));
       el.style.setProperty('--tilt-y', y.toFixed(3));
     }
@@ -65,8 +78,11 @@ export function useGardenTilt(paused) {
       const angle = window.screen.orientation?.angle ?? window.orientation ?? 0;
       const hasHeading = Number.isFinite(event.alpha);
       const pose = orientationFrame(event);
+      lastSample = {alpha:event.alpha,beta:event.beta,gamma:event.gamma};
+      gravity = screenGravity(event.beta,event.gamma,angle);
       if (!neutral || previousAngle !== angle || hadHeading !== hasHeading) {
-        reset();
+        x = 0; y = 0;
+        if (!frame) frame = requestAnimationFrame(paint);
         neutral = pose; previousAngle = angle; hadHeading = hasHeading;
         // Some browsers resume an earlier sensor grant without another prompt.
         if (needsPermission) setPermission('granted');
@@ -83,9 +99,14 @@ export function useGardenTilt(paused) {
       reset();
       if (!document.hidden) window.addEventListener('deviceorientation', read, {passive:true});
     }
+    function rotate() { if (lastSample) read(lastSample); }
+    window.screen.orientation?.addEventListener?.('change',rotate);
+    window.addEventListener('orientationchange',rotate);
     visibility();
     document.addEventListener('visibilitychange', visibility);
     return () => {
+      window.screen.orientation?.removeEventListener?.('change',rotate);
+      window.removeEventListener('orientationchange',rotate);
       document.removeEventListener('visibilitychange', visibility);
       window.removeEventListener('deviceorientation', read);
       reset();
