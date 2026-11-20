@@ -22,6 +22,10 @@ import './collector.css';
 const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts'};
 const homeItems = ['scenes','settings','install','phone'];
 const phoneItems = ['install','saves','alerts'];
+const updateMessages={
+  checking:'Checking for an update…',downloading:'Downloading the update…',current:'You have the latest version.',
+  offline:'Connect to the internet to check for updates.',failed:'Could not check for updates. Try again when online.',
+};
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
 const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 function MenuItems({ items, open }) {
@@ -251,6 +255,10 @@ function GardenApp({storage,phone,careMessage}) {
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
         <button onClick={()=>open('welcome')}><Play/>Welcome tour<ChevronRight className="row-end"/></button>
         <button data-audio="intro" onClick={replay}><Play/>Replay intro<ChevronRight className="row-end"/></button>
+        <button disabled={['checking','downloading'].includes(phone.updateStatus)}
+          onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
+          {phone.updateStatus==='ready'?'Restart to update':'Check for updates'}</button>
+        {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
       {page === 'reset' && <ResetGarden plant={plant} reset={storage.reset} cancel={()=>open('settings')}/>}
       {phoneItems.includes(page) && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}

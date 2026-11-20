@@ -49,6 +49,8 @@ Open the published Site online and choose **Get Plantigochi**. If you played an 
 
 Progress is stored in IndexedDB after each care action. Valid older saves migrate on first open. An unreadable or newer-format save opens recovery with an option to export the original. **App & saves → Saved plant → Back up** exports a save that can be restored on a different device or in a newly installed copy. Moving to a different Site origin creates separate browser storage. For a hosting move also set the canonical URL and Open Graph URLs in index.html to the new public origin.
 
+The installed app checks for new releases when it opens or returns to the foreground online. A downloaded update can activate while another Plantigochi window stays open. Reopen the app to load it, or choose **Settings → Check for updates** and then **Restart to update** when offered. Updates use the existing local garden.
+
 The production build uses vite-plugin-pwa and Workbox to generate a manifest and a versioned service worker that caches the game, artwork, icons and fonts. Service workers require HTTPS (or localhost for development). The normal Vite dev server does not register the production worker.
 
 ## Plant alerts

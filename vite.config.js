@@ -29,7 +29,7 @@ export default defineConfig({
         inlineWorkboxRuntime: true,
         cleanupOutdatedCaches: true,
         clientsClaim: true,
-        skipWaiting: false,
+        skipWaiting: true,
         navigateFallback: '/index.html',
         navigateFallbackAllowlist: [/^\/(?:index\.html)?(?:\?.*)?$/],
       },

@@ -1,4 +1,5 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { watchAppUpdates } from './appUpdates.js';
 import { createInstallPrompt } from './installPrompt.js';
 
 const install = createInstallPrompt(window);
@@ -8,8 +9,11 @@ export function usePhoneApp() {
   const standalone = useSyncExternalStore(install.subscribe, install.isStandalone);
   const [offline, setOffline] = useState('preparing');
 
+  const [updateStatus,setUpdateStatus]=useState('idle');
+  const updates=useRef(null);
   useEffect(() => {
     let active = true;
+    const sw=navigator.serviceWorker, initialController=sw?.controller;
     function status(value) { if (active) setOffline(value); }
     async function prepareOffline() {
       try {
@@ -17,7 +21,12 @@ export function usePhoneApp() {
           status('unavailable');
           return;
         }
-        const registration = await navigator.serviceWorker.register('/sw.js', { scope:'/', updateViaCache:'none' });
+        let registration;
+        try { registration=await sw.register('/sw.js', {scope:'/',updateViaCache:'none'}); }
+        catch(error){registration=await sw.getRegistration('/');if(!registration?.active)throw error;}
+        if(!active)return;
+        updates.current=watchAppUpdates(registration,sw,initialController,setUpdateStatus);
+        if(registration.active)void updates.current.check();
         const worker = registration.installing;
         function changed() {
           if (worker?.state === 'redundant' && !registration.active) status('unavailable');
@@ -32,8 +41,21 @@ export function usePhoneApp() {
     function identifyWindow(event){
       if(event.data?.type==='plant-window-mode')event.ports[0]?.postMessage(install.isStandalone());
     }
-    navigator.serviceWorker?.addEventListener('message',identifyWindow);
-    return () => { active = false;navigator.serviceWorker?.removeEventListener('message',identifyWindow); };
+    const resume=()=>{if(!document.hidden)void updates.current?.check();};
+    sw?.addEventListener('message',identifyWindow);
+    document.addEventListener('visibilitychange',resume);
+    window.addEventListener('pageshow',resume);
+    window.addEventListener('online',resume);
+    return () => {
+      active=false;updates.current?.close();updates.current=null;
+      sw?.removeEventListener('message',identifyWindow);
+      document.removeEventListener('visibilitychange',resume);
+      window.removeEventListener('pageshow',resume);window.removeEventListener('online',resume);
+    };
   }, []);
-  return { standalone, installState, installed:installState === 'installed', promptInstall:install.prompt, offline };
+  function checkForUpdates(){
+    if(updates.current)void updates.current.check(true);
+    else setUpdateStatus(navigator.onLine?'failed':'offline');
+  }
+  return { standalone, updateStatus, checkForUpdates, installState, installed:installState === 'installed', promptInstall:install.prompt, offline };
 }
