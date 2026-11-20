@@ -4,7 +4,7 @@ import DeviceShell from './DeviceShell.jsx';
 import PlantPixel from './PlantPixel.jsx';
 import {DewArt,EchoArt,JarArt,PressedLeaf} from './ActivityArt.jsx';
 import {toyCards,toyTitles} from './GardenLife.jsx';
-import {DEW_CHANCES,LEVELS,gameNames,playText,usePocketPlay} from './pocketPlay.js';
+import {DEW_CHANCES,LEVELS,gameNames,playText,saveDewCheckpoint,usePocketPlay} from './pocketPlay.js';
 import {care,careStatus,condition,healthLabels,replant,takeCutting,wake} from './game.js';
 import './PocketDevice.css';
 import './ToyMenu.css';
@@ -20,17 +20,12 @@ function Chances({remaining}) {
   </span>;
 }
 
-function ToyList({cards,index,reading}) {
-  const first=Math.max(0,Math.min(index-1,cards.length-3));
-  return <div className={'lcd-nav'+(reading?' lcd-reading':'')}>
-    <div className="lcd-options">
-      {cards.slice(first,first+3).map((entry,n)=><div key={first+n} className={'lcd-row'+(first+n===index?' selected':'')}>
-        <span className="lcd-cursor" aria-hidden="true">{first+n===index?'▸':''}</span>
-        <span>{entry.label}</span>
-        {entry.status && <small className="lcd-row-status">{entry.status}</small>}
-      </div>)}
-    </div>
-    <div className="lcd-hint">{cards[index].status===cards[index].hint ? (cards[index].locked?'‹ › Browse · ↶ Back':'♥ '+cards[index].label) : cards[index].hint}</div>
+function MenuItem({item}) {
+  const detail = item.status && item.status !== item.hint
+    ? item.status+' · '+item.hint : item.hint;
+  return <div className="lcd-caption">
+    <strong className="lcd-choice">{item.label}</strong>
+    {detail && <small className="lcd-hint">{detail}</small>}
   </div>;
 }
 
@@ -41,21 +36,20 @@ function GameArt({game}) {
 
 export default function PocketDevice({plant,now,resting,commit,sound}) {
   const [path,setPath]=useState([]);
-  const [lossIndex,setLossIndex]=useState(0);
   const [closeUp,setCloseUp]=useState(false), [feedback,setFeedback]=useState(null);
   const retreat=useRef(null), held=useRef(null), pressed=useRef(null), speech=useRef(null), heart=useRef(null);
   const screen=path.at(-1), paused=screen?.id==='pause';
-  const recordLevel=useCallback(level=>commit(old=>old.id===plant.id && level>old.dewCleared ? {...old,dewCleared:level} : old),[commit,plant.id]);
+  const recordLevel=useCallback(level=>commit(old=>old.id===plant.id ? saveDewCheckpoint(old,level) : old),[commit,plant.id]);
   const activity=usePocketPlay(plant,!resting || paused,recordLevel);
-  const game=activity.game, lost=game?.phase==='lost', playing=game && !paused && !lost;
-  const section=lost?'loss':screen?.id;
+  const game=activity.game, lost=game?.phase==='lost', playing=game && !paused;
+  const section=screen?.id;
   const browsing=Boolean(section && !playing);
   const soil=condition(plant,now), mood=soil==='healthy'?moods[plant.stage]:healthLabels[soil];
   const cards=browsing?toyCards(section,plant,now):[];
-  const index=Math.min(lost?lossIndex:(screen?.index??0),cards.length-1), choice=cards[index];
+  const index=Math.min(screen?.index??0,cards.length-1), choice=cards[index];
   let title='Monstera';
-  if (lost) title='Game over · L'+game.level;
-  else if (browsing) title=toyTitles[section];
+  if (browsing) title=toyTitles[section];
+  else if (lost) title='Three misses';
   else if (game) title=game.name==='dew'?'Dew Catch '+game.level+'/'+LEVELS:gameNames.echo;
   const status=game?playText(game):mood+' · ♥ Menu';
   const description=browsing?title+' · '+choice.label+' · '+choice.hint:game?title+' · '+status+' '+(game.name==='dew'?game.chances+' chances':''):'Monstera · '+mood;
@@ -66,19 +60,17 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
     setPath(old=>[...old,frame(id,initial)]);
   }
   function leaveGame() {
-    activity.exit();setLossIndex(0);
+    activity.exit();
     if (paused) setPath(old=>old.slice(0,-1));
   }
   function back() {
-    if (lost) {leaveGame();return;}
     if (playing) {go('pause');return;}
     setPath(old=>old.slice(0,-1));setFeedback(null);
   }
   function browse(delta) {
     if (!section) {go('home');return;}
     const next=(index+delta+cards.length)%cards.length;
-    if (lost) setLossIndex(next);
-    else setPath(old=>[...old.slice(0,-1),frame(section,next)]);
+    setPath(old=>[...old.slice(0,-1),frame(section,next)]);
   }
   function give(action,confirmed=false) {
     const time=Date.now(), live=wake(plant,time);
@@ -98,12 +90,11 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
     if (cmd==='back' || cmd==='resume') back();
     else if (cmd==='next') browse(1);
     else if (cmd==='leave') leaveGame();
-    else if (cmd==='retry') {setLossIndex(0);activity.retry();}
     else if (cmd==='pour-extra') return give('water',true);
     else {
       const [type,value]=cmd.split(':');
       if (type==='give') return give(value);
-      if (type==='game') {setLossIndex(0);activity.enter(value);}
+      if (type==='game') activity.enter(value);
       else if (type==='cut') commit(p=>takeCutting(p,value));
       else if (type==='new') {commit(p=>replant(p,value));setPath([]);}
       else go(cmd,cmd==='care' && soil==='rootRot'?toyCards('care',plant,now).findIndex(c=>c.command==='give:drain'):0);
@@ -153,12 +144,12 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
         <span className="lcd-top"><span><i/>{title.toUpperCase()}</span>
           {game?.name==='dew'?<Chances remaining={game.chances}/>:browsing?<span className="lcd-page">{index+1}/{cards.length}</span>:<span className="battery"><b/><b/><b/></span>}
         </span>
-        <span className={browsing?'lcd-pet':'lcd-art'}>
+        <span className={game?'lcd-art':'lcd-art lcd-plant'}>
           {game?<GameArt game={game}/>:<PlantPixel stage={plant.stage} condition={soil} reaction={feedback}/>}
           {browsing && choice.jar!==undefined && <span className="lcd-keepsake"><JarArt progress={choice.jar}/></span>}
           {browsing && choice.leaf && <span className="lcd-keepsake"><PressedLeaf stage={choice.leaf}/></span>}
         </span>
-        {browsing?<ToyList cards={cards} index={index} reading={section==='guide'}/>:<span className="lcd-status">{status}</span>}
+        {browsing?<MenuItem item={choice}/>:<span className="lcd-status">{status}</span>}
       </div>
       <span className="shell-name" aria-hidden="true">PLANTIGOCHI</span>
       <div className="toy-keys" role="group" aria-label="Plantigochi buttons"

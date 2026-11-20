@@ -1,5 +1,5 @@
 import {ACTIONS, STAGE_NAMES, ROOT_TIME, HOUR, careStatus, condition, countdown, healthLabels, deathDeadline, nextMilestone} from './game.js';
-import {canPlay, LEVELS} from './pocketPlay.js';
+import {canPlay, dewCheckpoint, LEVELS} from './pocketPlay.js';
 
 const card = (label, hint, command, extra) => ({label, hint, command, ...extra});
 const names = {water:'Water', sun:'Sunlight', talk:'Kind words', food:'Plant food', drain:'Drain pot'};
@@ -10,12 +10,12 @@ const guide = [
   ['Root rot','Two extra wet pours 1h apart. Drain within 12h.'],
   ['Care sets','Water, sun, words and food once per set.'],
   ['Growing up','Young on day 3. Last set on day 5. Grown on day 7.'],
-  ['Dew Catch','Catch with the arrows. Three misses end a run.'],
+  ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Leaf Echo','Watch three beats. Copy them with the keys.'],
   ['Taking a break','Press Back to pause a game.'],
   ['Cutting jar','Roots in 12h. Pot after the parent dies.'],
 ];
-export const toyTitles = {home:'Plant menu', care:'Care', play:'Play', growth:'Growth', jar:'Cutting jar', book:'Leaf Book', guide:'Field guide', pour:'Still wet?', pause:'Paused', loss:'Game over'};
+export const toyTitles = {home:'Plant menu', care:'Care', play:'Play', growth:'Growth', jar:'Cutting jar', book:'Leaf Book', guide:'Field guide', pour:'Still wet?', pause:'Paused'};
 
 function ageLabel(ms) {
   const hours=Math.floor(Math.max(0,ms)/HOUR);
@@ -47,11 +47,15 @@ export function toyCards(section, plant, now) {
     case 'pour': return [
       card('Leave it be','Soil is still wet','back'),
       card('Water anyway','Extra water risks rot','pour-extra')];
-    case 'play': return [
-      card('Dew Catch',canPlay('dew',plant)?(plant.dewCleared===LEVELS?'20 levels cleared':'Level '+Math.min(LEVELS,plant.dewCleared+1)+' / 20'):'After sprouting','game:dew',{locked:!canPlay('dew',plant)}),
-      card('Leaf Echo',canPlay('echo',plant)?'Copy three beats':'At young stage','game:echo',{locked:!canPlay('echo',plant)})];
+    case 'play': {
+      const cleared=dewCheckpoint(plant);
+      let hint=cleared===LEVELS?'20 levels cleared':'Level '+(cleared+1)+' / '+LEVELS;
+      if (plant.dewCleared>cleared) hint+=' · Best '+plant.dewCleared;
+      return [
+        card('Dew Catch',canPlay('dew',plant)?hint:'After sprouting','game:dew',{locked:!canPlay('dew',plant)}),
+        card('Leaf Echo',canPlay('echo',plant)?'Copy three beats':'At young stage','game:echo',{locked:!canPlay('echo',plant)})];
+    }
     case 'pause': return [card('Resume','Return to the game','resume'),card('Leave game','Keep cleared levels','leave')];
-    case 'loss': return [card('Retry level','Three fresh chances','retry'),card('Leave game','Keep cleared levels','leave')];
     case 'growth': {
       const next=nextMilestone(plant);
       const entries=[card(STAGE_NAMES[plant.stage],ageLabel((plant.deadAt??now)-plant.plantedAt)+' old · Gen '+plant.generation,'next')];

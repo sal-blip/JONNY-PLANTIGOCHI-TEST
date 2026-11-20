@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {HOUR as H,DAY,ROOT_TIME,care,condition,criticalReminder,deathDeadline,newPlant,readPlant,replant,takeCutting,wake} from '../src/game.js';
-import {stepGame,canPlay,dewRules,LEVELS} from '../src/pocketPlay.js';
+import {stepGame,canPlay,dewRules,dewCheckpoint,saveDewCheckpoint,LEVELS} from '../src/pocketPlay.js';
 
 const sprout=()=>wake(care(newPlant(0),'water',0),H);
 test('first sight starts the clock; thirst, rescue and death use real deadlines',()=>{
@@ -113,7 +113,7 @@ test('completed and unavailable care are true no-ops, while dry soil can always 
   assert.deepEqual(care(grown,'food',5*H).given,['food']);
 });
 
-test('three cumulative misses end a Dew run across levels and retry starts the failed level fresh',()=>{
+test('three cumulative misses across levels automatically start a fresh level-one run',()=>{
   const key=(g,key)=>stepGame(g,{type:'key',key,dropLane:0});
   const tick=g=>stepGame(g,{type:'tick',dropLane:0});
   let dew=key(stepGame(null,{type:'enter',name:'dew',cleared:4}),'heart');
@@ -126,9 +126,22 @@ test('three cumulative misses end a Dew run across levels and retry starts the f
   dew=land(dew,1);dew=land(dew,0);
   assert.equal(dew.phase,'lost');assert.equal(dew.count,1);
   assert.equal(dew.chances,0);assert.deepEqual(dew.drops,[]);
-  assert.equal(tick(dew),dew);assert.equal(key(dew,'left'),dew);
-  dew=stepGame(dew,{type:'retry',dropLane:2});
-  assert.equal(dew.phase,'fall');assert.equal(dew.level,6);assert.equal(dew.unlocked,6);
+  assert.equal(key(dew,'left'),dew);
+  dew=tick(dew);
+  assert.equal(dew.phase,'fall');assert.equal(dew.level,1);assert.equal(dew.unlocked,1);
+  assert.equal(dew.elapsed,0);assert.equal(dew.lane,1);assert.equal(dew.drops.length,1);
   assert.equal(dew.count,0);assert.equal(dew.chances,3);
   assert.equal(stepGame(dew,{type:'exit'}),null);
+});
+
+test('losing resets the saved run and keeps the best level through reload and replanting',()=>{
+  const legacy={...sprout(),dewCleared:8};
+  assert.equal(dewCheckpoint(legacy),8);
+  const reset=saveDewCheckpoint(legacy,0);
+  const restored=readPlant(JSON.stringify(reset),2*H);
+  assert.equal(restored.dewCleared,8);
+  assert.equal(stepGame(null,{type:'enter',name:'dew',cleared:dewCheckpoint(restored)}).unlocked,1);
+  const cleared=saveDewCheckpoint(restored,1);
+  assert.equal(dewCheckpoint(cleared),1);assert.equal(cleared.dewCleared,8);
+  assert.equal(dewCheckpoint(replant(wake(cleared,H+DAY),'seed',H+DAY)),1);
 });

@@ -105,6 +105,9 @@ export function readPlant(text, now = Date.now(), visible = true) {
       ...blankHealth, lastDrink: p.stage === 'seed' ? null : now, jar: null, book: [], dewCleared: 0 }, now, visible);
     if (!optionalStamp(p.lastFullCare)) p.lastFullCare = null;
     if (!Number.isInteger(p.dewCleared) || p.dewCleared < 0 || p.dewCleared > 20) p.dewCleared = 0;
+    if (p.dewRunCleared !== undefined && (!Number.isInteger(p.dewRunCleared) || p.dewRunCleared < 0 || p.dewRunCleared > p.dewCleared)) {
+      p.dewRunCleared = 0;
+    }
     return validGarden(p) ? wake(p, now, visible) : null;
   } catch { return null; }
 }
