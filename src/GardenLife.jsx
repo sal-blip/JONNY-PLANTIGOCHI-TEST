@@ -15,7 +15,8 @@ const guide = [
   ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
   ['Cutting jar','Roots in 12h. Pot after the parent dies.'],
 ];
-export const toyTitles = {home:'Plant menu', care:'Care', play:'Play', growth:'Growth', jar:'Cutting jar', book:'Leaf Book', guide:'Field guide', pour:'Still wet?', pause:'Paused'};
+export const toyBranches = {care:'Care', play:'Play', growth:'Growth', jar:'Cutting jar', book:'Leaf Book', guide:'Field guide'};
+export const toyTitles = {home:'Plant menu', ...toyBranches, pour:'Still wet?', pause:'Paused'};
 
 function ageLabel(ms) {
   const hours=Math.floor(Math.max(0,ms)/HOUR);
@@ -26,13 +27,17 @@ export function toyCards(section, plant, now) {
   const dead=plant.deadAt!==null;
   const rooted=plant.jar && now>=plant.jar.cutAt+ROOT_TIME;
   switch(section) {
-    case 'home': return [
-      card('Care',dead?'Pressed leaf':plant.stage==='seed'?'Sleeping seed':healthLabels[condition(plant,now)],'care'),
-      card('Play','Dew Catch · Leaf Echo','play'),
-      card('Growth',STAGE_NAMES[plant.stage],'growth'),
-      card('Cutting jar',plant.jar?(rooted?'Rooted cutting':'Growing roots'):'Save a stem','jar'),
-      card('Leaf Book',plant.book.length+' pressed '+(plant.book.length===1?'leaf':'leaves'),'book'),
-      card('Field guide','Care & controls','guide')];
+    case 'home': {
+      const hints = {
+        care: dead?'Pressed leaf':plant.stage==='seed'?'Sleeping seed':healthLabels[condition(plant,now)],
+        play: 'Dew Catch · Leaf Echo',
+        growth: STAGE_NAMES[plant.stage],
+        jar: plant.jar?(rooted?'Rooted cutting':'Growing roots'):'Save a stem',
+        book: plant.book.length+' pressed '+(plant.book.length===1?'leaf':'leaves'),
+        guide: 'Care & controls',
+      };
+      return Object.entries(toyBranches).map(([id,label])=>card(label,hints[id],id));
+    }
     case 'care':
       if (dead) return [card('Leaf Book','Visit your pressed leaf','book')];
       return [...ACTIONS,'drain'].map(action=>{

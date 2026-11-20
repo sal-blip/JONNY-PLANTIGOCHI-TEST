@@ -10,15 +10,53 @@
 .lcd-plant>.plant-pixel {width:100%;height:100%}
 .lcd-keepsake {position:absolute;right:-2%;bottom:2%;width:20%;height:44%}
 .lcd-page {font-variant-numeric:tabular-nums}
+
+.lcd [data-branch="care"], .lcd[data-branch="care"] {--branch-ink:#174a4d;--branch-paper:#cee5dc}
+.lcd [data-branch="play"], .lcd[data-branch="play"] {--branch-ink:#493659;--branch-paper:#dcd4e5}
+.lcd [data-branch="growth"], .lcd[data-branch="growth"] {--branch-ink:#2d4e2e;--branch-paper:#dae6bd}
+.lcd [data-branch="jar"], .lcd[data-branch="jar"] {--branch-ink:#644016;--branch-paper:#eddfb3}
+.lcd [data-branch="book"], .lcd[data-branch="book"] {--branch-ink:#653b3c;--branch-paper:#e9d3c9}
+.lcd [data-branch="guide"], .lcd[data-branch="guide"] {--branch-ink:#2f4565;--branch-paper:#d4dfeb}
+
+.lcd-menu .lcd-top {color:var(--branch-ink)}
+.lcd-branches {
+  position:absolute;
+  inset:14.5% 4% auto;
+  height:13%;
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:.7cqw;
+}
+.lcd-branches span {
+  display:grid;
+  place-items:center;
+  color:#4a5b42;
+  box-shadow:inset 0 0 0 1px #41573a57;
+  border-radius:.48cqw;
+}
+.lcd-branches .is-current {
+  color:var(--branch-ink);
+  background:var(--branch-paper);
+  box-shadow:inset 0 0 0 1px currentColor,inset 0 -.55cqw currentColor;
+}
+.lcd-branches svg {width:2.65cqw;height:2.65cqw;stroke-width:2.35}
 .lcd-caption {
   position:absolute;
-  inset:75% 4% auto;
+  inset:75% 4% 2.5%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:.22cqw .7cqw;
+  color:var(--branch-ink);
+  background:var(--branch-paper);
+  box-shadow:inset 0 0 0 1px currentColor;
+  border-radius:.48cqw;
   text-align:center;
   line-height:1.08;
 }
 .lcd-choice {display:block;font-size:2.58cqw;font-weight:400}
 .lcd-hint {display:block;margin-top:.3cqw;font-size:1.8cqw;line-height:1.1}
-.lcd-menu .lcd-art:not(.lcd-plant) {bottom:28%}
+.lcd-menu .lcd-art:not(.lcd-plant) {top:28.5%;bottom:26%}
 .lcd-ready .lcd-art {bottom:22%}
 .dew-chances {display:inline-flex;gap:.4cqw;align-items:center;flex:none}
 .dew-chances svg {display:block;width:1.63cqw;height:2cqw}

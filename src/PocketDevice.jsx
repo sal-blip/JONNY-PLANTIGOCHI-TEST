@@ -1,9 +1,9 @@
 import React, {useState,useRef,useEffect,useCallback} from 'react';
-import {ChevronLeft,ChevronRight,CornerUpLeft,Heart} from 'lucide-react';
+import {BookOpen,ChevronLeft,ChevronRight,Compass,CornerUpLeft,Droplet,FlaskConical,Gamepad2,Heart,Sprout} from 'lucide-react';
 import DeviceShell from './DeviceShell.jsx';
 import PlantPixel from './PlantPixel.jsx';
 import {DewArt,EchoArt,JarArt,PressedLeaf} from './ActivityArt.jsx';
-import {toyCards,toyTitles} from './GardenLife.jsx';
+import {toyBranches,toyCards,toyTitles} from './GardenLife.jsx';
 import {DEW_CHANCES,LEVELS,gameNames,playText,saveDewCheckpoint,usePocketPlay} from './pocketPlay.js';
 import {care,careStatus,condition,healthLabels,replant,takeCutting,wake} from './game.js';
 import './PocketDevice.css';
@@ -12,6 +12,17 @@ import './ToyMenu.css';
 const moods={seed:'Sleeping',sprout:'Curious',young:'Playful',grown:'Flourishing'};
 const frame=(id,index=0)=>({id,index});
 const BACK_HOLD_MS=700;
+const parentBranch={pour:'care',pause:'play'};
+const branchIcons={care:Droplet,play:Gamepad2,growth:Sprout,jar:FlaskConical,book:BookOpen,guide:Compass};
+
+function BranchIcons({active}) {
+  return <div className="lcd-branches" aria-hidden="true">
+    {Object.keys(toyBranches).map(id=>{
+      const Icon=branchIcons[id];
+      return <span key={id} data-branch={id} className={id===active?'is-current':undefined}><Icon/></span>;
+    })}
+  </div>;
+}
 
 function Chances({remaining}) {
   return <span className="dew-chances" role="img" aria-label={remaining+' of 3 chances'}>
@@ -49,8 +60,9 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
   const soil=condition(plant,now), mood=soil==='healthy'?moods[plant.stage]:healthLabels[soil];
   const cards=browsing?toyCards(section,plant,now):[];
   const index=Math.min(screen?.index??0,cards.length-1), choice=cards[index];
+  const branch=browsing?(section==='home'?choice.command:parentBranch[section]??section):undefined;
   let title='Monstera';
-  if (browsing) title=toyTitles[section];
+  if (browsing) title=parentBranch[section]?toyTitles[branch]+' · '+toyTitles[section]:toyTitles[section];
   else if (lost) title='Three misses';
   else if (game) title=game.name==='dew'?'Dew Catch '+game.level+'/'+LEVELS:gameNames.echo;
   const ready=playing && game.phase==='ready';
@@ -184,10 +196,11 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
   return <div className={'inspect-view'+(near?' close-up':'')}>
     <div className="device">
       <div className="inspect-shell"><DeviceShell/></div>
-      <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} role="group" aria-label={description}>
-        <span className="lcd-top"><span><i/>{title.toUpperCase()}</span>
+      <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} data-branch={branch} role="group" aria-label={description}>
+        <span className="lcd-top"><span>{!browsing && <i/>}{title.toUpperCase()}</span>
           {game?.name==='dew'?<Chances remaining={game.chances}/>:browsing?<span className="lcd-page">{index+1}/{cards.length}</span>:<span className="battery"><b/><b/><b/></span>}
         </span>
+        {browsing && <BranchIcons active={branch}/>}
         <span className={game?'lcd-art':'lcd-art lcd-plant'}>
           {game?<GameArt game={game}/>:<PlantPixel stage={plant.stage} condition={soil} reaction={feedback}/>}
           {browsing && choice.jar!==undefined && <span className="lcd-keepsake"><JarArt progress={choice.jar}/></span>}
@@ -203,7 +216,7 @@ export default function PocketDevice({plant,now,resting,commit,sound}) {
           suppressBackClick.current=false;
           if (button.classList.contains('toy-back')) beginHold(e.pointerId);
           clearTimeout(retreat.current);held.current=e.pointerId;pressed.current=button;
-          button.setPointerCapture(e.pointerId);setCloseUp(true);
+          button.setPointerCapture(e.pointerId);
         }}
         onPointerUp={endPointerHold}
         onLostPointerCapture={e=>{endPointerHold(e);if(held.current===e.pointerId) release();}}
