@@ -103,10 +103,13 @@ h1,h2,p{margin:0}svg{flex-shrink:0}
 .garden-edges,.garden-corners{position:absolute;inset:0;pointer-events:none}
 .garden-edges{background:linear-gradient(180deg,#15231b66,transparent 17%,transparent 83%,#12221c66)}
 .garden-corners{--side:max(20px,3.5vw);--top:max(16px,3.4dvh);color:#fafbf0;text-shadow:0 1px 4px #102019d9}
-.garden-wordmark,.wave-menu,.garden-clock,.garden-credit{position:absolute}
+.garden-wordmark,.garden-actions,.garden-clock,.garden-credit{position:absolute}
 .garden-wordmark{left:max(var(--side),env(safe-area-inset-left));top:max(calc(var(--top) + 8px),env(safe-area-inset-top));font:520 clamp(18px,2.1vw,27px)/1.1 var(--display);letter-spacing:-.025em;color:#f6f8ebdf}
-.wave-menu{pointer-events:auto;right:max(var(--side),env(safe-area-inset-right));top:max(var(--top),env(safe-area-inset-top));height:44px;width:48px;display:grid;place-items:center;background:transparent;color:#fffef0;border:0;filter:drop-shadow(0 1px 3px #15251cca)}
-.wave-menu svg{width:27px;height:27px;stroke-width:1.75}.wave-menu:hover{color:white}.wave-menu:focus-visible{outline-color:white}
+.garden-actions{right:max(var(--side),env(safe-area-inset-right));top:max(var(--top),env(safe-area-inset-top));display:flex;gap:4px}
+.garden-actions button{pointer-events:auto;height:44px;width:48px;display:grid;place-items:center;background:transparent;color:#fffef0;border:0;filter:drop-shadow(0 1px 3px #15251cca)}
+.garden-actions svg{width:27px;height:27px;stroke-width:1.75}.garden-actions .garden-share svg{width:23px;height:23px}
+.garden-actions button:hover{color:white}.garden-actions button:focus-visible{outline-color:white}
+.game-link{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:16px;color:var(--ink);background:#f6fbeacc;border:1px solid #849b7c;border-radius:8px}
 .garden-clock,.garden-credit{bottom:max(18px,env(safe-area-inset-bottom));font-size:13px;font-weight:520;color:#f4f7e9e8}
 .garden-clock{left:max(var(--side),env(safe-area-inset-left));display:flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums}
 .garden-clock svg{width:16px;height:16px;stroke-width:1.5}.garden-credit{right:max(var(--side),env(safe-area-inset-right))}

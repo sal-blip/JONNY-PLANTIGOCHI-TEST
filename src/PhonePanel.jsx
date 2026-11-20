@@ -2,19 +2,14 @@ import React, { useRef, useState } from 'react';
 import { Bell, Check, Download, HardDrive, Upload } from 'lucide-react';
 import { backupLimit } from './gardenScenes.js';
 import { readPlant, STAGE_NAMES } from './game.js';
+import GameLink from './GameLink.jsx';
 
 function InstallHelp({phone}) {
-  const [copyState,setCopyState] = useState('idle');
-  const link = new URL('/', window.location.href).href;
   const ua = navigator.userAgent;
   const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const android = /Android/i.test(ua);
   const embedded = window.self !== window.top || /ChatGPT|FBAN|FBAV|Instagram|; wv\)/i.test(ua) ||
     (ios && !/Safari|CriOS|FxiOS|EdgiOS/.test(ua));
-  async function copyLink() {
-    try { await navigator.clipboard.writeText(link); setCopyState('copied'); }
-    catch { setCopyState('select'); }
-  }
   switch (phone.installState) {
     case 'installed': return <p>Plantigochi is installed on this device.</p>;
     case 'prompting': return <p role="status">Choose Install in your browser’s prompt.</p>;
@@ -29,9 +24,7 @@ function InstallHelp({phone}) {
   return <>
     {embedded && <p>Open the game link in {ios ? 'Safari' : android ? 'Chrome' : 'your browser'} first.</p>}
     <p>{steps}</p>
-    <button className="primary-btn" onClick={copyLink}>Copy game link</button>
-    {copyState === 'copied' && <p role="status">Game link copied.</p>}
-    {copyState === 'select' && <input aria-label="Game link to copy" readOnly value={link} onFocus={e=>e.target.select()}/>}
+    <GameLink/>
   </>;
 }
 

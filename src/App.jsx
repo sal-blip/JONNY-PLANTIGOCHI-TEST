@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, ChevronRight, Waves, Moon, ImagePlus, Music2, Play, Move, Sun, Volume2, VolumeX } from 'lucide-react';
+import { Check, ChevronRight, Waves, Moon, ImagePlus, Music2, Play, Move, Share, Sun, Volume2, VolumeX } from 'lucide-react';
 import PhotoBackground from './PhotoBackground.jsx';
 import { scenes, selectedScene, photoStyle } from './gardenScenes.js';
 import PhonePanel from './PhonePanel.jsx';
 import GardenDialog from './GardenDialog.jsx';
+import GameLink, { gameLink } from './GameLink.jsx';
 import { useGardenTilt } from './useGardenTilt.js';
 import { useGardenSound } from './GardenSound.js';
 import { usePlantAlerts } from './usePlantAlerts.js';
@@ -11,7 +12,7 @@ import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
 import {KEY, restore, wake} from './game.js';
 
-const titles = {menu:'Pocket menu',scenes:'Backgrounds',settings:'Settings',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts'};
+const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts'};
 const homeItems = ['scenes','settings','install','phone'];
 const phoneItems = ['install','saves','alerts'];
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
@@ -42,11 +43,12 @@ export default function App() {
   const alerts = usePlantAlerts(plant, phone.offline);
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
+  const [sharing, setSharing] = useState(false);
   const [intro, setIntro] = useState(() => !reducedMotion());
   const tilt = useGardenTilt(intro || page !== null);
   const [leafReady, setLeafReady] = useState(false);
   const [saveOK, setSaveOK] = useState(() => readSave() !== null);
-  const menuButton = useRef(null), restoreFocus = useRef(false);
+  const menuButton = useRef(null), shareButton = useRef(null), restoreFocus = useRef(null);
   const savedLastChange = useRef(saveOK);
   const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, sleeping:plant.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
@@ -105,7 +107,7 @@ export default function App() {
   }, [intro, leafReady, finishIntro]);
   useEffect(() => {
     if (!page && !intro && restoreFocus.current) {
-      menuButton.current?.focus({preventScroll:true}); restoreFocus.current = false;
+      restoreFocus.current.focus({preventScroll:true}); restoreFocus.current = null;
     }
   }, [page, intro]);
 
@@ -115,8 +117,23 @@ export default function App() {
       installParent.current = page === 'phone' ? 'phone' : 'menu';
       if (phone.installState === 'available') void phone.promptInstall();
     }
-    restoreFocus.current = true;
+    restoreFocus.current = id === 'share' ? shareButton.current : menuButton.current;
     setPage(id);
+  }
+  async function shareGame() {
+    if (sharing) return;
+    if (typeof navigator.share === 'function') {
+      setSharing(true);
+      try {
+        await navigator.share({title: 'Plantigochi', url: gameLink()});
+        return;
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+      } finally {
+        setSharing(false);
+      }
+    }
+    open('share');
   }
   function toggleSound() {
     const enabled = !current.current.sound;
@@ -160,12 +177,15 @@ export default function App() {
       {photo && <img className="custom-photo" src={photo.src} style={photoStyle(photo)} alt="" draggable="false"/>}
     </div>
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
-      <PocketDevice key={plant.id+'-'+(plant.deadAt ?? 'alive')} plant={plant} now={now} resting={!intro && !page} commit={commit} sound={play}/>
+      <PocketDevice key={plant.id+'-'+(plant.deadAt ?? 'alive')} plant={plant} now={now} resting={!intro && !page && !sharing} commit={commit} sound={play}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo'} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
       <span className="garden-wordmark">Plant Garden</span>
-      <button ref={menuButton} className="wave-menu" aria-label="Open pocket menu" title="Pocket menu" aria-haspopup="dialog" onClick={() => open('menu')}><Waves/></button>
+      <div className="garden-actions">
+        <button ref={shareButton} className="garden-share" aria-label="Share Plantigochi" title="Share Plantigochi" onClick={shareGame}><Share aria-hidden="true"/></button>
+        <button ref={menuButton} className="wave-menu" aria-label="Open pocket menu" title="Pocket menu" aria-haspopup="dialog" onClick={() => open('menu')}><Waves aria-hidden="true"/></button>
+      </div>
       <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
       <small className="garden-credit">© 2026 Waz Lab</small>
     </div>
@@ -178,7 +198,8 @@ export default function App() {
     </div>}
     {page === 'photo' && <PhotoBackground photo={draftPhoto} update={setDraftPhoto} layer={scenery} apply={savePhoto}
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
-    {page && page !== 'photo' && <GardenDialog page={page} title={titles[page]} back={page === 'menu' ? null : () => open(parent)} close={() => setPage(null)}>
+    {page && page !== 'photo' && <GardenDialog page={page} title={titles[page]} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
+      {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
       {page === 'menu' && <MenuItems items={phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}
       {page === 'phone' && <MenuItems items={phoneItems} open={open}/>}
       {page === 'scenes' && <div className="scenes">{Object.entries(scenes).map(([id,name]) =>
