@@ -39,7 +39,6 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
   const camera=useRef(null),cameraCenter=useRef(page+.5);
   const [worldHeight,setWorldHeight]=useState(ROOM_HEIGHT);
   const lens=useRef(null),zoomTimer=useRef(null),petNumber=useRef(0);
-  const [eye,setEye]=useState((page+.5)*ROOM_WIDTH);
   const [visible,setVisible]=useState([page,page]);
   const mounted=useRef(false),pending=useRef(false);
   const collection=useMemo(()=>new Map(graduates.map(p=>[p.slot,p])),[graduates]);
@@ -76,7 +75,6 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
   function readCamera(){
     const el=stage.current,frame=camera.current;
     if(!el || !frame)return;
-    setEye(Math.round((el.scrollLeft+el.clientWidth/2)*ROOM_WIDTH/frame));
     const first=clamp(Math.floor(el.scrollLeft/frame),count-1);
     const last=clamp(Math.floor((el.scrollLeft+el.clientWidth-1)/frame),count-1);
     setVisible(old=>old[0]===first && old[1]===last?old:[first,last]);
@@ -297,7 +295,7 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
         else inspect(e.clientX,e.clientY);
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
-        {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} worldHeight={worldHeight} eye={eye} plants={potted[k]} hour={hour}
+        {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} worldHeight={worldHeight} plants={potted[k]} hour={hour}
           placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>

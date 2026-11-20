@@ -3,7 +3,7 @@ import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,CAT_SEAT,roomLight} from './ro
 import {drawRoomDepth} from './roomScenery.js';
 import {slotFor,speciesName,viewName} from './gardenLayout.js';
 
-export default function RoomView({index,onScreen,running,worldHeight,eye,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat}) {
+export default function RoomView({index,onScreen,running,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat}) {
   const canvas=useRef(null),depth=useRef(null);
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
   const scene=useRef(null);
@@ -31,8 +31,8 @@ export default function RoomView({index,onScreen,running,worldHeight,eye,plants,
     if(canvas.current)drawRoom(canvas.current,{...scene.current,time:performance.now(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
   },[plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing]);
   useLayoutEffect(()=>{
-    if(onScreen && depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above,eye);
-  },[onScreen,worldHeight,above,hour,index,eye]);
+    if(depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
+  },[worldHeight,above,hour,index]);
   return <div className="room-frame" aria-hidden={!onScreen || undefined} inert={!onScreen?'':undefined}
     style={{left:'calc('+index+' * var(--room-width))'}}>
     <canvas className="room-depth" ref={depth} width={ROOM_WIDTH} height={worldHeight} aria-hidden="true"/>

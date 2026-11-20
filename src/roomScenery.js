@@ -83,74 +83,72 @@ function slat(b,x,y,h,w=5){
   b.r(x+1,y+1,1,h-3,wood.lit);b.r(x+w-2,y+2,1,h-3,wood.shade);
 }
 
-// One eye line for both planes. An edge at the rear wall and its foreground
-// continuation lie on the same ray, even when the camera straddles two rooms.
-const EYE_HEIGHT=118;
-function planeX(x,y,back,eye){
-  return Math.round(eye+(x-eye)*(y-EYE_HEIGHT)/(back-EYE_HEIGHT));
-}
-function boardRange(camera,eye,y0,y1,back,width,offset){
-  // A room at the edge of the viewport can have its vanishing point outside the canvas.
-  // Include both ends of the strip so its texture continues through the next room.
-  const base=(x,y)=>eye+(x-eye)*(back-EYE_HEIGHT)/(y-EYE_HEIGHT);
-  const left=Math.min(base(camera,y0),base(camera,y1));
-  const right=Math.max(base(camera+BASE_WIDTH,y0),base(camera+BASE_WIDTH,y1));
-  return [Math.floor((left-offset)/width)-1,Math.ceil((right-offset)/width)+1];
-}
-function floorboardRow(b,camera,eye,row,y,h){
-  const {r,l,p}=b,width=84,offset=(row*37)%width;
-  const project=(x,depth)=>planeX(x,depth,214,eye),end=y+h;
-  const [first,last]=boardRange(camera,eye,y,end,214,width,offset);
-  const colors=['#b88861','#c3986a','#c18e63','#cda175','#b98d64'];
-  r(camera,y,BASE_WIDTH,h,'#b98d64');
+const floorWood={
+  faces:['#bb9068','#c1976d','#bd9269','#c49a71'],joint:'#a17b5e',
+  seam:'#a17a5b',edge:'#d3ab80',grain:['#b48965','#cca47c']
+};
+const ceilingWood={
+  faces:['#cbaf89','#cdb18d','#c8ac87','#cfb490'],joint:'#b79a79',
+  seam:'#ae9374',edge:'#d7be9b',grain:['#bda17f','#d3b996']
+};
+
+// All marks use room coordinates. The pattern wraps across each two-room suite
+// so a long board continues through a room boundary and into its postcard.
+function plankRow(b,roomX,y,height,row,across,wood){
+  const suiteWidth=2*BASE_WIDTH,span=suiteWidth/across;
+  const offset=hash(row*47+across)%Math.round(span);
+  const first=Math.floor((roomX-offset)/span)-1;
+  const last=Math.ceil((roomX+BASE_WIDTH-offset)/span);
   for(let n=first;n<=last;n++){
-    const x=n*width+offset;
-    const left=project(x,y),right=project(x+width,y),farLeft=project(x,end),farRight=project(x+width,end);
-    p([left,y,right+1,y,farRight+1,end,farLeft,end],colors[hash(n+100*row)%colors.length]);
-    l(left,y,farLeft,end-1,'#936e54');
-    for(let k=0;k<8;k++){
-      const gy=y+2+hash(n*19+k*97+row)%Math.max(1,h-3),gx=x+3+hash(n*300+row*23+k)%66;
-      l(project(gx,gy),gy,project(gx+2+hash(k+n)%7,gy),gy,k%3?'#b18763':'#d3a77a');
+    const board=(n%across+across)%across,seed=row*79+board*29;
+    const left=Math.round(offset+n*span)+hash(seed)%17;
+    const nextSeed=row*79+((board+1)%across)*29;
+    const right=Math.round(offset+(n+1)*span)+hash(nextSeed)%17;
+    const width=right-left;
+    b.r(left,y,width,height,wood.faces[hash(seed+5)%wood.faces.length]);
+    b.r(left,y+1,1,height-1,wood.joint);
+    for(let k=0;k<4;k++){
+      const grain=hash(seed+k*97+13);
+      const x=left+5+grain%(width-40);
+      const gy=y+3+hash(seed*13+k*73)%Math.max(1,height-5);
+      b.r(x,gy,7+(grain>>>12)%25,1,wood.grain[k%2]);
     }
   }
-  r(camera,y,BASE_WIDTH,1,'#926c52');r(camera,y+1,BASE_WIDTH,1,'#dcb187');
+  b.r(roomX,y,BASE_WIDTH,1,wood.seam);
+  b.r(roomX,y+1,BASE_WIDTH,1,wood.edge);
 }
-function paintPlanes(ctx,camera,eye,light,above,below){
-  const b=tools(ctx,palette(light.day,light.warmth)),top=-above,bottom=21,width=36;
-  const project=(x,y)=>planeX(x,y,bottom,eye);
-  b.r(camera,top,BASE_WIDTH,bottom-top,'#c8ab85');
-  const [first,last]=boardRange(camera,eye,top,bottom,bottom,width,0);
-  for(let n=first;n<=last;n++){
-    const x=n*width,left=project(x,top),right=project(x+width,top);
-    b.p([left,top,right+1,top,x+width+1,bottom,x,bottom],
-      ['#c9aa84','#cdb28b','#c5aa85','#ceb28b'][hash(n)%4]);
-    b.l(left,top,x,bottom,'#aa9171');
-    for(let y=top;y<bottom;y+=22){
-      const gx=x+5+hash(n+y)%25,stop=Math.min(bottom,y+5+hash(y+n)%11);
-      b.l(project(gx,y),y,project(gx,stop),stop,'#c1a37e');
-    }
+
+function paintPlanes(ctx,roomX,light,above,below){
+  const b=tools(ctx,palette(light.day,light.warmth));
+  let y=21;
+  for(let row=0;y> -above;row++){
+    const h=Math.min(31,8+row*3);
+    y-=h;
+    plankRow(b,roomX,y,h,row,4,ceilingWood);
   }
-  for(let y=-46,step=80;y>top-20;y-=step,step=Math.round(step*1.37)){
+  for(let y=-46,step=80;y> -above-20;y-=step,step=Math.round(step*1.37)){
     const h=Math.round(4+Math.abs(y)*.024);
-    b.r(camera,y,BASE_WIDTH,h+3,'#b29a77');b.r(camera,y,BASE_WIDTH,h,'#987454');
-    b.r(camera,y,BASE_WIDTH,2,'#c19a6d');b.r(camera,y+h-2,BASE_WIDTH,2,'#816247');
+    b.r(roomX,y,BASE_WIDTH,h+3,'#b29a77');b.r(roomX,y,BASE_WIDTH,h,'#987454');
+    b.r(roomX,y,BASE_WIDTH,2,'#c19a6d');b.r(roomX,y+h-2,BASE_WIDTH,2,'#816247');
   }
-  let y=214,h=8;
+  y=214;
   for(let row=0;y<BASE_HEIGHT+below;row++){
-    floorboardRow(b,camera,eye,row,y,h);y+=h;h=Math.min(78,Math.ceil(h*1.2));
+    const h=Math.min(38,8+row*3);
+    plankRow(b,roomX,y,h,row,row<5?5:4,floorWood);
+    y+=h;
   }
   if(below){
     const shade=ctx.createLinearGradient(0,BASE_HEIGHT,0,BASE_HEIGHT+below);
     shade.addColorStop(0,'rgba(69,46,40,0)');shade.addColorStop(1,'rgba(69,46,40,.16)');
-    ctx.fillStyle=shade;ctx.fillRect(camera,BASE_HEIGHT,BASE_WIDTH,below);
+    ctx.fillStyle=shade;ctx.fillRect(roomX,BASE_HEIGHT,BASE_WIDTH,below);
   }
 }
-export function drawRoomDepth(canvas,index,light,above,eye){
+export function drawRoomDepth(canvas,index,light,above){
   const ctx=canvas.getContext('2d');if(!ctx)return;
-  const camera=index*BASE_WIDTH;
+  const roomX=index*BASE_WIDTH;
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.save();ctx.translate(-camera,above);
-  paintPlanes(ctx,camera,eye,light,above,canvas.height-BASE_HEIGHT-above);
+  ctx.save();ctx.translate(-roomX,above);
+  paintPlanes(ctx,roomX,light,above,canvas.height-BASE_HEIGHT-above);
   ctx.restore();
 }
 
@@ -169,8 +167,7 @@ function structure(ctx,b,day,warmth,hour,camera){
     const x=hash(i*3)%800,y=35+hash(i*7+3)%131;
     if(x>=camera&&x<camera+400)r(x,y,1+hash(i+7)%3,1,i%4===0?'#eee1c2':'#e2d2af');
   }
-  // Sun through the trees picks out the texture of the lime plaster. The
-  // broad shafts and smaller leaf gaps share the same direction as the floor.
+  // Sun through the trees picks out the texture of the lime plaster.
   if(day>.3){
     const warm='rgba(255,245,201,'+(.13+warmth*.09)+')',soft='rgba(255,245,204,'+(.08+warmth*.06)+')';
     for(const a of [125,528]){
@@ -856,7 +853,7 @@ export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,draw
   const clock=reducedMotion||!Number.isFinite(time)?0:Math.max(0,time);
   const tint=palette(day,warmth),b=tools(ctx,tint),raw=tools(ctx,c=>c),L={day,warmth,hour};
   ctx.save();ctx.beginPath();ctx.rect(0,0,BASE_WIDTH,BASE_HEIGHT);ctx.clip();ctx.translate(-camera,0);
-  if(!separatePlanes)paintPlanes(ctx,camera,camera+BASE_WIDTH/2,{day,warmth},0,0);
+  if(!separatePlanes)paintPlanes(ctx,camera,{day,warmth},0,0);
   const backdrop=getBackdrop(ctx,day,warmth,hour);
   if(backdrop){
     ctx.imageSmoothingEnabled=false;
