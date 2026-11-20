@@ -50,7 +50,7 @@ export default function Collector({plant,moving,now,move,relocate,shareLink,star
     if(!ghostCanvas.current || !inHand)return;
     const ctx=ghostCanvas.current.getContext('2d');
     ctx.clearRect(0,0,76,82);
-    drawPottedPlant(ctx,{x:38,y:74,size:1.28,plant:inHand,night:1-roomLight(hour).day,reducedMotion:true});
+    drawPottedPlant(ctx,{x:38,y:74,size:1.28,plant:inHand,night:1-roomLight(hour).day,reducedMotion:true,selected:true});
   },[Boolean(ghost),inHand,hour]);
 
   const travel=useCallback(n=>{
@@ -82,7 +82,7 @@ export default function Collector({plant,moving,now,move,relocate,shareLink,star
   }
   function onCat(){
     if(ignoreClick.current || picking || inHand)return;
-    clearTimeout(catTimer.current);setCat(true);setNotice('The cat blinks hello.');
+    clearTimeout(catTimer.current);setSlot(null);setCat(true);setNotice('The cat blinks hello.');
     catTimer.current=setTimeout(()=>{setCat(false);setNotice(n=>n==='The cat blinks hello.'?'':n);},2100);
   }
   function hit(x,y){
@@ -165,7 +165,7 @@ export default function Collector({plant,moving,now,move,relocate,shareLink,star
       onClickCapture={e=>{if(ignoreClick.current){e.preventDefault();e.stopPropagation();}}}>
       <div className={'room-strip'+(pan!==null?' panning':'')} style={{transform:'translateX(calc('+(-page*100)+'% + '+(pan??0)+'px))'}}>
         {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k===page} plants={potted[k]} hour={hour}
-          placing={picking||Boolean(inHand)} carry={carry} selected={dropOver??slot} choose={choose} cat={cat} petCat={onCat}/>)}
+          placing={picking||Boolean(inHand)} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat} petCat={onCat}/>)}
       </div>
     </div></div>
     <footer className="room-footer">

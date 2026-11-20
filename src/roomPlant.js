@@ -255,26 +255,29 @@ function sprite(style,hash,pose) {
 
 const common = ['#3c322e','#574638','#836751','#aa8a64','#3f5945','#59794d','#899d61','#b4bf79'];
 const blended = new Map(), poses = new Map();
-function litColor(hex,night) {
+function litColor(hex,night,selected) {
   const rgb=parseInt(hex.slice(1),16);
   const r=rgb>>16,g=(rgb>>8)&255,b=rgb&255;
   // Moonlight keeps blue and green reflected from the window, even on the clay.
-  const shift=(c,d)=>Math.round(c+(d-c)*night);
-  return 'rgb('+shift(r,r*.58+5)+','+shift(g,g*.62+9)+','+shift(b,b*.74+16)+')';
+  const shift=(c,d,glaze)=>{
+    const lit=c+(d-c)*night;
+    return Math.round(selected ? lit+(glaze-lit)*.24 : lit);
+  };
+  return 'rgb('+shift(r,r*.58+5,255)+','+shift(g,g*.62+9,230)+','+shift(b,b*.74+16,169)+')';
 }
-function colors(style,night) {
-  const step=Math.max(0,Math.min(48,Math.round(night*48))),key=style*49+step;
+function colors(style,night,selected) {
+  const step=Math.max(0,Math.min(48,Math.round(night*48))),key=(style*49+step)*2+Number(selected);
   if(!blended.has(key)){
     const n=step/48;
     blended.set(key,[null,'rgba(53,42,49,.14)','rgba(47,37,44,.28)',
-      ...[...common,...ceramics[style].day,...leaves.flat()].map(ink=>litColor(ink,n))]);
+      ...[...common,...ceramics[style].day,...leaves.flat()].map(ink=>litColor(ink,n,selected))]);
   }
   return blended.get(key);
 }
 
 /** Draw at logical room coordinates. x/y is the bottom center of the ceramic,
  * size 1 gives a roughly 22px rim, and time is elapsed milliseconds. */
-export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,night=0,time=0,reducedMotion=false}) {
+export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,night=0,time=0,reducedMotion=false,selected=false}) {
   if(!ctx || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(size) || size<=0)return;
   const hash=plant?identity(plant):null;
   const chosen=Number.isInteger(plant?.potStyle)?plant.potStyle:hash===null?styleIndex:hash>>>12;
@@ -287,7 +290,10 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,night=0,
     if(poses.size>=192)poses.delete(poses.keys().next().value);
     poses.set(key,runs);
   }
-  const ink=colors(style,Number.isFinite(night)?night:0);
+  const ink=colors(style,Number.isFinite(night)?night:0,selected);
+  // The moving reflection is clipped to the painted leaves and ceramic runs.
+  // A stationary reflection on the rim also works with reduced motion.
+  const sweep=reducedMotion ? -8 : (time%3600)*.035-45;
   ctx.save();
   for(let i=1;i<runs.length;i++){
     const cells=runs[i];
@@ -297,6 +303,16 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,night=0,
       const px=cells[j],py=cells[j+1],left=Math.round(x+size*px),top=Math.round(y+size*py);
       const w=Math.round(x+size*(px+cells[j+2]))-left,h=Math.round(y+size*(py+1))-top;
       if(w && h)ctx.fillRect(left,top,w,h);
+      if(selected && i>shadowFirm && w && h){
+        const start=Math.round(sweep-py*.36);
+        const first=Math.max(px,start),end=Math.min(px+cells[j+2],start+4);
+        if(first<end){
+          const from=Math.round(x+size*first);
+          ctx.fillStyle='rgba(255,246,203,.56)';
+          ctx.fillRect(from,top,Math.round(x+size*end)-from,h);
+          ctx.fillStyle=ink[i];
+        }
+      }
     }
   }
   ctx.restore();

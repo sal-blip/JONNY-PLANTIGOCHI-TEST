@@ -13,7 +13,9 @@
 
 .lcd-readout {
   position:absolute;
-  inset:71.5% 4.2% 2%;
+  inset:auto 4.2% 2%;
+  height:max(21%,calc(6.15cqw + 4px));
+  box-sizing:border-box;
   display:grid;
   grid-template-rows:repeat(3,minmax(0,1fr));
   border-block:1px solid #465c3d99;
@@ -33,7 +35,7 @@
 .lcd-meter + .lcd-meter {border-top:1px solid #546a494f}
 .lcd-meter:nth-child(2) {background:rgb(65 87 66 / .09);color:#193e40}
 .lcd-meter:nth-child(3) {color:#4e3746}
-.lcd-meter-track {display:flex;gap:.43cqw;height:1.45cqw}
+.lcd-meter-track {display:flex;gap:.43cqw;height:1.3cqw}
 .lcd-meter-track i {
   flex:1;
   background:linear-gradient(90deg,currentColor var(--fill),transparent var(--fill));

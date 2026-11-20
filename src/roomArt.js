@@ -12,22 +12,33 @@ export function roomLight(hour) {
   return {day,warmth,hour:h};
 }
 
-export function drawRoom(canvas,{hour,plants=[],roomIndex=0,time=0,reducedMotion=false,awake=false}={}) {
+export function drawRoom(canvas,{
+  hour,plants=[],roomIndex=0,time=0,reducedMotion=false,awake=false,
+  highlighted=-1,lifted=-1,placing=false
+}={}) {
   const ctx=canvas.getContext('2d');
   if(!ctx)return;
   const view=roomIndex%2;
   const light=roomLight(hour);
+  const places=placesFor(view);
   ctx.save();
   ctx.setTransform(canvas.width/BASE_WIDTH,0,0,canvas.height/BASE_HEIGHT,0,0);
   ctx.imageSmoothingEnabled=false;
-  drawScenery(ctx,{view,light,time,reducedMotion});
-  if(view===0)drawRoomCat(ctx,{...CAT_SEAT,time,reducedMotion,night:1-light.day,awake});
-  const places=placesFor(view);
-  for(const [i,place] of places.entries()){
-    const plant=plants[i];
-    if(!plant && !place.shelf)continue;
+  function drawOccupant(slot){
+    if(slot==='cat'){
+      drawRoomCat(ctx,{...CAT_SEAT,time,reducedMotion,night:1-light.day,awake});
+      return;
+    }
+    if(slot===lifted)return;
+    const place=places[slot],plant=plants[slot],selected=slot===highlighted;
+    const preview=!plant && !place.shelf;
+    if(preview && !placing && !selected)return;
+    ctx.save();
+    if(preview)ctx.globalAlpha=selected ? .9 : .45;
     drawPottedPlant(ctx,{x:place.x*BASE_WIDTH,y:place.y*BASE_HEIGHT,size:place.size,
-      plant,styleIndex:i+roomIndex*6,night:1-light.day,time,reducedMotion});
+      plant,styleIndex:slot+roomIndex*places.length,night:1-light.day,time,reducedMotion,selected});
+    ctx.restore();
   }
+  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant});
   ctx.restore();
 }

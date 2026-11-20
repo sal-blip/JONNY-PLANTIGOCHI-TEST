@@ -2,16 +2,25 @@
 // integer-pixel geometry; the camera may travel between its two 400-pixel rooms.
 export const BASE_WIDTH = 400;
 export const BASE_HEIGHT = 320;
-export const CAT_SEAT = {x:191,y:197,size:1};
+export const CAT_SEAT = {x:205,y:197,size:1};
 
 const positions = [
-  [[52,98,'Upper bookcase shelf',true,.79],[63,143,'Middle bookcase shelf',true,.84],
-   [44,188,'Lower bookcase shelf',true,.87],[253,140,'Living room windowsill',false,.88],
-   [160,246,'Coffee table',false,1],[349,277,'Beside the sofa',false,1.24]],
-  [[49,88,'Upper studio shelf',true,.85],[70,131,'Lower studio shelf',true,.84],
-   [41,176,'Studio cabinet',true,.88],[218,144,'Studio windowsill',false,.9],
-   [164,186,'Drawing desk',false,.98],[310,274,'Beside the easel',false,1.2]],
+  [[55,96,'Upper bookcase shelf',true,.78],[50,141,'Middle bookcase shelf',true,.72],
+   [51,186,'Lower bookcase shelf',true,.73],[258,139,'Living room windowsill',false,.86],
+   [152,245,'Coffee table',false,.94],[347,287,'Beside the sofa',false,1.06]],
+  [[43,80,'Upper studio shelf',true,.82],[61,129,'Lower studio shelf',true,.75],
+   [50,180,'Studio cabinet',true,.77],[235,143,'Studio windowsill',false,.85],
+   [150,196,'Drawing desk',false,.86],[316,290,'Beside the easel',false,1.07]],
 ].map(slots=>slots.map(([x,y,name,shelf,size])=>({x:x/BASE_WIDTH,y:y/BASE_HEIGHT,name,shelf,size})));
+
+// Each upper/lower limit is an actual piece of joinery. Soft contact shadows
+// may extend along the far face of a shelf, but cannot spill over its fascia.
+const surfaces=[
+  [[17,54,86,98],[17,104,86,143],[17,149,86,188],[117,47,311,141],
+   [125,178,263,252],[314,227,394,309]],
+  [[18,32,94,82],[23,88,96,131],[12,137,89,182],[117,52,284,145],
+   [105,148,281,199],[279,234,369,313]],
+];
 function viewNumber(view) {
   if(view==='atelier'||view==='studio'||view==='right')return 1;
   const number=Number(view);
@@ -411,7 +420,7 @@ function paperStack(b,x,y,w,colors) {
   }
 }
 function bookcase(b) {
-  const {r,p,l}=b;const x=10,y=55,w=84,bottom=224;
+  const {r,p,l}=b;const x=10,y=49,w=84,bottom=224;
   p([x+6,y+5,x+w+10,y+9,x+w+10,bottom+4,x+9,bottom+4],'#a98f72');
   // Visible right return and slatted dark cedar back make the open spaces deep.
   p([x+w-1,y+2,x+w+6,y-3,x+w+6,bottom-6,x+w-1,bottom+2],wood.shade);
@@ -425,25 +434,26 @@ function bookcase(b) {
   p([x+3,y+3,x+9,y+8,x+9,bottom-8,x+3,bottom-3],wood.dark);
   p([x+w-4,y+3,x+w-9,y+8,x+w-9,bottom-8,x+w-4,bottom-3],wood.lit);
   for(const yy of [98,143,188,215]){
-    p([x+9,yy-3,x+w-9,yy-3,x+w-4,yy,x+4,yy],wood.lit);
+    p([x+9,yy-5,x+w-9,yy-5,x+w-4,yy,x+4,yy],wood.lit);
+    l(x+10,yy-5,x+w-11,yy-5,wood.mid);
     trim(b,x+3,yy,w-6,5);r(x+8,yy+5,w-16,2,'#634b39');
   }
   trim(b,x-2,y-1,w+4,5);slat(b,x,y+3,bottom-y-4,5);slat(b,x+w-5,y+3,bottom-y-4,5);
   for(const sx of [x+3,x+w-9]){r(sx,bottom-2,6,7,wood.dark);r(sx+1,bottom-2,3,5,wood.mid);}
   book(b,19,95,5,22,['#647c70','#b7b991']);
   book(b,24,95,5,18,['#a07161','#d8af8a'],1);
-  paperStack(b,73,138,13,['#a47960','#788974']);
+  paperStack(b,76,138,10,['#a47960','#788974']);
   book(b,68,211,5,13,['#9a7f5f','#c9b285']);book(b,74,211,4,16,['#6b797e','#c4b599'],1);
   r(19,193,33,18,'#9f7352');r(21,195,29,13,wood.mid);
   r(29,199,12,5,wood.shade);r(31,200,8,2,'#c3a371');
   // Small woven sewing basket on top, with its handle and crossing reed ends.
-  p([25,44,48,44,46,52,28,52],'#8d7051');p([26,45,47,45,45,51,29,51],'#c39f70');
-  l(30,43,32,38,'#897553');l(32,38,39,37,'#897553');l(39,37,43,43,'#897553');
-  l(32,39,39,38,'#cdb187');
-  for(let xx=28;xx<46;xx+=3){l(xx,45,xx+1,50,'#a38760');}
-  r(27,47,19,1,'#d3b283');r(28,50,17,1,'#ac865e');
-  p([55,48,70,46,73,48,73,50,57,52],'#d5c29a');l(56,48,70,47,'#e9d8ad');
-  r(66,47,2,3,'#ad7665');
+  p([25,38,48,38,46,46,28,46],'#8d7051');p([26,39,47,39,45,45,29,45],'#c39f70');
+  l(30,37,32,32,'#897553');l(32,32,39,31,'#897553');l(39,31,43,37,'#897553');
+  l(32,33,39,32,'#cdb187');
+  for(let xx=28;xx<46;xx+=3){l(xx,39,xx+1,44,'#a38760');}
+  r(27,41,19,1,'#d3b283');r(28,44,17,1,'#ac865e');
+  p([55,42,70,40,73,42,73,44,57,46],'#d5c29a');l(56,42,70,41,'#e9d8ad');
+  r(66,41,2,3,'#ad7665');
 }
 
 function rug(b) {
@@ -490,6 +500,10 @@ function sofa(b){
     p([x-2,198,x+w,198,x+w-1,204,x+1,204],mid);
     l(x+5,190,x+w-5,190,pale);l(x,202,x+w-3,202,shade);
   }
+  // The middle pad dips a pixel under the cat. Its paws land ahead of the
+  // piping and its tail no longer straddles the left cushion seam.
+  l(179,198,187,198,mid);r(188,198,34,1,'#8ca990');
+  l(188,199,221,199,mid);l(222,198,230,198,mid);
   p([114,191,118,187,124,188,128,194,128,207,293,207,293,194,297,189,304,189,309,193,
      309,209,302,216,119,216,114,211],deep);
   r(129,209,163,3,shade);r(128,213,166,2,ink);
@@ -506,14 +520,26 @@ function sofa(b){
   for(const [px,py] of [[252,167],[260,165],[255,175],[265,173],[260,181]]){
     l(px-2,py,px,py-2,'#eed195');l(px,py-2,px+2,py,'#eed195');r(px,py+2,1,1,'#bd8d53');
   }
-  // The throw follows three planes: cushion top, rolled arm, vertical drop.
-  p([276,177,290,175,300,181,303,188,300,206,296,215,279,212,280,200,271,189],'#9b6d61');
-  p([277,178,289,177,298,182,301,188,297,207,295,213,281,210,282,199,274,189],'#bf8872');
-  for(let i=0;i<4;i++){
-    const x=277+i*4;l(x,180,x+8,189,'#dec0a0');l(x+8,190,x+5,207,'#d7a98b');
-    l(x+5,208,x+3,214,'#dbb494');r(x+3,213,1,3+i%2,'#d9ba96');
+  // Padding rolls outward over the exposed wooden return. The woven throw
+  // lies across the right seat, bunches at the arm, then falls forward.
+  p([290,189,294,182,300,180,306,182,309,186,307,190,302,193,296,194],deep);
+  p([292,188,296,183,300,182,305,184,307,186,304,189,298,191],mid);
+  l(296,183,301,182,lit);l(300,192,307,189,wood.gold);
+  p([275,180,284,177,292,178,298,182,299,187,293,192,293,199,289,205,
+    286,215,279,218,267,214,265,208,268,201,263,198,252,198,251,194,259,190,268,186],'#8d6258');
+  p([275,181,284,178,291,179,296,182,297,186,291,191,283,194,273,200,
+    265,197,253,197,253,194,261,191,269,187],'#c99279');
+  p([275,195,283,192,291,189,291,199,286,206,285,214,279,216,268,212,267,208,270,201],'#a97766');
+  p([253,194,262,191,269,187,281,181,284,181,273,188,266,193,256,196],'#ddb69a');
+  p([270,201,277,196,284,194,282,200,277,205,275,214,270,212,269,207],'#c18a71');
+  p([285,195,289,192,288,199,284,205,282,214,279,215,280,204],'#c38d74');
+  for(const [xx,yy] of [[267,192],[276,186],[284,183],[283,190]]){
+    l(xx-2,yy+1,xx,yy-1,'#ead0aa');l(xx,yy-1,xx+2,yy,'#ead0aa');
   }
-  l(278,188,298,184,'#9d7163');l(282,201,298,201,'#9d7163');
+  l(255,196,264,195,'#dbae8e');l(264,195,275,188,'#dbae8e');
+  l(267,209,272,212,'#d1a383');l(274,213,281,215,'#d8ad8b');l(282,214,286,211,'#d8ad8b');
+  for(const [x,y] of [[268,211],[271,213],[274,214],[277,215],[280,216],[283,215],[285,213]])
+    l(x,y,x-1,y+3,'#d6b18d');
   // Low-contrast flecks follow the warp of the upholstery and build soft
   // cushion edges under the crisp window light.
   for(let i=0;i<130;i++){
@@ -548,9 +574,11 @@ function coffee(b){
   p([137,238,249,238,259,242,264,247,262,250,252,252,136,252,126,249,126,246,129,243],wood.lit);
   l(137,239,247,239,wood.pale);l(131,244,137,241,wood.gold);l(138,253,252,253,wood.mid);
   for(let i=0;i<10;i++){const x=136+hash(220+i)%100,y=241+hash(i+75)%9;r(x,y,4+i%7,1,i%2?wood.gold:wood.mid);}
-  paperStack(b,221,245,23,['#768e81','#b47b69']);
-  o(248,249,6,1,'#b38562');r(245,242,7,6,'#d6c3a6');r(245,242,7,2,'#f0ddba');
-  r(246,242,5,1,'#795e48');r(251,243,3,1,'#c1a98d');r(253,244,1,2,'#c1a98d');r(251,246,2,1,'#ae9277');
+  // Low stack on the rear half, cup and saucer on the front half.
+  paperStack(b,209,243,22,['#768e81','#b47b69']);
+  o(242,248,7,2,'#ad8265');o(242,247,6,1,'#e2c79f');
+  r(238,241,8,6,'#b49b7e');r(239,242,6,4,'#e1cdab');r(240,240,5,1,'#eedec0');
+  r(239,241,6,1,'#795e48');r(245,241,3,1,'#b49b7e');r(248,242,1,2,'#b49b7e');r(245,244,3,1,'#a88c70');
 }
 
 function cabinet(b,x,y,w,h){
@@ -567,27 +595,29 @@ function cabinet(b,x,y,w,h){
     l(dx+2,y+h-5,dx+dw-3,y+h-5,wood.mid);
     r(dx+(j?4:dw-7),y+h*.5,3,5,'#6a5946');r(dx+(j?5:dw-6),y+h*.5,1,4,'#d0aa72');
   }
-  p([x-2,y,x+3,y-4,x+w+4,y-4,x+w+3,y,x,y+2],wood.gold);
+  p([x-2,y,x+3,y-6,x+w+4,y-6,x+w+3,y,x,y+2],wood.gold);
+  l(x+4,y-6,x+w+2,y-6,wood.mid);
   trim(b,x-2,y,w+5,4);
   for(const xx of [x+3,x+w-8]){r(xx,y+h,5,6,wood.dark);r(xx+1,y+h,2,4,wood.mid);}
 }
 function studioShelves(b) {
   const {r,p,l}=b;
-  for(const [x,y,w] of [[417,88,77],[421,131,78]]){
+  for(const [x,y,w] of [[417,82,77],[421,131,78]]){
     r(x+4,y+6,w-1,3,'#c2ab89');
-    for(const bx of [x+10,x+w-15]){
-      r(bx,y+3,3,14,'#7c6953');l(bx+1,y+15,bx+11,y+5,'#9a8060',2);
+    for(const [bx,dir] of [[x+4,1],[x+w-7,-1]]){
+      r(bx,y+3,3,14,'#7c6953');l(bx+1,y+15,bx+1+dir*8,y+5,'#9a8060',2);
       r(bx+1,y+9,1,1,'#d5b185');
     }
-    p([x-1,y,x+3,y-4,x+w,y-4,x+w+2,y],wood.gold);trim(b,x-1,y,w+4,5);
+    p([x-1,y,x+3,y-5,x+w,y-5,x+w+2,y],wood.gold);
+    l(x+3,y-5,x+w-1,y-5,wood.lit);trim(b,x-1,y,w+4,5);
   }
-  book(b,479,85,4,12,['#b88371','#d4ab82']);
-  book(b,483,85,4,15,['#759383','#b9ba90'],1);
+  book(b,479,79,4,12,['#b88371','#d4ab82']);
+  book(b,483,79,4,15,['#759383','#b9ba90'],1);
   paperStack(b,427,128,15,['#9d745e','#75847b']);
-  cabinet(b,410,176,82,38);
-  p([457,173,469,173,470,177,468,191,456,191,458,178],'#73958b');
-  for(const xx of [458,463,467])l(xx,178,xx-1,188,'#adc1a1');
-  r(456,189,12,1,'#c5c9a6');for(let i=0;i<6;i++)r(456+i*2,191,1,2,'#b9be9d');
+  cabinet(b,410,182,82,38);
+  p([477,178,487,178,488,183,486,197,476,197,477,184],'#73958b');
+  for(const xx of [478,482,485])l(xx,184,xx-1,194,'#adc1a1');
+  r(476,195,10,1,'#c5c9a6');for(let i=0;i<5;i++)r(476+i*2,197,1,2,'#b9be9d');
 }
 function studioDesk(b) {
   const {r,p,l,o}=b;
@@ -603,12 +633,14 @@ function studioDesk(b) {
     r(646,190+j*10,28,8,wood.lit);r(647,191+j*10,26,1,wood.gold);
     r(656,193+j*10,9,2,wood.shade);r(658,193+j*10,5,1,'#d4b381');
   }
-  p([503,185,510,181,678,181,685,185,684,190,503,190],wood.dark);
-  p([503,185,510,181,678,181,685,185,682,187,505,187],wood.gold);
-  r(505,187,179,2,wood.mid);r(512,182,163,1,wood.pale);
+  p([503,185,510,178,678,178,685,185,684,190,503,190],wood.dark);
+  p([503,185,510,178,678,178,685,185,682,187,505,187],wood.gold);
+  r(505,187,179,2,wood.mid);r(512,179,163,1,wood.pale);
   // Brushes and an open sketchbook are tucked at the far end.
-  p([635,182,647,180,652,182,659,181,666,184,653,186,650,184,638,185],'#d8c9aa');
-  l(651,182,652,185,'#ab9e84');l(640,182,647,181,'#bba98e');
+  p([622,182,636,180,641,182,649,181,655,184,643,186,639,184,625,185],'#ad9374');
+  p([622,181,636,179,641,181,649,180,655,183,643,185,639,183,625,184],'#e7dac0');
+  l(640,181,642,184,'#ab9e84');l(627,181,634,180,'#bba98e');
+  o(670,183,6,1,'#a78e6c');
   l(667,179,663,163,'#7d6250');l(670,180,674,164,'#a67d50');
   l(669,179,669,158,'#8e7756');r(668,157,3,4,'#645348');
   p([664,173,675,173,674,183,666,183],'#72918c');r(666,175,2,6,'#adc6ac');r(664,172,11,2,'#bcc6af');
@@ -700,6 +732,13 @@ function passage(b){
 }
 
 const backdrops=new WeakMap();
+function floorMat(b,x,y,edge,weave){
+  const {r,o}=b;
+  // A flat woven mat gives a floor plant a visible contact patch even when
+  // carried away. Its rightward cast shadow follows the apartment light.
+  o(x+2,y+2,17,4,'rgba(73,52,46,.18)');o(x,y,17,4,edge);o(x-1,y-1,15,2,weave);
+  for(let j=-1;j<=1;j++)for(let i=-11;i<12;i+=4)r(x+i+(j%2),y+j,2,1,edge);
+}
 function staticWorld(ctx,day,warmth,hour) {
   const b=tools(ctx,palette(day,warmth));
   // Both halves always exist alongside each other. The runtime cache holds
@@ -708,8 +747,9 @@ function staticWorld(ctx,day,warmth,hour) {
     ctx.save();ctx.beginPath();ctx.rect(x,0,BASE_WIDTH,BASE_HEIGHT);ctx.clip();
     structure(ctx,b,day,warmth,hour,x);ctx.restore();
   }
-  passage(b);bookcase(b);rug(b);sofa(b);coffee(b);
-  studioShelves(b);hangingPrints(b);studioMat(b);studioDesk(b);easel(b);
+  passage(b);rug(b);hangingPrints(b);studioMat(b);
+  floorMat(b,347,288,'#987355','#c29b73');
+  floorMat(b,716,291,'#8c8164','#b5a781');
 }
 function getBackdrop(ctx,day,warmth,hour) {
   const target=ctx.canvas;
@@ -729,12 +769,61 @@ function getBackdrop(ctx,day,warmth,hour) {
   return layer.surface;
 }
 
+const furnishingLayers=new WeakMap();
+const furnitureBounds=[
+  [[4,29,309,204],[120,236,157,48]],
+  [[406,56,101,174],[496,82,284,180]],
+];
+function furniture(ctx,b,day,warmth,panel,front) {
+  function paint(target,brush) {
+    if(!panel && !front){bookcase(brush);sofa(brush);}
+    else if(!panel)coffee(brush);
+    else if(!front)studioShelves(brush);
+    else{
+      target.save();target.translate(0,12);
+      studioDesk(brush);
+      target.restore();easel(brush);
+    }
+  }
+  if(!ctx.canvas){paint(ctx,b);return;}
+  const tintKey=Math.round(day*64)*65+Math.round(warmth*64);
+  let cache=furnishingLayers.get(ctx.canvas);
+  if(!cache||cache.key!==tintKey) {
+    cache={key:tintKey,buffers:[[],[]]};furnishingLayers.set(ctx.canvas,cache);
+  }
+  const depth=front?1:0,[x,y,w,h]=furnitureBounds[panel][depth];
+  let buffer=cache.buffers[panel][depth];
+  if(!buffer) {
+    buffer=makeBuffer(ctx,w,h);
+    if(!buffer){paint(ctx,b);return;}
+    const ink=buffer.getContext('2d');
+    ink.translate(-x,-y);paint(ink,tools(ink,palette(day,warmth)));
+    cache.buffers[panel][depth]=buffer;
+  }
+  ctx.drawImage(buffer,x,y);
+}
+
+function placeOccupant(ctx,draw,panel,slot) {
+  if(!draw)return;
+  ctx.save();
+  try{
+    ctx.translate(panel*BASE_WIDTH,0);
+    if(slot!=='cat'){
+      const [left,top,right,bottom]=surfaces[panel][slot];
+      ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
+    }
+    draw(slot,panel);
+  }finally{ctx.restore();}
+}
+
 /**
  * Paint the world in native coordinates, preserving the caller's transform so
  * it can render at display or postcard resolution. view may also be a
- * fractional 0..1 camera position during travel between rooms.
+ * fractional 0..1 camera position during travel between rooms. The optional
+ * drawOccupant(slot,panel) callback paints in panel-local coordinates, in depth
+ * order. A numeric slot identifies a plant and 'cat' identifies the sofa seat.
  */
-export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false}={}){
+export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,drawOccupant}={}){
   if(!ctx)return;
   const day=clamp(Number.isFinite(light.day)?light.day:1),warmth=clamp(Number.isFinite(light.warmth)?light.warmth:0);
   const hour=Number.isFinite(light.hour)?((light.hour%24)+24)%24:12;
@@ -747,14 +836,18 @@ export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false}={})
     ctx.imageSmoothingEnabled=false;
     ctx.drawImage(backdrop,camera,0,BASE_WIDTH,BASE_HEIGHT,camera,0,BASE_WIDTH,BASE_HEIGHT);
   }else staticWorld(ctx,day,warmth,hour);
-  if(camera<400){
-    casement(ctx,b,raw,113,41,202,96,L,clock,false);
-    lamp(ctx,b,raw,day,clock);
-    if(!reducedMotion)details(b,day,clock,false);
-  }
-  if(camera+400>400){
-    casement(ctx,b,raw,508,45,181,96,L,clock,true);
-    if(!reducedMotion)details(b,day,clock,true);
+  for(let panel=0;panel<2;panel++){
+    if(camera>=BASE_WIDTH*(panel+1)||camera+BASE_WIDTH<=BASE_WIDTH*panel)continue;
+    if(panel)casement(ctx,b,raw,508,45,181,96,L,clock,true);
+    else casement(ctx,b,raw,113,41,202,96,L,clock,false);
+    placeOccupant(ctx,drawOccupant,panel,3);
+    if(!panel)lamp(ctx,b,raw,day,clock);
+    furniture(ctx,b,day,warmth,panel,false);
+    for(const slot of [0,1,2])placeOccupant(ctx,drawOccupant,panel,slot);
+    if(!panel)placeOccupant(ctx,drawOccupant,panel,'cat');
+    furniture(ctx,b,day,warmth,panel,true);
+    for(const slot of [4,5])placeOccupant(ctx,drawOccupant,panel,slot);
+    if(!reducedMotion)details(b,day,clock,panel);
   }
   ctx.restore();
 }
