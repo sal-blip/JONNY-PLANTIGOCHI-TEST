@@ -33,7 +33,7 @@ Run `npm test` to verify watering, elapsed time, saved progress, and all four gr
 
 ## Install on a phone
 
-Open the published Site online first. In **Pocket menu → App & saves → Install app**, wait for **Ready for offline play**. On iPhone, choose Safari → Share → Add to Home Screen. On Android, use the install prompt or Chrome → Add to home screen.
+Open the published Site online, tap the three waves, and choose **Install app**. Confirm the browser’s install prompt when offered. On iPhone, open the game in Safari and choose **Share → Add to Home Screen → Add**. On Android, Chrome also offers installation from its ⋮ menu. The install screen shows **Ready for offline play** once the game is cached.
 
 Progress is stored locally after each care action. **App & saves → Saved plant → Back up** exports a save that can be restored on a different device or in a newly installed copy. Moving to a different Site origin creates separate browser storage.
 

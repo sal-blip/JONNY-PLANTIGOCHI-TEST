@@ -12,7 +12,7 @@ import PocketDevice from './PocketDevice.jsx';
 import {KEY, restore, wake} from './game.js';
 
 const titles = {menu:'Pocket menu',scenes:'Backgrounds',settings:'Settings',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts'};
-const homeItems = ['scenes','settings','phone'];
+const homeItems = ['scenes','settings','install','phone'];
 const phoneItems = ['install','saves','alerts'];
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
 const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -109,7 +109,12 @@ export default function App() {
     }
   }, [page, intro]);
 
+  const installParent = useRef('menu');
   function open(id) {
+    if (id === 'install') {
+      installParent.current = page === 'phone' ? 'phone' : 'menu';
+      if (phone.installState === 'available') void phone.promptInstall();
+    }
     restoreFocus.current = true;
     setPage(id);
   }
@@ -145,7 +150,7 @@ export default function App() {
     return commit(() => wake(backup,Date.now()));
   }
   const introAudible = plant.sound && running;
-  const parent = phoneItems.includes(page) ? 'phone' : 'menu';
+  const parent = page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
   return <main ref={tilt.garden} className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
     const button = event.target.closest?.('button');
@@ -174,7 +179,7 @@ export default function App() {
     {page === 'photo' && <PhotoBackground photo={draftPhoto} update={setDraftPhoto} layer={scenery} apply={savePhoto}
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
     {page && page !== 'photo' && <GardenDialog page={page} title={titles[page]} back={page === 'menu' ? null : () => open(parent)} close={() => setPage(null)}>
-      {page === 'menu' && <MenuItems items={homeItems} open={open}/>}
+      {page === 'menu' && <MenuItems items={phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}
       {page === 'phone' && <MenuItems items={phoneItems} open={open}/>}
       {page === 'scenes' && <div className="scenes">{Object.entries(scenes).map(([id,name]) =>
         <button key={id} className="scene-choice" aria-pressed={scene === id} onClick={() => changeScene(id)}>

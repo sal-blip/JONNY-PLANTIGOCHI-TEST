@@ -3,15 +3,36 @@ import { Bell, Check, Download, HardDrive, Upload } from 'lucide-react';
 import { backupLimit } from './gardenScenes.js';
 import { readPlant, STAGE_NAMES } from './game.js';
 
-function installSteps() {
+function InstallHelp({phone}) {
+  const [copyState,setCopyState] = useState('idle');
+  const link = new URL('/', window.location.href).href;
   const ua = navigator.userAgent;
-  if (/iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-    return 'In Safari, tap Share, then Add to Home Screen. If offered, turn on Open as Web App and tap Add.';
+  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const android = /Android/i.test(ua);
+  const embedded = window.self !== window.top || /ChatGPT|FBAN|FBAV|Instagram|; wv\)/i.test(ua) ||
+    (ios && !/Safari|CriOS|FxiOS|EdgiOS/.test(ua));
+  async function copyLink() {
+    try { await navigator.clipboard.writeText(link); setCopyState('copied'); }
+    catch { setCopyState('select'); }
   }
-  if (/Android/i.test(ua)) {
-    return 'In Chrome, open the ⋮ menu and choose Add to home screen or Install app.';
+  switch (phone.installState) {
+    case 'installed': return <p>Plantigochi is installed on this device.</p>;
+    case 'prompting': return <p role="status">Choose Install in your browser’s prompt.</p>;
+    case 'accepted': return <p role="status">Installation accepted. Your device will add the Plantigochi icon.</p>;
+    case 'available': return <button className="primary-btn" onClick={phone.promptInstall}><Download size={16}/> Install Plantigochi</button>;
   }
-  return 'On iPhone, open this link in Safari and choose Share → Add to Home Screen. On Android, open it in Chrome and choose ⋮ → Add to home screen.';
+  let steps;
+  if (ios) steps = <>In Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>. If offered, turn on <b>Open as Web App</b>, then tap <b>Add</b>.</>;
+  else if (android) steps = <>In Chrome, open the <b>⋮</b> menu and choose <b>Add to Home screen</b> or <b>Install app</b>. Confirm to add Plantigochi.</>;
+  else if (/Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua)) steps = <>In Safari, choose <b>File → Add to Dock</b>.</>;
+  else steps = <>In Chrome or Edge, use the install icon in the address bar or the browser menu’s install option.</>;
+  return <>
+    {embedded && <p>Open the game link in {ios ? 'Safari' : android ? 'Chrome' : 'your browser'} first.</p>}
+    <p>{steps}</p>
+    <button className="primary-btn" onClick={copyLink}>Copy game link</button>
+    {copyState === 'copied' && <p role="status">Game link copied.</p>}
+    {copyState === 'select' && <input aria-label="Game link to copy" readOnly value={link} onFocus={e=>e.target.select()}/>}
+  </>;
 }
 
 export default function PhonePanel({ page, phone, alerts, plant, saveOK, onRestore }) {
@@ -49,10 +70,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, onResto
   }[phone.offline];
   return <>
     {page === 'install' && <section className="phone-section">
-      {phone.installed ? <p>Launch your garden from its home-screen icon.</p> : <>
-        <p>{installSteps()}</p>
-        {phone.canPrompt && <button className="primary-btn" onClick={phone.promptInstall}><Download size={16}/> Install app</button>}
-      </>}
+      <InstallHelp phone={phone}/>
       <div className="offline-state" role="status">{phone.offline === 'ready' ? <Check size={15}/> : <HardDrive size={15}/>} {offlineText}</div>
     </section>}
     {page === 'alerts' && <section className="phone-section">
