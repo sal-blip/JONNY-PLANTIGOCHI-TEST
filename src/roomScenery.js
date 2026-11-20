@@ -1,32 +1,17 @@
+import {placesFor} from './gardenLayout.js';
+export {placesFor} from './gardenLayout.js';
 // The apartment is one 800 × 320 game world. All scenery is drawn from live,
 // integer-pixel geometry; the camera may travel between its two 400-pixel rooms.
 export const BASE_WIDTH = 400;
 export const BASE_HEIGHT = 320;
 export const CAT_SEAT = {x:205,y:197,size:1};
 
-const positions = [
-  [[55,96,'Upper bookcase shelf',true,.78],[50,141,'Middle bookcase shelf',true,.72],
-   [51,186,'Lower bookcase shelf',true,.73],[258,139,'Living room windowsill',false,.86],
-   [152,245,'Coffee table',false,.94],[347,287,'Beside the sofa',false,1.06]],
-  [[43,80,'Upper studio shelf',true,.82],[61,129,'Lower studio shelf',true,.75],
-   [50,180,'Studio cabinet',true,.77],[235,143,'Studio windowsill',false,.85],
-   [150,196,'Drawing desk',false,.86],[316,290,'Beside the easel',false,1.07]],
-].map(slots=>slots.map(([x,y,name,shelf,size])=>({x:x/BASE_WIDTH,y:y/BASE_HEIGHT,name,shelf,size})));
-
-// Each upper/lower limit is an actual piece of joinery. Soft contact shadows
-// may extend along the far face of a shelf, but cannot spill over its fascia.
-const surfaces=[
-  [[17,54,86,98],[17,104,86,143],[17,149,86,188],[117,47,311,141],
-   [125,178,263,252],[314,227,394,309]],
-  [[18,32,94,82],[23,88,96,131],[12,137,89,182],[117,52,284,145],
-   [105,148,281,199],[279,234,369,313]],
-];
 function viewNumber(view) {
   if(view==='atelier'||view==='studio'||view==='right')return 1;
   const number=Number(view);
   return Number.isFinite(number)?Math.max(0,Math.min(1,number)):0;
 }
-export const placesFor = view => positions[Math.round(viewNumber(view))];
+
 const clamp = x=>Math.max(0,Math.min(1,x));
 const rgb = c=>[1,3,5].map(i=>parseInt(c.slice(i,i+2),16));
 const css = v=>'rgb('+v.map(x=>Math.max(0,Math.min(255,Math.round(x)))).join(',')+')';
@@ -98,77 +83,79 @@ function slat(b,x,y,h,w=5){
   b.r(x+1,y+1,1,h-3,wood.lit);b.r(x+w-2,y+2,1,h-3,wood.shade);
 }
 
-function floorboardRow(b,camera,j,y,h){
-  const {r,l}=b;
-  const seg=91+j*11,offset=(j*71)%seg;
-  for(let n=-1;n<11;n++){
-    const x=n*seg+offset;if(x+seg<camera||x>camera+402)continue;
-    const planks=['#b88861','#c3986a','#c18e63','#cda175','#b98d64'];
-    r(x,y,seg,h,planks[hash(n+100*j)%planks.length]);
-    r(x,y,seg,1,'#88634e');r(x,y+1,seg,1,'#dcb187');
-    const drift=Math.round((x-370)*h/580);
-    l(x,y,x+drift,y+h-1,'#8e684d');l(x+1,y+2,x+drift+1,y+h-1,'#d9b087');
+// One eye line for both planes. An edge at the rear wall and its foreground
+// continuation lie on the same ray, even when the camera straddles two rooms.
+const EYE_HEIGHT=118;
+function planeX(x,y,back,eye){
+  return Math.round(eye+(x-eye)*(y-EYE_HEIGHT)/(back-EYE_HEIGHT));
+}
+function boardRange(camera,eye,y0,y1,back,width,offset){
+  // A room at the edge of the viewport can have its vanishing point outside the canvas.
+  // Include both ends of the strip so its texture continues through the next room.
+  const base=(x,y)=>eye+(x-eye)*(back-EYE_HEIGHT)/(y-EYE_HEIGHT);
+  const left=Math.min(base(camera,y0),base(camera,y1));
+  const right=Math.max(base(camera+BASE_WIDTH,y0),base(camera+BASE_WIDTH,y1));
+  return [Math.floor((left-offset)/width)-1,Math.ceil((right-offset)/width)+1];
+}
+function floorboardRow(b,camera,eye,row,y,h){
+  const {r,l,p}=b,width=84,offset=(row*37)%width;
+  const project=(x,depth)=>planeX(x,depth,214,eye),end=y+h;
+  const [first,last]=boardRange(camera,eye,y,end,214,width,offset);
+  const colors=['#b88861','#c3986a','#c18e63','#cda175','#b98d64'];
+  r(camera,y,BASE_WIDTH,h,'#b98d64');
+  for(let n=first;n<=last;n++){
+    const x=n*width+offset;
+    const left=project(x,y),right=project(x+width,y),farLeft=project(x,end),farRight=project(x+width,end);
+    p([left,y,right+1,y,farRight+1,end,farLeft,end],colors[hash(n+100*row)%colors.length]);
+    l(left,y,farLeft,end-1,'#936e54');
     for(let k=0;k<8;k++){
-      const gx=x+hash(n*300+j*23+k)%seg,gy=y+3+hash(n*19+k*97+j)%(h-3);
-      l(gx,gy,Math.min(x+seg-4,gx+5+hash(k+n*3)%20),gy,k%3===0?'#d3a77a':'#b18763');
-    }
-    if(j>2&&hash(n+7*j)%3===0){
-      const gx=x+seg*.68,gy=y+h*.63;
-      l(gx-7,gy,gx-2,gy-1,'#a97955');l(gx-1,gy-1,gx+5,gy,'#a97955');
-      r(gx-1,gy,3,1,'#ae7d55');
+      const gy=y+2+hash(n*19+k*97+row)%Math.max(1,h-3),gx=x+3+hash(n*300+row*23+k)%66;
+      l(project(gx,gy),gy,project(gx+2+hash(k+n)%7,gy),gy,k%3?'#b18763':'#d3a77a');
     }
   }
+  r(camera,y,BASE_WIDTH,1,'#926c52');r(camera,y+1,BASE_WIDTH,1,'#dcb187');
 }
-
-// Plank edges share the same vanishing point across both rooms and across the
-// original ceiling line. Cross beams grow farther apart toward the viewer.
-function ceiling(b,camera,top,bottom){
-  const {r,l,p}=b;
-  const project=(x,y)=>Math.round(x+(x-400)*(-y/540)+y*.22);
-  r(camera,top,BASE_WIDTH,bottom-top,'#c8ab85');
-  for(let x=-168;x<=968;x+=56){
-    const left=project(x,top),right=project(x+56,top),end=project(x,bottom);
-    p([left,top,right+1,top,project(x+56,bottom)+1,bottom,end,bottom],
-      ['#c9aa84','#cdb28b','#c5aa85','#ceb28b'][hash(x)%4]);
-    l(left,top,end,bottom,'#a38a6c');l(left+1,top,end+1,bottom,'#e1c59b');
-    for(let y=Math.floor(top/21)*21;y<bottom;y+=21){
-      const gx=x+5+hash(x+y)%42,stop=Math.min(bottom,y+4+hash(y+x+9)%13);
-      l(project(gx,y),y,project(gx,stop),stop,'#c1a37e');
+function paintPlanes(ctx,camera,eye,light,above,below){
+  const b=tools(ctx,palette(light.day,light.warmth)),top=-above,bottom=21,width=36;
+  const project=(x,y)=>planeX(x,y,bottom,eye);
+  b.r(camera,top,BASE_WIDTH,bottom-top,'#c8ab85');
+  const [first,last]=boardRange(camera,eye,top,bottom,bottom,width,0);
+  for(let n=first;n<=last;n++){
+    const x=n*width,left=project(x,top),right=project(x+width,top);
+    b.p([left,top,right+1,top,x+width+1,bottom,x,bottom],
+      ['#c9aa84','#cdb28b','#c5aa85','#ceb28b'][hash(n)%4]);
+    b.l(left,top,x,bottom,'#aa9171');
+    for(let y=top;y<bottom;y+=22){
+      const gx=x+5+hash(n+y)%25,stop=Math.min(bottom,y+5+hash(y+n)%11);
+      b.l(project(gx,y),y,project(gx,stop),stop,'#c1a37e');
     }
   }
   for(let y=-46,step=80;y>top-20;y-=step,step=Math.round(step*1.37)){
     const h=Math.round(4+Math.abs(y)*.024);
-    r(camera,y,BASE_WIDTH,h+3,'#b29a77');r(camera,y,BASE_WIDTH,h,'#987454');
-    r(camera,y,BASE_WIDTH,2,'#c19a6d');r(camera,y+h-2,BASE_WIDTH,2,'#816247');
+    b.r(camera,y,BASE_WIDTH,h+3,'#b29a77');b.r(camera,y,BASE_WIDTH,h,'#987454');
+    b.r(camera,y,BASE_WIDTH,2,'#c19a6d');b.r(camera,y+h-2,BASE_WIDTH,2,'#816247');
   }
-}
-
-export function drawRoomDepth(canvas,view,light,above){
-  const ctx=canvas.getContext('2d');if(!ctx)return;
-  const camera=view*BASE_WIDTH,below=canvas.height-BASE_HEIGHT-above;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const b=tools(ctx,palette(light.day,light.warmth));
-  ctx.save();ctx.translate(-camera,above);
-  if(above>0)ceiling(b,camera,-above,0);
-  if(below>0){
-    ctx.save();ctx.beginPath();ctx.rect(camera,BASE_HEIGHT,BASE_WIDTH,below);ctx.clip();
-    let y=306,h=31;
-    for(let row=6;y<BASE_HEIGHT+below;row++){
-      floorboardRow(b,camera,row,y,h);y+=h;h=Math.min(78,Math.round(h*1.22));
-    }
-    // A little more shadow in the foreground keeps the light at the windows.
+  let y=214,h=8;
+  for(let row=0;y<BASE_HEIGHT+below;row++){
+    floorboardRow(b,camera,eye,row,y,h);y+=h;h=Math.min(78,Math.ceil(h*1.2));
+  }
+  if(below){
     const shade=ctx.createLinearGradient(0,BASE_HEIGHT,0,BASE_HEIGHT+below);
     shade.addColorStop(0,'rgba(69,46,40,0)');shade.addColorStop(1,'rgba(69,46,40,.16)');
-    ctx.fillStyle=shade;ctx.fillRect(camera,BASE_HEIGHT,BASE_WIDTH,below);ctx.restore();
+    ctx.fillStyle=shade;ctx.fillRect(camera,BASE_HEIGHT,BASE_WIDTH,below);
   }
+}
+export function drawRoomDepth(canvas,index,light,above,eye){
+  const ctx=canvas.getContext('2d');if(!ctx)return;
+  const camera=index*BASE_WIDTH;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.save();ctx.translate(-camera,above);
+  paintPlanes(ctx,camera,eye,light,above,canvas.height-BASE_HEIGHT-above);
   ctx.restore();
 }
 
 function structure(ctx,b,day,warmth,hour,camera){
   const {r,l,p}=b,end=Math.min(800,camera+420);
-  r(camera,0,400,320,'#e7d8ad');
-  // The staggered ceiling joints and beams establish the camera's depth.
-  ceiling(b,camera,0,21);
   r(camera,21,400,7,wood.dark);r(camera,21,400,1,wood.gold);
   r(camera,23,400,2,wood.mid);r(camera,28,400,2,'#bda780');r(camera,30,400,2,'#dbc69d');
   r(camera,32,400,139,'#eadbb7');r(camera,171,400,40,'#b1b49a');
@@ -195,10 +182,6 @@ function structure(ctx,b,day,warmth,hour,camera){
       }
     }
   }
-  // Wide boards recede toward a point beyond the back wall. Each plank has
-  // its own end joint and growth rings, rather than a flat crosshatch.
-  const rows=[214,222,232,245,261,281,306,337];
-  for(let j=0;j<rows.length-1;j++)floorboardRow(b,camera,j,rows[j],rows[j+1]-rows[j]);
   if(day>.25){
     const cast='rgba(255,225,155,'+(.11*day+warmth*.10)+')',shear=(hour-12)*2;
     // Sash shadows remain between four separately projected panes.
@@ -805,7 +788,7 @@ function getBackdrop(ctx,day,warmth,hour) {
   if(layer.key!==key) {
     const buffer=layer.surface.getContext('2d');
     if(!buffer)return null;
-    staticWorld(buffer,day,warmth,hour);layer.key=key;
+    buffer.clearRect(0,0,800,320);staticWorld(buffer,day,warmth,hour);layer.key=key;
   }
   return layer.surface;
 }
@@ -849,8 +832,9 @@ function placeOccupant(ctx,draw,panel,slot) {
   ctx.save();
   try{
     ctx.translate(panel*BASE_WIDTH,0);
-    if(slot!=='cat'){
-      const [left,top,right,bottom]=surfaces[panel][slot];
+    const clip=slot==='cat'?null:placesFor(panel)[slot].clip;
+    if(clip){
+      const [left,top,right,bottom]=clip;
       ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
     }
     draw(slot,panel);
@@ -864,7 +848,7 @@ function placeOccupant(ctx,draw,panel,slot) {
  * drawOccupant(slot,panel) callback paints in panel-local coordinates, in depth
  * order. A numeric slot identifies a plant and 'cat' identifies the sofa seat.
  */
-export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,drawOccupant}={}){
+export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,drawOccupant,separatePlanes=false}={}){
   if(!ctx)return;
   const day=clamp(Number.isFinite(light.day)?light.day:1),warmth=clamp(Number.isFinite(light.warmth)?light.warmth:0);
   const hour=Number.isFinite(light.hour)?((light.hour%24)+24)%24:12;
@@ -872,6 +856,7 @@ export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,draw
   const clock=reducedMotion||!Number.isFinite(time)?0:Math.max(0,time);
   const tint=palette(day,warmth),b=tools(ctx,tint),raw=tools(ctx,c=>c),L={day,warmth,hour};
   ctx.save();ctx.beginPath();ctx.rect(0,0,BASE_WIDTH,BASE_HEIGHT);ctx.clip();ctx.translate(-camera,0);
+  if(!separatePlanes)paintPlanes(ctx,camera,camera+BASE_WIDTH/2,{day,warmth},0,0);
   const backdrop=getBackdrop(ctx,day,warmth,hour);
   if(backdrop){
     ctx.imageSmoothingEnabled=false;
@@ -881,13 +866,16 @@ export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,draw
     if(camera>=BASE_WIDTH*(panel+1)||camera+BASE_WIDTH<=BASE_WIDTH*panel)continue;
     if(panel)casement(ctx,b,raw,508,45,181,96,L,clock,true);
     else casement(ctx,b,raw,113,41,202,96,L,clock,false);
-    placeOccupant(ctx,drawOccupant,panel,3);
+    const paintLayer=layer=>placesFor(panel).forEach((spot,i)=>{
+      if(spot.layer===layer)placeOccupant(ctx,drawOccupant,panel,i);
+    });
+    paintLayer('window');
     if(!panel)lamp(ctx,b,raw,day,clock);
     furniture(ctx,b,day,warmth,panel,false);
-    for(const slot of [0,1,2])placeOccupant(ctx,drawOccupant,panel,slot);
+    paintLayer('shelf');
     if(!panel)placeOccupant(ctx,drawOccupant,panel,'cat');
     furniture(ctx,b,day,warmth,panel,true);
-    for(const slot of [4,5])placeOccupant(ctx,drawOccupant,panel,slot);
+    paintLayer('table');
     if(!reducedMotion)details(b,day,clock,panel);
   }
   ctx.restore();

@@ -14,7 +14,7 @@ export function roomLight(hour) {
 
 export function drawRoom(canvas,{
   hour,plants=[],roomIndex=0,time=0,reducedMotion=false,awake=false,
-  highlighted=-1,lifted=-1,placing=false
+  highlighted=-1,lifted=-1,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false
 }={}) {
   const ctx=canvas.getContext('2d');
   if(!ctx)return;
@@ -22,7 +22,8 @@ export function drawRoom(canvas,{
   const light=roomLight(hour);
   const places=placesFor(view);
   ctx.save();
-  ctx.setTransform(canvas.width/BASE_WIDTH,0,0,canvas.height/BASE_HEIGHT,0,0);
+  ctx.setTransform(canvas.width/BASE_WIDTH,0,0,canvas.height/worldHeight,0,0);
+  ctx.clearRect(0,0,BASE_WIDTH,worldHeight);ctx.translate(0,above);
   ctx.imageSmoothingEnabled=false;
   function drawOccupant(slot){
     if(slot==='cat'){
@@ -32,13 +33,15 @@ export function drawRoom(canvas,{
     if(slot===lifted)return;
     const place=places[slot],plant=plants[slot],selected=slot===highlighted;
     const preview=!plant && !place.shelf;
-    if(preview && !placing && !selected)return;
+    if(preview && (placing || !selected))return;
     ctx.save();
     if(preview)ctx.globalAlpha=selected ? .9 : .45;
-    drawPottedPlant(ctx,{x:place.x*BASE_WIDTH,y:place.y*BASE_HEIGHT,size:place.size,
+    drawPottedPlant(ctx,{x:place.x*BASE_WIDTH,y:place.y*BASE_HEIGHT+place.front*(worldHeight-above-BASE_HEIGHT),size:place.size,
       plant,styleIndex:slot+roomIndex*places.length,night:1-light.day,time,reducedMotion,selected});
     ctx.restore();
   }
-  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant});
+  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant,separatePlanes});
+  // Floor pots can sit forward of the furniture and outside the old 320px frame.
+  places.forEach((spot,i)=>{if(spot.layer==='floor')drawOccupant(i);});
   ctx.restore();
 }

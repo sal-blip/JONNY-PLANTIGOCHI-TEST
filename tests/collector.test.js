@@ -70,3 +70,29 @@ test('graduates can share a 48-plant apartment, move across views and round-trip
   assert.equal(relocateGraduate(moved,original.id,46,48),moved);
   assert.equal(canPlaceAt(moved.graduates,0),true);
 });
+
+test('old numbered pots and new surfaces share a collection and keep their addresses across a backup',async()=>{
+  const {placesFor,slotFor,viewForSlot,canPlaceAt,gardenViews}=await import('../src/gardenLayout.js');
+  const {relocateGraduate}=await import('../src/game.js');
+  let p=newPlant(0);
+  const mature={...p,stage:'grown',earned:WEEK,wateredAt:0,lastDrink:WEEK,litAt:WEEK,fedAt:WEEK,companyAt:WEEK};
+  p=graduate(mature,mature.id,6,WEEK);
+  const first=p.graduates[0],dest='0/front-left';
+  for(const view of [0,1]){
+    const ids=placesFor(view).map(spot=>slotFor(view,spot));
+    assert.equal(new Set(ids).size,ids.length);
+    assert.ok(ids.every(id=>viewForSlot(id)===view));
+  }
+  assert.equal(canPlaceAt(p.graduates,'2/front-left'),false);
+  assert.equal(canPlaceAt(p.graduates,'0/couch'),false);
+  assert.equal(canPlaceAt(p.graduates,'01/front-left'),false);
+  const moved=relocateGraduate(p,first.id,6,dest);
+  assert.equal(canPlaceAt(moved.graduates,dest),false);
+  assert.equal(relocateGraduate(moved,first.id,6,0),moved);
+  assert.deepEqual(readPlant(JSON.stringify(moved),WEEK).graduates,[{...first,slot:dest}]);
+  let second={...mature,id:p.id,generation:2,graduates:moved.graduates};
+  second=graduate(second,second.id,'1/desk-end',WEEK);
+  assert.ok(Number.isInteger(second.graduates[1].potStyle));
+  assert.equal(gardenViews(second.graduates),2);
+  assert.deepEqual(readPlant(JSON.stringify(second),WEEK).graduates,second.graduates);
+});

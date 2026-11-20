@@ -14,7 +14,7 @@
 .room-picture::-webkit-scrollbar{display:none}
 .room-strip{position:relative;width:calc(var(--rooms) * var(--room-width));height:var(--room-height)}
 .room-frame{position:absolute;inset-block:0;width:var(--room-width)}
-.room-depth{position:absolute;inset:0;pointer-events:none}
+.room-depth,.room-actors{position:absolute;inset:0;pointer-events:none}
 .room-interior{position:absolute;inset-inline:0}
 .room-frame canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
 .room-frame .place-target,.room-frame .room-cat-target{position:absolute;min-height:32px;border:0;border-radius:6px;pointer-events:auto;display:block;padding:0;background:transparent;-webkit-tap-highlight-color:transparent}
@@ -43,3 +43,20 @@
 .cat-affection i:nth-of-type(3){left:-5px;--drift:0px;animation-delay:.38s;background:#c85d6f}
 @keyframes cat-hearts{0%{opacity:0;transform:translateY(3px) scale(.7)}18%{opacity:1}73%{opacity:1}100%{opacity:0;transform:translate(var(--drift),-35px) scale(1)}}
 @media(prefers-reduced-motion:reduce){.room-lens{transform:none!important;transition:none}.cat-affection i{animation:none}.cat-affection i:not(:first-of-type){display:none}}
+
+.room-frame .open-destination{
+  transform:translate(-50%,-50%);width:clamp(30px,8.7vw,42px);height:clamp(30px,8.7vw,42px);
+  min-width:0;min-height:0;border-radius:50%;display:grid;place-items:center;z-index:1
+}
+.open-destination:before,.open-destination:after{content:"";grid-area:1/1;pointer-events:none;border-radius:100%}
+.open-destination:before{width:19px;height:19px;border:2px solid #fff4cb;background:#2c493bc9;box-shadow:0 0 0 2px #2e3f34a8}
+.open-destination:after{width:5px;height:5px;background:#ffedbd}
+.room-frame .open-destination:is(:hover,:focus-visible,[aria-pressed=true]):before{background:#458568;box-shadow:0 0 0 3px #273d32;transform:scale(1.15)}
+.room-frame .place-target:disabled{pointer-events:none}
+
+.room-placement{top:max(9px,env(safe-area-inset-top));bottom:auto;max-width:calc(100% - 125px);padding:7px 12px 3px;flex-direction:column;gap:1px;text-align:center}
+.placement-actions{display:flex;align-items:center;justify-content:center;gap:3px}
+.placement-actions span{font-size:13px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.placement-actions button[aria-label]{padding:3px;min-width:30px;display:grid;place-items:center}
+.placement-actions button:last-child{margin-left:4px}.placement-actions svg{width:17px;height:17px}
+.placement-actions button:disabled{opacity:.32}
