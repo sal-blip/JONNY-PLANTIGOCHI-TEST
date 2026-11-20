@@ -1,0 +1,99 @@
+.welcome-tour,.welcome-modal{
+  --tour-ink:#203e30;--tour-accent:#526c3d;--tour-paper:#f7f5e9;--tour-line:#b9c1ab;
+  position:fixed;inset:0;z-index:15;width:100%;height:100%;height:100dvh;max-width:none;max-height:none;
+  margin:0;padding:0;border:0;background:var(--tour-paper);color:var(--tour-ink);font-family:var(--display)
+}
+.welcome-modal::backdrop{background:var(--tour-paper)}
+.tour-sheet{
+  height:100%;max-width:1320px;margin:auto;display:grid;grid-template-rows:auto minmax(0,1fr) auto;
+  padding:max(14px,env(safe-area-inset-top)) max(clamp(18px,5.2vw,82px),env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(clamp(18px,5.2vw,82px),env(safe-area-inset-left));
+  touch-action:pan-y pinch-zoom
+}
+.tour-sheet button{border:0;line-height:1.1;color:inherit;font-family:inherit}
+.tour-sheet button:focus-visible{outline:3px solid #866128;outline-offset:3px}
+.tour-header,.tour-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px}
+.tour-header{border-bottom:1px solid var(--tour-line)}
+.tour-brand{display:inline-flex;align-items:center;gap:7px;font-size:clamp(19px,2.5vw,26px);font-weight:750;letter-spacing:-.055em}
+.tour-brand svg{width:1.07em;height:1.07em;stroke-width:2.35;fill:#d8e9aa}
+.tour-skip,.tour-back,.tour-secondary{background:transparent;font-size:14px;font-weight:650;min-height:40px;padding:5px 0}
+.tour-skip,.tour-secondary{text-decoration:underline;text-underline-offset:4px;text-decoration-color:#78876d}
+.tour-story{min-height:0;display:grid;grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr);align-items:center;gap:clamp(25px,5vw,84px);padding-block:clamp(15px,4vh,48px)}
+.tour-art{
+  grid-column:2;grid-row:1;height:min(100%,625px);width:100%;min-height:0;position:relative;overflow:hidden;isolation:isolate;
+  display:grid;place-items:center;border-radius:clamp(18px,3.2vw,42px);
+  background:#dfe9c9
+}
+.tour-page-0 .tour-art{
+  background:linear-gradient(115deg,#f6f0d8b3,#d0dfbc73),url('/scenes/shoji.webp') center/cover
+}
+.tour-device{width:76%;height:90%;object-fit:contain;filter:drop-shadow(0 11px 9px #34482f30)}
+.tour-words{grid-column:1;grid-row:1;min-width:0}
+.tour-words h1{font-size:clamp(46px,5.6vw,84px);letter-spacing:-.063em;line-height:.99;font-weight:680;margin:0;outline:none}
+.tour-words h1 em{display:block;font-style:normal;color:var(--tour-accent)}
+.tour-caption{font-family:'DM Sans Variable',sans-serif;font-size:clamp(16px,1.55vw,21px);line-height:1.42;color:#435447;
+ max-width:34ch;margin:clamp(10px,2vh,21px) 0 0;text-wrap:pretty}
+.tour-actions{display:flex;align-items:center;gap:clamp(15px,2vw,22px);margin-top:clamp(15px,3vh,32px)}
+.tour-primary,.tour-install .primary-btn{
+  display:inline-flex;justify-content:center;align-items:center;gap:8px;background:var(--tour-ink);color:#fffbec!important;
+  min-height:45px;padding:10px 22px;border-radius:40px;font-size:16px;font-weight:650
+}
+.tour-primary:hover,.tour-install .primary-btn:hover{background:#35593f}
+.tour-footer{display:grid;grid-template-columns:1fr auto 1fr;min-height:47px;border-top:1px solid var(--tour-line)}
+.tour-back{justify-self:start}.tour-back:disabled{visibility:hidden}.tour-footer .tour-skip{justify-self:end}
+.tour-dots{display:flex;align-items:center;justify-content:center;gap:0}
+.tour-dots button{background:transparent;padding:0;width:28px;height:40px;display:grid;place-items:center}
+.tour-dots i{border-radius:8px;width:7px;height:7px;background:#959f85}
+.tour-dots [aria-current] i{width:20px;background:var(--tour-ink)}
+.tour-page-1 .tour-art{background:linear-gradient(150deg,#e1edde,#e8f0d1 55%,#f4e7be)}
+.tour-life-art{width:94%;height:93%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5%}
+.tour-stages{width:93%;height:48%;object-fit:contain;image-rendering:pixelated}
+.tour-life-art figure{margin:0;text-align:center;max-height:44%;display:grid;justify-items:center;align-content:start;gap:5px}
+.tour-life-art figure img{width:auto;max-width:90%;height:clamp(38px,10vh,99px);image-rendering:pixelated;border:3px solid #536c57;border-radius:5px}
+.tour-life-art figcaption{font:500 12px/1.2 Silkscreen,monospace;color:#445c49}
+.tour-page-2 .tour-art{background:#bdc9ae}
+.tour-room-art{width:100%;height:100%;object-fit:cover;object-position:33% center;image-rendering:pixelated}
+.tour-page-3 .tour-art{background:linear-gradient(142deg,#dfeacb,#bad1ae)}
+.tour-phone-picture{
+  width:58%;height:83%;max-width:235px;display:flex;position:relative;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  color:#203238;background:linear-gradient(#ecf9ed38,#d2edd922),url('/scenes/clouds.webp') center/cover;
+  border:5px solid #344b3e;border-radius:clamp(16px,3vh,32px);box-shadow:4px 7px 0 #879b7a66;font:700 14px/1.1 var(--display)
+}
+.tour-phone-picture img{width:60px;max-height:52%;object-fit:contain;aspect-ratio:1;border-radius:24%;box-shadow:0 2px 6px #20322d33}
+.tour-phone-picture span{background:#eff5dedd;padding:2px 5px;border-radius:4px}
+.tour-phone-picture i{position:absolute;bottom:4%;height:3px;width:24%;background:#365345;border-radius:3px}
+.tour-install{display:grid;justify-items:start;gap:9px;font-family:'DM Sans Variable',sans-serif;font-size:15px;line-height:1.3;margin-top:12px}
+.tour-install p{margin:0}.tour-install .backup-notice:empty{display:none}
+.tour-install .primary-btn{font-family:var(--display);min-height:36px;font-size:14px;padding:8px 16px}
+.tour-install .game-link{width:min(100%,310px);color:var(--tour-ink);font:inherit}
+.install-steps{list-style:none;display:flex;align-items:stretch;gap:5px;padding:0;margin:5px 0;font:600 13px/1.2 var(--display)}
+.install-steps li{flex:1;display:flex;align-items:center;gap:5px;border:1px solid #78978388;border-radius:7px;padding:5px 7px}
+.install-steps svg{width:16px;height:16px;flex:none;stroke-width:1.8}
+.tour-install .install-note{font-size:13px}
+.tour-splash{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;isolation:isolate;overflow:hidden}
+.tour-splash i{position:absolute;inset:-15% 38% -15% -20%;background:url('/art/intro-leaf.webp') center/cover;animation:tour-leaf-out 1.8s cubic-bezier(.35,0,.42,1) both;--direction:-1}
+.tour-splash i+i{inset:-15% -20% -15% 38%;scale:-1 1}
+.tour-splash strong{position:relative;font-size:clamp(28px,5vw,72px);color:#fff9d9;letter-spacing:-.055em;text-shadow:0 2px 8px #173726;animation:tour-word-out 1.8s ease both}
+@keyframes tour-leaf-out{0%,17%{transform:translateX(0) scale(1.12)}100%{transform:translateX(calc(var(--direction)*115%)) scale(1.02)}}
+@keyframes tour-word-out{0%,19%{opacity:1}64%,100%{opacity:0}}
+@media(max-width:680px) and (orientation:portrait){
+ .tour-sheet{padding-inline:max(17px,env(safe-area-inset-left)) max(17px,env(safe-area-inset-right))}
+ .tour-story{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:clamp(12px,2.6vh,24px);padding-block:clamp(12px,2.5vh,24px)}
+ .tour-art,.tour-words{grid-column:1}.tour-art{grid-row:1;height:100%}.tour-words{grid-row:2}
+ .tour-words h1{font-size:clamp(34px,8vw,52px);line-height:1.02}
+ .tour-words h1 em{display:inline}.tour-caption{max-width:42ch}
+ .tour-actions{margin-top:12px}.tour-primary{min-height:42px}
+ .tour-room-art{object-position:18% center}
+ .tour-page-3 .tour-phone-picture{height:84%;min-width:115px;width:auto;aspect-ratio:.69}
+}
+@media(max-height:620px){
+ .tour-header,.tour-footer{min-height:39px}.tour-story{padding-block:9px;gap:12px}.tour-words h1{font-size:clamp(29px,5.5vw,45px)}
+ .tour-caption{font-size:15px;line-height:1.28;margin-top:7px}.tour-actions{margin-top:9px}.tour-primary{min-height:39px}
+ .tour-install{font-size:14px;gap:5px;margin-top:7px}.tour-install .install-note{font-size:12px}
+ .tour-page-3 .tour-story{gap:8px}.tour-back,.tour-skip{min-height:36px}
+}
+@media(max-height:550px) and (orientation:landscape){
+ .tour-sheet{padding-block:max(4px,env(safe-area-inset-top)) max(3px,env(safe-area-inset-bottom));padding-inline:max(18px,env(safe-area-inset-left)) max(18px,env(safe-area-inset-right))}
+ .tour-story{grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);gap:clamp(15px,4vw,42px)}
+ .tour-install .primary-btn{min-height:29px;padding:6px 10px}.tour-words h1 em{display:inline}
+}
+@media(prefers-reduced-motion:reduce){.tour-splash{display:none}}

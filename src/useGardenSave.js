@@ -3,6 +3,8 @@ import {gardenStore} from './gardenStore.js';
 import {KEY} from './game.js';
 
 const store=gardenStore(()=>localStorage,()=>!document.hidden);
+export const hasVisitedGarden=store.hasVisited;
+export const rememberWelcome=store.rememberWelcome;
 export function useGardenSave() {
   const [plant,setPlant]=useState(null), current=useRef(null);
   const [issue,setIssue]=useState(''), [raw,setRaw]=useState(null);

@@ -11,7 +11,8 @@ import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
 import {wake,graduate,relocateGraduate} from './game.js';
-import {useGardenSave} from './useGardenSave.js';
+import {useGardenSave,hasVisitedGarden,rememberWelcome} from './useGardenSave.js';
+import WelcomeTour from './WelcomeTour.jsx';
 import Recovery from './Recovery.jsx';
 import Collector from './Collector.jsx';
 import './collector.css';
@@ -28,12 +29,35 @@ function MenuItems({ items, open }) {
 }
 
 export default function App() {
-  const storage=useGardenSave();
   const phone=usePhoneApp();
-  if (!storage.plant) return <Recovery {...storage}/>;
-  return <GardenApp storage={storage} phone={phone}/>;
+  const [careMessage,setCareMessage]=useState(null);
+  const [route,setRoute]=useState(()=>phone.installed || new URL(location.href).searchParams.has('care') ? 'game' : 'checking');
+  useEffect(()=>{
+    if(route!=='checking')return;
+    let active=true;
+    hasVisitedGarden().then(visited=>{if(active)setRoute(visited?'game':'welcome');},
+      ()=>{if(active)setRoute('game');});
+    return ()=>{active=false;};
+  },[route]);
+  useEffect(()=>{
+    function rescue(e){
+      if(e.data?.type!=='plant-care' || !['water','drain'].includes(e.data.action))return;
+      setCareMessage({action:e.data.action});
+      setRoute('game');
+    }
+    navigator.serviceWorker?.addEventListener('message',rescue);
+    return ()=>navigator.serviceWorker?.removeEventListener('message',rescue);
+  },[]);
+  if(route==='checking')return <main aria-busy="true" aria-label="Loading Plantigochi"/>;
+  if(route==='welcome')return <WelcomeTour phone={phone} remember={rememberWelcome} onPlay={()=>setRoute('game')}/>;
+  return <SavedGame phone={phone} careMessage={careMessage}/>;
 }
-function GardenApp({storage,phone}) {
+function SavedGame({phone,careMessage}){
+  const storage=useGardenSave();
+  if (!storage.plant) return storage.issue ? <Recovery {...storage}/> : <main aria-busy="true" aria-label="Opening your garden"/>;
+  return <GardenApp storage={storage} phone={phone} careMessage={careMessage}/>;
+}
+function GardenApp({storage,phone,careMessage}) {
   const {plant,current,commit,replace,issue}=storage;
   const saveOK=!issue;
   const [room,setRoom]=useState(null);
@@ -46,7 +70,7 @@ function GardenApp({storage,phone}) {
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
   const [sharing, setSharing] = useState(false);
-  const [intro, setIntro] = useState(() => !reducedMotion());
+  const [intro, setIntro] = useState(false);
   const tilt = useGardenTilt(intro || page !== null || room!==null);
   const [leafReady, setLeafReady] = useState(false);
   const menuButton = useRef(null), shareButton = useRef(null), restoreFocus = useRef(null);
@@ -75,12 +99,11 @@ function GardenApp({storage,phone}) {
       if(action==='drain'?p.rotAt===null:action==='water'?p.rotAt!==null||Date.now()<p.lastDrink+12*3600000:true)return;
       setIntro(false);setPage(null);setRoom(null);setCareTarget({action,seq:Date.now()});
     }
-    const onMessage=e=>{if(e.data?.type==='plant-care')rescue(e.data.action);};
-    navigator.serviceWorker?.addEventListener('message',onMessage);
     const url=new URL(location.href);
-    if(url.searchParams.has('care')){rescue(url.searchParams.get('care'));url.searchParams.delete('care');history.replaceState(null,'',url);}
-    return ()=>navigator.serviceWorker?.removeEventListener('message',onMessage);
-  },[current]);
+    const action=careMessage?.action ?? url.searchParams.get('care');
+    if(url.searchParams.has('care')){url.searchParams.delete('care');history.replaceState(null,'',url);}
+    if(action)rescue(action);
+  },[current,careMessage]);
 
   useEffect(() => {
     let active = true;
@@ -212,7 +235,8 @@ function GardenApp({storage,phone}) {
     </div>}
     {page === 'photo' && <PhotoBackground photo={draftPhoto} update={setDraftPhoto} layer={scenery} apply={savePhoto}
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
-    {page && page !== 'photo' && <GardenDialog page={page} title={titles[page]} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
+    {page === 'welcome' && <WelcomeTour replay phone={phone} onPlay={()=>setPage(null)}/>}
+    {page && page !== 'photo' && page !== 'welcome' && <GardenDialog page={page} title={titles[page]} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
       {page === 'menu' && <MenuItems items={phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}
       {page === 'phone' && <MenuItems items={phoneItems} open={open}/>}
@@ -227,6 +251,7 @@ function GardenApp({storage,phone}) {
           onClick={() => commit(old => ({...old,ambience:old.ambience === false}))}><Music2/>Garden ambience<span className="setting-value">{plant.sound && plant.ambience !== false ? 'On' : 'Off'}</span></button>
         <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
+        <button onClick={()=>open('welcome')}><Play/>Welcome tour<ChevronRight className="row-end"/></button>
         <button data-audio="intro" onClick={replay}><Play/>Replay intro<ChevronRight className="row-end"/></button></div>}
       {phoneItems.includes(page) && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
     </GardenDialog>}

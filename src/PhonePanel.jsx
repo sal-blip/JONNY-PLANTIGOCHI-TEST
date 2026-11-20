@@ -2,32 +2,8 @@ import React, { useRef, useState } from 'react';
 import { Bell, Check, Download, HardDrive, Upload } from 'lucide-react';
 import { backupLimit } from './gardenScenes.js';
 import { readPlant, STAGE_NAMES } from './game.js';
-import GameLink from './GameLink.jsx';
+import InstallHelp from './InstallHelp.jsx';
 import {downloadFile} from './Recovery.jsx';
-
-function InstallHelp({phone}) {
-  const ua = navigator.userAgent;
-  const ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const android = /Android/i.test(ua);
-  const embedded = window.self !== window.top || /ChatGPT|FBAN|FBAV|Instagram|; wv\)/i.test(ua) ||
-    (ios && !/Safari|CriOS|FxiOS|EdgiOS/.test(ua));
-  switch (phone.installState) {
-    case 'installed': return <p>Plantigochi is installed on this device.</p>;
-    case 'prompting': return <p role="status">Choose Install in your browser’s prompt.</p>;
-    case 'accepted': return <p role="status">Installation accepted. Your device will add the Plantigochi icon.</p>;
-    case 'available': return <button className="primary-btn" onClick={phone.promptInstall}><Download size={16}/> Install Plantigochi</button>;
-  }
-  let steps;
-  if (ios) steps = <>In Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>. If offered, turn on <b>Open as Web App</b>, then tap <b>Add</b>.</>;
-  else if (android) steps = <>In Chrome, open the <b>⋮</b> menu and choose <b>Add to Home screen</b> or <b>Install app</b>. Confirm to add Plantigochi.</>;
-  else if (/Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua)) steps = <>In Safari, choose <b>File → Add to Dock</b>.</>;
-  else steps = <>In Chrome or Edge, use the install icon in the address bar or the browser menu’s install option.</>;
-  return <>
-    {embedded && <p>Open the game link in {ios ? 'Safari' : android ? 'Chrome' : 'your browser'} first.</p>}
-    <p>{steps}</p>
-    <GameLink/>
-  </>;
-}
 
 export default function PhonePanel({ page, phone, alerts, plant, saveOK, recoveryRaw, onRestore }) {
   const fileInput = useRef(null);

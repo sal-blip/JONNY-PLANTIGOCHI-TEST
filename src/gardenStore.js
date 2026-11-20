@@ -3,6 +3,7 @@ import {KEY, newPlant, readPlant} from './game.js';
 const databaseName = 'plantigochi.pocket.garden';
 const storeName = 'garden';
 const currentKey = 'current';
+const welcomeKey = 'welcome-seen';
 
 export class SaveIssue extends Error {
   constructor(message,raw=null) { super(message); this.raw=raw; }
@@ -24,12 +25,12 @@ function openDB() {
 }
 export function gardenStore(legacyStorage, visible) {
   let db;
-  async function transaction(mode, apply) {
+  async function transaction(mode, apply, lookup = records => records.get(currentKey)) {
     db ??= await openDB();
     return new Promise((resolve,reject)=>{
       const tx=db.transaction(storeName,mode);
       const records=tx.objectStore(storeName);
-      const read=records.get(currentKey);
+      const read=lookup(records);
       let result, fault;
       read.onsuccess=()=>{
         try {result=apply(records,read.result);} catch(error){ fault=error;tx.abort(); }
@@ -48,6 +49,13 @@ export function gardenStore(legacyStorage, visible) {
   });
   return {
     read,
+    hasVisited() {
+      return transaction('readonly',(_,keys)=>keys.includes(currentKey) || keys.includes(welcomeKey) ||
+        legacyStorage().getItem(KEY)!==null, records=>records.getAllKeys());
+    },
+    rememberWelcome() {
+      return transaction('readwrite',records=>{records.put(true,welcomeKey);},records=>records.getKey(welcomeKey));
+    },
     async initialize() {
       await transaction('readwrite',(records,stored)=>{
         if(stored!==undefined) {const p=decode(stored);if(JSON.stringify(p)!==stored)write(records,p);return;}
