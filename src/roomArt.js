@@ -26,7 +26,7 @@ export function drawRoom(canvas,{
   ctx.imageSmoothingEnabled=false;
   function drawOccupant(slot){
     if(slot==='cat'){
-      drawRoomCat(ctx,{...CAT_SEAT,time,reducedMotion,night:1-light.day,awake});
+      drawRoomCat(ctx,{...CAT_SEAT,time,reducedMotion,night:1-light.day,awake,selected:highlighted==='cat'});
       return;
     }
     if(slot===lifted)return;

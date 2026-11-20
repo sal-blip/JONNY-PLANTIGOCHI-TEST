@@ -54,11 +54,12 @@ export default function Collector({plant,moving,now,move,relocate,shareLink,star
   },[Boolean(ghost),inHand,hour]);
 
   const travel=useCallback(n=>{
+    setCat(false);
     setRoom(clamp(n,count-1));setSlot(null);setNotice('');setPan(null);setDropOver(null);
   },[count]);
   function returnCard(){setPostcard(null);requestAnimationFrame(()=>previewButton.current?.focus());}
   function cancelCarry(){setCarry(null);setSlot(null);setGhost(null);setDropOver(null);setNotice('');}
-  function pickUp(p){setCarry({id:p.id,from:p.slot});setSlot(null);setNotice('');}
+  function pickUp(p){setCarry({id:p.id,from:p.slot});setSlot(null);setCat(false);setNotice('');}
   async function putDown(target,source) {
     if(pending.current || target===null || collection.has(target))return;
     pending.current=true;setBusy(true);
@@ -71,6 +72,7 @@ export default function Collector({plant,moving,now,move,relocate,shareLink,star
   }
   function choose(target){
     if(pending.current || ignoreClick.current)return;
+    setCat(false);
     const occupant=collection.get(target);
     if(inHand){
       if(!occupant){void putDown(target,carry);return;}

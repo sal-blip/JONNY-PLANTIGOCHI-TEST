@@ -19,11 +19,13 @@ h1,h2,p{margin:0}svg{flex-shrink:0}
 .camera{display:grid;place-items:center;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .device{position:relative;aspect-ratio:600/565;flex:none;width:100%;pointer-events:none;container-type:inline-size;user-select:none;--pixel-ink:#344630}
 .shell{position:absolute;inset:0;height:100%;width:100%;object-fit:fill;pointer-events:none;filter:drop-shadow(5px 10px 7px #394b2c20)}
-.lcd{position:absolute;left:30.68%;top:40.35%;width:39.0%;height:27.1%;overflow:hidden;border-radius:4.9%/8%;color:#354633;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;background:linear-gradient(120deg,#bdc7a2,#b6c29a 55%,#aebc94);box-shadow:inset 1px 3px 6px #586a4855}
+.lcd{position:absolute;left:30.68%;top:40.35%;width:39.0%;height:27.1%;overflow:hidden;border-radius:4.9%/8%;color:#203e49;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;
+  background:linear-gradient(165deg,#a5dce7 0%,#c8e9de 41%,#f5e6b7 76%,#d9e4be 100%);
+  box-shadow:inset 1px 3px 6px #25495755}
 .lcd:after{content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
-  background-image:linear-gradient(0deg,#89987670 0 15%,transparent 15%),linear-gradient(90deg,#89987670 0 15%,transparent 15%);
+  background-image:linear-gradient(0deg,#3f727930 0 15%,transparent 15%),linear-gradient(90deg,#3f727930 0 15%,transparent 15%);
   background-size:calc(100% / 72) calc(100% / 48)}
-.lcd-top{display:flex;align-items:center;justify-content:space-between;margin:4.5% 6% 0;font-size:1.7cqw;font-weight:800;line-height:1.1;letter-spacing:.075em}.lcd-top>span:first-child{display:flex;align-items:center;gap:4px}.lcd-top i{width:.8cqw;height:.8cqw;background:#40523b}
+.lcd-top{display:flex;align-items:center;justify-content:space-between;margin:4.5% 6% 0;font-size:1.7cqw;font-weight:800;line-height:1.1;letter-spacing:.075em}.lcd-top>span:first-child{display:flex;align-items:center;gap:4px}.lcd-top i{width:.8cqw;height:.8cqw;background:#217653}
 .battery{display:flex;align-items:center;gap:1px;border:1px solid currentColor;padding:1px;position:relative;height:1.5cqw}.battery:after{content:"";width:2px;background:currentColor;height:50%;position:absolute;right:-3px}.battery b{height:100%;width:.52cqw;background:currentColor}
 .lcd-art{position:absolute;left:0;right:0;top:14%;bottom:13%}
 .lcd-status{font-size:1.58cqw;letter-spacing:.13em;text-align:center;line-height:1.2;font-weight:800;margin:0 0 4%}.lcd-status span{font-weight:600}

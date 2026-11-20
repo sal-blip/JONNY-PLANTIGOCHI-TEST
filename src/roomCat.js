@@ -1,3 +1,5 @@
+import {drawSelectionContour} from './roomContour.js';
+
 // Calico sprite, drawn on its own native pixel grid. A period is transparent.
 // Inks, warm/cool fur shadows and two ivory values keep the face legible at 1×.
 const colors = {
@@ -155,15 +157,17 @@ function catPose(awake, blink, breath, tailLift) {
     for (let x = 0; x < WIDTH;) {
       const first = x, value = pixels[y * WIDTH + x++];
       while (x < WIDTH && pixels[y * WIDTH + x] === value) x++;
-      if (value) runs[value].push([first, y, x-first]);
+      if (value) runs[value].push(first,y,x-first);
     }
   }
   poses.set(key, runs);
   return runs;
 }
 
-export function drawRoomCat(ctx, { x, y, size = 1, night = 0, time = 0, reducedMotion = false, awake = false }) {
-  const phase = reducedMotion ? 0 : Math.max(0, time);
+const glossyFur = new Set([index.a,index.g,index.c,index.h,index.d]);
+
+export function drawRoomCat(ctx, { x, y, size = 1, night = 0, time = 0, reducedMotion = false, awake = false, selected = false }) {
+  const phase = reducedMotion || !Number.isFinite(time) ? 0 : Math.max(0,time);
   const blink = !reducedMotion && phase % 5100 >= 4830 && phase % 5100 < 5020;
   const breath = !reducedMotion && phase % 3400 > 1150 && phase % 3400 < 2360 ? 1 : 0;
   const tailTime = phase % (awake ? 3200 : 6800);
@@ -177,10 +181,25 @@ export function drawRoomCat(ctx, { x, y, size = 1, night = 0, time = 0, reducedM
   ctx.fillRect(px(5), py(27), px(40)-px(5), py(28)-py(27));
   ctx.fillRect(px(3), py(28), px(42)-px(3), py(29)-py(28));
   ctx.fillRect(px(7), py(29), px(37)-px(7), Math.max(1,py(30)-py(29)));
+  if (selected) drawSelectionContour(ctx,runs,{x,y,size,offsetX:-23,offsetY:-30});
+  const glint = reducedMotion ? 24 : phase%4800*.031-13;
   for (let color = 1; color < runs.length; color++) {
     ctx.fillStyle = shades[color];
-    for (const [xx, yy, length] of runs[color]) {
-      ctx.fillRect(px(xx), py(yy), px(xx+length)-px(xx), py(yy+1)-py(yy));
+    const row = runs[color];
+    const sheen = selected && glossyFur.has(color);
+    for (let i=0; i<row.length; i+=3) {
+      const xx=row[i], yy=row[i+1], end=xx+row[i+2];
+      const top=py(yy), h=py(yy+1)-top;
+      ctx.fillRect(px(xx),top,px(end)-px(xx),h);
+      if (sheen) {
+        const start=Math.floor(glint-yy*.39);
+        const from=px(Math.max(xx,start)), through=px(Math.min(end,start+3));
+        if (through>from) {
+          ctx.fillStyle='rgba(255,238,181,.30)';
+          ctx.fillRect(from,top,through-from,h);
+          ctx.fillStyle=shades[color];
+        }
+      }
     }
   }
 }

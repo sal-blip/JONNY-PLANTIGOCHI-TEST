@@ -7,7 +7,8 @@ export default function RoomView({index,onScreen,plants,hour,placing,carry,dragg
   const scene=useRef(null);
   const [focused,setFocused]=useState(null);
   const firstSlot=index*PLACES_PER_VIEW;
-  const highlighted=(focused ?? selected ?? carry?.from ?? -1)-firstSlot;
+  const active=focused ?? selected ?? carry?.from ?? (cat ? 'cat' : null);
+  const highlighted=typeof active==='number' ? active-firstSlot : active;
   const lifted=dragging && carry ? carry.from-firstSlot : -1;
   scene.current={hour,plants,roomIndex:index,awake:cat,highlighted,lifted,placing};
   useEffect(()=>{
@@ -24,7 +25,11 @@ export default function RoomView({index,onScreen,plants,hour,placing,carry,dragg
   return <div className="room-frame" aria-hidden={!onScreen || undefined} inert={!onScreen?'':undefined}
     style={{left:index*100+'%'}}>
     <canvas ref={canvas} width={ROOM_WIDTH} height={ROOM_HEIGHT} role="img" aria-label={viewName(index)+(index%2===0?' with an open pot shelf, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
-    {index%2===0 && <button type="button" className="room-cat-target" style={{left:CAT_SEAT.x/ROOM_WIDTH*100+'%',top:(CAT_SEAT.y-11*CAT_SEAT.size)/ROOM_HEIGHT*100+'%'}} aria-label="Say hello to the cat" onClick={petCat}/>}
+    {index%2===0 && <button type="button" className="room-cat-target"
+      style={{left:CAT_SEAT.x/ROOM_WIDTH*100+'%',top:(CAT_SEAT.y-11*CAT_SEAT.size)/ROOM_HEIGHT*100+'%'}}
+      disabled={placing} aria-label="Say hello to the cat" onClick={petCat}
+      onFocus={e=>{if(e.currentTarget.matches(':focus-visible'))setFocused('cat');}}
+      onBlur={()=>setFocused(null)} onPointerDown={()=>setFocused(null)}/>}
     {placesFor(index%2).map((spot,i)=>{
       const slot=index*PLACES_PER_VIEW+i,plant=plants[i];
       return <button key={slot} type="button" data-slot={slot}

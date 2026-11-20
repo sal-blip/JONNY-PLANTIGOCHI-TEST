@@ -1,3 +1,5 @@
+import {drawSelectionContour} from './roomContour.js';
+
 // Each graduate is inked on a small logical grid. Transparent cells in each
 // blade reveal the stem, other leaves, or the actual room through the splits.
 const sideBlade = [
@@ -296,6 +298,8 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,night=0,
   const sweep=reducedMotion ? -8 : (time%3600)*.035-45;
   ctx.save();
   for(let i=1;i<runs.length;i++){
+    if(selected && i===soilShadow)
+      drawSelectionContour(ctx,runs,{x,y,size,firstInk:soilShadow});
     const cells=runs[i];
     if(!cells)continue;
     ctx.fillStyle=ink[i];
