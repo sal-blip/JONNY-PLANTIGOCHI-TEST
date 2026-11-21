@@ -4,23 +4,32 @@ import {drawShopPreview} from './roomShopArt.js';
 import {preparePhoto} from './gardenScenes.js';
 import {Coins,ChevronRight,ShoppingBag} from 'lucide-react';
 
-function ItemArt({sku,photo}){
+// Optical centers and pot baselines on a 72 × 64 shop tile. The trailing
+// pothos and beckoning paw put more of the silhouette on one side.
+const previewLayout={
+  terra:[33,50,1.85], wave:[33,49,1.85], oak:[36,55,1.75], lacquer:[35,51,1.75],
+  neko:[32,57,1.65], record:[36,54,1.55], 'golden-pothos':[32,54,1.15], 'snake-plant':[36,57,1],
+};
+
+function ItemArt({sku,photo,large=false}){
   const canvas=useRef(null);
+  const zoom=large?2:1;
   useEffect(()=>{
-    const ctx=canvas.current.getContext('2d');
+    const tile=canvas.current,ctx=tile.getContext('2d');
+    if(!ctx)return;
     let live=true;
-    const kind=catalog[sku].kind;
-    const y=kind==='plant'?54:kind==='pot'?44:48;
-    const size=kind==='plant'?1:kind==='pot'?1.9:1.45;
+    const [x,y,size]=previewLayout[sku];
     function draw(){
       if(!live)return;
-      ctx.clearRect(0,0,64,64);
-      drawShopPreview(ctx,{sku,x:32,y,size,photo,onPhotoReady:draw});
+      ctx.clearRect(0,0,tile.width,tile.height);
+      drawShopPreview(ctx,{sku,x:x*zoom,y:y*zoom,size:size*zoom,photo,onPhotoReady:draw});
     }
     draw();
     return ()=>{live=false;};
-  },[sku,photo]);
-  return <canvas ref={canvas} className="shop-art" width="64" height="64" aria-hidden="true"/>;
+  },[sku,photo,zoom]);
+  return <span className={large?'shop-specimen large':'shop-specimen'} aria-hidden="true">
+    <canvas ref={canvas} className="shop-art" width={72*zoom} height={64*zoom}/>
+  </span>;
 }
 export function CoinBalance({plant}){
   const life=lifeOf(plant);
@@ -42,7 +51,7 @@ export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
     finally {setLoading(false);}
   }
   return <div className="garden-page">
-    {item.photo && <img className="framed-preview" src={item.photo.src} alt="Photo in this frame"/>}
+    <ItemArt large sku={item.sku} photo={item.photo}/>
     {children}
     <div className="menu-items">
       {product.kind==='frame' && <><button disabled={busy||loading} onClick={()=>input.current.click()}>{loading?'Preparing photo…':item.photo?'Change photo':'Choose a photo'}</button>

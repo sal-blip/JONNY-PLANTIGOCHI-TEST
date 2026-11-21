@@ -112,10 +112,10 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   const tilt = useGardenTilt(intro || page !== null || room!==null);
   const [leafReady, setLeafReady] = useState(false);
   const menuButton = useRef(null), shareButton = useRef(null), restoreFocus = useRef(null);
-  const [recordPlaying,setRecordPlaying]=useState(false);
+  const [playingRecordId,setPlayingRecordId]=useState(null);
   useEffect(()=>{
-    if(!passage.inside || !plant.sound || !lifeOf(plant).items.some(i=>i.sku==='record' && i.slot!==null))setRecordPlaying(false);
-  },[passage.inside,plant.sound,lifeOf(plant).items]);
+    if(!passage.inside || !plant.sound || !lifeOf(plant).items.some(i=>i.id===playingRecordId && i.sku==='record' && i.slot!==null))setPlayingRecordId(null);
+  },[passage.inside,plant.sound,lifeOf(plant).items,playingRecordId]);
   const [coinsMessage,setCoinsMessage]=useState('');
   const day=localDay(now);
   useEffect(()=>{
@@ -125,7 +125,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       .then(saved=>{if(saved && credited && !lesson)setCoinsMessage('+10 Garden Coins · Visit the garden shop');});
   },[day,lifeOf(plant).day,lesson,commit]);
   useEffect(()=>{if(coinsMessage){const timer=setTimeout(()=>setCoinsMessage(''),6500);return ()=>clearTimeout(timer);}},[coinsMessage]);
-  const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, recordPlaying, sleeping:plant.stage === 'seed', intro, leafReady});
+  const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, recordPlaying:Boolean(playingRecordId), sleeping:plant.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
   const scenery = useRef(null);
   const scene = selectedScene(plant);
@@ -278,7 +278,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       aria-label="Open garden" onClick={passage.activate}><i aria-hidden="true"/>Garden</button>}
     </div>
     <div className="room-floor" inert={!passage.inside?'':undefined} aria-hidden={!passage.inside||undefined}>
-    {room!==null && <Collector recordPlaying={recordPlaying} onRecordPlaying={setRecordPlaying} active={passage.inside} plant={plant} moving={room.moving} initialPanel={room.panel} commit={commit} now={now}
+    {room!==null && <Collector playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} active={passage.inside} plant={plant} moving={room.moving} initialPanel={room.panel} commit={commit} now={now}
       move={async slot=>{const id=room.moving;const ok=await commit(p=>graduate(p,id,slot,Date.now()));
         return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
       relocate={async (id,from,to)=>{

@@ -89,15 +89,16 @@ const ceramics = [
   { // indigo ceramic with pooling blue glaze
     day:['#3c5057','#4b646c','#658186','#809a9d','#a7b6ac','#c9cdb6'], wall:[9,9,10,10,10,10,10,9,9,8,7,6], motif:'glaze' },
 ];
-const shopPots = {
-  terra: {day:['#754c3e','#a05c43','#c27650','#d78c60','#e5a572','#f0be88'],wall:[11,11,10,10,9,9,8,8,7,7,6,6],motif:'red-clay'},
-  wave: {day:['#345565','#527c93','#95b1b6','#bdcfc6','#d4decb','#eee8cd'],wall:[9,10,10,11,11,11,10,10,9,7,6,7],motif:'blue-wave'},
+const shopPots={
+  terra:{lift:3,tones:['#563d38','#75473b','#985239','#b76644','#cc7950','#df9061','#eca579','#f4c394']},
+  wave:{lift:2,tones:['#34475c','#254f7c','#416c93','#7292ac','#96a9af','#c0c7bc','#dedfca','#f4ecd5','#fbf2df']},
 };
-const goldLeaf=['#30573e','#427749','#6f9b55','#95ae65','#b9be70','#dec97b','#f0df9b'];
-const snakeLeaf=['#324f48','#3f6656','#57816b','#71957c','#9da574','#beae6c','#dbcb84'];
-const pothosInk=38,snakeInk=45;
+const goldLeaf=['#203f37','#285846','#377553','#548e57','#7dac60','#aebe68','#ddc976','#f4e5a3','#385f54'];
+const snakeLeaf=['#293e3a','#305749','#3c6f5d','#578a70','#78a18a','#a4bc93','#a89953','#d8be62','#efe19a'];
+const pothosInk=38,snakeInk=pothosInk+goldLeaf.length,glazeInk=snakeInk+snakeLeaf.length;
 
-const leftEdge = -29, topEdge = -54, width = 59, height = 58;
+const originalBounds={leftEdge:-29,topEdge:-54,width:59,height:58};
+const shopBounds={leftEdge:-32,topEdge:-60,width:65,height:67};
 const shadowSoft = 1, shadowFirm = 2, soilShadow = 3, soil = 4, soilLight = 5, loam = 6;
 const stemDark = 7, stem = 8, stemLight = 9, newLeaf = 10;
 const clay = 11, green = 17;
@@ -113,7 +114,7 @@ function identity(plant) {
   return hash >>> 0;
 }
 
-function makeGrid() {
+function makeGrid({leftEdge,topEdge,width,height}) {
   const cells = new Uint8Array(width * height);
   function dot(x,y,ink) {
     if (x >= leftEdge && x < leftEdge+width && y >= topEdge && y < topEdge+height)
@@ -137,8 +138,85 @@ function makeGrid() {
   return { cells,dot,span,line };
 }
 
+// Bought pots have their own silhouettes, firing marks and glazed surfaces.
+function craftedPot(grid,finish){
+  const {span,dot}=grid;
+  const p=(x,y,n,c)=>span(x,y,n,glazeInk+c);
+  const d=(x,y,c)=>dot(x,y,glazeInk+c);
+  const ridge=(y,half,edge,light)=>{
+    for(let x=-half;x<=half;x++){
+      const bow=Math.abs(x)>half*.72?-1:0;
+      d(x,y+bow,x>half*.55?edge:light);
+    }
+  };
+  span(-12,1,30,shadowSoft);span(-9,2,24,shadowSoft);span(-8,0,19,shadowFirm);span(-6,1,17,shadowFirm);
+  if(finish==='terra'){
+    // The undercut collar, gently tapered wall and raised foot are distinct fired pieces.
+    const walls=[12,12,12,11,11,11,10,10,10,9,9,9,8,8,8];
+    walls.forEach((r,i)=>{
+      const y=i-16;
+      p(-r,y,2*r+1,0);p(-r+1,y,2*r-1,2);p(-r+1,y,2*r-4,3);
+      p(-r+2,y,r+6,4);p(-r+3,y,r-1,5);
+      if(i<9)p(-r+4,y,3,6);
+    });
+    p(-7,-2,15,1);p(-9,-1,19,1);p(-8,-1,14,4);p(-6,-1,6,5);p(-7,0,15,0);
+    // Throwing ridges curve around the wall and catch a broken raking highlight.
+    ridge(-8,9,2,3);p(-6,-7,8,5);p(-5,-7,3,6);
+    ridge(-4,7,2,3);p(-4,-3,5,5);
+    d(5,-11,3);d(4,-10,5);d(-5,-5,4);
+    // Rolled lip with a light front-left arc and a deep oxide shadow along its underside.
+    p(-8,-22,16,2);p(-12,-21,24,3);p(-14,-20,28,4);
+    for(let y=-19;y<=-16;y++){p(-15,y,30,0);p(-14,y,28,3);p(-13,y,22,5);}
+    p(-14,-15,28,1);p(-12,-14,24,1);p(-10,-13,20,2);
+    p(-13,-16,23,4);p(-11,-15,18,4);p(-9,-15,11,5);
+    p(-13,-20,25,6);p(-10,-21,18,6);p(-7,-21,8,7);
+    p(-14,-19,25,6);p(-12,-18,21,5);p(-9,-17,17,6);
+    span(-8,-20,16,soil);span(-11,-19,22,soilShadow);span(-9,-18,18,soil);
+    span(-8,-18,4,soilLight);span(2,-19,3,loam);dot(-2,-19,soilLight);
+    p(-14,-18,2,7);p(-10,-17,7,7);p(11,-17,3,2);p(13,-18,1,3);
+  }else{
+    // A narrow neck opens onto a broad, softly faceted ivory stoneware belly.
+    const walls=[9,10,12,13,14,14,14,14,13,13,12,11,10,8,7];
+    walls.forEach((r,i)=>{
+      const y=i-17;
+      p(-r,y,2*r+1,0);p(-r+1,y,2*r-1,4);p(-r+1,y,2*r-4,5);
+      p(-r+2,y,2*r-6,6);p(-r+3,y,r+2,7);p(-r+4,y,3,8);
+    });
+    // Paint each fan from the back course forward. The approaching wave masks
+    // the course above, just like overlapping scales on a seigaiha textile.
+    function fan(cx,base){
+      const outerRise=[4,4,4,3,2,0];
+      for(let side=-5;side<=5;side++){
+        const hx=cx+side,peak=outerRise[Math.abs(side)];
+        for(let j=0;j<=peak;j++){
+          const yy=base-j,rad=walls[yy+17];
+          if(rad && Math.abs(hx)<rad-1)d(hx,yy,hx>8?5:hx<0?7:6);
+        }
+      }
+      for(const [radius,rise] of [[5,outerRise],[3,[2,2,1,0]],[1,[0,0]]]){
+        for(let dx=-radius;dx<=radius;dx++){
+          const ax=cx+dx,ay=base-rise[Math.abs(dx)],rad=walls[ay+17];
+          if(rad && Math.abs(ax)<rad-1)d(ax,ay,ax>6?0:1);
+          if(Math.abs(dx)===4 && radius===5 && rad && Math.abs(ax)<rad-1)d(ax,ay+1,2);
+        }
+      }
+    }
+    for(const cx of [-10,0,10])fan(cx,-8);
+    for(const cx of [-5,5])fan(cx,-5);
+    // Reserve bare cream at the neck and lower edge so the blue rhythm reads.
+    p(-8,-3,15,5);p(-6,-3,10,6);p(-7,-2,15,1);p(-6,-2,8,3);
+    p(-7,-1,15,0);p(-6,-1,11,2);p(-6,0,13,0);
+    p(-6,-21,13,2);p(-9,-20,19,1);p(-10,-19,21,2);
+    p(-10,-18,21,4);p(-9,-17,19,2);p(-7,-17,13,3);
+    p(-9,-20,16,6);p(-6,-21,12,7);p(-9,-19,17,7);p(-8,-18,14,7);
+    span(-6,-20,13,soilShadow);span(-8,-19,17,soil);span(-6,-19,4,soilLight);
+    span(2,-19,3,loam);p(-7,-18,6,8);p(-5,-16,6,8);
+  }
+}
+
 function ceramic(grid,style,finish) {
-  const { wall,motif }=shopPots[finish] || ceramics[style];
+  if(finish)return craftedPot(grid,finish);
+  const { wall,motif }=ceramics[style];
   const { span,dot,line }=grid;
   span(-8,0,21,shadowSoft); span(-10,1,27,shadowSoft);
   span(-7,2,20,shadowSoft); span(-5,0,16,shadowFirm); span(-4,1,13,shadowFirm);
@@ -152,18 +230,7 @@ function ceramic(grid,style,finish) {
     span(-radius+3,y,Math.max(1,Math.floor(radius/2)-1-(row>>2)),clay+4);
     if (row===wall.length-2) span(-radius+1,y,radius,clay+2);
   });
-  if(motif==='red-clay'){
-    span(-9,-10,19,clay+1); span(-8,-9,16,clay+4); span(-6,-9,6,clay+5);
-    span(-6,-3,11,clay+1); span(-4,-2,9,clay+3);
-    span(2,-7,3,clay+1); dot(3,-8,clay+1); dot(3,-6,clay+4);
-  }else if(motif==='blue-wave'){
-    // Three overlapping seigaiha crests wrap around the glazed bowl.
-    for(const [x,y] of [[-5,-9],[3,-9],[-1,-6]]){
-      span(x-1,y,3,clay); dot(x-2,y+1,clay); dot(x+2,y+1,clay); dot(x-3,y+2,clay+1); dot(x+3,y+2,clay+1);
-      span(x-1,y+2,3,clay+1); dot(x-2,y+3,clay+1); dot(x+2,y+3,clay+1);
-    }
-    span(-5,-2,10,clay);
-  }else if(motif==='flutes'){
+  if(motif==='flutes'){
     for(const [x,tone] of [[-7,4],[-4,3],[0,3],[4,2],[7,1]]) {
       const end=x-Math.sign(x);
       line(x,-9,end,-4,clay+tone); line(x+1,-8,end+1,-4,clay+tone-1);
@@ -255,70 +322,123 @@ function canopy(grid,hash,pose) {
   line(rootX+5*side,-18,rootX+5*side,-16,soilLight);
 }
 
-// Pothos blades have an uninterrupted heart outline and irregular gold marbling.
+// Broad ascending, oblique and newly unrolled heart leaves use individually
+// painted color clusters. The pale sectors follow the midrib of each blade.
 const heartLeaves=[
-  ['   22    22','  2332  2232',' 233542223331','2335653333331','2356532433321','135532343321',' 1333234331','  13323431','   123431','    1341','     11'],
-  [' 22  22','23322232','23555331','13453231',' 134231','  1331','   11'],
-  [' 2 22','232321','13531',' 131','  1'],
+  {notch:8, rows:[
+    '    33      33','  34443    34432',' 3445543  3444321','34456553 244333210',
+    '345667743344333210','345667654344543210','234556443445432110',' 2343434434432210',
+    '  233343454332210','   1234465432210','    12345433210','     1235432210',
+    '      01243210','       0123210','        01210','         010','          0',
+  ]},
+  {notch:10, rows:[
+    '     23444    2','   23344443  221','  23344667432221',' 234456677543210',
+    '234455676433210','233456754332210','12356764333210',' 235643432210',
+    '  1343432210','  123432210','   1232210','   012210','   0120','    00',
+  ]},
+  {notch:5, rows:[
+    '  33    22',' 3443  2321','344553233210','345665433210','23456343210',
+    '1235433210',' 12343210','  123210','   1220','    00',
+  ]},
+  {notch:4, rows:[
+    '  34   2',' 3443 221','345643321','235643210',' 12343210','  123210','   120','    0',
+  ]},
 ];
 function trailingPothos(grid,hash,pose){
-  const {line,dot}=grid,mirror=hash&1?-1:1,lean=((hash>>>4)%3)-1;
-  const x=v=>v*mirror+lean;
-  const ivy=(points)=>{
-    for(let i=1;i<points.length;i++){
-      const [ax,ay]=points[i-1],[bx,by]=points[i];
-      line(x(ax),ay,x(bx),by,i%3===1?stemDark:stem);
+  const {dot,line,span}=grid,mirror=hash&1?-1:1,lean=((hash>>>4)%3)-1;
+  const crest=-39-((hash>>>7)%3);
+  const X=(v,y)=>v*mirror+lean+(y<-26 || Math.abs(v)>15?pose:0);
+  function vine(nodes){
+    for(let i=1;i<nodes.length;i++){
+      const [a,b]=nodes[i-1],[c,d]=nodes[i];
+      line(X(a,b),b,X(c,d),d,pothosInk+(i%3===1?0:1));
+      if(i===1)line(X(a,b)-1,b,X(c,d)-1,d,pothosInk+2);
     }
-  };
-  const upper=-35-(hash>>>7)%3;
-  ivy([[0,-14],[-2,-21],[-4,-26],[-1,-31],[4,upper],[10,upper+2]]);
-  ivy([[0,-14],[-6,-20],[-12,-21],[-16,-16],[-18,-10],[-16,-5],[-20,-2]]);
-  ivy([[1,-14],[4,-21],[8,-25],[13,-24],[16,-20],[18,-15],[17,-9],[20,-6]]);
-  ivy([[0,-15],[-1,-20],[3,-24],[5,-26]]);
-  const blades=[
-    [-4,-27,0,1],[4,upper,0,1],[10,upper+2,1,-1],[8,-25,0,-1],
-    [-10,-22,1,-1],[-15,-17,0,1],[-18,-10,1,-1],[-19,-3,2,1],
-    [15,-21,1,-1],[18,-15,1,1],[18,-8,2,-1],[3,-23,0,1],[-2,-18,1,1],
-  ];
-  for(const [ax,ay,kind,direction] of blades){
-    const rows=heartLeaves[kind], tipSway=ay> -11?pose:0;
-    const axNative=x(ax)+tipSway, sign=mirror*direction;
-    if(tipSway)line(x(ax),ay,axNative,ay,stem);
-    rows.forEach((row,ry)=>[...row].forEach((cell,rx)=>{
-      if(cell!==' ')dot(axNative+(rx-(kind===0?6:kind===1?3:2))*sign,ay+ry-1,pothosInk+Number(cell));
-    }));
   }
+  vine([[0,-15],[-3,-22],[-1,-30],[-5,-35],[-7,crest]]);
+  vine([[0,-16],[-5,-22],[-10,-25],[-15,-23],[-19,-18],[-22,-10],[-19,-6],[-20,-2]]);
+  vine([[0,-16],[4,-25],[8,-32],[13,-34],[14,-31]]);
+  vine([[3,-21],[9,-24],[14,-23],[16,-19],[16,-14]]);
+  vine([[1,-21],[4,-26],[5,-28]]);
+  const leavesAt=[
+    [-7,crest,0,1,0], [13,-34,2,-1,1], [-15,-23,1,1,0],
+    [16,-18,3,-1,1],[-22,-10,2,-1,0],[-20,-2,3,1,1], [5,-29,1,1,0],
+  ];
+  for(const [ax,ay,kind,direction,back] of leavesAt){
+    const {notch,rows}=heartLeaves[kind],sign=direction*mirror;
+    const origin=X(ax,ay),tip=ay>-15?pose:0;
+    rows.forEach((row,ry)=>{
+      const turn=ry>rows.length*.62?tip:0;
+      for(let rx=0;rx<row.length;rx++){
+        if(row[rx]===' ')continue;
+        const shade=Number(row[rx]);
+        // Turned-away leaves share the emerald shadow but carry less golden light.
+        const lit=back&&shade>=3&&shade<=7?shade-1:shade;
+        dot(origin+(rx-notch)*sign+turn,ay+ry-3,pothosInk+lit);
+      }
+    });
+  }
+  // A fresh rolled spear and a knuckled aerial root at the bend of the runner.
+  line(X(0,-25),-25,X(2,-34),-34,pothosInk+2);
+  line(X(2,-34),-34,X(4,-38),-38,pothosInk+5);
+  dot(X(4,-38),-38,pothosInk+7);
+  const root=X(-15,-20);
+  line(root,-20,root-2*mirror,-17,loam);
+  line(root-2*mirror,-17,root-2*mirror,-14,soilLight);
+  span(X(0,-15)-1,-15,3,stemDark);
 }
 
+const snakeSpears=[
+  // base, quarter, waist, high edge, needle tip, height, half-width, light plane
+  [-3,-5,-8,-13,-16,29,3,0], [2,4,7,9,9,34,3,0],
+  [-1,-2,-3,-5,-6,36,4,1], [3,6,11,15,18,24,3,1],
+  [-4,-7,-10,-12,-12,17,3,0], [1,2,4,4,3,25,4,1],
+];
 function uprightSnake(grid,hash,pose){
-  const {dot}=grid,mirror=hash&1?1:-1,taller=(hash>>>3)%4;
-  // Each lance has a golden margin and broken transverse bands of pale green.
-  const spears=[[-4,-11,24,2],[1,5,34+taller,2],[4,13,24,2],[-2,-7,33,2],
-    [-4,-14,17,2],[3,9,18,2],[0,0,26,3]];
-  spears.forEach(([base,tip,length,full],i)=>{
+  const {dot}=grid,mirror=hash&1?1:-1,variation=(hash>>>3)%3;
+  snakeSpears.forEach(([base,low,waist,high,tip,height,radius,lit],i)=>{
+    const length=height+(i===2?variation:0),axis=[base,low,waist,high,tip];
     for(let n=0;n<length;n++){
-      const t=n/(length-1),center=Math.round((base+(tip-base)*(t**1.23))*mirror+(t>.75?pose*.6:0));
-      const half=t>.92?0:t>.75?1:full;
-      for(let k=-half;k<=half;k++){
-        const band=(n+(k>=0?1:0)+i*3)%6;
-        let shade=k<0?2:1;
-        if(band===2 || (band===3 && k<0))shade=k<0?4:3;
-        if(k===-half)shade=i%3===1?5:4;
-        if(k===half && half>0)shade=i%2?0:5;
-        if(!half)shade=5;
-        dot(center+k,-15-n,snakeInk+shade);
+      const t=n/(length-1),part=Math.min(3,Math.floor(t*4)),f=t*4-part;
+      const mid=Math.round((axis[part]+(axis[part+1]-axis[part])*f)*mirror+(t>.67?pose*.66:0));
+      const spread=t<.18?.45+2.8*t:t<.72?1:t<.9?1-(t-.72)*2.3:(1-t)*5.7;
+      const left=Math.round(radius*spread),right=Math.max(0,left-(lit&&t<.8?1:0));
+      for(let x=-left;x<=right;x++){
+        // A shallow chevron and a broken second band run across opposite planes.
+        const seam=Math.round((t-.5)*1.4)*mirror;
+        const band=(n+(x<seam?Math.floor((seam-x)/2):Math.floor((x-seam)/3))+i*3)%11;
+        let tone=x<seam?3:1;
+        if(band===2 || band===3&&x<seam)tone=x<seam?5:3;
+        if(band===7 && (x<seam || i%2))tone=x<seam?4:2;
+        if(x===seam && left>=2)tone=lit?2:1;
+        if(!lit && tone>=3&&tone<=5)tone--;
+        // The brightly rimmed Laurentii cultivar has a golden stripe along both edges.
+        if(x===-left)tone=lit?7:6;
+        if(x===right)tone=lit&&right>0?7:6;
+        if(x===right-1&&right>=2)tone=(n%7<4)?0:1;
+        if(left>=3&&lit&&x===-left+1&&n%13<8)tone=8;
+        if(t>.96)tone=lit?8:6;
+        dot(mid+x,-15-n,snakeInk+tone);
       }
     }
   });
 }
 
 function sprite(style,hash,pose,species,finish) {
-  const grid=makeGrid();
+  const bounds=finish || species==='golden-pothos' || species==='snake-plant'?shopBounds:originalBounds;
+  const {leftEdge,topEdge,width,height}=bounds;
+  const grid=makeGrid(bounds);
   ceramic(grid,style,finish);
   if(hash!==null){
-    if(species==='golden-pothos')trailingPothos(grid,hash,pose);
-    else if(species==='snake-plant')uprightSnake(grid,hash,pose);
-    else canopy(grid,hash,pose);
+    const lift=shopPots[finish]?.lift || 0;
+    const foliage=lift?{
+      dot:(x,y,t)=>grid.dot(x,y-lift,t),
+      span:(x,y,w,t)=>grid.span(x,y-lift,w,t),
+      line:(a,b,c,d,t)=>grid.line(a,b-lift,c,d-lift,t),
+    }:grid;
+    if(species==='golden-pothos')trailingPothos(foliage,hash,pose);
+    else if(species==='snake-plant')uprightSnake(foliage,hash,pose);
+    else canopy(foliage,hash,pose);
   }
   // Merge adjacent cells of a single color into horizontal runs. Keeping the
   // drawing indexed makes room lighting independent of the cached plant pose.
@@ -347,11 +467,11 @@ function litColor(hex,night,selected) {
   return 'rgb('+shift(r,r*.58+5,255)+','+shift(g,g*.62+9,230)+','+shift(b,b*.74+16,169)+')';
 }
 function colors(style,night,selected,finish) {
-  const step=Math.max(0,Math.min(48,Math.round(night*48))),key=[finish || style,step,selected].join('/');
+  const step=Math.max(0,Math.min(48,Math.round(night*48))),key=[style,finish,step,selected].join('/');
   if(!blended.has(key)){
     const n=step/48;
     blended.set(key,[null,'rgba(53,42,49,.14)','rgba(47,37,44,.28)',
-      ...[...common,...(shopPots[finish] || ceramics[style]).day,...leaves.flat(),...goldLeaf,...snakeLeaf].map(ink=>litColor(ink,n,selected))]);
+      ...[...common,...ceramics[style].day,...leaves.flat(),...goldLeaf,...snakeLeaf,...(shopPots[finish]?.tones || [])].map(ink=>litColor(ink,n,selected))]);
   }
   return blended.get(key);
 }

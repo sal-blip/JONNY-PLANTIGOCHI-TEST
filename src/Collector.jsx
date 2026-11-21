@@ -34,7 +34,7 @@ function firstVacantRoom(plants){
   return 0;
 }
 
-export default function Collector({active,plant,moving,initialPanel,commit,now,move,relocate,shareLink,startClose,purr,recordPlaying,onRecordPlaying}) {
+export default function Collector({active,plant,moving,initialPanel,commit,now,move,relocate,shareLink,startClose,purr,playingRecordId,onSelectRecord}) {
   const graduates=plant.graduates;
   const count=gardenViews(graduates);
   const [room,setRoom]=useState(()=>moving?firstVacantRoom(graduates):0);
@@ -185,7 +185,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
   }
   function inspectItem(i,fromRoom=false){
     setItemId(i.id);setNotice('');setPanel('item');relax();
-    if(fromRoom && i.sku==='record' && plant.sound)onRecordPlaying(!recordPlaying);
+    if(fromRoom && i.sku==='record' && plant.sound)onSelectRecord(playingRecordId===i.id?null:i.id);
   }
   function startPlacement(request){
     const hasSpace=Array.from({length:count},(_,view)=>view).some(view=>{
@@ -384,7 +384,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
         {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} worldHeight={worldHeight} plants={potted[k]} hour={hour}
-          garden={plant} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
+          garden={plant} playingItemId={active && plant.sound ? playingRecordId : null} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
     <button className="room-corner room-return" aria-label="Back to Plantigochi" title="Back to Plantigochi"
@@ -403,7 +403,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       {!placing && <button aria-label="Dismiss garden message" onClick={()=>{setSlot(null);setNotice('');}}>×</button>}
     </div>}
     {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width="76" height="82" aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
-    <GardenRecord active={active} soundEnabled={plant.sound} playing={recordPlaying} onPlayingChange={onRecordPlaying}/>
+    <GardenRecord active={active} soundEnabled={plant.sound} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
     {panel==='move' && source && <GardenDialog page="garden-move" title={'Move '+(source.name || speciesName(source))+'?'} close={cancelCarry}>
       <p className="room-guide">{placeName(carry.from)} · {viewName(viewForSlot(carry.from))}</p>
       <div className="menu-items"><button onClick={confirmMove}>Move</button>{items.some(i=>i.slot===source.slot) && <button onClick={()=>{setCarry(null);inspectItem(items.find(i=>i.slot===source.slot));}}>Manage pot</button>}<button onClick={cancelCarry}>Keep here</button></div>
@@ -430,9 +430,9 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       {panel==='journal' && <GardenJournal plant={plant} change={change} busy={busy}/>}
       {panel==='item' && item && <ShopItemDetail key={item.id} item={item} busy={busy}
         move={()=>startPlacement({id:item.id,sku:item.sku,buy:false,from:item.slot})}
-        store={async()=>{if(await change(p=>storeItem(p,item.id,item.slot))){if(item.sku==='record')onRecordPlaying(false);setPanel('shop');}}}
+        store={async()=>{if(await change(p=>storeItem(p,item.id,item.slot))){if(item.id===playingRecordId)onSelectRecord(null);setPanel('shop');}}}
         savePhoto={photo=>change(p=>framePhoto(p,item.id,photo))}>
-        {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={plant.sound} playing={recordPlaying} onPlayingChange={onRecordPlaying}/>}
+        {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={plant.sound} playing={playingRecordId===item.id} onPlayingChange={yes=>onSelectRecord(yes?item.id:null)}/>}
       </ShopItemDetail>}
       {['shop','journal','item'].includes(panel) && notice && <p role="status">{notice}</p>}
       {['jar','book'].includes(panel) && <><GardenKeepsakes key={panel} kind={panel} plant={plant} now={now} act={useKeepsake} openJar={()=>openKeepsake('jar')} busy={busy}/>{notice && <p role="status">{notice}</p>}</>}

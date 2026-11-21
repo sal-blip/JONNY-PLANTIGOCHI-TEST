@@ -11,10 +11,20 @@
 .garden-tabs button {padding:8px 0;min-height:42px;font:inherit;}
 .garden-tabs button[aria-pressed=true]{font-weight:700;box-shadow:inset 0 -2px currentColor}
 .shop-list {display:grid}
-.shop-list>button {min-height:52px;display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:9px;text-align:left;border-bottom:1px solid #64765f36;font:600 16px/1.2 var(--display);padding:4px 1px}
+.shop-list>button {min-height:52px;display:grid;grid-template-columns:72px 1fr auto;align-items:center;gap:9px;text-align:left;border-bottom:1px solid #64765f36;font:600 16px/1.2 var(--display);padding:4px 1px}
 .shop-list button small,.shop-list button b {display:block;font:400 13px/1.4 var(--display);color:#405947}
 .shop-list button b {display:flex;align-items:center;gap:4px;font-weight:650}
-.shop-list .shop-art {image-rendering:pixelated;width:44px;height:44px}
+.shop-specimen {
+  display:grid;place-items:center;isolation:isolate;overflow:hidden;border-radius:6px;
+  background:radial-gradient(ellipse at 50% 75%,#a1a88229 0%,transparent 48%),linear-gradient(145deg,#fcf9eac9,#dce5cbad);
+}
+.shop-specimen .shop-art {display:block;width:72px;height:64px;image-rendering:pixelated}
+.shop-specimen.large {width:100%;margin:0 0 12px;padding:8px 0}
+.shop-specimen.large .shop-art {width:144px;height:128px}
+.garden-dialog .shop-list>button:disabled {opacity:1}
+.shop-list>button:disabled span:not(.shop-specimen),.shop-list>button:disabled b {color:#596652}
+@media(max-width:350px){.shop-list>button {gap:6px}}
+
 .garden-footnote,.journal-entries small {color:#455b4c;font-size:14px;line-height:1.4}
 .journal-controls,.journal-form {display:grid;gap:12px;padding:8px 0}
 .journal-page label {display:grid;gap:4px;font-weight:600}
@@ -25,7 +35,6 @@
 .journal-entries {padding:0;list-style:none;margin:8px 0}
 .journal-entries li {padding:10px 0;border-top:1px solid #64765f40}
 .journal-entries :is(small,strong) {display:block}.journal-entries p {white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0}.journal-entries svg {vertical-align:middle}
-.framed-preview {display:block;max-width:100%;max-height:160px;margin:4px auto 12px}
 .coin-toast {position:absolute;z-index:2;bottom:max(72px,calc(env(safe-area-inset-bottom) + 66px));left:50%;transform:translateX(-50%);width:max-content;max-width:84%;border-radius:12px;background:#203a2de8;color:#ffffe9;padding:8px 12px;font:500 14px/1.3 var(--display);pointer-events:none}
 .room-frame .decor-target:not(.open-destination){transform:translate(-50%,-50%);width:8%;height:9%;min-width:26px;min-height:25px;z-index:1}
 @media(max-height:520px){.collector .menu-card:has([class*="page-garden-"]){max-height:82dvh}}

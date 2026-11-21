@@ -7,7 +7,7 @@ import {keepsakeFor} from './roomKeepsakes.js';
 import {slotFor,speciesName,viewName} from './gardenLayout.js';
 
 export default function RoomView({index,onScreen,running,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
-  garden,shopItems=[],shopMove,inspectItem,openKeepsake,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
+  garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null);
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
   const scene=useRef(null);
@@ -20,7 +20,7 @@ export default function RoomView({index,onScreen,running,worldHeight,plants,hour
   const lifted=dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
   const [photoReady,setPhotoReady]=useState(0);
   const onPhotoReady=React.useCallback(()=>setPhotoReady(n=>n+1),[]);
-  scene.current={hour,plants,shopItems,onPhotoReady,roomIndex:index,awake:Boolean(cat),highlighted,lifted,above,worldHeight,separatePlanes:true,placing,jarProgress,leafCount};
+  scene.current={hour,plants,shopItems,playingItemId,onPhotoReady,roomIndex:index,awake:Boolean(cat),highlighted,lifted,above,worldHeight,separatePlanes:true,placing,jarProgress,leafCount};
   useEffect(()=>{
     const media=matchMedia('(prefers-reduced-motion: reduce)');
     const paint=()=>{if(canvas.current && !document.hidden)drawRoom(canvas.current,{...scene.current,time:performance.now(),reducedMotion:media.matches});};
@@ -37,7 +37,7 @@ export default function RoomView({index,onScreen,running,worldHeight,plants,hour
   },[onScreen,running]);
   useLayoutEffect(()=>{
     if(canvas.current)drawRoom(canvas.current,{...scene.current,time:performance.now(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
-  },[plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,photoReady]);
+  },[plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId,photoReady]);
   useLayoutEffect(()=>{
     if(depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
   },[worldHeight,above,hour,index]);
