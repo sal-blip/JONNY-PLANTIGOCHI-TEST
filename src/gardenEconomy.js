@@ -51,6 +51,9 @@ function decorView(slot){
   const view=Number(slot.split('/')[0]);
   return integer(view) && decorPlaces(view).some(p=>p.slot===slot) ? view : -1;
 }
+function itemView(item){
+  return catalog[item.sku]?.kind==='pot'?viewForSlot(item.slot):decorView(item.slot);
+}
 export function validGardenLife(plant) {
   if(plant.gardenLife===undefined)return true;
   const g=plant.gardenLife;
@@ -63,7 +66,7 @@ export function validGardenLife(plant) {
     const kind=catalog[item.sku]?.kind;
     if(!['frame','pot','decor'].includes(kind) || (item.photo!==undefined && (kind!=='frame' || !validPhoto(item.photo))))return false;
     if(item.slot===null)continue;
-    const view=kind==='pot'?viewForSlot(item.slot):decorView(item.slot);
+    const view=itemView(item);
     if(view<0 || view>=gardenViews(plant.graduates) || placed.has(item.slot))return false;
     placed.add(item.slot);
   }
@@ -73,23 +76,24 @@ export function validGardenLife(plant) {
     g.notes.every(n=>integer(n.time) && validId(n.subject) && (n.group==='toy' || (n.group==='real' && subjects.has(n.subject)))
       && noteKinds.includes(n.kind) && typeof n.text==='string' && n.text.length<=2000);
 }
-export function canSetItem(plant,sku,slot) {
+export function canSetItem(plant,sku,slot,from=null) {
   const kind=catalog[sku]?.kind;
-  if(!kind)return false;
+  if(!kind || from===slot)return false;
   if(kind==='plant')return canPlaceAt(plant.graduates,slot);
   if(kind==='pot'){
     const view=viewForSlot(slot);
     return view>=0 && view<gardenViews(plant.graduates);
   }
-  return decorView(slot)>=0 && decorView(slot)<gardenViews(plant.graduates) &&
-    !lifeOf(plant).items.some(i=>i.slot===slot);
+  const view=decorView(slot),items=lifeOf(plant).items;
+  if(view<0 || view>=gardenViews(plant.graduates))return false;
+  return !items.some(i=>i.slot===slot) || (decorView(from)>=0 && items.some(i=>i.slot===from && i.sku===sku));
 }
 export function destinationKey(plant,slot) {
   return JSON.stringify([plant.graduates.find(g=>g.slot===slot)?.id,lifeOf(plant).items.find(i=>i.slot===slot)?.id]);
 }
 export function placeItem(plant,{id,sku,from,buy,slot,expected},time) {
   const g=lifeOf(plant), product=catalog[sku], existing=g.items.find(i=>i.id===id);
-  if(!product || !validId(id) || !canSetItem(plant,sku,slot) || destinationKey(plant,slot)!==expected)return plant;
+  if(!product || !validId(id) || !canSetItem(plant,sku,slot,buy?null:from) || destinationKey(plant,slot)!==expected)return plant;
   if(buy && (g.balance<product.price || existing || plant.graduates.some(p=>p.id===id)))return plant;
   if(!buy && (!existing || existing.sku!==sku || existing.slot!==from || from===slot))return plant;
   const balance=g.balance-(buy?product.price:0);
@@ -98,13 +102,26 @@ export function placeItem(plant,{id,sku,from,buy,slot,expected},time) {
     plant=update({...plant,graduates:[...plant.graduates,resident]},{balance});
     return milestone(plant,'bought',product.name+' came home from the shop.',time,id);
   }
-  const items=g.items.filter(i=>i.id!==id).map(i=>i.slot===slot?{...i,slot:null}:i);
+  const otherSlot=buy?null:existing.slot;
+  const items=g.items.filter(i=>i.id!==id).map(i=>i.slot===slot?{...i,slot:otherSlot}:i);
   return update(plant,{balance,items:[...items,{...existing,id,sku,slot}]});
 }
-export function carryPot(before,after,from,to) {
-  const g=lifeOf(before), moving=g.items.find(i=>catalog[i.sku].kind==='pot' && i.slot===from);
-  if(!moving)return after;
-  return update(after,{items:g.items.map(i=>i.id===moving.id?{...i,slot:to}:i.slot===to?{...i,slot:null}:i)});
+export function itemsFromClosingRooms(before,graduates,from) {
+  const remaining=gardenViews(graduates);
+  if(remaining>=gardenViews(before.graduates))return [];
+  // A pot at the graduate’s source comes along to the destination.
+  return lifeOf(before).items.filter(item=>item.slot!==from && itemView(item)>=remaining);
+}
+export function relocateFurnishings(before,after,from,to) {
+  const items=lifeOf(before).items;
+  const moving=items.find(item=>catalog[item.sku].kind==='pot' && item.slot===from);
+  const stranded=new Set(itemsFromClosingRooms(before,after.graduates,from));
+  if(!moving && !stranded.size)return after;
+  return update(after,{items:items.map(item=>{
+    if(item===moving)return {...item,slot:to};
+    if(stranded.has(item) || (moving && item.slot===to))return {...item,slot:null};
+    return item;
+  })});
 }
 export function storeItem(plant,id,from) {
   const g=lifeOf(plant),item=g.items.find(i=>i.id===id && i.slot!==null && i.slot===from);

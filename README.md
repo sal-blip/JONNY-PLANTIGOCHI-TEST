@@ -30,9 +30,11 @@ Each two-view apartment has twelve display spots. Filling it opens another pair 
 
 ## Garden shop and journal
 
-Open the garden's waves menu to visit **Shop** or **Journal**. The first gameplay visit each local day earns 10 Garden Coins. Successful seed watering, safe top-ups and watering a thirsty plant earn 2 coins up to three times a day. Winning a Dew Catch level or Leaf Echo round earns 3 coins up to five times a day. The wallet, room items and journal travel with your garden backup.
+Tap **iSEED**, the phone on the living room coffee table or studio desk. Its home screen opens **Shop**, **Inventory**, **Journal**, **Care library**, and **Garden postcard**. The three-wave button opens the same game settings in the garden and at the keychain. The first gameplay visit each local day earns 10 Garden Coins. Successful seed watering, safe top-ups and watering a thirsty plant earn 2 coins up to three times a day. Winning a Dew Catch level or Leaf Echo round earns 3 coins up to five times a day. The wallet, room items and journal travel with your garden backup.
 
 Choose an item, tap a placement circle and confirm the purchase. A 10-coin terracotta pot is affordable on day one. Bought plants arrive grown. Each purchased pot or decoration is a physical item that can move around the room. Frames accept a personal photo, and the record player includes Jason Singh’s orchid-biodata recording *Earth Day* for offline listening. [Recording and attribution](public/records/earth-day-credits.txt)
+
+To rearrange the room, tap a decoration or pot, choose **Move to another spot**, and select a marked surface. Use the room arrows to move across rooms. Confirm with **Place here** or **Swap here**. Rearranging costs no coins. Tapping foliage moves the plant with its pot. Tapping a purchased pot underneath moves the pot independently.
 
 **My Plantigochi** combines milestones and notes. **My real plants** keeps personal observations and care logs by plant. **Care library** includes offline guides and searches English Wikipedia for credited cultivation and propagation sections. The last six opened species guides are available offline on that device.
 

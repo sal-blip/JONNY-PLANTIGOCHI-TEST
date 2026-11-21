@@ -1,0 +1,46 @@
+/* The room painter and these native buttons use the same logical rectangles. */
+.room-frame .room-interior .scene-target {
+  transform:none;
+  min-width:0;
+  min-height:0;
+  cursor:pointer;
+}
+.room-frame .room-interior .scene-target:focus-visible {
+  outline:2px solid #fff4ce;
+  outline-offset:-2px;
+  box-shadow:inset 0 0 0 3px #345046;
+}
+.room-frame .room-interior .scene-target:disabled {pointer-events:none}
+.scene-target[data-exchange]::before {background:#74513c}
+.scene-target[data-exchange]::after {display:none}
+.scene-target .room-exchange-mark {
+  grid-area:1/1;
+  z-index:1;
+  width:14px;
+  height:14px;
+  color:#fff5d4;
+  stroke-width:2.5;
+  pointer-events:none;
+}
+.room-phone-caption {
+  position:absolute;
+  left:50%;
+  bottom:1px;
+  transform:translateX(-50%);
+  pointer-events:none;
+  max-width:100%;
+  padding:1px 3px 2px;
+  border-radius:3px;
+  background:#f5e8cde8;
+  color:#45392d;
+  box-shadow:0 1px 0 #715b45b3;
+  font:650 clamp(10px,1.35vmin,12px)/1.15 var(--display,system-ui),sans-serif;
+}
+.scene-target[data-side-caption] .room-phone-caption {
+  left:1px;
+  bottom:50%;
+  transform:translateY(50%);
+}
+@media (forced-colors:active) {
+  .room-frame .room-interior .scene-target:focus-visible {outline-color:Highlight}
+}

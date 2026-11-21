@@ -108,6 +108,7 @@ h1,h2,p{margin:0}svg{flex-shrink:0}
 .garden-wordmark,.garden-actions,.garden-clock,.garden-credit{position:absolute}
 .garden-wordmark{left:max(var(--side),env(safe-area-inset-left));top:max(calc(var(--top) + 8px),env(safe-area-inset-top));font:520 clamp(18px,2.1vw,27px)/1.1 var(--display);letter-spacing:-.025em;color:#f6f8ebdf}
 .garden-actions{right:max(var(--side),env(safe-area-inset-right));top:max(var(--top),env(safe-area-inset-top));display:flex;gap:4px}
+.garden-actions.pocket-share-actions{padding-right:52px}
 .garden-actions button{pointer-events:auto;height:44px;width:48px;display:grid;place-items:center;background:transparent;color:#fffef0;border:0;filter:drop-shadow(0 1px 3px #15251cca)}
 .garden-actions svg{width:27px;height:27px;stroke-width:1.75}.garden-actions .garden-share svg{width:23px;height:23px}
 .garden-actions button:hover{color:white}.garden-actions button:focus-visible{outline-color:white}

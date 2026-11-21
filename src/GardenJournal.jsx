@@ -1,15 +1,19 @@
-import React,{useState} from 'react';
+import React,{useEffect,useState} from 'react';
 import {BookOpen,Leaf,Plus} from 'lucide-react';
 import {addRealPlant,lifeOf,localDay,noteKinds,removeNote,saveNote} from './gardenEconomy.js';
 import CareLibrary from './CareLibrary.jsx';
 
 const dateLabel=new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric',year:'numeric'});
-export default function GardenJournal({plant,change,busy}){
-  const [tab,setTab]=useState('toy'),[subject,setSubject]=useState('');
+export default function GardenJournal({plant,change,busy,initialTab='toy',onTabChange}){
+  const startTab=['real','library'].includes(initialTab)?initialTab:'toy';
+  const [tab,setTab]=useState(startTab),[subject,setSubject]=useState('');
   const [form,setForm]=useState(null),[original,setOriginal]=useState(),[error,setError]=useState('');
   const g=lifeOf(plant),real=g.plants.find(p=>p.id===subject);
+  useEffect(()=>{
+    setTab(startTab);setForm(null);setOriginal(undefined);setError('');
+  },[startTab]);
   function reset(){setForm(null);setOriginal(undefined);setError('');}
-  function openTab(id){reset();setTab(id);}
+  function openTab(id){reset();setTab(id);onTabChange?.(id);}
   function edit(note){
     setOriginal(note);
     setForm({type:'note',id:note?.id??crypto.randomUUID(),kind:note?.kind??'Observation',text:note?.text??'',day:localDay(note?.time??Date.now())});

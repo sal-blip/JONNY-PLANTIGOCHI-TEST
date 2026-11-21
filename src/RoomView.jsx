@@ -1,22 +1,47 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
+import {ArrowLeftRight} from 'lucide-react';
 import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,CAT_SEAT,roomLight} from './roomArt.js';
 import {decorPlaces} from './roomShopArt.js';
-import {catalog,canSetItem} from './gardenEconomy.js';
+import {catalog,canSetItem,lifeOf} from './gardenEconomy.js';
 import {drawRoomDepth} from './roomScenery.js';
 import {keepsakeFor} from './roomKeepsakes.js';
+import {phoneFor} from './roomPhone.js';
 import {slotFor,speciesName,viewName} from './gardenLayout.js';
+import './roomTargets.css';
+
+// Targets share the art's 400 × 320 coordinate system, including the extra
+// floor depth in portrait. Split intersecting rectangles between their centers
+// so a neighbor cannot cover another object as rooms fill up.
+function targetBounds(targets){
+  const bounds=targets.map(({x,y,w,h})=>({left:x-w/2,right:x+w/2,top:y-h/2,bottom:y+h/2}));
+  targets.forEach((a,i)=>{
+    for(let j=i+1;j<targets.length;j++){
+      const b=targets[j],first=bounds[i],second=bounds[j];
+      if(first.right<=second.left || second.right<=first.left || first.bottom<=second.top || second.bottom<=first.top)continue;
+      const horizontal=Math.abs(a.x-b.x)/(a.w+b.w)>Math.abs(a.y-b.y)/(a.h+b.h);
+      const [axis,size,start,end]=horizontal?['x','w','left','right']:['y','h','top','bottom'];
+      const cut=(a[axis]*b[size]+b[axis]*a[size])/(a[size]+b[size]);
+      const [near,far]=a[axis]<b[axis]?[first,second]:[second,first];
+      near[end]=Math.min(near[end],cut);far[start]=Math.max(far[start],cut);
+    }
+  });
+  return bounds;
+}
 
 export default function RoomView({index,onScreen,running,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
-  garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
+  garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,openPhone,panelOpen=false,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null);
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
   const scene=useRef(null);
   const [focused,setFocused]=useState(null);
   const spots=placesFor(index%2),below=worldHeight-above-ROOM_HEIGHT;
-  const object=keepsakeFor(index);
-  const active=focused ?? (object && !placing && selectedKeepsake===object.id?object.id:null) ?? selected ?? carry?.from ?? (cat?'cat':null);
+  const object=keepsakeFor(index),phone=phoneFor(index);
+  const blocked=busy || panelOpen || !onScreen || !running;
+  const selectedFixture=!placing && [object?.id,phone?.id].includes(selectedKeepsake)?selectedKeepsake:null;
+  const active=focused ?? selectedFixture ?? selected ?? carry?.from ?? (cat?'cat':null);
   const decor=decorPlaces(index);
-  const highlighted=decor.some(d=>d.slot===active)?active:active==='cat'||(object&&active===object.id)?active:spots.findIndex(spot=>slotFor(index,spot)===active);
+  const highlighted=active==='cat' || active===phone?.id || active===object?.id || decor.some(d=>d.slot===active) || shopItems.some(item=>item.id===active)
+    ?active:spots.findIndex(spot=>slotFor(index,spot)===active);
   const lifted=dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
   const [photoReady,setPhotoReady]=useState(0);
   const onPhotoReady=React.useCallback(()=>setPhotoReady(n=>n+1),[]);
@@ -41,50 +66,88 @@ export default function RoomView({index,onScreen,running,worldHeight,plants,hour
   useLayoutEffect(()=>{
     if(depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
   },[worldHeight,above,hour,index]);
+  const targets=[];
+  const originalItems=shopMove?lifeOf(garden).items:[];
+  function destination(slot,name){
+    // A preview can put the moving item's artwork at this address. Describe
+    // the destination using the saved occupant that would actually be moved.
+    const occupant=originalItems.find(item=>item.slot===slot);
+    if(!occupant || !['pot','frame','decor'].includes(catalog[shopMove.sku].kind))
+      return {label:'Place at '+name};
+    const swapping=shopMove.from!=null;
+    return {exchange:true,label:(swapping?'Swap with ':'Replace ')+catalog[occupant.sku].name+' at '+name};
+  }
+  function addFixture(fixture,click,attrs){
+    if(!fixture || placing)return;
+    targets.push({key:fixture.id,focus:fixture.id,x:fixture.hitX,y:fixture.hitY,w:fixture.hitWidth,h:fixture.hitHeight,
+      label:'Open '+fixture.name,click,attrs:{'aria-haspopup':'dialog',...attrs}});
+  }
+  if(openKeepsake)addFixture(object,()=>openKeepsake(object.id,index),{'data-keepsake':object?.id,className:'room-cat-target room-keepsake-target'});
+  if(openPhone && phone){
+    // The caption and handset are one button. Reserve the caption's space
+    // before partitioning adjacent plant, pot and decoration controls.
+    const studio=index%2===1;
+    const left=Math.min(phone.hitX-phone.hitWidth/2,phone.x-(studio?48:22));
+    const right=Math.max(phone.hitX+phone.hitWidth/2,phone.x+(studio?0:22));
+    const top=phone.hitY-phone.hitHeight/2,bottom=studio?phone.hitY+phone.hitHeight/2:phone.y+21;
+    addFixture({...phone,hitX:(left+right)/2,hitY:(top+bottom)/2,hitWidth:right-left,hitHeight:bottom-top},
+      ()=>openPhone(index),{'data-room-phone':'','data-side-caption':studio?'':undefined});
+  }
+  if(!placing && index%2===0)targets.push({key:'cat',focus:'cat',x:CAT_SEAT.x,y:CAT_SEAT.y-11*CAT_SEAT.size,
+    w:48,h:34,label:'Say hello to the cat',click:()=>petCat(index),attrs:{'data-audio':'cat',className:'room-cat-target'}});
+
+  for(const place of decor){
+    const item=shopItems.find(i=>i.slot===place.slot);
+    const open=shopMove && shopMove.from!==place.slot && canSetItem(garden,shopMove.sku,place.slot,shopMove.from);
+    if(placing?!open:!item)continue;
+    targets.push({key:place.slot,focus:place.slot,x:place.x*ROOM_WIDTH,y:place.y*ROOM_HEIGHT,
+      w:open?39:Math.max(32,place.hitWidth),h:open?39:Math.max(32,place.hitHeight),open,
+      ...(open?destination(place.slot,place.name):{label:catalog[item.sku].name+' · '+place.name}),
+      click:()=>open?choose(place.slot):inspectItem(item,true),
+      attrs:{'data-slot':place.slot,'data-item-id':open?undefined:item.id,'aria-haspopup':open?undefined:'dialog',className:'decor-target'}});
+  }
+  spots.forEach((spot,i)=>{
+    const slot=slotFor(index,spot),plant=plants[i],pot=shopItems.find(item=>item.slot===slot && catalog[item.sku]?.kind==='pot');
+    const x=spot.x*ROOM_WIDTH,y=spot.y*ROOM_HEIGHT+spot.front*below,size=spot.size;
+    const open=placing && (shopMove?slot!==shopMove.from && canSetItem(garden,shopMove.sku,slot,shopMove.from):!plant);
+    const isSource=placing && !shopMove && carry?.from===slot;
+    if(placing && !open && !isSource)return;
+    const plantName=plant && (plant.name || speciesName(plant));
+    if(!placing && pot){
+      const potName=catalog[pot.sku].name;
+      targets.push({key:'pot/'+pot.id,focus:pot.id,x:x-(plant?3:0),y:y-(plant?5:9)*size,w:Math.max(32,36*size),h:Math.max(32,30*size),
+        label:potName+' · '+spot.name+(plant?' · Holds '+plantName:''),click:()=>inspectItem(pot,true),
+        attrs:{'data-item-id':pot.id,'data-pot-slot':slot,'aria-haspopup':'dialog'}});
+    }
+    if(!placing && !plant && (pot || typeof spot.key==='string'))return;
+    const label=plant?plantName+(plant.source==='shop'?' · Shop plant':' · Gen '+plant.generation):'Empty';
+    const split=Boolean(!placing && plant && pot);
+    targets.push({key:'spot/'+slot,focus:slot,x:x+(split?3:0),y:open?y:y-(split?41:plant?26:11)*size,
+      w:open?39:Math.max(34,46*size),h:open?39:split?Math.max(26,34*size):plant?Math.max(38,55*size):32,
+      open,...(open?destination(slot,spot.name):{label:spot.name+' · '+label}),click:()=>choose(slot),
+      attrs:{'data-slot':slot,'data-occupied':plant?'':undefined,'aria-haspopup':plant && !placing?'dialog':undefined,
+        'aria-pressed':selected===slot || carry?.from===slot}});
+  });
+  const bounds=targetBounds(targets);
   return <div className="room-frame" aria-hidden={!onScreen || undefined} inert={!onScreen?'':undefined}
     style={{left:'calc('+index+' * var(--room-width))'}}>
     <canvas className="room-depth" ref={depth} width={ROOM_WIDTH} height={worldHeight} aria-hidden="true"/>
     <canvas className="room-actors" ref={canvas} width={ROOM_WIDTH} height={worldHeight} role="img" aria-label={viewName(index)+(index%2===0?' with an open pot shelf, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
     <div className="room-interior" style={{top:(100*above/worldHeight)+'%',height:(100*ROOM_HEIGHT/worldHeight)+'%'}}>
-    {object && <button type="button" className="room-cat-target room-keepsake-target"
-      data-keepsake={object.id} title={object.name} aria-label={'Open '+object.name} aria-haspopup="dialog"
-      disabled={placing || busy} style={{left:object.hitX/ROOM_WIDTH*100+'%',top:object.hitY/ROOM_HEIGHT*100+'%',
-        width:object.hitWidth/ROOM_WIDTH*100+'%',height:object.hitHeight/ROOM_HEIGHT*100+'%',pointerEvents:placing || busy?'none':undefined}}
-      onFocus={e=>{if(e.currentTarget.matches(':focus-visible'))setFocused(object.id);}}
-      onBlur={()=>setFocused(null)} onPointerDown={()=>setFocused(null)} onClick={()=>openKeepsake?.(object.id,index)}/>}
-    {index%2===0 && <button type="button" className="room-cat-target"
-      style={{left:CAT_SEAT.x/ROOM_WIDTH*100+'%',top:(CAT_SEAT.y-11*CAT_SEAT.size)/ROOM_HEIGHT*100+'%'}}
-      disabled={placing} data-audio="cat" aria-label="Say hello to the cat" onClick={()=>petCat(index)}
-      onFocus={e=>{if(e.currentTarget.matches(':focus-visible'))setFocused('cat');}}
-      onBlur={()=>setFocused(null)} onPointerDown={()=>setFocused(null)}/>}
-    {cat && <div className="cat-affection" key={cat.number} style={{left:(CAT_SEAT.x/ROOM_WIDTH*100)+'%',top:((CAT_SEAT.y-23)/ROOM_HEIGHT*100)+'%'}}>
-      <span className="sr-only" role="status">The cat purrs.</span>
-      <i aria-hidden="true"/><i aria-hidden="true"/><i aria-hidden="true"/>
-    </div>}
-    {decor.map(place=>{
-      const item=shopItems.find(i=>i.slot===place.slot),open=shopMove && canSetItem(garden,shopMove.sku,place.slot);
-      if(!open && (!item || placing))return null;
-      return <button key={place.slot} type="button" className={'place-target decor-target'+(open?' open-destination':'')}
-        data-slot={place.slot} data-destination={open?'':undefined} disabled={busy}
-        style={{left:place.x*100+'%',top:place.y*100+'%','--spot-size':.75}}
-        aria-label={open?'Place at '+place.name:catalog[item.sku].name+' · '+place.name}
-        onFocus={()=>setFocused(place.slot)} onBlur={()=>setFocused(null)}
-        onClick={()=>open?choose(place.slot):inspectItem(item,true)}/>;
-    })}
-    {spots.map((spot,i)=>{
-      const slot=slotFor(index,spot),plant=plants[i],pot=shopItems.find(item=>item.slot===slot && catalog[item.sku]?.kind==='pot');
-      const open=shopMove?slot!==shopMove.from && canSetItem(garden,shopMove.sku,slot):placing && !plant;
-      if(!placing && !plant && !pot && typeof spot.key==='string')return null;
-      const label=plant?(plant.name || speciesName(plant))+(plant.source==='shop'?' · Shop plant':' · Gen '+plant.generation):pot?catalog[pot.sku].name:'Empty';
-      return <button key={slot} type="button" data-slot={slot} data-occupied={plant?'':undefined}
-        data-destination={open?'':undefined} disabled={busy || (shopMove?!open:(placing && !!plant && carry?.from!==slot))}
-        className={'place-target'+(open?' open-destination':'')}
-        style={{left:spot.x*100+'%',top:(spot.y+spot.front*below/ROOM_HEIGHT)*100+'%','--spot-size':spot.size}}
-        aria-label={open?'Place at '+spot.name:spot.name+' · '+label}
-        aria-pressed={selected===slot || carry?.from===slot}
-        onFocus={e=>{if(e.currentTarget.matches(':focus-visible'))setFocused(slot);}}
-        onBlur={()=>setFocused(null)} onPointerDown={()=>setFocused(null)}
-        title={spot.name} onClick={()=>pot && !plant && !placing?inspectItem(pot):choose(slot)}/>;
-    })}
-  </div></div>;
+      {targets.map(({key,focus,label,click,attrs,open,exchange},i)=>{
+        const {left,right,top,bottom}=bounds[i];
+        return <button {...attrs} key={key} type="button" className={'place-target scene-target '+(attrs.className || '')+(open?' open-destination':'')}
+          data-scene-object="" data-destination={open?'':undefined} data-exchange={exchange?'':undefined} disabled={blocked} aria-label={label} title={label}
+          style={{left:left/ROOM_WIDTH*100+'%',top:top/ROOM_HEIGHT*100+'%',width:(right-left)/ROOM_WIDTH*100+'%',height:(bottom-top)/ROOM_HEIGHT*100+'%'}}
+          onFocus={e=>{if(e.currentTarget.matches(':focus-visible'))setFocused(focus);}}
+          onBlur={()=>setFocused(null)} onPointerDown={()=>setFocused(null)} onClick={click}>
+          {exchange && <ArrowLeftRight className="room-exchange-mark" aria-hidden="true"/>}
+          {key===phone?.id && !blocked && <span className="room-phone-caption" aria-hidden="true">iSEED</span>}
+        </button>;
+      })}
+      {cat && <div className="cat-affection" key={cat.number} style={{left:(CAT_SEAT.x/ROOM_WIDTH*100)+'%',top:((CAT_SEAT.y-23)/ROOM_HEIGHT*100)+'%'}}>
+        <span className="sr-only" role="status">The cat purrs.</span>
+        <i aria-hidden="true"/><i aria-hidden="true"/><i aria-hidden="true"/>
+      </div>}
+    </div></div>;
 }

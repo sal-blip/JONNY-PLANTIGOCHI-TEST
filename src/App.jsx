@@ -17,12 +17,12 @@ import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.
 import {SetupWelcome,NameEditor} from './PlantSetup.jsx';
 import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
-import {checkIn,lifeOf,localDay,milestone} from './gardenEconomy.js';
+import {checkIn,itemsFromClosingRooms,lifeOf,localDay,milestone} from './gardenEconomy.js';
 import Collector from './Collector.jsx';
 import {useGardenPassage} from './useGardenPassage.js';
 import './collector.css';
 
-const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',test:'Test notifications'};
+const titles = {menu:'Plantigochi menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',test:'Test notifications'};
 const homeItems = ['scenes','settings','install','phone'];
 const phoneItems = ['install','saves','alerts'];
 const updateMessages={
@@ -106,6 +106,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   const [careTarget,setCareTarget]=useState(null);
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
+  const [roomOverlayOpen,setRoomOverlayOpen]=useState(false);
   const openDebug=useCallback(()=>setPage('debug'),[]);
   const [sharing, setSharing] = useState(false);
   const [intro, setIntro] = useState(false);
@@ -122,7 +123,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     if(document.hidden || day<=lifeOf(plant).day)return;
     let credited=false;
     void commit(p=>{const next=checkIn(p,Date.now());credited=next!==p;return next;})
-      .then(saved=>{if(saved && credited && !lesson)setCoinsMessage('+10 Garden Coins · Visit the garden shop');});
+      .then(saved=>{if(saved && credited && !lesson)setCoinsMessage('+10 Garden Coins · Visit iSEED');});
   },[day,lifeOf(plant).day,lesson,commit]);
   useEffect(()=>{if(coinsMessage){const timer=setTimeout(()=>setCoinsMessage(''),6500);return ()=>clearTimeout(timer);}},[coinsMessage]);
   const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, recordPlaying:Boolean(playingRecordId), sleeping:plant.stage === 'seed', intro, leafReady});
@@ -246,6 +247,9 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     setNow(Date.now());
     return replace(backup);
   }
+  const showGlobalMenu=!lesson && !intro && !page && !sharing && (room===null || (passage.inside && !roomOverlayOpen));
+  // The room keeps its panorama and selected spot while the editor shows the pocket backdrop.
+  const previewPocket=page==='photo' && passage.inside;
   const introAudible = plant.sound && running;
   const parent = page === 'test' ? 'debug' : (page === 'reset' || page === 'debug') ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
@@ -253,7 +257,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     const button = event.target.closest?.('button');
     if (plant.sound && button && !button.disabled && !button.dataset.audio) void play('tap');
   }}>
-    <div className="room-track" ref={passage.track} onPointerMove={passage.drag}
+    <div className="room-track" ref={passage.track} style={previewPocket?{translate:'0 100%'}:undefined} onPointerMove={passage.drag}
       onPointerUp={e=>passage.release(e)} onPointerCancel={e=>passage.release(e,true)} onLostPointerCapture={e=>{if(e.target===e.currentTarget)passage.release(e,true);}}>
     <div className="pocket-floor" inert={room!==null?'':undefined} aria-hidden={room!==null||undefined}
       onPointerDown={!lesson && !intro && !page && !sharing?passage.start:undefined}>
@@ -266,9 +270,8 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo' || !!lesson} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
       <span className="garden-wordmark">Plant Garden</span>
-      <div className="garden-actions">
+      <div className="garden-actions pocket-share-actions">
         <button ref={shareButton} className="garden-share" aria-label="Share Plantigochi" title="Share Plantigochi" onClick={shareGame}><Share aria-hidden="true"/></button>
-        <button ref={menuButton} className="wave-menu" aria-label="Open pocket menu" title="Pocket menu" aria-haspopup="dialog" onClick={() => open('menu')}><Waves aria-hidden="true"/></button>
       </div>
       <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
       <small className="garden-credit">© 2026 Waz Lab</small>
@@ -278,15 +281,30 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       aria-label="Open garden" onClick={passage.activate}><i aria-hidden="true"/>Garden</button>}
     </div>
     <div className="room-floor" inert={!passage.inside?'':undefined} aria-hidden={!passage.inside||undefined}>
-    {room!==null && <Collector playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} active={passage.inside} plant={plant} moving={room.moving} initialPanel={room.panel} commit={commit} now={now}
+    {room!==null && <Collector playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={passage.inside} plant={plant} moving={room.moving} initialPanel={room.panel} commit={commit} now={now}
       move={async slot=>{const id=room.moving;const ok=await commit(p=>graduate(p,id,slot,Date.now()));
         return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
       relocate={async (id,from,to)=>{
-        const ok=await commit(p=>relocateGraduate(p,id,from,to));
-        return ok && current.current.graduates.some(g=>g.id===id && g.slot===to);
+        let moved=false,storedCount=0;
+        const saved=await commit(p=>{
+          const next=relocateGraduate(p,id,from,to);
+          moved=next!==p;
+          if(moved)storedCount=itemsFromClosingRooms(p,next.graduates,from).length;
+          return next;
+        });
+        const ok=saved && moved && current.current?.graduates.some(g=>g.id===id && g.slot===to);
+        return {ok:Boolean(ok),storedCount:ok?storedCount:0};
       }}
-      startClose={passage.leave} shareLink={shareGame} purr={()=>{if(plant.sound)play('purr');}}/>}
+      startClose={passage.leave} purr={()=>{if(plant.sound)play('purr');}}/>}
     </div></div>
+    <div className="garden-corners global-menu-corner" hidden={!showGlobalMenu}>
+      <div className="garden-actions">
+        <button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu"
+          aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}>
+          <Waves aria-hidden="true"/>
+        </button>
+      </div>
+    </div>
     {!saveOK && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>
       <div className="intro-shade" aria-hidden="true"/>

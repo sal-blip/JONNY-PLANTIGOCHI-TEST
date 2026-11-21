@@ -74,3 +74,37 @@ test('journal, coins and real plants survive graduation and replanting, independ
   const old=seed();
   assert.ok(readPlant(JSON.stringify(old),morning));
 });
+
+test('placed decorations can trade surfaces in a full room without changing ownership or coins',()=>{
+  let p=checkIn(seed(),morning);p={...p,gardenLife:{...p.gardenLife,balance:500}};
+  for(const view of [0,1]){
+    for(const [index,surface] of ['sill','stand',view===0?'bookcase':'cabinet'].entries())
+      p=buy(p,['oak','neko','record'][index],view+'-'+surface,view+'/decor-'+surface);
+  }
+  const from='0/decor-sill',slot='1/decor-stand',balance=p.gardenLife.balance;
+  const request={id:'0-sill',sku:'oak',buy:false,from,slot,expected:destinationKey(p,slot)};
+  assert.equal(canSetItem(p,'oak',slot),false);
+  assert.equal(canSetItem(p,'oak',slot,from),true);
+  assert.equal(canSetItem(p,'oak',from,from),false);
+  const moved=placeItem(p,request,morning);
+  assert.equal(moved.gardenLife.items.find(i=>i.id==='1-stand').slot,from);
+  assert.equal(moved.gardenLife.items.find(i=>i.id==='0-sill').slot,slot);
+  assert.equal(moved.gardenLife.balance,balance);
+  assert.equal(moved.gardenLife.items.length,6);
+  assert.equal(placeItem(moved,request,morning),moved);
+  const changed=storeItem(p,'1-stand',slot);
+  assert.equal(placeItem(changed,request,morning),changed);
+  assert.deepEqual(readPlant(JSON.stringify(moved),morning),moved);
+});
+
+test('swapping pots from shelf zero moves only the ceramics and preserves both plants',()=>{
+  let p=checkIn(seed(),morning);p={...p,gardenLife:{...p.gardenLife,balance:500}};
+  p=buy(p,'golden-pothos','pothos',0);p=buy(p,'snake-plant','snake',6);
+  p=buy(p,'terra','clay',0);p=buy(p,'wave','glaze',6);
+  const moved=placeItem(p,{id:'clay',sku:'terra',buy:false,from:0,slot:6,expected:destinationKey(p,6)},morning);
+  assert.deepEqual(moved.graduates,p.graduates);
+  assert.equal(moved.gardenLife.balance,p.gardenLife.balance);
+  assert.equal(moved.gardenLife.items.find(i=>i.id==='glaze').slot,0);
+  assert.equal(moved.gardenLife.items.find(i=>i.id==='clay').slot,6);
+  assert.deepEqual(readPlant(JSON.stringify(moved),morning),moved);
+});

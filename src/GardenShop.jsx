@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {catalog,lifeOf} from './gardenEconomy.js';
+import {catalog,lifeOf,localDay} from './gardenEconomy.js';
 import {drawShopPreview} from './roomShopArt.js';
 import {preparePhoto} from './gardenScenes.js';
 import {Coins,ChevronRight,ShoppingBag} from 'lucide-react';
@@ -34,7 +34,7 @@ function ItemArt({sku,photo,large=false}){
 export function CoinBalance({plant}){
   const life=lifeOf(plant);
   return <div className="wallet"><Coins size={20} aria-hidden="true"/><strong>{life.balance} Garden Coins</strong>
-    <small>Today +{life.day?10+life.waters*2+life.wins.length*3:0}</small></div>;
+    <small>Today +{life.day===localDay(Date.now())?10+life.waters*2+life.wins.length*3:0}</small></div>;
 }
 export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
   const [error,setError]=useState(''),[loading,setLoading]=useState(false);
@@ -52,24 +52,29 @@ export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
   }
   return <div className="garden-page">
     <ItemArt large sku={item.sku} photo={item.photo}/>
-    {children}
     <div className="menu-items">
+      <button disabled={busy||loading} onClick={move}>{item.slot===null?'Place in room':'Move to another spot'}</button>
+    </div>
+    {children}
+    {(product.kind==='frame' || item.slot!==null) && <div className="menu-items">
       {product.kind==='frame' && <><button disabled={busy||loading} onClick={()=>input.current.click()}>{loading?'Preparing photo…':item.photo?'Change photo':'Choose a photo'}</button>
         <input hidden type="file" accept="image/*" ref={input} onChange={choosePhoto}/>
         {item.photo && <button disabled={busy||loading} onClick={()=>savePhoto(null)}>Remove photo</button>}</>}
-      <button disabled={busy||loading} onClick={move}>{item.slot===null?'Place in room':'Move to another spot'}</button>
       {item.slot!==null && <button disabled={busy||loading} onClick={store}>Put in inventory</button>}
-    </div>{error && <p role="status">{error}</p>}
+    </div>}{error && <p role="status">{error}</p>}
   </div>;
 }
-export default function GardenShop({plant,onPlace,inspect}){
-  const [tab,setTab]=useState('shop');
+export default function GardenShop({plant,onPlace,inspect,initialTab='shop',onTabChange}){
+  const startTab=initialTab==='bag'?'bag':'shop';
+  const [tab,setTab]=useState(startTab);
+  useEffect(()=>{setTab(startTab);},[startTab]);
+  function openTab(id){setTab(id);onTabChange?.(id);}
   const g=lifeOf(plant);
   return <div className="garden-page">
     <CoinBalance plant={plant}/>
     <div className="garden-tabs">
-      <button aria-pressed={tab==='shop'} onClick={()=>setTab('shop')}>Shop</button>
-      <button aria-pressed={tab==='bag'} onClick={()=>setTab('bag')}>My items</button>
+      <button aria-pressed={tab==='shop'} onClick={()=>openTab('shop')}>Shop</button>
+      <button aria-pressed={tab==='bag'} onClick={()=>openTab('bag')}>My items</button>
     </div>
     {tab==='shop'?<div className="shop-list">{Object.entries(catalog).map(([sku,p])=><button key={sku}
       aria-label={p.name+' · '+p.price+' coins'} disabled={g.balance<p.price}

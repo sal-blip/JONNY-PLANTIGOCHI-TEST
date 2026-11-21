@@ -1,5 +1,5 @@
 import {canPlaceAt,viewForSlot,placesFor,slotFor} from './gardenLayout.js';
-import {carryPot,catalog,earnWater,milestone,validGardenLife} from './gardenEconomy.js';
+import {catalog,earnWater,milestone,relocateFurnishings,validGardenLife} from './gardenEconomy.js';
 import { validPhoto } from './gardenScenes.js';
 
 export const HOUR = 60 * 60 * 1000;
@@ -249,7 +249,7 @@ export function relocateGraduate(p, id, from, to) {
   if (index < 0 || !canPlaceAt(p.graduates,to)) return p;
   const graduates=p.graduates.slice();
   graduates[index]={...graduates[index],slot:to};
-  return carryPot(p,{...p,graduates},from,to);
+  return relocateFurnishings(p,{...p,graduates},from,to);
 }
 
 const happy = {
