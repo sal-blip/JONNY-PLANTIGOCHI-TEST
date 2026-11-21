@@ -35,3 +35,11 @@ The living room and adjoining plant studio form a continuous 16-bit Canvas scene
 Growth, Water and Mood each have a separate LCD row under the centered plant. At 320 × 568, the three labels, tracks and readings fit without overlap.
 
 Mobile Chromium checks covered picking up and dragging plants, placing them across rooms, cancelling a move, reloading saved positions, exporting a room postcard, and moving a grown plant into its first home. A 45-plant Monstera collection opened eight views. Additional species artwork is future work.
+
+## Future idea for move-in day
+
+Deferred for future consideration.
+
+- New players could start with an unfurnished garden room. A gift pothos cutting could give them something to pot on day one while their Monstera follows its seven-day growth cycle.
+- Daily check-ins could award Garden Coins to spend in a laptop shop. The room’s existing furniture could become pieces players buy and arrange over time. Players who already have furnished rooms would keep them.
+- A separate, installable playtest could let players try the move-in experience alongside the live game. It would need its own site address, app identity, saves, and notification subscriptions.
