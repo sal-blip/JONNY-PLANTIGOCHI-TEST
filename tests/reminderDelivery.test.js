@@ -362,7 +362,14 @@ async function alertWorker(subscription = null) {
   const self = {
     indexedDB, location:new URL(origin),
     clients:{matchAll:async () => [], openWindow:async url => navigations.push(url)},
-    registration:{pushManager:{getSubscription:async()=>subscription},showNotification:async (title, options) => displayed.push({title, options})},
+    registration:{
+      pushManager:{getSubscription:async()=>subscription},
+      showNotification:async (title, options)=>{
+        assert.equal(options.badge,'/icons/notification-badge-96.png');
+        assert.equal(options.icon,'/icons/icon-192.png');
+        displayed.push({title, options});
+      },
+    },
     addEventListener(name, handler) { handlers[name] = handler; },
   };
   runInNewContext(readFileSync(new URL('../public/plant-alerts.js', import.meta.url), 'utf8'), {

@@ -27,7 +27,7 @@ async function notifyGarden(event, show) {
     if(await cached(cache,receipt)===event.testId)return;
     await show('Plantigochi test '+event.step+' of 2',{
       body:event.step===1?'First push · 5-second test':'Second push · 15-second test',
-      icon:'/icons/icon-192.png',badge:'/leaf.svg',tag:'plantigochi-test-'+event.step,data:{action:'test'}
+      tag:'plantigochi-test-'+event.step,data:{action:'test'}
     });
     await cache.put(receipt,new Response(event.testId));
     return;
@@ -38,7 +38,7 @@ async function notifyGarden(event, show) {
   async function notify(kind,title,body,identity,action) {
     const key='/notice-delivered-'+kind;
     if(await cached(cache,key)===identity)return false;
-    await show(title,{body,icon:'/icons/icon-192.png',badge:'/leaf.svg',tag:'plantigochi-'+kind,data:action==='fungus'?{action,plantId:schedule.id,episode:schedule.fungusAt}:{action}});
+    await show(title,{body,tag:'plantigochi-'+kind,data:action==='fungus'?{action,plantId:schedule.id,episode:schedule.fungusAt}:{action}});
     await cache.put(key,new Response(identity));return true;
   }
   const id=schedule.id??'legacy';
@@ -74,7 +74,11 @@ async function notifyGarden(event, show) {
 async function deliver(data,remote){
   let shown=false, result;
   const show=async(title,options)=>{
-    await self.registration.showNotification(title,options);
+    await self.registration.showNotification(title,{
+      ...options,
+      icon:'/icons/icon-192.png',
+      badge:'/icons/notification-badge-96.png',
+    });
     shown=true;
   };
   try{
@@ -86,7 +90,7 @@ async function deliver(data,remote){
       const sub=await self.registration.pushManager?.getSubscription();
       if(sub && new URL(sub.endpoint).hostname.endsWith('.push.apple.com')){
         await show('Plantigochi garden update',{body:'Open your garden to see how your plant is doing.',
-          tag:'plantigochi-garden-update',icon:'/icons/icon-192.png'});
+          tag:'plantigochi-garden-update'});
       }
     }
   }
