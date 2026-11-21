@@ -1,6 +1,8 @@
 import React, { useLayoutEffect, useRef } from 'react';
 
-export default function GardenDialog({ page, title, back, close, children }) {
+import SettingsDebugGesture from './SettingsDebugGesture.jsx';
+
+export default function GardenDialog({ page, title, back, close, onDebug, children }) {
   const dialog = useRef(null), card = useRef(null), heading = useRef(null);
   useLayoutEffect(() => {
     const el = dialog.current;
@@ -28,7 +30,7 @@ export default function GardenDialog({ page, title, back, close, children }) {
   return <dialog className="garden-dialog" ref={dialog} aria-labelledby="menu-title"
     onCancel={event => { event.preventDefault(); close(); }}
     onClick={event => { if (event.target === event.currentTarget) close(); }}>
-    <div className="glass-pane" aria-hidden="true"/>
+    <div className="glass-pane" aria-hidden="true">{onDebug && <SettingsDebugGesture onOpen={onDebug}/>}</div>
     <section className="menu-card" ref={card}>
       <header className="menu-heading">
         {back && <button className="round-button" onClick={back} aria-label="Back">Back</button>}

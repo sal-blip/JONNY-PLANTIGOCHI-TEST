@@ -126,6 +126,8 @@ h1,h2,p{margin:0}svg{flex-shrink:0}
   box-shadow:inset 0 1.5px 2px #ffffffbd,inset 0 -1.5px 3px #f4fff0ab,inset 2px 1px 9px #fff9,0 14px 58px #172e2840;
   -webkit-backdrop-filter:blur(1.8px) saturate(1.12);backdrop-filter:blur(1.8px) saturate(1.12);
   animation:glass-arrive .52s cubic-bezier(.18,.72,.25,1) both}
+.debug-corner{position:absolute;bottom:0;width:clamp(52px,18vw,88px);height:clamp(48px,8dvh,72px);pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.debug-corner.left{left:0}.debug-corner.right{right:0}
 .menu-card{border:1px solid #f8fff194;background:linear-gradient(132deg,#fbfff1c9,#f0fae8ad);box-shadow:inset 0 1px 1px #fff9,0 6px 22px #243e2c17;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);animation:menu-focus .46s cubic-bezier(.18,.72,.25,1) both}
 .menu-heading{border-color:#657f663d}.menu-items button,.scene-choice,.care-grid button,.save-buttons button{background:#f6fbeaBA;border-color:#849b7c72}
 .scene-choice[aria-pressed=true]{background:#e2efdbdc}

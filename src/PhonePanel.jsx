@@ -55,7 +55,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, recover
         (alerts.nextDue?'Reminders confirmed · Next '+new Date(alerts.nextDue).toLocaleString(undefined,{weekday:'short',hour:'numeric',minute:'2-digit'}):
         plant.stage==='seed' && plant.wateredAt===null?'Permission granted · Water your seed to schedule its first reminder.':'Reminders confirmed · No upcoming reminder.')
         :'Permission granted · Sync pending'))}</p>
-      <NotificationTest alerts={alerts}/>
+      {page==='test' && <NotificationTest alerts={alerts}/>}
     </section>}
     {page === 'saves' && <section className="phone-section">
       <p>{saveOK ? 'Your garden saves on this device.' : 'Device storage is unavailable. Download a backup before closing the game.'} Use a backup to move your plant to another phone.</p>

@@ -21,7 +21,7 @@ import Collector from './Collector.jsx';
 import {useGardenPassage} from './useGardenPassage.js';
 import './collector.css';
 
-const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',test:'Test notifications'};
+const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',test:'Test notifications'};
 const homeItems = ['scenes','settings','install','phone'];
 const phoneItems = ['install','saves','alerts'];
 const updateMessages={
@@ -105,6 +105,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   const [careTarget,setCareTarget]=useState(null);
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
+  const openDebug=useCallback(()=>setPage('debug'),[]);
   const [sharing, setSharing] = useState(false);
   const [intro, setIntro] = useState(false);
   const tilt = useGardenTilt(intro || page !== null || room!==null);
@@ -226,7 +227,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     return replace(backup);
   }
   const introAudible = plant.sound && running;
-  const parent = (page === 'reset' || page === 'test') ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
+  const parent = page === 'test' ? 'debug' : (page === 'reset' || page === 'debug') ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
   return <main ref={tilt.garden} className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
     const button = event.target.closest?.('button');
@@ -278,7 +279,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     {page === 'welcome' && <WelcomeTour phone={phone} onClose={closeOnboarding}/>}
     {page === 'rename' && <NameEditor rename original={plant.name} onCancel={closeOnboarding} issue={issue}
       onSave={async name=>{if(await commit(p=>({...p,name})))closeOnboarding();}}/>}
-    {page && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
+    {page && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} onDebug={page==='settings'?openDebug:undefined} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
       {page === 'menu' && <MenuItems items={phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}
       {page === 'phone' && <MenuItems items={phoneItems} open={open}/>}
@@ -293,12 +294,12 @@ function GardenApp({storage,phone,careMessage,alerts}) {
           onClick={() => commit(old => ({...old,ambience:old.ambience === false}))}><Music2/>Garden ambience<span className="setting-value">{plant.sound && plant.ambience !== false ? 'On' : 'Off'}</span></button>
         <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
-        <button onClick={()=>open('test')}>Test notifications<ChevronRight className="row-end"/></button>
         <button disabled={['checking','downloading'].includes(phone.updateStatus)}
           onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
           {phone.updateStatus==='ready'?'Restart to update':'Check for updates'}</button>
         {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
+      {page === 'debug' && <MenuItems items={['test']} open={open}/>}
       {page === 'reset' && <ResetGarden plant={plant} reset={storage.reset} cancel={()=>open('settings')}/>}
       {(phoneItems.includes(page) || page==='test') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
     </GardenDialog>}
