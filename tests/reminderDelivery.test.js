@@ -63,7 +63,7 @@ async function decryptedPush(body, devicePrivate, keys) {
   return JSON.parse(plaintext.subarray(0, delimiter).toString('utf8'));
 }
 
-async function fixture(t, seedLegacyRows) {
+async function fixture(t, seedLegacyRows, providerReply = () => new Response(null, {status:201})) {
   const sqlite = new DatabaseSync(':memory:');
   t.after(() => sqlite.close());
   const migrations = new URL('../drizzle/', import.meta.url);
@@ -92,7 +92,7 @@ async function fixture(t, seedLegacyRows) {
     });
     return reminderAPI(request, env, async (url, init) => {
       sends.push({url, init});
-      return new Response(null, {status:201});
+      return providerReply(sends.length);
     }, {waitUntil: promise => background.push(promise)});
   }
   return {
@@ -262,6 +262,7 @@ test('an enrolled owner gets one rate-limited pair of independent test pushes at
   assert.equal(app.sends.length, 2);
   const topics = app.sends.map(({url, init}) => {
     assert.equal(url, endpoint);
+    assert.equal(init.redirect, 'manual');
     const headers = new Headers(init.headers);
     assert.equal(headers.get('Content-Encoding'), 'aes128gcm');
     assert.ok(headers.get('Topic'));
@@ -282,6 +283,29 @@ test('an enrolled owner gets one rate-limited pair of independent test pushes at
   assert.equal((await app.testPush(crypto.randomUUID())).status, 429);
   assert.equal((await app.cancel(owner)).status, 200);
   assert.equal((await app.testPush(crypto.randomUUID())).status, 409);
+});
+
+test('failed test pushes distinguish a provider redirect from a transport failure', async t => {
+  const app = await fixture(t, undefined, attempt => {
+    if (attempt === 1) return Response.redirect('https://example.com/other', 307);
+    throw new TypeError('fetch failed');
+  });
+  await app.put({keys:app.keys});
+  t.mock.timers.enable({apis:['setTimeout','Date'], now:Date.now()});
+  await app.testPush(crypto.randomUUID());
+  t.mock.timers.tick(5000);
+  const deadline = performance.now() + 5000;
+  while (!app.sends.length && performance.now() < deadline) {
+    await new Promise(resolve => setImmediate(resolve));
+  }
+  assert.equal(app.sends.length, 1);
+  t.mock.timers.tick(10000);
+  await Promise.all(app.background);
+  assert.deepEqual(app.sends.map(s => [s.url,s.init.redirect]), [[endpoint,'manual'],[endpoint,'manual']]);
+  const result = await (await app.status()).json();
+  assert.equal(result.status, 'failed');
+  assert.deepEqual(result.steps, ['failed','failed']);
+  assert.deepEqual(result.reasons, ['http-307','connection']);
 });
 
 async function alertWorker() {

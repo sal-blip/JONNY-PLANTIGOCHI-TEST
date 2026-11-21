@@ -31,9 +31,11 @@ export async function testAPI(request,env,owner,send,ctx,authorization,json){
   const device=await select();
   if(!device)return json({error:'Enable plant alerts on this device first.'},409);
   if(request.method==='GET'){
-    const steps=[device.first_status,device.second_status];
+    const recorded=[device.first_status,device.second_status];
+    const steps=recorded.map(value=>value?.startsWith('failed:')?'failed':value);
+    const reasons=recorded.map(value=>value?.startsWith('failed:')?value.slice(7):null);
     const status=steps.every(s=>s==='sent')?'sent':steps.includes('failed')?'failed':steps.some(s=>s==='sent'||s==='sending')?'sending':'queued';
-    return json({testId:device.test_id,startedAt:device.test_at,status,steps});
+    return json({testId:device.test_id,startedAt:device.test_at,status,steps,reasons});
   }
   if(request.method!=='POST')return json({},405);
   const {testId}=await request.json().catch(()=>({})) || {};
@@ -47,13 +49,20 @@ export async function testAPI(request,env,owner,send,ctx,authorization,json){
     const column=step===1?'first_status':'second_status';
     const update=status=>env.DB.prepare('UPDATE alert_devices SET '+column+'=? WHERE owner=? AND endpoint=? AND test_id=?').bind(status,owner,device.endpoint,testId).run();
     if(!(await update('sending')).meta.changes)return;
+    let stage='encryption';
+    let outcome;
     try{
       const body=await encrypt(device,{type:'test',testId,step});
+      stage='signing';
       const auth=await authorization(device.endpoint,env,new URL(request.url).origin,Date.now());
-      const result=await send(device.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'90',Urgency:'high',
+      stage='connection';
+      const result=await send(device.endpoint,{method:'POST',redirect:'manual',headers:{Authorization:auth,TTL:'90',Urgency:'high',
         Topic:'plantigochi-test-'+step,'Content-Encoding':'aes128gcm','Content-Type':'application/octet-stream'},body});
-      await update(result.ok?'sent':'failed');
-    }catch{await update('failed');}
+      outcome=result.ok?'sent':'failed:http-'+result.status;
+    }catch{
+      outcome='failed:'+stage;
+    }
+    await update(outcome);
   }
   ctx.waitUntil(Promise.all([deliver(1,5000),deliver(2,15000)]));
   return json({testId,startedAt:now,status:'queued',steps:['queued','queued']},202);

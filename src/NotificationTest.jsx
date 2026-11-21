@@ -3,6 +3,17 @@ import {alertKey,withReminderLock} from './alertCleanup.js';
 
 const device=()=>JSON.parse(localStorage.getItem(alertKey) || '{}');
 const resultLabel={queued:'Scheduled',sending:'Sending…',sent:'Sent to push service',failed:'Send failed'};
+function failureLabel(reason){
+  if(reason==='encryption')return 'Could not encrypt the message for this subscription.';
+  if(reason==='signing')return 'The server could not sign the notification.';
+  if(reason==='connection')return 'The server could not reach the push service.';
+  if(!reason?.startsWith('http-'))return 'Send failed';
+  const status=reason.slice(5);
+  if(status==='404' || status==='410')return 'Subscription expired ('+status+'). Turn alerts off and on, then test again.';
+  if(status==='401' || status==='403')return 'Push service rejected the server credentials ('+status+').';
+  if(status==='429')return 'Push service is busy (429). Try again later.';
+  return 'Push service returned HTTP '+status+'.';
+}
 async function request(method,token,id){
   const res=await fetch('/api/alerts/test',{method,cache:'no-store',headers:{Authorization:'Bearer '+token,...(id?{'Content-Type':'application/json'}:{})},
     keepalive:Boolean(id),body:id?JSON.stringify({testId:id}):undefined});
@@ -62,7 +73,7 @@ export default function NotificationTest({alerts}){
   return <div className="push-test"><p>Keep the app open for the first push at 5 seconds. Then close it and lock your phone for the second at 15 seconds.</p>
     <button className="alert-control" onClick={start} disabled={!alerts.enabled || busy || cooldown}>{busy?'Starting…':'Send two test alerts'}</button>
     {result && <ol aria-live="polite">{[5,15].map((delay,i)=><li key={delay}>{delay}s · {result.receipts?.[i]?'Received on this device':
-      (result.steps?.[i]==='queued' || result.steps?.[i]==='sending') && Date.now()-result.startedAt>45000?'Delivery unconfirmed':resultLabel[result.steps?.[i]] || 'Scheduled'}</li>)}</ol>}
+      (result.steps?.[i]==='queued' || result.steps?.[i]==='sending') && Date.now()-result.startedAt>45000?'Delivery unconfirmed':result.steps?.[i]==='failed'?failureLabel(result.reasons?.[i]):resultLabel[result.steps?.[i]] || 'Scheduled'}</li>)}</ol>}
     {notice && <p role="status">{notice}</p>}
   </div>;
 }

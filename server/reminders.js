@@ -50,7 +50,7 @@ async function dispatch(env, origin, send) {
     if ((item.expires!=null && now>=item.expires) || now-item.due >= 24*HOUR || item.attempts >= 5) { await remove(); continue; }
     try {
       const auth = await authorization(item.endpoint,env,origin,now);
-      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:item.id.endsWith('.fungus') ? 'plantigochi-fungus' : item.id.endsWith('.care') ? 'plantigochi-care' : item.id.endsWith('.company') ? 'plantigochi-company' : 'plantigochi-growth'},body:new Uint8Array()});
+      const result = await send(item.endpoint,{method:'POST',redirect:'manual',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:item.id.endsWith('.fungus') ? 'plantigochi-fungus' : item.id.endsWith('.care') ? 'plantigochi-care' : item.id.endsWith('.company') ? 'plantigochi-company' : 'plantigochi-growth'},body:new Uint8Array()});
       if (result.ok || [400,404,410].includes(result.status)) {
         if (result.ok) sent++;
         if(item.event_id && result.ok)await env.DB.batch([

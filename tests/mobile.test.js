@@ -37,7 +37,7 @@ test('a player can schedule, cancel, and receive one due notification', async ()
   const origin='https://garden.example',token='aa'.repeat(32), endpoint='https://fcm.googleapis.com/fcm/send/test-subscription';
   let count=0;
   async function send(url, init){
-    assert.equal(url,endpoint);assert.equal(init.redirect,'error');
+    assert.equal(url,endpoint);assert.equal(init.redirect,'manual');
     assert(init.headers.Authorization.startsWith('vapid t='));
     count++;return new Response(null,{status:201});
   }
