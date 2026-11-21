@@ -1,5 +1,5 @@
 import React,{forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import {ChevronLeft,ChevronRight,ChevronUp,X} from 'lucide-react';
+import {ChevronLeft,ChevronRight,ChevronUp,Smartphone,X} from 'lucide-react';
 import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces,prepareRoomPhotos} from './roomShopArt.js';
@@ -31,7 +31,7 @@ function firstVacantRoom(plants){
   return 0;
 }
 
-const Collector=forwardRef(function Collector({active,recordActive=active,plant,commit,now,move,relocate,raisePhone,purr,
+const Collector=forwardRef(function Collector({active,backdropVisible=false,recordActive=active,plant,commit,now,move,relocate,raisePhone,returnToToy,purr,
   playingRecordId,onSelectRecord,onOverlayChange,globalMenuOpen,onPlacementCancel,onPlacementDone},ref) {
   const graduates=plant.graduates;
   const count=gardenViews(graduates);
@@ -60,10 +60,10 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
   const placing=Boolean(inHand) || picking || Boolean(shopMove);
   canFocus.current=active && !globalMenuOpen && !panel;
   const sceneItems=useMemo(()=>{
-    if(!shopMove || !preview || catalog[shopMove.sku].kind==='plant')return items;
+    if(!active || !shopMove || !preview || catalog[shopMove.sku].kind==='plant')return items;
     const others=items.filter(i=>i.id!==shopMove.id).map(i=>i.slot===preview.slot?{...i,slot:shopMove.from??null}:i);
     return [...others,{...items.find(i=>i.id===shopMove.id),id:shopMove.id,sku:shopMove.sku,slot:preview.slot}];
-  },[items,shopMove,preview]);
+  },[active,items,shopMove,preview]);
   const chosen=slot===null?null:collection.get(slot);
   const clock=new Date(now),hour=clock.getHours()+clock.getMinutes()/60;
   const potted=useMemo(()=>{
@@ -71,12 +71,12 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
     for(let view=Math.max(0,page-1);view<=Math.min(count-1,page+1);view++)
       result[view]=placesFor(view).map(spot=>{
         const slot=slotFor(view,spot);
-        if(preview?.slot===slot && shopMove && catalog[shopMove.sku].kind==='plant')
+        if(active && preview?.slot===slot && shopMove && catalog[shopMove.sku].kind==='plant')
           return {id:shopMove.id,species:shopMove.sku,name:catalog[shopMove.sku].name};
         return collection.get(slot);
       });
     return result;
-  },[collection,count,page,shopMove,preview]);
+  },[active,collection,count,page,shopMove,preview]);
   useEffect(()=>{
     mounted.current=true;
     return ()=>{mounted.current=false;clearInterval(edge.current);clearTimeout(catTimer.current);clearTimeout(zoomTimer.current);};
@@ -125,6 +125,18 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
     return ()=>observer.disconnect();
   },[count]);
   useEffect(()=>{
+    const surface=stage.current;
+    function consumeRoomDrag(event){
+      const drag=gesture.current;
+      // Pointer capture moves the camera or plant. Cancel native touch scrolling
+      // for that same drag so Chromium delivers the next tap to the room HUD.
+      if(drag?.pointerType==='touch' && drag.mode && event.touches.length===1 && event.cancelable)
+        event.preventDefault();
+    }
+    surface.addEventListener('touchmove',consumeRoomDrag,{passive:false});
+    return ()=>surface.removeEventListener('touchmove',consumeRoomDrag);
+  },[]);
+  useEffect(()=>{
     if(!active || globalMenuOpen){
       gesture.current=null;clearEdge();setGhost(null);setDropOver(null);relax();
     }
@@ -166,9 +178,10 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
     if(placing || pending.current)return;
     setNotice('');setSlot(null);setPanel(kind);
   }
-  function openPhone(){
+  function leaveRoom(event,go){
     if(placing || pending.current)return;
-    setNotice('');relax();raisePhone?.();
+    roomOpener.current=event.currentTarget;
+    setNotice('');relax();go?.(event);
   }
   async function useKeepsake(kind,value){
     if(pending.current)return;
@@ -183,7 +196,7 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
       });
       if(!mounted.current)return;
       if(!ok || !changed)setNotice('Your garden changed or could not save. Check the plant and try again.');
-      else if(kind==='replant'){setPanel(null);raisePhone?.();}
+      else if(kind==='replant'){setPanel(null);returnToToy?.();}
     }finally{pending.current=false;if(mounted.current)setBusy(false);}
   }
   async function change(operation){
@@ -235,7 +248,7 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
   function cancelPlacement(){
     if(pending.current)return;
     if(shopMove){cancelShop();return;}
-    if(picking){setGraduating(null);setSlot(null);setNotice('');raisePhone?.();return;}
+    if(picking){setGraduating(null);setSlot(null);setNotice('');returnToToy?.();return;}
     cancelCarry();
   }
   function reset(){
@@ -353,7 +366,7 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
     if(!active || globalMenuOpen || !e.isPrimary || e.button!==0 || busy || panel)return;
     const target=e.target.closest('[data-slot]'),slot=target?buttonSlot(target):null;
     const button=e.target.closest('button');
-    gesture.current={pointer:e.pointerId,x:e.clientX,y:e.clientY,button,plant:collection.get(slot),mode:null,edge:0,left:stage.current.scrollLeft,top:stage.current.scrollTop};
+    gesture.current={pointer:e.pointerId,pointerType:e.pointerType,x:e.clientX,y:e.clientY,button,plant:collection.get(slot),mode:null,edge:0,left:stage.current.scrollLeft,top:stage.current.scrollTop};
   }
   function clearEdge(){clearInterval(edge.current);edge.current=null;}
   function onMotion(e){
@@ -423,14 +436,14 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
   const panelTitle={item:catalog[item?.sku]?.name || 'My items',jar:'Cutting Jar',book:'Leaf Book'};
   const available=active && !globalMenuOpen;
   return <section className="collector" aria-label="Collector garden" aria-hidden={!available || undefined} inert={!available?'':undefined}
-    data-room-placing={placing?'':undefined} data-room-blocked={!available || panel || busy?'':undefined}
+    data-room-hud={available?'':undefined} data-room-placing={placing?'':undefined} data-room-blocked={!available || panel || busy?'':undefined}
     onPointerDownCapture={e=>{if(e.isPrimary)ignoreClick.current=false;}}
     onClickCapture={e=>{
       if(ignoreClick.current && e.detail!==0){e.preventDefault();e.stopPropagation();}
     }}
     onKeyDown={e=>{
     if(!available || panel || busy || e.altKey || e.metaKey || e.ctrlKey)return;
-    if(e.key==='Escape'){e.preventDefault();if(placing)cancelPlacement();else openPhone();}
+    if(e.key==='Escape'){e.preventDefault();if(placing)cancelPlacement();else returnToToy?.();}
     if(['ArrowLeft','ArrowRight'].includes(e.key)){
       e.preventDefault();
       stage.current.scrollBy({left:(e.key==='ArrowLeft'?-1:1)*stage.current.clientWidth*.7,
@@ -450,33 +463,39 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
         else inspect(e.clientX,e.clientY);
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
-        {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} worldHeight={worldHeight} plants={potted[k]} hour={hour}
-          garden={plant} playingItemId={active && plant.sound ? playingRecordId : null} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
+        {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible} worldHeight={worldHeight} plants={potted[k]} hour={hour}
+          garden={plant} playingItemId={plant.sound ? playingRecordId : null} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
-    <button ref={roomReturn} className={'room-corner room-return'+(placing?'':' room-phone-pickup')} data-room-focus="" data-room-pickup={placing?undefined:''}
-      aria-label={placing?'Cancel move':'Pick up iSEED'} title={placing?'Cancel move':'Pick up iSEED'}
-      disabled={!available || busy} onClick={placing?cancelPlacement:()=>{roomOpener.current=roomReturn.current;openPhone();}}>
-      {placing?<X aria-hidden="true"/>:<><ChevronUp aria-hidden="true"/><span>Swipe up for iSEED</span></>}
-    </button>
-    {!placing && !panel && !message && <nav className="room-hint room-navigation" aria-label="Garden rooms">
-      <button aria-label="Previous room" disabled={page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>
-      <span>{viewName(page)}</span>
-      <button aria-label="Next room" disabled={page===count-1} onClick={()=>travel(page+1)}><ChevronRight aria-hidden="true"/></button>
-    </nav>}
-    {message && <div className={placing?"room-hint room-placement":"room-hint"}><span role="status">{message}</span>
-      {placing && <div className="placement-actions">
-        <button aria-label="Previous placement room" disabled={busy || page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>
-        <span aria-label={'Room '+(page+1)+' of '+count}>{page+1} / {count}</span>
-        <button aria-label="Next placement room" disabled={busy || page===count-1} onClick={()=>travel(page+1)}><ChevronRight aria-hidden="true"/></button>
-        <button disabled={busy} onClick={cancelPlacement}>Cancel</button>
+    <div className="room-controls" hidden={!available || Boolean(panel)}>
+      <button ref={roomReturn} className={'room-corner '+(placing?'room-return':'room-toy-return')} data-room-focus="" data-room-return={placing?undefined:''}
+        aria-label={placing?'Cancel move':'Return to Plantigochi'} title={placing?'Cancel move':'Return to Plantigochi'}
+        disabled={!available || busy} onClick={placing?cancelPlacement:event=>leaveRoom(event,returnToToy)}>
+        {placing?<X aria-hidden="true"/>:<><ChevronUp aria-hidden="true"/><span>Plantigochi</span></>}
+      </button>
+      {!placing && <button type="button" className="room-corner room-open-phone" data-room-open-phone=""
+        aria-label="Open iSEED" title="Open iSEED" disabled={!available || busy} onClick={event=>leaveRoom(event,raisePhone)}>
+        <Smartphone aria-hidden="true"/>
+      </button>}
+      {!placing && !panel && !message && <nav className="room-hint room-navigation" aria-label="Garden rooms">
+        <button aria-label="Previous room" disabled={page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>
+        <span>{viewName(page)}</span>
+        <button aria-label="Next room" disabled={page===count-1} onClick={()=>travel(page+1)}><ChevronRight aria-hidden="true"/></button>
+      </nav>}
+      {message && <div className={placing?"room-hint room-placement":"room-hint"}><span role="status">{message}</span>
+        {placing && <div className="placement-actions">
+          <button aria-label="Previous placement room" disabled={busy || page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>
+          <span aria-label={'Room '+(page+1)+' of '+count}>{page+1} / {count}</span>
+          <button aria-label="Next placement room" disabled={busy || page===count-1} onClick={()=>travel(page+1)}><ChevronRight aria-hidden="true"/></button>
+          <button disabled={busy} onClick={cancelPlacement}>Cancel</button>
+        </div>}
+        {displaced && <small>{catalog[displaced.sku].name} {swapping?'will move to '+placeName(shopMove.from).toLowerCase()+'.':'will return to inventory.'}</small>}
+        {shopMove && preview && <button ref={placeButton} disabled={busy} onClick={finishPlacement}>{shopMove.buy?'Buy for '+catalog[shopMove.sku].price+' coins':swapping?'Swap here':'Place here'}</button>}
+        {picking && slot!==null && !chosen && <button onClick={()=>putDown(slot,null)} disabled={busy}>Move in</button>}
+        {!placing && <button aria-label="Dismiss garden message" onClick={()=>{setSlot(null);setNotice('');}}>×</button>}
       </div>}
-      {displaced && <small>{catalog[displaced.sku].name} {swapping?'will move to '+placeName(shopMove.from).toLowerCase()+'.':'will return to inventory.'}</small>}
-      {shopMove && preview && <button ref={placeButton} disabled={busy} onClick={finishPlacement}>{shopMove.buy?'Buy for '+catalog[shopMove.sku].price+' coins':swapping?'Swap here':'Place here'}</button>}
-      {picking && slot!==null && !chosen && <button onClick={()=>putDown(slot,null)} disabled={busy}>Move in</button>}
-      {!placing && <button aria-label="Dismiss garden message" onClick={()=>{setSlot(null);setNotice('');}}>×</button>}
-    </div>}
-    {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width="76" height="82" aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
+      {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width="76" height="82" aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
+    </div>
     <GardenRecord active={recordActive} soundEnabled={plant.sound} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
     {available && panel==='move' && source && <GardenDialog page="garden-move" title={'Move '+(source.name || speciesName(source))+'?'} close={cancelCarry}>
       <p className="room-guide">{placeName(carry.from)} · {viewName(viewForSlot(carry.from))}</p>

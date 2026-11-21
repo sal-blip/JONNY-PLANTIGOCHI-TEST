@@ -1,4 +1,5 @@
 export const scenes = {
+  garden: 'My garden',
   denim: 'Stonewashed Pocket',
   raked: 'Raked Sand',
   stillwater: 'Still Water',
@@ -15,9 +16,12 @@ export const backupLimit = 5 * 1024 * 1024;
 export function selectedScene(plant) {
   const id = plant.scene;
   if (id === 'photo' && plant.photo) return id;
-  if (typeof id !== 'string') return 'denim';
-  if (Object.hasOwn(scenes, id)) return id;
-  return Object.hasOwn(previousScenes, id) ? previousScenes[id] : 'denim';
+  if (typeof id === 'string') {
+    if (Object.hasOwn(scenes, id)) return id;
+    if (Object.hasOwn(previousScenes, id)) return previousScenes[id];
+  }
+  // Older saves omitted scene until the first choice in Backgrounds.
+  return 'garden';
 }
 
 export function validPhoto(photo) {

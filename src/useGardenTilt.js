@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const radians = Math.PI / 180;
 const fullTilt = Math.sin(18 * radians);
@@ -38,8 +38,7 @@ function initialPreference() {
   try { return localStorage.getItem(preferenceKey) !== 'off'; } catch { return true; }
 }
 
-export function useGardenTilt(paused) {
-  const garden = useRef(null);
+export function useGardenTilt(paused, garden) {
   const supported = window.isSecureContext && typeof window.DeviceOrientationEvent !== 'undefined';
   const needsPermission = typeof window.DeviceOrientationEvent?.requestPermission === 'function';
   const [enabled, setEnabled] = useState(initialPreference);
@@ -156,7 +155,7 @@ export function useGardenTilt(paused) {
       window.removeEventListener('devicemotion', motion);
       reset();
     };
-  }, [listening, needsPermission]);
+  }, [garden, listening, needsPermission]);
 
   async function toggle() {
     if (!supported || reduced || requesting) return;
@@ -185,7 +184,7 @@ export function useGardenTilt(paused) {
   else if (permission === 'denied') label = 'Retry';
   else if (permission === 'ask' && enabled) label = 'Allow';
   return {
-    garden, toggle, label, active: supported && !reduced && enabled && permission === 'granted',
+    toggle, label, active: supported && !reduced && enabled && permission === 'granted',
     disabled: !supported || reduced || requesting,
     denied: supported && !reduced && permission === 'denied',
   };

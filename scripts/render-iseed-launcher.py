@@ -1,4 +1,4 @@
-"""Draw the six iSEED launcher illustrations on their original 48-pixel grid.
+"""Draw the five iSEED launcher illustrations on their original 48-pixel grid.
 
 Run with Python and Pillow when changing the artwork. The app bundles the
 finished atlas and has no image generation or drawing dependencies at runtime.
@@ -6,80 +6,6 @@ finished atlas and has no image generation or drawing dependencies at runtime.
 from pathlib import Path
 
 from PIL import Image, ImageColor, ImageDraw
-
-def plantigochi(d):
-    """Jade moulded leaf, polished chain, and an awake pocket sprout."""
-    # A split Monstera blade with its stalk behind the lanyard.
-    blade = [(9,16),(10,14),(13,11),(17,10),(20,10),(23,11),
-             (25,13),(26,11),(28,9),(32,8),(35,9),(38,11),(40,13),
-             (40,14),(35,14),(33,15),(38,15),(41,17),(43,19),
-             (43,21),(39,20),(37,20),(40,22),(43,23),(44,25),
-             (44,27),(43,28),(40,26),(37,25),(36,25),(40,28),
-             (42,31),(41,34),(40,35),(39,32),(37,30),(38,35),
-             (37,38),(34,40),(30,42),(28,41),(24,40),(20,40),
-             (15,38),(13,36),(13,35),(18,36),(19,36),(15,34),
-             (11,32),(9,29),(9,28),(13,30),(16,30),(12,27),
-             (9,25),(7,22),(7,20),(10,22),(13,23),(11,20),
-             (9,18)]
-    edge = '#446c58'
-    d.polygon([(x,y+1) for x,y in blade], fill=edge)
-    d.polygon(blade, fill='#9fbf86',outline='#597d60')
-    # Broad moulded facets with a cream-lit edge and a shaded lower lip.
-    d.polygon([(9,17),(12,13),(15,12),(19,11),(23,12),(25,15),
-               (27,13),(29,11),(32,10),(35,10),(38,12),(39,13),
-               (34,13),(31,15),(28,17),(20,19),(13,20)], fill='#b6d19a')
-    d.polygon([(19,33),(26,34),(34,32),(36,30),(37,35),(36,37),
-               (32,39),(30,41),(25,39),(20,39),(16,37),
-               (22,38),(25,38),(22,36)], fill='#84ab7e')
-    d.line([(10,16),(12,14),(16,12),(19,11)],fill='#d6e4af')
-    d.line([(28,12),(30,10),(33,9)],fill='#d6e4af')
-    d.line([(8,22),(10,24),(13,26)],fill='#c7dca1')
-    d.line([(10,29),(12,31),(14,32)],fill='#c5dba1')
-    d.line([(35,15),(38,15),(41,17)],fill='#c8dba6')
-    d.line([(39,22),(42,24)],fill='#cbdfa7')
-    d.line([(38,27),(40,29),(41,31)],fill='#bace9c')
-    d.line([(36,36),(33,39),(31,40)],fill='#719775')
-    # Two moulded holes above the sharply recessed LCD.
-    d.line([(20,13),(21,15)],fill='#7c9e71')
-    d.line([(32,12),(31,13)],fill='#7d9d70')
-    d.point((21,13),fill='#c7dba1')
-    # Silver chain has an open ring and two little turned links at the mounting eye.
-    d.ellipse((3,4,14,13),outline='#465c58',width=2)
-    d.arc((3,4,14,13),175,314,fill='#a5b9ab')
-    d.arc((4,5,13,12),178,303,fill='#f5f4d8')
-    d.line([(4,9),(4,10),(5,11)],fill='#dbe2cb')
-    d.line([(9,12),(11,12),(13,10)],fill='#cfdbcc')
-    d.ellipse((12,10,15,14),outline='#5a736a')
-    d.line([(12,10),(14,11)],fill='#dce4cb')
-    d.ellipse((14,12,18,16),fill='#6f9270',outline='#a4bd8d')
-    d.ellipse((15,12,17,15),outline='#526d63')
-    d.line([(14,12),(15,12),(16,13)],fill='#eef1d3')
-    # Lit gasket, dark inset, warm pixel face. Keep the glass corners notched.
-    d.rounded_rectangle((15,16,35,32),radius=3,fill='#ccddac')
-    d.rounded_rectangle((15,16,35,31),radius=3,fill='#789b74')
-    d.rounded_rectangle((16,17,34,31),radius=2,fill='#496c61')
-    d.rounded_rectangle((17,18,33,30),radius=1,fill='#bedbd0')
-    d.line([(18,18),(32,18)],fill='#93b7a9')
-    d.rectangle((17,26,33,29),fill='#d5dbb1')
-    d.line([(18,30),(32,30)],fill='#c4c99c')
-    d.line([(25,25),(25,22)],fill='#3f7057')
-    d.polygon([(25,23),(23,23),(22,22),(22,21),(23,21),(25,22)],fill='#739b5c')
-    d.line([(25,22),(27,20),(29,20)], fill='#48835a')
-    d.line([(26,22),(28,21)],fill='#87ac68')
-    d.line([(21,25),(29,25)],fill='#835f4f')
-    d.rectangle((22,26,28,28),fill='#ce996e')
-    d.line([(23,29),(27,29)],fill='#8e7158')
-    d.point((23,27),fill='#455b4a')
-    d.point((27,27),fill='#455b4a')
-    d.point((25,28),fill='#8f6652')
-    # The high/low button spacing mirrors the four keys on the real device.
-    for x,y in [(18,33),(22,35),(27,35),(32,33)]:
-        d.ellipse((x-1,y-1,x+1,y+1),fill='#688768')
-        d.point((x,y-1),fill='#d3e1ad')
-        d.point((x,y),fill='#bed5a0')
-
-
-"""Two original 48-pixel iSEED launcher illustrations, rendered on clear RGBA."""
 
 goods_palette = {
     'ink':'#413642','deep':'#524440','wood':'#835c48','cedar':'#a47552',
@@ -353,7 +279,6 @@ def postcard(d):
 # and the cast shadow beneath the illustration. The backing is light enough for
 # the dark, local-color contours of the illustrated object to remain distinct.
 TILES = {
-    'plantigochi': ('#445e65','#d8e6d6','#9dc9cb','#6aa09d','#547b77'),
     'shop':       ('#935e50','#ffe0af','#f5c89f','#db9b82','#b97d6a'),
     'inventory':  ('#566981','#d6e4e6','#b7cdda','#829cb6','#657f92'),
     'journal':    ('#746878','#f6dfd1','#e4c8c4','#b99eab','#967f8e'),
@@ -388,7 +313,7 @@ def pixel_tile(paint, colors):
 
 
 def render():
-    makers=(plantigochi,shop,inventory,journal,library,postcard)
+    makers=(shop,inventory,journal,library,postcard)
     sheet=Image.new('RGBA',(48*len(makers),48))
     for i,maker in enumerate(makers):
         sheet.paste(pixel_tile(maker,TILES[maker.__name__]),(48*i,0))

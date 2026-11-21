@@ -39,6 +39,8 @@ export const healthLabels = { healthy: 'Damp soil', dry: 'Thirsty', critical: 'V
 
 export const plantName = name => typeof name === 'string' && /^[A-Za-z -]{1,12}$/.test(name) && name.trim() ? name.trim() : 'Monstera';
 
+// An absent scene follows the app default. Keeping it off a fresh seed also
+// preserves the player's explicit background when graduate or replant merges it.
 export function newPlant(now = Date.now(), name = 'Monstera') {
   return { version: 3, name:plantName(name), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,

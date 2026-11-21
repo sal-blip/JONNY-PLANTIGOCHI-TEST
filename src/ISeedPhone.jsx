@@ -4,7 +4,6 @@ import {CoinBalance} from './GardenShop.jsx';
 import './ISeedPhone.css';
 
 const apps=[
-  {id:'plantigochi',label:'Plantigochi'},
   {id:'shop',label:'Shop'},
   {id:'inventory',label:'Inventory'},
   {id:'journal',label:'Journal'},
@@ -106,15 +105,12 @@ export function ISeedHome({plant,open,busy=false}){
   return <div className={'iseed-home'+(night?' is-night':'')} data-phone-wallpaper="" data-handset-pull="">
     <ScreenLandscape night={night}/>
     <div className="iseed-home-clock"><time dateTime={now.toISOString()}>{clockLabel.format(now)}</time><span>{dateLabel.format(now)}</span></div>
-    <nav className="iseed-launcher" aria-label="iSEED apps">
+    <nav className="iseed-launcher" aria-label="iSEED apps" style={{'--app-count':apps.length}}>
       {apps.map((app,index)=><button type="button" key={app.id} className={'iseed-app app-'+app.id} data-handset-no-pull="" disabled={busy} onClick={()=>open(app.id)}>
         <span className="iseed-icon-tile" aria-hidden="true" style={{backgroundPositionX:(index*100/(apps.length-1))+'%'}}/><span>{app.label}</span>
       </button>)}
     </nav>
-    <div className="iseed-dock">
-      <CoinBalance plant={plant}/>
-
-    </div>
+    <div className="iseed-dock"><CoinBalance plant={plant}/></div>
   </div>;
 }
 
@@ -123,34 +119,31 @@ function SmallClock(){
   return <time className="iseed-small-time" dateTime={now.toISOString()}>{clockLabel.format(now)}</time>;
 }
 
-export default function ISeedPhone({page,title,back,home,lower,locked=false,lowerLocked=locked,corner,pocket,children}){
-  const atHome=page==='phone' || page==='home',atToy=page==='plantigochi';
+export default function ISeedPhone({page,title,back,home,lower,locked=false,corner,children}){
+  const atHome=page==='phone' || page==='home';
   const pane=useRef(null),heading=useRef(null),lastPage=useRef(page);
   useLayoutEffect(()=>{
-    if(atToy || lastPage.current===page)return;
+    if(lastPage.current===page)return;
     lastPage.current=page;
     if(pane.current)pane.current.scrollTop=0;
     if(!locked)heading.current?.focus({preventScroll:true});
-  },[page,atToy,locked]);
+  },[page,locked]);
 
-  return <section className="iseed-handset" aria-label="iSEED handset" data-handset-no-pull={lowerLocked?'':undefined}>
-    <button type="button" className="iseed-bezel" data-phone-bezel="" data-handset-pull="" aria-label="Put down iSEED" onClick={lower} disabled={lowerLocked}>
+  return <section className="iseed-handset" aria-label="iSEED handset" data-handset-no-pull={locked?'':undefined}>
+    <button type="button" className="iseed-bezel" data-phone-bezel="" data-handset-pull="" aria-label="Put down iSEED" onClick={lower} disabled={locked}>
       <span className="iseed-earpiece" aria-hidden="true"><i/><b/><i/></span>
     </button>
-    <div className={'iseed-screen'+(atHome?' is-home':atToy?' is-toy':'')}>
-      {!atToy && <header className="iseed-header">
-        {atHome?<button type="button" className="iseed-open-garden" onClick={lower} disabled={lowerLocked}
+    <div className={'iseed-screen'+(atHome?' is-home':'')}>
+      <header className="iseed-header">
+        {atHome?<button type="button" className="iseed-open-garden" onClick={lower} disabled={locked}
           aria-label="Open garden" title="Open garden" data-handset-no-pull=""><Flower2 aria-hidden="true"/><span>Garden</span></button>:
           back && <button type="button" className="iseed-back" aria-label="Back" onClick={back} disabled={locked} data-handset-no-pull=""><ChevronLeft aria-hidden="true"/></button>}
         <h1 ref={heading} tabIndex="-1">{atHome?'iSEED':title}</h1>
         {!atHome && <SmallClock/>}
-      </header>}
-      <div className="iseed-pocket-pane" data-handset-scroll="" hidden={!atToy} inert={!atToy?'':undefined} aria-hidden={!atToy || undefined}
-        data-phone-page={atToy?'plantigochi':undefined}>{pocket}</div>
-      <div ref={pane} className={'iseed-contents'+(atHome?' is-launcher':'')} hidden={atToy} inert={atToy?'':undefined}
-        aria-hidden={atToy || undefined} data-phone-page={atToy?undefined:page}
-        data-phone-scroll={atHome || atToy?undefined:''} data-handset-scroll={atHome || atToy?undefined:''}>{children}</div>
-      {!atToy && <div className="iseed-pixels" aria-hidden="true"/>}
+      </header>
+      <div ref={pane} className={'iseed-contents'+(atHome?' is-launcher':'')} data-phone-page={page}
+        data-phone-scroll={atHome?undefined:''} data-handset-scroll={atHome?undefined:''}>{children}</div>
+      <div className="iseed-pixels" aria-hidden="true"/>
       {corner && <div className="iseed-corner" data-handset-no-pull="">{corner}</div>}
     </div>
     <footer className="iseed-chin">

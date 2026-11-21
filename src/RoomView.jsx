@@ -27,7 +27,7 @@ function targetBounds(targets){
   return bounds;
 }
 
-export default function RoomView({index,onScreen,running,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
+export default function RoomView({index,onScreen,running,ambient=false,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
   garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null);
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
@@ -37,34 +37,36 @@ export default function RoomView({index,onScreen,running,worldHeight,plants,hour
   const object=keepsakeFor(index);
   const blocked=busy || panelOpen || !onScreen || !running;
   const selectedFixture=!placing && object?.id===selectedKeepsake?selectedKeepsake:null;
-  const active=focused ?? selectedFixture ?? selected ?? carry?.from ?? (cat?'cat':null);
+  const active=running && onScreen?(focused ?? selectedFixture ?? selected ?? carry?.from ?? (cat?'cat':null)):null;
   const decor=decorPlaces(index);
   const highlighted=active==='cat' || active===object?.id || decor.some(d=>d.slot===active) || shopItems.some(item=>item.id===active)
     ?active:spots.findIndex(spot=>slotFor(index,spot)===active);
-  const lifted=dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
+  const lifted=running && dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
+  const paintable=running || (ambient && onScreen);
   const [photoReady,setPhotoReady]=useState(0);
   const onPhotoReady=React.useCallback(()=>setPhotoReady(n=>n+1),[]);
-  scene.current={hour,plants,shopItems,playingItemId,onPhotoReady,roomIndex:index,awake:Boolean(cat),highlighted,lifted,above,worldHeight,separatePlanes:true,placing,jarProgress,leafCount};
+  scene.current={hour,plants,shopItems,playingItemId,onPhotoReady,roomIndex:index,awake:Boolean(cat),highlighted,lifted,above,worldHeight,separatePlanes:true,placing:running && placing,jarProgress,leafCount};
   useEffect(()=>{
     const media=matchMedia('(prefers-reduced-motion: reduce)');
     const paint=()=>{if(canvas.current && !document.hidden)drawRoom(canvas.current,{...scene.current,time:performance.now(),reducedMotion:media.matches});};
     let timer;
     function refresh(){
       clearInterval(timer);
-      if(running && onScreen && !document.hidden){
+      if(paintable && onScreen && !document.hidden){
+        if(depth.current)drawRoomDepth(depth.current,scene.current.roomIndex,roomLight(scene.current.hour),scene.current.above);
         paint();
         if(!media.matches)timer=setInterval(paint,160);
       }
     }
     refresh();media.addEventListener('change',refresh);document.addEventListener('visibilitychange',refresh);
     return ()=>{clearInterval(timer);media.removeEventListener('change',refresh);document.removeEventListener('visibilitychange',refresh);};
-  },[onScreen,running]);
+  },[onScreen,paintable]);
   useLayoutEffect(()=>{
-    if(canvas.current)drawRoom(canvas.current,{...scene.current,time:performance.now(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
-  },[plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId,photoReady]);
+    if(paintable && !document.hidden && canvas.current)drawRoom(canvas.current,{...scene.current,time:performance.now(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
+  },[paintable,running,plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId,photoReady]);
   useLayoutEffect(()=>{
-    if(depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
-  },[worldHeight,above,hour,index]);
+    if(paintable && !document.hidden && depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
+  },[paintable,worldHeight,above,hour,index]);
   const targets=[];
   const originalItems=shopMove?lifeOf(garden).items:[];
   function destination(slot,name){
@@ -121,7 +123,7 @@ export default function RoomView({index,onScreen,running,worldHeight,plants,hour
     style={{left:'calc('+index+' * var(--room-width))'}}>
     <canvas className="room-depth" ref={depth} width={ROOM_WIDTH} height={worldHeight} aria-hidden="true"/>
     <canvas className="room-actors" ref={canvas} width={ROOM_WIDTH} height={worldHeight} role="img" aria-label={viewName(index)+(index%2===0?' with an open pot shelf, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
-    <div className="room-interior" style={{top:(100*above/worldHeight)+'%',height:(100*ROOM_HEIGHT/worldHeight)+'%'}}>
+    <div className="room-interior" hidden={!running} style={{top:(100*above/worldHeight)+'%',height:(100*ROOM_HEIGHT/worldHeight)+'%'}}>
       {targets.map(({key,focus,label,click,attrs,open,exchange},i)=>{
         const {left,right,top,bottom}=bounds[i];
         return <button {...attrs} key={key} type="button" className={'place-target scene-target '+(attrs.className || '')+(open?' open-destination':'')}
