@@ -17,3 +17,8 @@ export const alertDevices=sqliteTable('alert_devices',{
   owner:text('owner').primaryKey(),endpoint:text('endpoint').notNull().unique(),p256dh:text('p256dh').notNull(),auth:text('auth').notNull(),
   testId:text('test_id'),testAt:integer('test_at'),firstStatus:text('first_status'),secondStatus:text('second_status')
 });
+
+// Shared across Worker instances so APNs sees a stable sender token.
+export const applePushTokens=sqliteTable('apple_push_tokens',{
+  scope:text('scope').primaryKey(), token:text('token').notNull(), refreshAt:integer('refresh_at').notNull()
+});

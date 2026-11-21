@@ -15,7 +15,9 @@ test('backup rejects bad files and restores an older watered seed', () => {
 test('push destination is restricted to HTTPS browser push services', () => {
   const apple='https://web.push.apple.com/example';
   assert.equal(pushTarget(apple),apple);
-  for (const bad of ['https://localhost/x','https://fcm.googleapis.com.example.org/x','https://example.org@web.push.apple.com/x','http://fcm.googleapis.com/x','https://fcm.googleapis.com:444/x']) assert.equal(pushTarget(bad),null);
+  const regional='https://webcourier.push.apple.com/registration';
+  assert.equal(pushTarget(regional),regional);
+  for (const bad of ['https://web.push.apple.com.example.org/registration','https://notpush.apple.com/registration','https://localhost/x','https://fcm.googleapis.com.example.org/x','https://example.org@web.push.apple.com/x','http://fcm.googleapis.com/x','https://fcm.googleapis.com:444/x']) assert.equal(pushTarget(bad),null);
 });
 
 function testDB(){

@@ -16,15 +16,16 @@ async function activePlant() {
     };
   });
 }
-async function notifyGarden(event) {
+async function notifyGarden(event, show) {
   const cache=await caches.open('plantigochi-notices');
   const schedule=await (await cache.match('/notice-schedule'))?.json();
-  if(!schedule||schedule.disabled)return;
+  if(schedule?.disabled)return 'disabled';
+  if(!schedule)return;
   if(event?.type==='test'){
     if(![1,2].includes(event.step) || await cached(cache,'/notice-test-id')!==event.testId)return;
     const receipt='/notice-test-received-'+event.step;
     if(await cached(cache,receipt)===event.testId)return;
-    await self.registration.showNotification('Plantigochi test '+event.step+' of 2',{
+    await show('Plantigochi test '+event.step+' of 2',{
       body:event.step===1?'First push · 5-second test':'Second push · 15-second test',
       icon:'/icons/icon-192.png',badge:'/leaf.svg',tag:'plantigochi-test-'+event.step,data:{action:'test'}
     });
@@ -37,7 +38,7 @@ async function notifyGarden(event) {
   async function notify(kind,title,body,identity,action) {
     const key='/notice-delivered-'+kind;
     if(await cached(cache,key)===identity)return false;
-    await self.registration.showNotification(title,{body,icon:'/icons/icon-192.png',badge:'/leaf.svg',tag:'plantigochi-'+kind,data:action==='fungus'?{action,plantId:schedule.id,episode:schedule.fungusAt}:{action}});
+    await show(title,{body,icon:'/icons/icon-192.png',badge:'/leaf.svg',tag:'plantigochi-'+kind,data:action==='fungus'?{action,plantId:schedule.id,episode:schedule.fungusAt}:{action}});
     await cache.put(key,new Response(identity));return true;
   }
   const id=schedule.id??'legacy';
@@ -70,8 +71,31 @@ async function notifyGarden(event) {
     }
   }
 }
-function queue(event,data){pending=pending.catch(()=>{}).then(()=>notifyGarden(data));event.waitUntil(pending);}
-self.addEventListener('push',event=>{let data;try{data=event.data?.json();}catch{}queue(event,data);});
+async function deliver(data,remote){
+  let shown=false, result;
+  const show=async(title,options)=>{
+    await self.registration.showNotification(title,options);
+    shown=true;
+  };
+  try{
+    result=await notifyGarden(data,show);
+  }finally{
+    // APNs requires a visible notification for every incoming push on an active subscription.
+    // A player may already have handled the care task while the reminder was in flight.
+    if(remote && !shown && result!=='disabled'){
+      const sub=await self.registration.pushManager?.getSubscription();
+      if(sub && new URL(sub.endpoint).hostname.endsWith('.push.apple.com')){
+        await show('Plantigochi garden update',{body:'Open your garden to see how your plant is doing.',
+          tag:'plantigochi-garden-update',icon:'/icons/icon-192.png'});
+      }
+    }
+  }
+}
+function queue(event,data,remote=false){
+  pending=pending.catch(()=>{}).then(()=>deliver(data,remote));
+  event.waitUntil(pending);
+}
+self.addEventListener('push',event=>{let data;try{data=event.data?.json();}catch{}queue(event,data,true);});
 self.addEventListener('message',event=>{if(event.data?.type==='milestone')queue(event,event.data);});
 function isInstalledWindow(client){
   return new Promise(resolve=>{
@@ -90,7 +114,13 @@ self.addEventListener('notificationclick',event=>{
     const candidates=windows.filter(c=>new URL(c.url).origin===self.location.origin);
     const installed=await Promise.all(candidates.map(isInstalledWindow));
     const garden=candidates.find((_,i)=>installed[i]);
-    if(garden){await garden.focus();if(action)garden.postMessage({type:'plant-care',...event.notification.data});return;}
+    if(garden){
+      try{
+        await garden.focus();
+        if(action)garden.postMessage({type:'plant-care',...event.notification.data});
+        return;
+      }catch{/* The Home Screen window may have closed since it replied. */}
+    }
     let path=['drain','water','fungus','test'].includes(action)?'/?care='+action:'/';
     if(action==='fungus')path+='&plant='+encodeURIComponent(event.notification.data.plantId)+'&episode='+event.notification.data.episode;
     return self.clients.openWindow(path);

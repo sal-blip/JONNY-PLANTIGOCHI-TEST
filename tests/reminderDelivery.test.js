@@ -194,6 +194,31 @@ test('client projection retains overdue care and fungus times, with stable event
   assert.equal(cured.fungusDue, null);
 });
 
+test('Apple reminder requests reuse their VAPID JWT and rotate before its expiry', async t => {
+  const app=await fixture(t);
+  const start=Date.now();
+  let clock=start;
+  t.mock.method(Date,'now',()=>clock);
+  async function reminder(delay){
+    clock=start+delay;
+    assert.equal((await app.put({due:clock})).status,200);
+    assert.equal(await app.tick(),1);
+    return app.sends.at(-1).init.headers.Authorization;
+  }
+  const first=await reminder(0);
+  assert.equal(await reminder(hour-1),first);
+  assert.equal(await reminder(10*hour),first);
+  assert.notEqual(await reminder(11*hour),first);
+  const match=/^vapid t=([^,]+), k=(.+)$/.exec(first);
+  const [header,claims,signature]=match[1].split('.');
+  const key=await crypto.subtle.importKey('raw',Buffer.from(match[2],'base64url'),{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
+  assert.ok(await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},key,Buffer.from(signature,'base64url'),Buffer.from(header+'.'+claims)));
+  const decoded=JSON.parse(Buffer.from(claims,'base64url'));
+  assert.equal(decoded.aud,'https://web.push.apple.com');
+  assert.equal(decoded.sub,origin);
+  assert.equal(decoded.exp,Math.floor(start/1000)+12*3600);
+});
+
 test('clearing the fungus slot preserves a different due reminder', async t => {
   const app = await fixture(t);
   const start = Date.now();
@@ -269,6 +294,7 @@ test('an enrolled owner gets one rate-limited pair of independent test pushes at
     return headers.get('Topic');
   });
   assert.notEqual(topics[0], topics[1]);
+  assert.equal(app.sends[0].init.headers.Authorization,app.sends[1].init.headers.Authorization);
   for (const [index, send] of app.sends.entries()) {
     const message = await app.readPush(send.init.body);
     assert.equal(message.type, 'test');
@@ -308,7 +334,7 @@ test('failed test pushes distinguish a provider redirect from a transport failur
   assert.deepEqual(result.reasons, ['http-307','connection']);
 });
 
-async function alertWorker() {
+async function alertWorker(subscription = null) {
   const {runInNewContext} = await import('node:vm');
   const scheduleCache = new Map();
   const displayed = [];
@@ -336,7 +362,7 @@ async function alertWorker() {
   const self = {
     indexedDB, location:new URL(origin),
     clients:{matchAll:async () => [], openWindow:async url => navigations.push(url)},
-    registration:{showNotification:async (title, options) => displayed.push({title, options})},
+    registration:{pushManager:{getSubscription:async()=>subscription},showNotification:async (title, options) => displayed.push({title, options})},
     addEventListener(name, handler) { handlers[name] = handler; },
   };
   runInNewContext(readFileSync(new URL('../public/plant-alerts.js', import.meta.url), 'utf8'), {
@@ -382,6 +408,19 @@ test('the worker displays two individually labeled test pushes, remembers each, 
   await sw.cache.put('/notice-schedule', Response.json({disabled:true}));
   await sw.push({...first, testId:nextId});
   assert.equal(sw.displayed.length, 2);
+});
+
+test('an enabled Apple subscription presents a harmless update for a stale push', async () => {
+  const sw=await alertWorker({endpoint});
+  await sw.cache.put('/notice-schedule',Response.json({id:'retired-plant'}));
+  await sw.push();
+  assert.equal(sw.displayed.length,1);
+  assert.equal(sw.displayed[0].options.tag,'plantigochi-garden-update');
+  await sw.click(sw.displayed[0]);
+  assert.deepEqual(sw.navigations,['/']);
+  await sw.cache.put('/notice-schedule',Response.json({disabled:true}));
+  await sw.push();
+  assert.equal(sw.displayed.length,1);
 });
 
 test('fungus notifies once at six hours, opens First Aid, and ignores stale schedules after a cure', async t => {

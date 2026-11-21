@@ -3,7 +3,7 @@ import { testAPI } from './testPush.js';
 const supportedEndpoint = [
   ['fcm.googleapis.com', '/'],
   ['updates.push.services.mozilla.com', '/'],
-  ['web.push.apple.com', '/'],
+  ['push.apple.com', '/'],
   ['notify.windows.com', '/'],
   ['notify.live.net', '/'],
 ];
@@ -25,13 +25,27 @@ function json(obj, status = 200) {
   return Response.json(obj, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options':'nosniff' } });
 }
 async function authorization(endpoint, env, origin, now) {
+  const audience = new URL(endpoint).origin;
+  const apple = new URL(endpoint).hostname.endsWith('.push.apple.com');
+  const scope = audience+'|'+env.PUSH_PUBLIC_KEY;
+  if (apple) {
+    const cached = await env.DB.prepare('SELECT token FROM apple_push_tokens WHERE scope=? AND refresh_at>?').bind(scope,now).first();
+    if (cached) return cached.token;
+  }
   const enc = value => base64(new TextEncoder().encode(JSON.stringify(value)));
   const header = enc({ typ: 'JWT', alg: 'ES256' });
-  const claims = enc({ aud: new URL(endpoint).origin, exp: Math.floor(now/1000) + 3600, sub: origin });
+  const claims = enc({ aud: audience, exp: Math.floor(now/1000) + (apple ? 12*3600 : 3600), sub: origin });
   const input = header + '.' + claims;
   const key = await crypto.subtle.importKey('jwk', JSON.parse(env.PUSH_PRIVATE_JWK), { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, new TextEncoder().encode(input));
-  return 'vapid t=' + input + '.' + base64(sig) + ', k=' + env.PUSH_PUBLIC_KEY;
+  const token = 'vapid t=' + input + '.' + base64(sig) + ', k=' + env.PUSH_PUBLIC_KEY;
+  if (!apple) return token;
+  // Concurrent signers may race. Return only the value selected by the database.
+  await env.DB.prepare(`INSERT INTO apple_push_tokens(scope,token,refresh_at) VALUES(?,?,?)
+      ON CONFLICT(scope) DO UPDATE SET token=excluded.token,refresh_at=excluded.refresh_at
+      WHERE apple_push_tokens.refresh_at<=?`).bind(scope,token,now+11*HOUR,now).run();
+  const current = await env.DB.prepare('SELECT token FROM apple_push_tokens WHERE scope=?').bind(scope).first();
+  return current.token;
 }
 
 // A tick accepts no recipients, messages or times. A player authorizes one reminder

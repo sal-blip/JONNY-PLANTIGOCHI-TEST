@@ -7,6 +7,12 @@ import {alertKey as KEY,withReminderLock} from './alertCleanup.js';
 function device(){try{return JSON.parse(localStorage.getItem(KEY))||{};}catch{return {};}}
 function persist(d){localStorage.setItem(KEY,JSON.stringify(d));}
 function supported(){return window.isSecureContext && typeof window.Notification?.requestPermission==='function' && 'PushManager' in window && 'serviceWorker' in navigator;}
+async function subscriptionKey(){
+  const response=await fetch('/api/alerts/key',{cache:'no-store'});
+  if(!response.ok)throw Error('Push service unavailable');
+  const {publicKey}=await response.json();
+  return Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
+}
 async function api(method,token,body){
   const res=await fetch('/api/alerts/reminder',{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
   if(!res.ok)throw Error('Reminder sync failed');
@@ -20,11 +26,22 @@ export function usePlantAlerts(plant,offline,epoch){
   const lock=useRef(false),work=useRef(Promise.resolve()),last=useRef(plant);
   const capable=supported(),denied=capable && Notification.permission==='denied';
   const optedIn=Boolean(capable && settings.enabled && settings.token && Notification.permission==='granted');
+  const apple=capable && (navigator.vendor==='Apple Computer, Inc.' || /iPhone|iPad|iPod/.test(navigator.userAgent));
+  const [appleSetup,setAppleSetup]=useState(null);
   const schedule=plant?JSON.stringify(reminderSchedule(plant,settings.company===true)):null;
   const enrolled=optedIn;
   const enabled=Boolean(enrolled && verified?.token===settings.token && verified?.schedule===schedule);
 
 
+  // Safari needs subscribe() in the tap handler, before any asynchronous work.
+  useEffect(()=>{
+    if(!apple || appleSetup || optedIn || denied || offline!=='ready' || !navigator.onLine)return;
+    let active=true;
+    Promise.all([navigator.serviceWorker.ready,subscriptionKey()]).then(([reg,key])=>{
+      if(active){setAppleSetup({manager:reg.pushManager,key});setNotice('');}
+    }).catch(()=>{if(active)setNotice('Could not connect to plant alerts. We’ll retry automatically.');});
+    return ()=>{active=false;};
+  },[apple,appleSetup,optedIn,denied,offline,retry]);
   const refresh=useCallback(()=>{setSettings(device());bump(n=>n+1);},[]);
   useEffect(()=>{
     const visible=()=>{if(!document.hidden)refresh();};
@@ -95,7 +112,12 @@ export function usePlantAlerts(plant,offline,epoch){
     lock.current=true;setBusy(true);setNotice('');
     try{
       if(turnOn && !navigator.onLine)throw Error('Offline');
-      if(turnOn && Notification.permission!=='granted'){
+      let appleSubscription;
+      if(turnOn && apple){
+        if(denied)return 'denied';
+        if(!appleSetup)return 'unavailable';
+        appleSubscription=await appleSetup.manager.subscribe({userVisibleOnly:true,applicationServerKey:appleSetup.key});
+      }else if(turnOn && Notification.permission!=='granted'){
         const answer=Notification.permission==='denied'?'denied':await Notification.requestPermission();
         if(answer!=='granted'){
           setNotice(answer==='denied'?'Allow notifications in your device settings to enable plant alerts.':'You can enable plant alerts later.');
@@ -103,9 +125,12 @@ export function usePlantAlerts(plant,offline,epoch){
         }
       }
       return await withReminderLock(async()=>{
-        if(!await mayChangeAlerts(epoch,plant?.id))return 'stale';
+        if(!await mayChangeAlerts(epoch,plant?.id)){
+          if(appleSubscription && !device().enabled)await appleSubscription.unsubscribe();
+          return 'stale';
+        }
         const d=device(),reg=await navigator.serviceWorker.ready;
-        const sub=await reg.pushManager.getSubscription();
+        const sub=appleSubscription || await reg.pushManager.getSubscription();
         if(!turnOn){
           const off={...d,enabled:false,pendingDelete:true};persist(off);setSettings(off);setVerified(null);
           const cache=await caches.open('plantigochi-notices');await cache.put('/notice-schedule',Response.json({disabled:true}));
@@ -113,15 +138,20 @@ export function usePlantAlerts(plant,offline,epoch){
           return 'disabled';
         }
         if(!sub){
-          const res=await fetch('/api/alerts/key',{cache:'no-store'});if(!res.ok)throw Error();
-          const {publicKey}=await res.json();const key=Uint8Array.from(atob(publicKey.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
-          await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
+          await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:await subscriptionKey()});
         }
         const token=d.token || Array.from(crypto.getRandomValues(new Uint8Array(32)),n=>n.toString(16).padStart(2,'0')).join('');
         const next={...d,enabled:true,token,pendingDelete:false};
         persist(next);setVerified(null);setSettings(next);return 'enabled';
       });
-    }catch{setNotice('Could not update alerts. Try again when online.');return 'failed';}
+    }catch(error){
+      if(turnOn && error.name==='NotAllowedError' && Notification.permission!=='granted'){
+        const blocked=Notification.permission==='denied';
+        setNotice(blocked?'Allow Plantigochi notifications in your device settings.':'You can enable plant alerts later.');
+        return blocked?'denied':'dismissed';
+      }
+      setNotice('Could not update alerts. Try again when online.');return 'failed';
+    }
     finally{lock.current=false;setBusy(false);}
   }
   useEffect(()=>{
@@ -131,5 +161,5 @@ export function usePlantAlerts(plant,offline,epoch){
   },[plant,enrolled]);
   const toggleCompany=()=>{try{const d=device();if(!d.enabled || d.token!==settings.token)return;const next={...d,company:!d.company};persist(next);setSettings(next);}catch{setNotice('Could not save the company reminder setting.');}};
   return {enabled,enrolled,nextDue,busy,notice,toggle:()=>changeEnabled(!enrolled),enable:()=>changeEnabled(true),capable,denied,
-    canEnable:offline==='ready' && navigator.onLine,company:!!settings.company,toggleCompany};
+    canEnable:offline==='ready' && navigator.onLine && (!apple || Boolean(appleSetup)),company:!!settings.company,toggleCompany};
 }
