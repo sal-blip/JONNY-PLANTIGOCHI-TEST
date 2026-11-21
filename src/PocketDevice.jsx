@@ -300,7 +300,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   return <>{lesson && <aside className="water-lesson" aria-live="polite">
       <strong>{lesson==='watered'?'First drink saved':'A first drink for '+plant.name}</strong>
       {lesson==='watered'?<><p>{plant.stage==='seed'?'Your seed sprouts when it is an hour old.':'Your seed has sprouted.'}</p>
-        <p>You have {lifeOf(plant).balance} Garden Coins. Find your first pot in Garden → Shop.</p>
+        <p>You have {lifeOf(plant).balance} Garden Coins. Press the seed Home button, then open Shop for your first pot.</p>
         <button ref={lessonDone} className="lesson-done" onClick={finishLesson}>Meet my plant</button></>:
         <p>{!section?'Press the heart to open your toy menu.':section==='home'?'Press the heart to choose Care.':'Press the heart to choose Water.'}</p>}
     </aside>}<div className={'inspect-view'+(near?' close-up':'')}>

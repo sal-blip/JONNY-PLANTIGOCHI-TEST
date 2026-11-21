@@ -46,6 +46,18 @@
   height: auto;
   aspect-ratio: 1;
   pointer-events: auto;
+  border: 0;
+  background: transparent url('/art/toy-keycaps.png') var(--cap-position, 0%) center / 400% 100% no-repeat;
+  image-rendering: pixelated;
+}
+
+/* The baked cap includes the engraved symbol. Keep focus and touch on the button. */
+.device .toy-keys button:not(.teaching-heart) {
+  box-shadow: none;
+}
+
+.device .toy-keys svg {
+  visibility: hidden;
 }
 
 .device .toy-keys button::before {
@@ -69,16 +81,17 @@
 
 .device .toy-keys button:nth-child(2) {
   --key-x: 45.5%;
+  --cap-position: 33.333333%;
 }
 
 .device .toy-keys .toy-heart {
   --key-x: 55.5%;
   --key-size: 6.15%;
-  color: #4c6949;
-  background: linear-gradient(135deg, #e6eecb, #b3c995 76%, #93b282);
+  --cap-position: 66.666667%;
 }
 
 .device .toy-keys button:nth-child(4) {
   --key-x: 65.5%;
+  --cap-position: 100%;
   --key-y: 76.460177%;
 }

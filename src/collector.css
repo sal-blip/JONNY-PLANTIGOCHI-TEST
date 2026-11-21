@@ -1,8 +1,9 @@
 .garden{overflow:clip}
-.room-track,.pocket-floor,.room-floor,.collector,.room-picture{position:absolute;inset:0}
-.room-track{transform:translate3d(0,0,0)}
+.garden-room-layer,.handset-layer,.pocket-floor,.collector,.room-picture{position:absolute;inset:0}
+.garden-room-layer{z-index:0}
+.handset-layer{z-index:1;isolation:isolate}
+.handset-layer.previewing-photo{transform:translate3d(0,0,0)!important}
 .pocket-floor{overflow:clip;touch-action:pinch-zoom}
-.room-floor{top:100%;bottom:auto;height:100%}
 .garden-pull,.save-warning{position:absolute;left:50%;transform:translateX(-50%);z-index:2;border:0;color:white;background:#24352fbb;font:600 14px/1.3 var(--display);padding:9px 16px;border-radius:20px}
 .garden-pull{bottom:max(18px,calc(env(safe-area-inset-bottom) + 6px));min-width:82px;min-height:44px;display:grid;place-content:center;justify-items:center;gap:4px;touch-action:none}
 .garden-pull i{width:24px;height:3px;border-radius:3px;background:#f2f4def0}
@@ -66,3 +67,13 @@
 .placement-actions button:disabled{opacity:.32}
 
 .keepsake-details{text-align:center;color:var(--ink)}.keepsake-details p{margin:.5rem 0 1rem}.keepsake-print{width:80px;height:70px;margin:auto;color:#496650}.keepsake-print svg{width:100%;height:100%}.leaf-pages{display:flex;justify-content:center;align-items:center;gap:1rem}.leaf-pages button{border:0;background:transparent;text-decoration:underline;min-height:40px;color:inherit}
+
+.room-corner.room-phone-pickup {
+  display:flex;
+  gap:6px;
+  width:auto;
+  padding:0 12px;
+  border-radius:22px;
+  font:650 13px/1 var(--display);
+}
+.room-phone-pickup svg {width:17px;height:17px}

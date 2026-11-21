@@ -19,7 +19,9 @@ import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
 import {checkIn,itemsFromClosingRooms,lifeOf,localDay,milestone} from './gardenEconomy.js';
 import Collector from './Collector.jsx';
-import {useGardenPassage} from './useGardenPassage.js';
+import {useHandsetPassage} from './useHandsetPassage.js';
+import ISeedPhone,{ISeedHome} from './ISeedPhone.jsx';
+import {useGardenPhoneApps} from './GardenPhoneApps.jsx';
 import './collector.css';
 
 const titles = {menu:'Plantigochi menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',test:'Test notifications'};
@@ -95,14 +97,16 @@ function InstalledSession({phone,storage,careMessage,alertVisitId}){
   }else{
     screen=<GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}/>;
   }
-  return <OnboardingTransition scene={scene}>{screen}</OnboardingTransition>;
+  const setupScreen=phase==='tour' || phase==='welcome' || phase==='name' || Boolean(offer);
+  return <OnboardingTransition scene={scene}>{setupScreen?
+    <div className="garden setup-handset"><ISeedPhone page="plantigochi" title="Plantigochi" locked pocket={screen}/></div>:screen}</OnboardingTransition>;
 }
 function GardenApp({storage,phone,careMessage,alerts}) {
   const {plant,current,commit,replace,issue}=storage;
   const saveOK=!issue;
   const lesson=storage.phase==='water' || storage.phase==='watered' ? storage.phase : null;
-  const passage=useGardenPassage();
-  const {room,reset:resetPassage}=passage;
+  const roomRef=useRef(null);
+  const [app,setApp]=useState('plantigochi');
   const [careTarget,setCareTarget]=useState(null);
   const [now, setNow] = useState(Date.now);
   const [page, setPage] = useState(null);
@@ -110,13 +114,19 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   const openDebug=useCallback(()=>setPage('debug'),[]);
   const [sharing, setSharing] = useState(false);
   const [intro, setIntro] = useState(false);
-  const tilt = useGardenTilt(intro || page !== null || room!==null);
+  const passage=useHandsetPassage({blocked:Boolean(lesson || intro || page || sharing)});
+  const {raised,transitioning,resetRaised}=passage;
+  const roomActive=!raised && !transitioning;
+  const toyActive=raised && !transitioning && app==='plantigochi' && !intro && !page && !sharing;
+  const tilt = useGardenTilt(!toyActive);
   const [leafReady, setLeafReady] = useState(false);
   const menuButton = useRef(null), shareButton = useRef(null), restoreFocus = useRef(null);
   const [playingRecordId,setPlayingRecordId]=useState(null);
+  const recordActive=!raised || app!=='plantigochi';
+  const apps=useGardenPhoneApps({page:app,open:setApp,plant,commit,roomRef,raised,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement});
   useEffect(()=>{
-    if(!passage.inside || !plant.sound || !lifeOf(plant).items.some(i=>i.id===playingRecordId && i.sku==='record' && i.slot!==null))setPlayingRecordId(null);
-  },[passage.inside,plant.sound,lifeOf(plant).items,playingRecordId]);
+    if(!recordActive || !plant.sound || !lifeOf(plant).items.some(i=>i.id===playingRecordId && i.sku==='record' && i.slot!==null))setPlayingRecordId(null);
+  },[recordActive,plant.sound,lifeOf(plant).items,playingRecordId]);
   const [coinsMessage,setCoinsMessage]=useState('');
   const day=localDay(now);
   useEffect(()=>{
@@ -146,7 +156,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   },[commit,current]);
   useEffect(()=>{
     function rescue(action,plantId,episode,lastDrink) {
-      if(action==='test'){resetPassage();setPage('test');return;}
+      if(action==='test'){roomRef.current?.reset();resetRaised();setApp('plantigochi');setPage('test');return;}
       const time=Date.now(), p=wake(current.current,time);
       if(action==='water'){
         const soil=condition(p,time);
@@ -155,7 +165,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       }else if(action==='drain'){
         if(p.deadAt!==null || p.rotAt===null)return;
       }else if(action!=='fungus')return;
-      setIntro(false);setPage(null);resetPassage();setCareTarget({action,stale:action==='fungus' && (p.id!==plantId || p.fungusAt!==episode || p.deadAt!==null),seq:Date.now()});
+      setIntro(false);setPage(null);roomRef.current?.reset();resetRaised();setApp('plantigochi');setCareTarget({action,stale:action==='fungus' && (p.id!==plantId || p.fungusAt!==episode || p.deadAt!==null),seq:Date.now()});
     }
     const url=new URL(location.href);
     const action=careMessage?.action ?? url.searchParams.get('care');
@@ -164,7 +174,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     const lastDrink=careMessage ? careMessage.lastDrink : url.searchParams.has('drink') ? Number(url.searchParams.get('drink')) : null;
     if(url.searchParams.has('care')){for(const k of ['care','plant','episode','drink'])url.searchParams.delete(k);history.replaceState(null,'',url);}
     if(action)rescue(action,plantId,episode,lastDrink);
-  },[current,careMessage,resetPassage]);
+  },[current,careMessage,resetRaised]);
 
   useEffect(() => {
     if (!intro || leafReady) return;
@@ -247,25 +257,28 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     setNow(Date.now());
     return replace(backup);
   }
-  const showGlobalMenu=!lesson && !intro && !page && !sharing && (room===null || (passage.inside && !roomOverlayOpen));
-  // The room keeps its panorama and selected spot while the editor shows the pocket backdrop.
-  const previewPocket=page==='photo' && passage.inside;
+  function beginPlacement(request){
+    if(!roomRef.current?.beginPlacement(request))return false;
+    passage.lower();return true;
+  }
+  function enterGraduation(){
+    if(roomRef.current?.beginGraduation(plant.id))passage.lower();
+  }
+  function enterBook(){
+    if(roomRef.current?.showBook())passage.lower();
+  }
+  const showGlobalMenu=!lesson && !intro && !page && !sharing && !transitioning && (raised || !roomOverlayOpen);
+  const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
+    hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
   const introAudible = plant.sound && running;
   const parent = page === 'test' ? 'debug' : (page === 'reset' || page === 'debug') ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
-  return <main ref={tilt.garden} className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
-    const button = event.target.closest?.('button');
-    if (plant.sound && button && !button.disabled && !button.dataset.audio) void play('tap');
-  }}>
-    <div className="room-track" ref={passage.track} style={previewPocket?{translate:'0 100%'}:undefined} onPointerMove={passage.drag}
-      onPointerUp={e=>passage.release(e)} onPointerCancel={e=>passage.release(e,true)} onLostPointerCapture={e=>{if(e.target===e.currentTarget)passage.release(e,true);}}>
-    <div className="pocket-floor" inert={room!==null?'':undefined} aria-hidden={room!==null||undefined}
-      onPointerDown={!lesson && !intro && !page && !sharing?passage.start:undefined}>
+  const pocket=<div className="pocket-floor" data-handset-pull="">
     <div key={photo ? 'photo' : scene} ref={scenery} className="scenery" style={photo ? undefined : {backgroundImage:'url(/scenes/' + scene + '.webp)'}} aria-hidden="true">
       {photo && <img className="custom-photo" src={photo.src} style={photoStyle(photo)} alt="" draggable="false"/>}
     </div>
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
-      <PocketDevice lesson={lesson} finishLesson={()=>storage.setup('game')} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={()=>passage.enter(plant.id)} openBook={()=>passage.enter(null,'book')} resting={!intro && !page && !sharing && room===null} commit={commit} sound={play}/>
+      <PocketDevice lesson={lesson} finishLesson={()=>storage.setup('game')} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={enterGraduation} openBook={enterBook} resting={toyActive} commit={commit} sound={play}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo' || !!lesson} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
@@ -276,14 +289,22 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
       <small className="garden-credit">© 2026 Waz Lab</small>
     </div>
-    {coinsMessage && !room && !page && <div className="coin-toast" role="status">{coinsMessage}</div>}
-    {!lesson && !intro && !page && <button className="garden-pull" ref={passage.handle}
-      aria-label="Open garden" onClick={passage.activate}><i aria-hidden="true"/>Garden</button>}
-    </div>
-    <div className="room-floor" inert={!passage.inside?'':undefined} aria-hidden={!passage.inside||undefined}>
-    {room!==null && <Collector playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={passage.inside} plant={plant} moving={room.moving} initialPanel={room.panel} commit={commit} now={now}
-      move={async slot=>{const id=room.moving;const ok=await commit(p=>graduate(p,id,slot,Date.now()));
-        return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
+    {coinsMessage && toyActive && <div className="coin-toast" role="status">{coinsMessage}</div>}
+    {!lesson && !intro && !page && <button className="garden-pull"
+      aria-label="Open garden" onClick={passage.lower}><i aria-hidden="true"/>Garden</button>}
+  </div>;
+  return <main ref={tilt.garden} data-handset-position={transitioning?'moving':raised?'raised':'lowered'}
+    className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')}
+    aria-label="Plantigochi pocket garden" onClickCapture={event=>{
+      const button=event.target.closest?.('button');
+      if(plant.sound && button && !button.disabled && !button.dataset.audio)void play('tap');
+    }}>
+    <div className="garden-room-layer" inert={!roomActive?'':undefined} aria-hidden={!roomActive || undefined}>
+      <Collector ref={roomRef} playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} recordActive={recordActive}
+        onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={roomActive} plant={plant} commit={commit} now={now}
+        raisePhone={passage.raise} onPlacementCancel={passage.raise}
+        move={async(slot,id)=>{const ok=await commit(p=>graduate(p,id,slot,Date.now()));
+          return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
       relocate={async (id,from,to)=>{
         let moved=false,storedCount=0;
         const saved=await commit(p=>{
@@ -295,15 +316,16 @@ function GardenApp({storage,phone,careMessage,alerts}) {
         const ok=saved && moved && current.current?.graduates.some(g=>g.id===id && g.slot===to);
         return {ok:Boolean(ok),storedCount:ok?storedCount:0};
       }}
-      startClose={passage.leave} purr={()=>{if(plant.sound)play('purr');}}/>}
-    </div></div>
-    <div className="garden-corners global-menu-corner" hidden={!showGlobalMenu}>
-      <div className="garden-actions">
-        <button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu"
-          aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}>
-          <Waves aria-hidden="true"/>
-        </button>
-      </div>
+        purr={()=>{if(plant.sound)play('purr');}}/>
+      {!raised && <div className="garden-corners global-menu-corner" hidden={!showGlobalMenu}><div className="garden-actions">{menuTrigger}</div></div>}
+    </div>
+    <div className={'handset-layer'+(page==='photo'?' previewing-photo':'')} ref={passage.phoneRef} {...passage.gestureProps}
+      inert={!raised || transitioning?'':undefined} aria-hidden={!raised || undefined}>
+      <ISeedPhone page={page==='photo'?'plantigochi':app} title={app==='plantigochi'?'Plantigochi':app==='phone'?'iSEED':apps.title}
+        home={()=>setApp('phone')} back={apps.back} lower={passage.lower} locked={Boolean(lesson || page || intro || sharing || apps.busy)}
+        corner={raised?menuTrigger:null} pocket={pocket}>
+        {app==='phone'?<ISeedHome plant={plant} open={apps.openApp} busy={apps.busy}/>:apps.content}
+      </ISeedPhone>
     </div>
     {!saveOK && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>

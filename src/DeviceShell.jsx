@@ -2,10 +2,22 @@ import React, { useEffect, useId, useRef } from 'react';
 import { EYELET, LINK, RING, dragChain, flickChain, gripChain, outsideLeafPath, partPose, projectedGravity, releaseChain, restingChain, stepChain } from './chainMotion.js';
 import './DeviceShell.css';
 
-const artwork = '/art/device.svg';
+// Each atlas region maps back to the original 600 × 565 moulding coordinates.
+const moulding = {
+  'case-surface': { x: 0, y: 0, width: 600, height: 565, crop: '0 0 360 339' },
+  'case-detail': { x: 0, y: 0, width: 600, height: 565, crop: '0 339 360 339' },
+  'silver-ring': { x: 96, y: 18, width: 100, height: 98, crop: '0 680 65 64' },
+  chainLink: { x: -10, y: -20, width: 20, height: 40, crop: '67 681 14 28' },
+  'eyelet-pin': { x: 200, y: 137, width: 18, height: 14, crop: '83 682 12 10' },
+};
 
-function Part({ name, ...props }) {
-  return <use href={`${artwork}#${name}`} {...props} />;
+function MaterialPart({ name, transform }) {
+  const { crop, ...bounds } = moulding[name];
+  return <g transform={transform}>
+    <svg {...bounds} viewBox={crop} preserveAspectRatio="none" overflow="hidden">
+      <image href="/art/toy-moulding.png" width="360" height="744" className="toy-material"/>
+    </svg>
+  </g>;
 }
 
 const indices=Array.from({length:RING},(_,i)=>i+1);
@@ -20,10 +32,10 @@ function HardwareParts({layer, hits=false}) {
       {i===RING ?
         <g transform="scale(.76 .75) rotate(-31)">
           {hits ? <ellipse className="chain-grab ring-grab" data-grab={i} rx="44" ry="37" strokeWidth="13"/> :
-            <g transform="rotate(31) translate(-146 -67)"><Part name="silver-ring"/></g>}
+            <g transform="rotate(31) translate(-146 -67)"><MaterialPart name="silver-ring"/></g>}
         </g> :
         hits ? <path className="chain-grab" data-grab={i} d={`M0 ${-LINK/2}v${LINK}`} strokeWidth="12" /> :
-          <Part name="chainLink" transform={`scale(${i%2 ? .8 : .49} ${(LINK+6.5)/30})`}/>}
+          <MaterialPart name="chainLink" transform={`scale(${i%2 ? .8 : .49} ${(LINK+6.5)/30})`}/>}
     </g>;
   })}</g>;
 }
@@ -143,7 +155,7 @@ export default function DeviceShell() {
     <svg className="shell device-shell" viewBox="0 0 600 565"
       aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <clipPath id={`${id}-leaf`}><Part name="leaf" /></clipPath>
+        <clipPath id={`${id}-leaf`}><use href="/art/device.svg#leaf"/></clipPath>
         <radialGradient id={`${id}-pearl`}>
           <stop stopColor="#ffffdc" stopOpacity=".53" />
           <stop offset=".38" stopColor="#f5f7cb" stopOpacity=".31" />
@@ -162,7 +174,7 @@ export default function DeviceShell() {
         </linearGradient>
       </defs>
       <HardwareParts layer="back"/>
-      <Part name="case-surface" />
+      <MaterialPart name="case-surface" />
       <g clipPath={ref('leaf')}>
         <g className="device-shell-light">
           <ellipse cx="184" cy="167" rx="141" ry="95" fill={ref('pearl')} />
@@ -176,13 +188,13 @@ export default function DeviceShell() {
         <path d="M125 189 Q145 159 179 145 M188 142 Q201 137 212 138 M324 126 Q335 121 348 122 M91 279 Q95 296 106 309"
           fill="none" stroke={ref('relief')} strokeWidth="2.7" strokeLinecap="round" opacity=".72" />
       </g>
-      <Part name="case-detail" />
+      <MaterialPart name="case-detail" />
     </svg>
     <svg className="device-chain-front" ref={frontRef} viewBox="0 0 600 565"
       xmlns="http://www.w3.org/2000/svg" aria-label="Plantigochi keychain">
       <defs><clipPath id={`${id}-outside`}><path d={outsideLeafPath} clipRule="evenodd" /></clipPath></defs>
       <HardwareParts layer="front"/>
-      <Part name="eyelet-pin" />
+      <MaterialPart name="eyelet-pin" />
       <g clipPath={ref('outside')} aria-hidden="true"><HardwareParts layer="back" hits/></g>
       <g aria-hidden="true"><HardwareParts layer="front" hits/></g>
       <circle className="chain-eyelet" data-retrieve="" cx={EYELET.x} cy={EYELET.y} r="9"

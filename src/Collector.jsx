@@ -1,8 +1,6 @@
-import React,{useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import {ChevronDown,ChevronLeft,ChevronRight} from 'lucide-react';
-import GardenShop,{ShopItemDetail} from './GardenShop.jsx';
-import ISeedPhone,{ISeedHome} from './ISeedPhone.jsx';
-import GardenJournal from './GardenJournal.jsx';
+import React,{forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useMemo,useRef,useState} from 'react';
+import {ChevronLeft,ChevronRight,Smartphone,X} from 'lucide-react';
+import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces,prepareRoomPhotos} from './roomShopArt.js';
 import {catalog,lifeOf,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackup} from './gardenEconomy.js';
@@ -14,8 +12,6 @@ import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,roomLight} from './roomArt.js'
 import {drawPottedPlant} from './roomPlant.js';
 import {gardenViews,slotFor,viewForSlot,canPlaceAt,speciesName,viewName} from './gardenLayout.js';
 import RoomView from './RoomView.jsx';
-import {downloadFile} from './Recovery.jsx';
-import GameLink from './GameLink.jsx';
 
 const clamp=(v,max)=>Math.min(max,Math.max(0,v));
 function placeName(slot){
@@ -35,18 +31,18 @@ function firstVacantRoom(plants){
   return 0;
 }
 
-export default function Collector({active,plant,moving,initialPanel,commit,now,move,relocate,startClose,purr,playingRecordId,onSelectRecord,onOverlayChange,globalMenuOpen}) {
+const Collector=forwardRef(function Collector({active,recordActive=active,plant,commit,now,move,relocate,raisePhone,purr,
+  playingRecordId,onSelectRecord,onOverlayChange,globalMenuOpen,onPlacementCancel,onPlacementDone},ref) {
   const graduates=plant.graduates;
   const count=gardenViews(graduates);
-  const [room,setRoom]=useState(()=>moving?firstVacantRoom(graduates):0);
+  const [room,setRoom]=useState(0);
   const page=clamp(room,count-1);
   const [slot,setSlot]=useState(null),[notice,setNotice]=useState('');
-  const [carry,setCarry]=useState(null),[busy,setBusy]=useState(false),[postcard,setPostcard]=useState(null);
-  const [panel,setPanel]=useState(initialPanel || null),[ghost,setGhost]=useState(null),[cat,setCat]=useState(false);
+  const [carry,setCarry]=useState(null),[busy,setBusy]=useState(false),[graduating,setGraduating]=useState(null);
+  const [panel,setPanel]=useState(null),[ghost,setGhost]=useState(null),[cat,setCat]=useState(false);
   const items=lifeOf(plant).items;
   const [shopMove,setShopMove]=useState(null),[preview,setPreview]=useState(null),[itemId,setItemId]=useState(null);
-  const [journalTab,setJournalTab]=useState('toy');
-  const itemOrigin=useRef('inventory'),roomOpener=useRef(null),placeButton=useRef(null),handset=useRef(null);
+  const phonePlacement=useRef(null),roomOpener=useRef(null),placeButton=useRef(null);
   const item=items.find(i=>i.id===itemId);
   const itemPlant=item?.slot!=null && catalog[item.sku].kind==='pot'?graduates.find(p=>p.slot===item.slot):null;
   const [dropOver,setDropOver]=useState(null);
@@ -56,12 +52,13 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
   const [worldHeight,setWorldHeight]=useState(ROOM_HEIGHT);
   const lens=useRef(null),zoomTimer=useRef(null),petNumber=useRef(0);
   const [visible,setVisible]=useState([page,page]);
-  const mounted=useRef(false),pending=useRef(false),postcardJob=useRef(0);
+  const mounted=useRef(false),pending=useRef(false),canFocus=useRef(false);
   const collection=useMemo(()=>new Map(graduates.map(p=>[p.slot,p])),[graduates]);
-  const picking=moving===plant.id && plant.stage==='grown' && plant.fungusAt==null && plant.deadAt===null;
+  const picking=graduating===plant.id && plant.stage==='grown' && plant.fungusAt==null && plant.deadAt===null;
   const source=carry && collection.get(carry.from)?.id===carry.id?collection.get(carry.from):null;
   const inHand=carry?.confirmed && source;
   const placing=Boolean(inHand) || picking || Boolean(shopMove);
+  canFocus.current=active && !globalMenuOpen && !panel;
   const sceneItems=useMemo(()=>{
     if(!shopMove || !preview || catalog[shopMove.sku].kind==='plant')return items;
     const others=items.filter(i=>i.id!==shopMove.id).map(i=>i.slot===preview.slot?{...i,slot:shopMove.from??null}:i);
@@ -90,7 +87,6 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       setNotice('This plant has moved. Select it again.');
     }
   },[carry,source,busy]);
-  useEffect(()=>()=>{if(postcard?.url)URL.revokeObjectURL(postcard.url);},[postcard]);
   useEffect(()=>{
     if(!ghostCanvas.current || !inHand)return;
     const ctx=ghostCanvas.current.getContext('2d');
@@ -128,11 +124,20 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
     const observer=new ResizeObserver(size);observer.observe(el);
     return ()=>observer.disconnect();
   },[count]);
-  useEffect(()=>{if(active && !initialPanel)roomReturn.current?.focus({preventScroll:true});},[active]);
+  useEffect(()=>{
+    if(!active || globalMenuOpen){
+      gesture.current=null;clearEdge();setGhost(null);setDropOver(null);relax();
+    }
+  },[active,globalMenuOpen]);
+  useEffect(()=>{
+    if(active && !globalMenuOpen){
+      if(placing)focusDestination();else restoreFocus();
+    }
+  },[active]);
   useLayoutEffect(()=>{
-    onOverlayChange?.(Boolean(panel || busy));
+    onOverlayChange?.(Boolean(active && (panel || busy)));
     return ()=>onOverlayChange?.(false);
-  },[panel,busy,onOverlayChange]);
+  },[active,panel,busy,onOverlayChange]);
   function relax(){
     clearTimeout(zoomTimer.current);
     const el=lens.current;
@@ -163,7 +168,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
   }
   function openPhone(){
     if(placing || pending.current)return;
-    setNotice('');setSlot(null);relax();setPanel('phone');
+    setNotice('');relax();raisePhone?.();
   }
   async function useKeepsake(kind,value){
     if(pending.current)return;
@@ -178,7 +183,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       });
       if(!mounted.current)return;
       if(!ok || !changed)setNotice('Your garden changed or could not save. Check the plant and try again.');
-      else if(kind==='replant'){setPanel(null);startClose();}
+      else if(kind==='replant'){setPanel(null);raisePhone?.();}
     }finally{pending.current=false;if(mounted.current)setBusy(false);}
   }
   async function change(operation){
@@ -196,48 +201,53 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       return ok && changed;
     }finally{pending.current=false;if(mounted.current)setBusy(false);}
   }
-  function inspectItem(i,fromRoom=false){
+  function inspectItem(i){
     if(pending.current || placing)return;
-    itemOrigin.current=fromRoom?'room':'inventory';
     setItemId(i.id);setNotice('');setPanel('item');relax();
   }
-  function openPhoneApp(app){
-    if(busy)return;
-    if(app==='postcard'){void prepare();return;}
-    setPostcard(null);
-    if(app==='journal')setJournalTab('toy');
-    setNotice('');setPanel(app);
-  }
-  function openJournalTab(tab){
-    if(tab!=='library')setJournalTab(tab);
-    setPanel(tab==='library'?'library':'journal');
-  }
-  function backFromPanel(){
-    setNotice('');setPostcard(null);
-    if(panel==='item'){
-      if(itemOrigin.current==='room'){closePanel();return;}
-      setPanel('inventory');
-    }else setPanel('phone');
-  }
-  function startPlacement(request){
+  function startPlacement(request,fromPhone=false){
+    const product=catalog[request?.sku];
+    if(!product || pending.current || phonePlacement.current || shopMove || carry || picking)return false;
     const hasSpace=Array.from({length:count},(_,view)=>view).some(view=>{
-      const addresses=['frame','decor'].includes(catalog[request.sku].kind)?decorPlaces(view).map(s=>s.slot):placesFor(view).map(s=>slotFor(view,s));
+      const addresses=['frame','decor'].includes(product.kind)?decorPlaces(view).map(s=>s.slot):placesFor(view).map(s=>slotFor(view,s));
       return addresses.some(s=>canSetItem(plant,request.sku,s,request.from));
     });
-    if(!hasSpace){setNotice('Every suitable spot is occupied. Put an item in inventory to make room.');return;}
-    function begin(){
-      setShopMove({...request,returnTo:request.buy?'shop':itemOrigin.current==='room'?'room':'item'});
-      setPreview(null);setSlot(null);setPanel(null);setNotice('');relax();
-      focusDestination();
-    }
-    if(handset.current)handset.current.dismiss(begin);else begin();
+    if(!hasSpace){setNotice('Every suitable spot is occupied. Put an item in inventory to make room.');return false;}
+    phonePlacement.current=fromPhone?request:null;
+    setShopMove(request);setPreview(null);setSlot(null);setPanel(null);setNotice('');relax();
+    focusDestination();
+    return true;
   }
   function cancelShop(){
     if(!shopMove || pending.current)return;
+    const request=phonePlacement.current;
+    phonePlacement.current=null;
     setShopMove(null);setPreview(null);setSlot(null);setNotice('');
-    if(shopMove.returnTo==='room'){setPanel(null);focusSlot(shopMove.from,shopMove.id);}
-    else setPanel(shopMove.returnTo);
+    if(request)onPlacementCancel?.(request);else focusSlot(shopMove.from,shopMove.id);
   }
+  function beginGraduation(id){
+    if(id!==plant.id || plant.stage!=='grown' || plant.deadAt!==null || plant.fungusAt!=null || pending.current || shopMove || phonePlacement.current || carry)return false;
+    if(!placesFor(page).some(spot=>!collection.has(slotFor(page,spot))))travel(firstVacantRoom(graduates));
+    setGraduating(id);setPanel(null);setPreview(null);setSlot(null);setNotice('');relax();
+    focusDestination();
+    return true;
+  }
+  function cancelPlacement(){
+    if(pending.current)return;
+    if(shopMove){cancelShop();return;}
+    if(picking){setGraduating(null);setSlot(null);setNotice('');raisePhone?.();return;}
+    cancelCarry();
+  }
+  function reset(){
+    phonePlacement.current=null;gesture.current=null;clearEdge();clearTimeout(catTimer.current);relax();
+    setPanel(null);setItemId(null);setShopMove(null);setPreview(null);setGraduating(null);setCarry(null);
+    setSlot(null);setNotice('');setCat(false);setDropOver(null);setGhost(null);
+  }
+  useImperativeHandle(ref,()=>({
+    beginPlacement:request=>startPlacement(request,true),beginGraduation,
+    showBook:()=>{if(pending.current || placing)return false;openKeepsake('book');return true;},
+    preparePostcard,reset,
+  }));
   async function finishPlacement(){
     if(!preview || !shopMove)return;
     const ok=await change(p=>placeItem(p,{...shopMove,...preview},Date.now()));
@@ -245,18 +255,21 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       setShopMove(null);setPreview(null);setSlot(null);
       focusSlot(preview.slot,shopMove.id);
       setNotice(catalog[shopMove.sku].name+' placed at '+placeName(preview.slot).toLowerCase()+'.');
+      const request=phonePlacement.current;phonePlacement.current=null;
+      if(request)onPlacementDone?.(request);
     }else setPreview(null);
   }
-  function closePanel(){
-    postcardJob.current++;
-    setPanel(null);setPostcard(null);
+  function restoreFocus(){
     requestAnimationFrame(()=>{
+      if(!canFocus.current)return;
       const opener=roomOpener.current;
       (opener?.isConnected && !opener.disabled && !opener.closest('[inert]')?opener:roomReturn.current)?.focus({preventScroll:true});
     });
   }
+  function closePanel(){setPanel(null);restoreFocus();}
   function focusSlot(id,itemId){
     requestAnimationFrame(()=>{
+      if(!canFocus.current)return;
       const visible='.room-frame:not([inert]) ';
       const button=(itemId && [...(stage.current?.querySelectorAll(visible+'[data-item-id]') || [])].find(b=>b.dataset.itemId===itemId)) ||
         stage.current?.querySelector(visible+'[data-slot="'+id+'"]');
@@ -265,6 +278,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
   }
   function focusDestination(){
     requestAnimationFrame(()=>{
+      if(!canFocus.current)return;
       const button=stage.current?.querySelector('.room-frame:not([inert]) [data-destination]');
       (button || stage.current?.closest('.collector')?.querySelector('.placement-actions button:not(:disabled)'))?.focus({preventScroll:true});
     });
@@ -284,10 +298,10 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
     if(!canPlaceAt(graduates,target)){setNotice('Choose an open circle.');return;}
     pending.current=true;setBusy(true);
     try{
-      const result=origin ? await relocate(origin.id,origin.from,target) : {ok:await move(target)};
+      const result=origin ? await relocate(origin.id,origin.from,target) : {ok:await move(target,graduating)};
       if(!mounted.current)return;
       if(result.ok){
-        setCarry(null);setSlot(target);focusSlot(target);
+        setCarry(null);if(!origin)setGraduating(null);setSlot(target);focusSlot(target);
         const stored=result.storedCount?' '+result.storedCount+(result.storedCount===1?' item returned':' items returned')+' to inventory.':'';
         setNotice(origin?'Moved to '+placeName(target).toLowerCase()+'.'+stored:'Home at last. A new seed is waiting in the keychain.');
       }else setNotice('That spot or plant changed. Choose again.');
@@ -301,7 +315,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
     if(shopMove){
       if(canSetItem(plant,shopMove.sku,target,shopMove.from)){
         setPreview({slot:target,expected:destinationKey(plant,target)});setSlot(target);
-        requestAnimationFrame(()=>placeButton.current?.focus({preventScroll:true}));
+        requestAnimationFrame(()=>{if(canFocus.current)placeButton.current?.focus({preventScroll:true});});
       }
       return;
     }
@@ -336,7 +350,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
     return nearest?buttonSlot(nearest):null;
   }
   function start(e){
-    if(!e.isPrimary || e.button!==0 || busy || panel)return;
+    if(!active || globalMenuOpen || !e.isPrimary || e.button!==0 || busy || panel)return;
     const target=e.target.closest('[data-slot]'),slot=target?buttonSlot(target):null;
     const button=e.target.closest('button');
     gesture.current={pointer:e.pointerId,x:e.clientX,y:e.clientY,button,plant:collection.get(slot),mode:null,edge:0,left:stage.current.scrollLeft,top:stage.current.scrollTop};
@@ -378,35 +392,26 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       }
       return;
     }
-    const dy=e.clientY-g.y;
     setGhost(null);setDropOver(null);
     if(stage.current.hasPointerCapture(e.pointerId))stage.current.releasePointerCapture(e.pointerId);
     if(g.mode==='plant'){
       const dest=cancelled?null:hit(e.clientX,e.clientY);
       if(dest!==null && !collection.has(dest))void putDown(dest,{id:g.plant.id,from:g.plant.slot});
       else if(!cancelled)setNotice('Choose an open circle, or drag the plant onto one.');
-    } else if(!cancelled && g.mode==='vertical' && dy>74 && g.top<1 && !g.button && !placing)startClose();
+    }
     // A touch can synthesize its click after pointerup. The next press clears this flag.
   }
-  async function prepare(){
-    if(pending.current)return;
-    pending.current=true;
-    const job=++postcardJob.current;
-    setBusy(true);setNotice('');
+  async function preparePostcard(){
+    const image=document.createElement('canvas');image.width=ROOM_WIDTH*3;image.height=ROOM_HEIGHT*3;
+    const plants=placesFor(page).map(spot=>collection.get(slotFor(page,spot)));
     try{
-      const image=document.createElement('canvas');image.width=ROOM_WIDTH*3;image.height=ROOM_HEIGHT*3;
       await prepareRoomPhotos(items);
-      drawRoom(image,{hour,shopItems:items,plants:potted[page],jarProgress,leafCount:plant.book.length,roomIndex:page,time:0,reducedMotion:true});
+      drawRoom(image,{hour,shopItems:items,plants,jarProgress,leafCount:plant.book.length,roomIndex:page,time:0,reducedMotion:true});
       const blob=await new Promise(resolve=>image.toBlob(resolve,'image/png'));
-      if(!blob)throw Error();
+      if(!blob || !mounted.current)return null;
       const file=new File([blob],'plantigochi-'+viewName(page).toLowerCase().replaceAll(' ','-')+'.png',{type:'image/png'});
-      if(mounted.current && job===postcardJob.current){setPostcard({url:URL.createObjectURL(blob),file});setPanel('postcard');}
-    }catch{if(mounted.current && job===postcardJob.current)setNotice('Could not prepare the postcard. Try again.');}
-    finally{pending.current=false;if(mounted.current)setBusy(false);}
-  }
-  async function shareCard(){
-    try{await navigator.share({files:[postcard.file],title:'My Plantigochi garden'});}
-    catch(error){if(error.name!=='AbortError')setNotice('Save the image to share this postcard.');}
+      return {file,url:URL.createObjectURL(file)};
+    }catch{return null;}
   }
   const message=notice || (shopMove ? (preview?placeName(preview.slot)+' · '+catalog[shopMove.sku].name:'Choose a spot for '+catalog[shopMove.sku].name.toLowerCase()+'.') : inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):
     'Choose an open circle for '+(inHand.name || speciesName(inHand))+'.'):
@@ -415,17 +420,16 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
     '');
   const displaced=shopMove && preview && catalog[shopMove.sku].kind!=='plant' && items.find(i=>i.slot===preview.slot);
   const swapping=Boolean(displaced && shopMove.from!=null);
-  const panelTitle={phone:'iSEED',shop:'Garden shop',inventory:'Inventory',journal:'Journal',library:'Care library',item:catalog[item?.sku]?.name || 'My items',jar:'Cutting Jar',book:'Leaf Book',postcard:'Garden postcard'};
-  const phoneOpen=['phone','shop','inventory','journal','library','postcard'].includes(panel) || (panel==='item' && itemOrigin.current==='inventory');
-  const Panel=phoneOpen?ISeedPhone:GardenDialog;
-  return <section className="collector" aria-label="Collector garden"
+  const panelTitle={item:catalog[item?.sku]?.name || 'My items',jar:'Cutting Jar',book:'Leaf Book'};
+  const available=active && !globalMenuOpen;
+  return <section className="collector" aria-label="Collector garden" aria-hidden={!available || undefined} inert={!available?'':undefined}
     onPointerDownCapture={e=>{if(e.isPrimary)ignoreClick.current=false;}}
     onClickCapture={e=>{
       if(ignoreClick.current && e.detail!==0){e.preventDefault();e.stopPropagation();}
     }}
     onKeyDown={e=>{
-    if(panel || globalMenuOpen || busy || e.altKey || e.metaKey || e.ctrlKey)return;
-    if(e.key==='Escape'){e.preventDefault();if(shopMove)cancelShop();else if(inHand)cancelCarry();else startClose();}
+    if(!available || panel || busy || e.altKey || e.metaKey || e.ctrlKey)return;
+    if(e.key==='Escape'){e.preventDefault();if(placing)cancelPlacement();else openPhone();}
     if(['ArrowLeft','ArrowRight'].includes(e.key)){
       e.preventDefault();
       stage.current.scrollBy({left:(e.key==='ArrowLeft'?-1:1)*stage.current.clientWidth*.7,
@@ -449,8 +453,11 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
           garden={plant} playingItemId={active && plant.sound ? playingRecordId : null} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} openPhone={openPhone} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
-    <button ref={roomReturn} className="room-corner room-return" aria-label={shopMove || inHand?'Cancel move':'Back to Plantigochi'} title={shopMove || inHand?'Cancel move':'Back to Plantigochi'}
-      disabled={busy} onClick={shopMove?cancelShop:inHand?cancelCarry:startClose}><ChevronDown aria-hidden="true"/></button>
+    <button ref={roomReturn} className={'room-corner room-return'+(placing?'':' room-phone-pickup')} data-room-focus=""
+      aria-label={placing?'Cancel move':'Pick up iSEED'} title={placing?'Cancel move':'Pick up iSEED'}
+      disabled={!available || busy} onClick={placing?cancelPlacement:()=>{roomOpener.current=roomReturn.current;openPhone();}}>
+      {placing?<X aria-hidden="true"/>:<><Smartphone aria-hidden="true"/><span>Pick up iSEED</span></>}
+    </button>
     {!placing && !panel && !message && <nav className="room-hint room-navigation" aria-label="Garden rooms">
       <button aria-label="Previous room" disabled={page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>
       <span>{viewName(page)}</span>
@@ -461,7 +468,7 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
         <button aria-label="Previous placement room" disabled={busy || page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>
         <span aria-label={'Room '+(page+1)+' of '+count}>{page+1} / {count}</span>
         <button aria-label="Next placement room" disabled={busy || page===count-1} onClick={()=>travel(page+1)}><ChevronRight aria-hidden="true"/></button>
-        <button disabled={busy} onClick={shopMove?cancelShop:inHand?cancelCarry:startClose}>Cancel</button>
+        <button disabled={busy} onClick={cancelPlacement}>Cancel</button>
       </div>}
       {displaced && <small>{catalog[displaced.sku].name} {swapping?'will move to '+placeName(shopMove.from).toLowerCase()+'.':'will return to inventory.'}</small>}
       {shopMove && preview && <button ref={placeButton} disabled={busy} onClick={finishPlacement}>{shopMove.buy?'Buy for '+catalog[shopMove.sku].price+' coins':swapping?'Swap here':'Place here'}</button>}
@@ -469,34 +476,26 @@ export default function Collector({active,plant,moving,initialPanel,commit,now,m
       {!placing && <button aria-label="Dismiss garden message" onClick={()=>{setSlot(null);setNotice('');}}>×</button>}
     </div>}
     {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width="76" height="82" aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
-    <GardenRecord active={active} soundEnabled={plant.sound} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
-    {panel==='move' && source && <GardenDialog page="garden-move" title={'Move '+(source.name || speciesName(source))+'?'} close={cancelCarry}>
+    <GardenRecord active={recordActive} soundEnabled={plant.sound} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
+    {available && panel==='move' && source && <GardenDialog page="garden-move" title={'Move '+(source.name || speciesName(source))+'?'} close={cancelCarry}>
       <p className="room-guide">{placeName(carry.from)} · {viewName(viewForSlot(carry.from))}</p>
       {items.some(i=>i.slot===source.slot) && <p className="room-guide">Its pot moves with the plant.</p>}
-      <div className="menu-items"><button onClick={confirmMove}>Move</button>{items.some(i=>i.slot===source.slot) && <button onClick={()=>{setCarry(null);inspectItem(items.find(i=>i.slot===source.slot),true);}}>Manage pot</button>}<button onClick={cancelCarry}>Keep here</button></div>
+      <div className="menu-items"><button onClick={confirmMove}>Move</button>{items.some(i=>i.slot===source.slot) && <button onClick={()=>{setCarry(null);inspectItem(items.find(i=>i.slot===source.slot));}}>Manage pot</button>}<button onClick={cancelCarry}>Keep here</button></div>
     </GardenDialog>}
-    {panel && panel!=='move' && <Panel {...(phoneOpen?{ref:handset,home:()=>openPhoneApp('phone')}:null)}
-      page={phoneOpen?panel:'garden-'+panel} title={panelTitle[panel]} back={phoneOpen && panel!=='phone'?backFromPanel:null} close={closePanel}>
-      {panel==='phone' && <ISeedHome plant={plant} open={openPhoneApp} busy={busy}/>}
-      {['shop','inventory'].includes(panel) && <GardenShop plant={plant} initialTab={panel==='inventory'?'bag':'shop'} onTabChange={tab=>setPanel(tab==='bag'?'inventory':'shop')} onPlace={startPlacement} inspect={inspectItem}/>}
-      {['journal','library'].includes(panel) && <GardenJournal plant={plant} initialTab={panel==='library'?'library':journalTab} onTabChange={openJournalTab} change={change} busy={busy}/>}
+    {available && panel && panel!=='move' && <GardenDialog page={'garden-'+panel} title={panelTitle[panel]} close={closePanel}>
       {panel==='item' && item && <ShopItemDetail key={item.id} item={item} busy={busy}
         move={()=>startPlacement({id:item.id,sku:item.sku,buy:false,from:item.slot})}
         store={async()=>{if(await change(p=>storeItem(p,item.id,item.slot))){
           if(item.id===playingRecordId)onSelectRecord(null);
-          if(itemOrigin.current==='room'){closePanel();setNotice(catalog[item.sku].name+' put in inventory.');}
-          else setPanel('inventory');
+          closePanel();setNotice(catalog[item.sku].name+' put in inventory.');
         }}}
         savePhoto={photo=>change(p=>framePhoto(p,item.id,photo))}>
         {itemPlant && <p className="room-guide">Moving just this pot leaves {itemPlant.name || speciesName(itemPlant)} here.</p>}
         {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={plant.sound} playing={playingRecordId===item.id} onPlayingChange={yes=>onSelectRecord(yes?item.id:null)}/>}
       </ShopItemDetail>}
-      {['phone','shop','inventory','journal','library','item'].includes(panel) && notice && <p role="status">{notice}</p>}
+      {panel==='item' && notice && <p role="status">{notice}</p>}
       {['jar','book'].includes(panel) && <><GardenKeepsakes key={panel} kind={panel} plant={plant} now={now} act={useKeepsake} openJar={()=>openKeepsake('jar')} busy={busy}/>{notice && <p role="status">{notice}</p>}</>}
-      {panel==='postcard' && postcard && <div className="room-postcard"><img src={postcard.url} alt={'Your '+viewName(page)+' postcard'}/>
-        <div className="menu-items">{navigator.canShare?.({files:[postcard.file]}) && <button onClick={shareCard}>Share image</button>}
-          <button onClick={()=>downloadFile(postcard.file,postcard.file.name)}>Save image</button></div><GameLink/>
-        {notice && <p role="status">{notice}</p>}</div>}
-    </Panel>}
+    </GardenDialog>}
   </section>;
-}
+});
+export default Collector;
