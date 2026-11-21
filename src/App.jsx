@@ -21,7 +21,7 @@ import Collector from './Collector.jsx';
 import {useGardenPassage} from './useGardenPassage.js';
 import './collector.css';
 
-const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts'};
+const titles = {menu:'Pocket menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',test:'Test notifications'};
 const homeItems = ['scenes','settings','install','phone'];
 const phoneItems = ['install','saves','alerts'];
 const updateMessages={
@@ -57,7 +57,7 @@ function InstalledGame({phone}){
   const [careMessage,setCareMessage]=useState(null);
   useEffect(()=>{
     function rescue(e){
-      if(e.data?.type==='plant-care' && ['water','drain'].includes(e.data.action))setCareMessage({action:e.data.action});
+      if(e.data?.type==='plant-care' && ['water','drain','fungus','test'].includes(e.data.action))setCareMessage({action:e.data.action,plantId:e.data.plantId,episode:e.data.episode});
     }
     navigator.serviceWorker?.addEventListener('message',rescue);
     return ()=>navigator.serviceWorker?.removeEventListener('message',rescue);
@@ -71,18 +71,18 @@ function InstalledSession({phone,storage,careMessage,alertVisitId}){
   const {invite,alertVisit,phase}=storage;
   const fresh=!invite && phase==='welcome';
   const returning=invite?.round===1 && invite.visit!==alertVisitId;
-  const needsVisit=alerts.capable && !alerts.verifying && phase!=='tour' && (
-    fresh || returning || (alerts.enabled && invite?.closed)
+  const needsVisit=alerts.capable && phase!=='tour' && (
+    fresh || returning || (alerts.enrolled && invite?.closed)
   );
   useEffect(()=>{
-    if(needsVisit)void alertVisit(alertVisitId,'open',alerts.enabled);
-  },[needsVisit,alertVisit,alerts.enabled,alertVisitId]);
-  const offer=alerts.capable && !alerts.enabled && invite?.visit===alertVisitId && !invite.closed ? invite.round : null;
+    if(needsVisit)void alertVisit(alertVisitId,'open',alerts.enrolled);
+  },[needsVisit,alertVisit,alerts.enrolled,alertVisitId]);
+  const offer=alerts.capable && !alerts.enrolled && invite?.visit===alertVisitId && !invite.closed ? invite.round : null;
   const answer=defer=>alertVisit(alertVisitId,defer?'defer':'finish');
   let scene=phase, screen;
   if(phase==='tour'){
     screen=<WelcomeTour phone={phone} issue={storage.issue} onBegin={()=>storage.setup('welcome')}/>;
-  }else if(needsVisit && !storage.issue && !alerts.enabled){
+  }else if(needsVisit && !storage.issue && !alerts.enrolled){
     scene=null;
     screen=<main aria-busy="true" aria-label="Opening your garden"/>;
   }else if(phase==='welcome' || offer){
@@ -129,16 +129,19 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     return ()=>{clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};
   },[commit,current]);
   useEffect(()=>{
-    function rescue(action) {
+    function rescue(action,plantId,episode) {
+      if(action==='test'){resetPassage();setPage('test');return;}
       const p=wake(current.current);
-      if(p.deadAt!==null || p.stage==='seed')return;
-      if(action==='drain'?p.rotAt===null:action==='water'?p.rotAt!==null||Date.now()<p.lastDrink+12*3600000:true)return;
-      setIntro(false);setPage(null);resetPassage();setCareTarget({action,seq:Date.now()});
+      if(action!=='fungus' && (p.deadAt!==null || p.stage==='seed'))return;
+      if(action==='drain'?p.rotAt===null:action==='water'?p.rotAt!==null||Date.now()<p.lastDrink+12*3600000:action!=='fungus')return;
+      setIntro(false);setPage(null);resetPassage();setCareTarget({action,stale:action==='fungus' && (p.id!==plantId || p.fungusAt!==episode || p.deadAt!==null),seq:Date.now()});
     }
     const url=new URL(location.href);
     const action=careMessage?.action ?? url.searchParams.get('care');
-    if(url.searchParams.has('care')){url.searchParams.delete('care');history.replaceState(null,'',url);}
-    if(action)rescue(action);
+    const plantId=careMessage?.plantId ?? url.searchParams.get('plant');
+    const episode=careMessage?.episode ?? Number(url.searchParams.get('episode'));
+    if(url.searchParams.has('care')){for(const k of ['care','plant','episode'])url.searchParams.delete(k);history.replaceState(null,'',url);}
+    if(action)rescue(action,plantId,episode);
   },[current,careMessage,resetPassage]);
 
   useEffect(() => {
@@ -223,7 +226,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     return replace(backup);
   }
   const introAudible = plant.sound && running;
-  const parent = page === 'reset' ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
+  const parent = (page === 'reset' || page === 'test') ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
   return <main ref={tilt.garden} className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')} aria-label="Plantigochi pocket garden" onClickCapture={event => {
     const button = event.target.closest?.('button');
@@ -237,7 +240,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       {photo && <img className="custom-photo" src={photo.src} style={photoStyle(photo)} alt="" draggable="false"/>}
     </div>
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
-      <PocketDevice lesson={lesson} finishLesson={()=>storage.setup('game')} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={()=>passage.enter(plant.id)} resting={!intro && !page && !sharing && room===null} commit={commit} sound={play}/>
+      <PocketDevice lesson={lesson} finishLesson={()=>storage.setup('game')} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={()=>passage.enter(plant.id)} openBook={()=>passage.enter(null,'book')} resting={!intro && !page && !sharing && room===null} commit={commit} sound={play}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo' || !!lesson} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
@@ -253,7 +256,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       aria-label="Open garden" onClick={passage.activate}><i aria-hidden="true"/>Garden</button>}
     </div>
     <div className="room-floor" inert={!passage.inside?'':undefined} aria-hidden={!passage.inside||undefined}>
-    {room!==null && <Collector active={passage.inside} plant={plant} moving={room.moving} now={now}
+    {room!==null && <Collector active={passage.inside} plant={plant} moving={room.moving} initialPanel={room.panel} commit={commit} now={now}
       move={async slot=>{const id=room.moving;const ok=await commit(p=>graduate(p,id,slot,Date.now()));
         return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
       relocate={async (id,from,to)=>{
@@ -290,13 +293,14 @@ function GardenApp({storage,phone,careMessage,alerts}) {
           onClick={() => commit(old => ({...old,ambience:old.ambience === false}))}><Music2/>Garden ambience<span className="setting-value">{plant.sound && plant.ambience !== false ? 'On' : 'Off'}</span></button>
         <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
+        <button onClick={()=>open('test')}>Test notifications<ChevronRight className="row-end"/></button>
         <button disabled={['checking','downloading'].includes(phone.updateStatus)}
           onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
           {phone.updateStatus==='ready'?'Restart to update':'Check for updates'}</button>
         {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
       {page === 'reset' && <ResetGarden plant={plant} reset={storage.reset} cancel={()=>open('settings')}/>}
-      {phoneItems.includes(page) && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
+      {(phoneItems.includes(page) || page==='test') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
     </GardenDialog>}
   </main>;
 }

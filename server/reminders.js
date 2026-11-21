@@ -1,4 +1,5 @@
 import { HOUR, WEEK } from '../src/game.js';
+import { testAPI } from './testPush.js';
 const supportedEndpoint = [
   ['fcm.googleapis.com', '/'],
   ['updates.push.services.mozilla.com', '/'],
@@ -37,41 +38,49 @@ async function authorization(endpoint, env, origin, now) {
 // at registration. Only due, unexpired, unclaimed reminders can leave the queue.
 async function dispatch(env, origin, send) {
   const now = Date.now();
-  const due = await env.DB.prepare('SELECT id, endpoint, due, attempts FROM reminders WHERE next_try <= ? ORDER BY next_try LIMIT 25').bind(now).all();
+  await env.DB.prepare('DELETE FROM alert_receipts WHERE expires<=?').bind(now).run();
+  const due = await env.DB.prepare('SELECT id, owner, event_id, expires, endpoint, due, attempts FROM reminders WHERE next_try <= ? ORDER BY next_try LIMIT 25').bind(now).all();
   let sent = 0;
   for (const item of due.results) {
     const lock = now + 120000;
-    const claim = await env.DB.prepare('UPDATE reminders SET next_try=?, attempts=attempts+1 WHERE id=? AND due=? AND next_try<=?').bind(lock,item.id,item.due,now).run();
+    const claim = await env.DB.prepare('UPDATE reminders SET next_try=?, attempts=attempts+1 WHERE id=? AND due=? AND event_id IS ? AND next_try<=?').bind(lock,item.id,item.due,item.event_id,now).run();
     if (!claim.meta.changes) continue;
-    const remove = () => env.DB.prepare('DELETE FROM reminders WHERE id=? AND due=? AND next_try=?').bind(item.id,item.due,lock).run();
-    if (now-item.due >= 24*HOUR || item.attempts >= 5) { await remove(); continue; }
+    const deletion=()=>env.DB.prepare('DELETE FROM reminders WHERE id=? AND due=? AND event_id IS ? AND next_try=?').bind(item.id,item.due,item.event_id,lock);
+    const remove=()=>deletion().run();
+    if ((item.expires!=null && now>=item.expires) || now-item.due >= 24*HOUR || item.attempts >= 5) { await remove(); continue; }
     try {
       const auth = await authorization(item.endpoint,env,origin,now);
-      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:item.id.endsWith('.care') ? 'plantigochi-care' : item.id.endsWith('.company') ? 'plantigochi-company' : 'plantigochi-growth'},body:new Uint8Array()});
+      const result = await send(item.endpoint,{method:'POST',redirect:'error',headers:{Authorization:auth,TTL:'1800',Urgency:'normal',Topic:item.id.endsWith('.fungus') ? 'plantigochi-fungus' : item.id.endsWith('.care') ? 'plantigochi-care' : item.id.endsWith('.company') ? 'plantigochi-company' : 'plantigochi-growth'},body:new Uint8Array()});
       if (result.ok || [400,404,410].includes(result.status)) {
         if (result.ok) sent++;
-        await remove(); continue;
+        if(item.event_id && result.ok)await env.DB.batch([
+          env.DB.prepare('INSERT OR REPLACE INTO alert_receipts(id,owner,expires) VALUES(?,?,?)').bind(item.event_id,item.owner,now+WEEK+24*HOUR),deletion()
+        ]);
+        else await remove();
+        continue;
       }
     } catch { /* A temporary failure releases on the next eligible tick. */ }
     const retry = now + Math.min(HOUR, 60000 * 2 ** item.attempts);
-    await env.DB.prepare('UPDATE reminders SET next_try=? WHERE id=? AND due=? AND next_try=?').bind(retry,item.id,item.due,lock).run();
+    await env.DB.prepare('UPDATE reminders SET next_try=? WHERE id=? AND due=? AND event_id IS ? AND next_try=?').bind(retry,item.id,item.due,item.event_id,lock).run();
   }
   return json({ processed: due.results.length, sent });
 }
 
-export async function reminderAPI(request, env, send = fetch) {
+export async function reminderAPI(request, env, send = fetch, ctx) {
   const url = new URL(request.url);
   if (!env.DB || !env.PUSH_PUBLIC_KEY || !env.PUSH_PRIVATE_JWK) return json({ error: 'Alerts are unavailable.' },503);
   if (request.method === 'GET' && url.pathname === '/api/alerts/key') return json({publicKey:env.PUSH_PUBLIC_KEY});
   if (request.method === 'POST' && url.pathname === '/api/alerts/dispatch') return dispatch(env, url.origin, send);
-  if (url.pathname !== '/api/alerts/reminder' || !['PUT','DELETE'].includes(request.method)) return json({},404);
+  const test=url.pathname==='/api/alerts/test';
+  if (!test && (url.pathname !== '/api/alerts/reminder' || !['PUT','DELETE'].includes(request.method))) return json({},404);
 
-  if (request.headers.get('Origin') !== url.origin) return json({},403);
+  if ((request.method!=='GET' || request.headers.has('Origin')) && request.headers.get('Origin') !== url.origin) return json({},403);
   const secret = (request.headers.get('Authorization') || '').replace(/^Bearer /,'');
   if (!/^[a-f0-9]{64}$/.test(secret)) return json({},401);
   const owner = await digest(secret);
+  if(test)return testAPI(request,env,owner,send,ctx,authorization,json);
   if (request.method === 'DELETE') {
-    await env.DB.prepare('DELETE FROM reminders WHERE owner IN (?,?,?)').bind(owner,owner+'.care',owner+'.company').run();
+    await env.DB.batch([env.DB.prepare('DELETE FROM reminders WHERE owner IN (?,?,?,?)').bind(owner,owner+'.care',owner+'.company',owner+'.fungus'),env.DB.prepare('DELETE FROM alert_devices WHERE owner=?').bind(owner)]);
     return json({ cancelled: true });
   }
   if (!request.headers.get('Content-Type')?.startsWith('application/json')) return json({},415);
@@ -85,16 +94,36 @@ export async function reminderAPI(request, env, send = fetch) {
   const slots = [[id,owner,body.due]];
   if (Object.hasOwn(body,'criticalDue')) slots.push([id+'.care',owner+'.care',body.criticalDue]);
   if (Object.hasOwn(body,'companyDue')) slots.push([id+'.company',owner+'.company',body.companyDue]);
+  if(Object.hasOwn(body,'fungusDue'))slots.push([id+'.fungus',owner+'.fungus',body.fungusDue]);
+  const names=['due','criticalDue','companyDue','fungusDue'];
+  const fieldForKey=k=>names[k.endsWith('.care')?1:k.endsWith('.company')?2:k.endsWith('.fungus')?3:0];
   const statements = [];
+  if(body.keys){
+    const {p256dh,auth}=body.keys;
+    if(typeof p256dh!=='string' || typeof auth!=='string' || !/^[A-Za-z0-9_-]{87}$/.test(p256dh) || !/^[A-Za-z0-9_-]{22}$/.test(auth))return json({error:'Invalid subscription keys.'},400);
+    const existing=await env.DB.prepare('SELECT owner FROM alert_devices WHERE endpoint=?').bind(endpoint).first();
+    if(existing && existing.owner!==owner)return json({error:'Reconnect this subscription.'},409);
+    statements.push(env.DB.prepare('INSERT INTO alert_devices(owner,endpoint,p256dh,auth) VALUES(?,?,?,?) ON CONFLICT(owner) DO UPDATE SET endpoint=excluded.endpoint,p256dh=excluded.p256dh,auth=excluded.auth').bind(owner,endpoint,p256dh,auth));
+  }
+  if(body.expires!=null && !Number.isSafeInteger(body.expires))return json({error:'Invalid expiry.'},400);
   for (const [key,slot,time] of slots) {
-    if (time === null) {
+    const event=body.eventIds?.[fieldForKey(key)];
+    if(event!=null && (typeof event!=='string' || !event.length || event.length>220))return json({error:'Invalid event.'},400);
+    const eventId=event?await digest(slot+'|'+event):null;
+    if (time === null || (eventId && (time<=now-24*HOUR || (body.expires!=null && body.expires<=now)))) {
       statements.push(env.DB.prepare('DELETE FROM reminders WHERE owner=?').bind(slot));
       continue;
     }
-    if (!Number.isSafeInteger(time) || time < now-5*60000 || time > now+WEEK+5*60000) return json({error:'Invalid reminder.'},400);
-    statements.push(env.DB.prepare('DELETE FROM reminders WHERE owner=? AND id!=?').bind(slot,key));
-    statements.push(env.DB.prepare('INSERT INTO reminders (id, owner, endpoint, due, next_try, attempts) VALUES (?,?,?,?,?,0) ON CONFLICT(id) DO UPDATE SET due=excluded.due, next_try=excluded.next_try, attempts=0 WHERE reminders.owner=excluded.owner AND reminders.due!=excluded.due').bind(key,slot,endpoint,time,time));
+    if (!Number.isSafeInteger(time) || (!eventId && time < now-5*60000) || time > now+WEEK+5*60000) return json({error:'Invalid reminder.'},400);
+    statements.push(env.DB.prepare('DELETE FROM reminders WHERE owner=? AND (id!=? OR (? IS NOT NULL AND event_id IS NOT NULL AND event_id!=?))').bind(slot,key,eventId,eventId));
+    statements.push(env.DB.prepare(`INSERT INTO reminders (id,owner,endpoint,due,next_try,attempts,event_id,expires)
+      SELECT ?,?,?,?,?,0,?,? WHERE NOT EXISTS (SELECT 1 FROM alert_receipts WHERE id=?)
+      ON CONFLICT(id) DO UPDATE SET due=excluded.due,next_try=CASE WHEN reminders.due=excluded.due AND reminders.event_id IS excluded.event_id THEN reminders.next_try ELSE excluded.next_try END,
+      expires=excluded.expires,attempts=CASE WHEN reminders.due=excluded.due AND reminders.event_id IS excluded.event_id THEN reminders.attempts ELSE 0 END,event_id=excluded.event_id
+      WHERE reminders.owner=excluded.owner`).bind(key,slot,endpoint,time,time,eventId,body.expires??null,eventId));
+
   }
   await env.DB.batch(statements);
-  return json({ scheduled: true });
+  const next=await env.DB.prepare('SELECT MIN(due) AS due FROM reminders WHERE owner IN (?,?,?,?)').bind(owner,owner+'.care',owner+'.company',owner+'.fungus').first();
+  return json({ scheduled:true,nextDue:next?.due??null });
 }

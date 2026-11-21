@@ -67,7 +67,7 @@
   inset:14.5% 4% auto;
   height:13%;
   display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
+  grid-template-columns:repeat(5,minmax(0,1fr));
   gap:.7cqw;
 }
 .lcd-branches span {
@@ -103,3 +103,6 @@
 .lcd-ready .lcd-art {bottom:22%}
 .dew-chances {display:inline-flex;gap:.4cqw;align-items:center;flex:none;color:#186587}
 .dew-chances svg {display:block;width:1.63cqw;height:2cqw}
+
+.lcd [data-branch="aid"],.lcd[data-branch="aid"]{--branch-ink:#9a303c;--branch-paper:#ffdfcc}
+.fungus-alarm{color:#862b35;display:flex;align-items:center;justify-content:center;gap:0.45em;font-weight:700;line-height:1}.fungus-alarm svg{height:1em;width:1em;fill:currentColor}

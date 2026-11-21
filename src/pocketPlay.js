@@ -1,4 +1,4 @@
-import { useEffect, useReducer } from 'react';
+import { useCallback, useEffect, useReducer } from 'react';
 
 const keys = ['left','heart','right'];
 export const gameNames = { dew: 'Dew Catch', echo: 'Leaf Echo' };
@@ -109,6 +109,7 @@ export function playText(g) {
 
 export function usePocketPlay(plant,paused,onFinish) {
   const [game, dispatch] = useReducer(stepGame, null);
+  const exit=useCallback(()=>dispatch({type:'exit'}),[]);
   const active = game && canPlay(game.name,plant) ? game : null;
   useEffect(() => { if (game && !active) dispatch({type:'exit'}); },[game,active]);
   useEffect(() => {
@@ -123,5 +124,5 @@ export function usePocketPlay(plant,paused,onFinish) {
     return () => clearInterval(timer);
   },[active?.name,active?.phase,active?.lit,paused]);
   return { game:active, enter:name => { if (canPlay(name,plant)) dispatch({type:'enter',name,cleared:dewCheckpoint(plant)}); },
-    exit:()=>dispatch({type:'exit'}), key:key=>dispatch({type:'key',key,dropLane:randomLane(),sequence:Array.from({length:3},()=>keys[randomLane()])}) };
+    exit, key:key=>dispatch({type:'key',key,dropLane:randomLane(),sequence:Array.from({length:3},()=>keys[randomLane()])}) };
 }

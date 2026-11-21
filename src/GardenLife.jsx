@@ -1,4 +1,4 @@
-import {ACTIONS, STAGE_NAMES, ROOT_TIME, HOUR, careStatus, condition, countdown, healthLabels} from './game.js';
+import {ACTIONS, STAGE_NAMES, FUNGUS_WINDOW, HOUR, careStatus, condition, countdown, healthLabels} from './game.js';
 import {canPlay, dewCheckpoint, LEVELS} from './pocketPlay.js';
 import {foodReadout, growthReadout, waterReadout} from './plantReadout.js';
 
@@ -15,10 +15,11 @@ const guide = [
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Leaf Echo','Watch three beats. Copy them with the keys.'],
   ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
-  ['Cutting jar','Roots in 12h. Pot after the parent dies.'],
+  ['Fungus','Gnats? First Aid cures fungus. Treat within 12h.'],
+  ['Garden keepsakes','Swipe up for the Cutting Jar and Leaf Book.'],
 ];
-export const toyBranches = {care:'Care', play:'Play', growth:'Growth', jar:'Cutting jar', book:'Leaf Book', guide:'Field guide'};
-export const toyTitles = {home:'Plant menu', ...toyBranches, pour:'Still wet?', pause:'Paused'};
+export const toyBranches = {care:'Care', play:'Play', growth:'Growth', aid:'First Aid', guide:'Field guide'};
+export const toyTitles = {home:'Plant menu', ...toyBranches, pour:'Still wet?', pause:'Paused',pastAid:'Past alert'};
 
 function ageLabel(ms) {
   const hours=Math.floor(Math.max(0,ms)/HOUR);
@@ -27,21 +28,22 @@ function ageLabel(ms) {
 
 export function toyCards(section, plant, now) {
   const dead=plant.deadAt!==null;
-  const rooted=plant.jar && now>=plant.jar.cutAt+ROOT_TIME;
+  const sick=plant.fungusAt!=null && !dead;
+  const timeLeft=sick?Math.max(1,Math.ceil((plant.fungusAt+FUNGUS_WINDOW-now)/60000)):0;
+  const remaining=timeLeft>=60?Math.floor(timeLeft/60)+'h '+timeLeft%60+'m':timeLeft+'m';
   switch(section) {
     case 'home': {
       const hints = {
         care: dead?'Pressed leaf':plant.stage==='seed'?'Sleeping seed':healthLabels[condition(plant,now)],
         play: 'Dew Catch · Leaf Echo',
         growth: STAGE_NAMES[plant.stage],
-        jar: plant.jar?(rooted?'Rooted cutting':'Growing roots'):'Save a stem',
-        book: plant.book.length+' pressed '+(plant.book.length===1?'leaf':'leaves'),
+        aid:sick?'Fungus · '+remaining+' left':'All clear',
         guide: 'Care & controls',
       };
       return Object.entries(toyBranches).map(([id,label])=>card(label,hints[id],id));
     }
     case 'care': {
-      if (dead) return [card('Leaf Book','Visit your pressed leaf','book')];
+      if (dead) return [card('Start again','Open the garden Leaf Book','garden-book')];
       const soil=condition(plant,now);
       const water=waterReadout(plant,now);
       const food=foodReadout(plant,now);
@@ -70,29 +72,14 @@ export function toyCards(section, plant, now) {
       if (progress.next) {
         const [remaining, blockers]=progress.detail.split(' · ');
         entries.push(card(progress.next,remaining,'next'));
-        if(blockers)entries.push(card('Growth needs',blockers.replace('Needs ',''),'care'));
+        if(blockers)entries.push(card('Growth needs',blockers.replace('Needs ',''),sick?'aid':'care'));
       }
-      if (!dead && plant.stage==='grown') entries.unshift(card('Move to garden','Choose a permanent pot','graduate'));
+      if (!dead && plant.stage==='grown') entries.unshift(sick?card('Treat fungus first','Open First Aid','aid'):card('Move to garden','Choose a permanent pot','graduate'));
       return [...entries,...(dead?[]:[card('Rename plant',plant.name || 'Monstera','rename')]),...[['Sprout','1 hour'],['Young plant','3 days'],['First split','5 days'],['Grown plant','7 days']].map(([name,age])=>card(name,age+' growing time','next'))];
     }
-    case 'jar': {
-      if (!plant.jar) {
-        if(plant.stage==='grown' && !dead) return ['left','right'].map(stem=>card(stem==='left'?'Left stem':'Right stem','Take a cutting','cut:'+stem));
-        return [card('Empty jar','Cut a stem at full growth',null)];
-      }
-      return [card(rooted?'Rooted cutting':'Growing roots',rooted?'Generation '+plant.jar.generation:countdown(plant.jar.cutAt+ROOT_TIME-now),null,{jar:Math.max(0,Math.min(1,(now-plant.jar.cutAt)/ROOT_TIME))}),
-        ...(dead && rooted?[card('Pot cutting','Start generation '+plant.jar.generation,'new:cutting')]:[])];
-    }
-    case 'book': {
-      const leaves=plant.book.slice().reverse().map(leaf=>card((leaf.name || 'Monstera')+' · Gen '+leaf.generation,
-        STAGE_NAMES[leaf.stage]+' · '+ageLabel(leaf.diedAt-leaf.plantedAt)+' · '+leaf.cause,'next',{leaf:leaf.stage}));
-      if (!leaves.length) leaves.push(card('Empty book','Your keepsakes go here',null));
-      if (dead) {
-        leaves.push(card('Plant a seed','Start a new Monstera','new:seed'));
-        if (plant.jar) leaves.push(rooted?card('Pot cutting','Generation '+plant.jar.generation,'new:cutting'):card('Visit cutting','Roots are growing','jar'));
-      }
-      return leaves;
-    }
+    case 'pastAid': return [card('All clear','This outbreak has ended','back')];
+    case 'aid': return [sick ? card('G-NAT ASSASSIN','♥ One drop · '+remaining,'treat')
+      : dead ? card('Start again','Open the garden Leaf Book','garden-book') : card('All clear','Your plant needs no drops',null)];
     case 'guide': return guide.map(([label,hint])=>card(label,hint,'next'));
     default: return [];
   }

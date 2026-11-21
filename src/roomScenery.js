@@ -657,10 +657,7 @@ function studioDesk(b) {
   p([503,185,510,178,678,178,685,185,684,190,503,190],wood.dark);
   p([503,185,510,178,678,178,685,185,682,187,505,187],wood.gold);
   r(505,187,179,2,wood.mid);r(512,179,163,1,wood.pale);
-  // Brushes and an open sketchbook are tucked at the far end.
-  p([622,182,636,180,641,182,649,181,655,184,643,186,639,184,625,185],'#ad9374');
-  p([622,181,636,179,641,181,649,180,655,183,643,185,639,183,625,184],'#e7dac0');
-  l(640,181,642,184,'#ab9e84');l(627,181,634,180,'#bba98e');
+  // The Leaf Book occupies the clear desk surface beside the brushes.
   o(670,183,6,1,'#a78e6c');
   l(667,179,663,163,'#7d6250');l(670,180,674,164,'#a67d50');
   l(669,179,669,158,'#8e7756');r(668,157,3,4,'#645348');
@@ -829,7 +826,7 @@ function placeOccupant(ctx,draw,panel,slot) {
   ctx.save();
   try{
     ctx.translate(panel*BASE_WIDTH,0);
-    const clip=slot==='cat'?null:placesFor(panel)[slot].clip;
+    const clip=typeof slot==='number'?placesFor(panel)[slot].clip:null;
     if(clip){
       const [left,top,right,bottom]=clip;
       ctx.beginPath();ctx.rect(left,top,right-left,bottom-top);ctx.clip();
@@ -845,7 +842,7 @@ function placeOccupant(ctx,draw,panel,slot) {
  * drawOccupant(slot,panel) callback paints in panel-local coordinates, in depth
  * order. A numeric slot identifies a plant and 'cat' identifies the sofa seat.
  */
-export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,drawOccupant,separatePlanes=false}={}){
+export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,separatePlanes=false}={}){
   if(!ctx)return;
   const day=clamp(Number.isFinite(light.day)?light.day:1),warmth=clamp(Number.isFinite(light.warmth)?light.warmth:0);
   const hour=Number.isFinite(light.hour)?((light.hour%24)+24)%24:12;
@@ -869,9 +866,11 @@ export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,draw
     paintLayer('window');
     if(!panel)lamp(ctx,b,raw,day,clock);
     furniture(ctx,b,day,warmth,panel,false);
+    if(!panel)placeOccupant(ctx,drawKeepsake,panel,'jar');
     paintLayer('shelf');
     if(!panel)placeOccupant(ctx,drawOccupant,panel,'cat');
     furniture(ctx,b,day,warmth,panel,true);
+    if(panel)placeOccupant(ctx,drawKeepsake,panel,'book');
     paintLayer('table');
     if(!reducedMotion)details(b,day,clock,panel);
   }

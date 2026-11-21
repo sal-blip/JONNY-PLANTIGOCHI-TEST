@@ -1,19 +1,19 @@
 import React, {useState,useRef,useEffect,useCallback} from 'react';
-import {BookOpen,ChevronLeft,ChevronRight,Compass,CornerUpLeft,Droplet,FlaskConical,Gamepad2,Heart,Sprout} from 'lucide-react';
+import {Cross,ChevronLeft,ChevronRight,Compass,CornerUpLeft,Droplet,Gamepad2,Heart,Sprout} from 'lucide-react';
 import DeviceShell from './DeviceShell.jsx';
 import PlantPixel from './PlantPixel.jsx';
-import {DewArt,EchoArt,JarArt,PressedLeaf} from './ActivityArt.jsx';
+import {DewArt,EchoArt} from './ActivityArt.jsx';
 import {toyBranches,toyCards,toyTitles} from './GardenLife.jsx';
 import {DEW_CHANCES,LEVELS,gameNames,playText,saveDewCheckpoint,usePocketPlay} from './pocketPlay.js';
-import {care,careStatus,condition,company,moodOf,FOOD_INTERVAL,LIGHT_INTERVAL,HOUR,healthLabels,replant,takeCutting,wake} from './game.js';
+import {care,careStatus,condition,company,moodOf,FOOD_INTERVAL,LIGHT_INTERVAL,HOUR,healthLabels,discoverFungus,treatFungus,FUNGUS_WINDOW,wake} from './game.js';
 import {foodReadout, GROWTH_STEPS, growthReadout, waterReadout} from './plantReadout.js';
 import './PocketDevice.css';
 import './ToyMenu.css';
 
 const frame=(id,index=0)=>({id,index});
 const BACK_HOLD_MS=700;
-const parentBranch={pour:'care',pause:'play'};
-const branchIcons={care:Droplet,play:Gamepad2,growth:Sprout,jar:FlaskConical,book:BookOpen,guide:Compass};
+const parentBranch={pour:'care',pause:'play',pastAid:'aid'};
+const branchIcons={care:Droplet,play:Gamepad2,growth:Sprout,aid:Cross,guide:Compass};
 
 function BranchIcons({active}) {
   return <div className="lcd-branches" aria-hidden="true">
@@ -58,7 +58,7 @@ function GameArt({game}) {
   return <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>;
 }
 
-export default function PocketDevice({plant,now,resting,commit,sound,openMove,careTarget,rename,lesson,finishLesson}) {
+export default function PocketDevice({plant,now,resting,commit,sound,openMove,openBook,careTarget,rename,lesson,finishLesson}) {
   const [path,setPath]=useState([]);
   const [closeUp,setCloseUp]=useState(false), [feedback,setFeedback]=useState(null);
   const retreat=useRef(null), held=useRef(null), pressed=useRef(null), speech=useRef(null), heart=useRef(null);
@@ -78,9 +78,6 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
     else if(last.stage!==plant.stage) react('growth');
     previous.current={id:plant.id,stage:plant.stage,dead:plant.deadAt};
   },[plant.id,plant.stage,plant.deadAt,react]);
-  useEffect(()=>{
-    if(careTarget) setPath([frame('home'),frame('care',careTarget.action==='drain'?4:0)]);
-  },[careTarget]);
   const recordRound=useCallback((name,phase,level)=>{
     const id=plant.id, time=Date.now();
     void commit(old=>{
@@ -92,6 +89,11 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
     react(phase==='won'?'gameWin':'gameLoss');
   },[commit,plant.id,react]);
   const activity=usePocketPlay(plant,!resting || paused,recordRound);
+  useEffect(()=>{
+    if(!careTarget)return;
+    activity.exit();
+    setPath([frame('home'),frame(careTarget.action==='fungus'?(careTarget.stale?'pastAid':'aid'):'care',careTarget.action==='drain'?4:0)]);
+  },[careTarget,activity.exit]);
   const gameOwner=useRef(plant.id);
   useEffect(()=>{
     if (gameOwner.current!==plant.id) {activity.exit();gameOwner.current=plant.id;}
@@ -110,12 +112,23 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
   const ready=playing && game.phase==='ready';
   const ageHours=Math.max(0,Math.floor((now-plant.plantedAt)/HOUR));
   const ageText=(ageHours>=24?Math.floor(ageHours/24)+'d ':'')+(ageHours%24)+'h';
+  const sick=plant.deadAt===null && plant.fungusAt!=null;
+  const severity=sick?Math.min(3,1+Math.floor(Math.max(0,now-plant.fungusAt)/(4*HOUR))):0;
+  const fungusTime=sick?Math.max(1,Math.ceil((plant.fungusAt+FUNGUS_WINDOW-now)/60000)):0;
+  const minutesLabel=fungusTime>=60?Math.floor(fungusTime/60)+'h '+fungusTime%60+'m':fungusTime+'m';
+  const canDiscover=resting && !section && !game && !lesson && !sick && plant.deadAt===null &&
+    plant.outbreakDue!=null && now>=plant.outbreakDue && soil!=='critical' && soil!=='rootRot';
+  const discovery=useRef(false);
+  discovery.current=canDiscover;
+  useEffect(()=>{
+    if(canDiscover && !document.hidden)void commit(p=>discovery.current && !document.hidden && p.id===plant.id?discoverFungus(p,Date.now()):p);
+  },[canDiscover,plant.id,commit,now]);
   const showMeters=!browsing && !game && plant.deadAt===null;
   const food=showMeters ? foodReadout(plant,now) : null;
   const growth=showMeters ? growthReadout(plant,now) : null;
   const water=showMeters ? waterReadout(plant,now) : null;
-  const status=game?playText(game):mood+' · ♥ Menu';
-  const description=browsing?title+' · '+choice.label+' · '+choice.hint:game?title+' · '+status+' '+(game.name==='dew'?game.chances+' chances':''):title+' · '+mood;
+  const status=game?playText(game):plant.deadAt!==null?'♥ Start again':mood+' · ♥ Menu';
+  const description=!browsing && sick?'Fungus · '+minutesLabel+' left. Heart opens First Aid.':browsing?title+' · '+choice.label+' · '+choice.hint:game?title+' · '+status+' '+(game.name==='dew'?game.chances+' chances':''):title+' · '+mood;
   useEffect(()=>{ if(game?.name) heart.current?.focus({preventScroll:true}); },[game?.name]);
 
   function go(id,initial=0) {
@@ -147,21 +160,35 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
     return 'care';
   }
   function choose() {
-    if (!section) {go('home');return 'tap';}
+    if (!section) {
+      if(plant.deadAt!==null)openBook();
+      else if(sick)setPath([frame('home'),frame('aid')]);
+      else go('home');
+      return 'tap';
+    }
     if (choice.locked || !choice.command) return false;
     const cmd=choice.command;
     if (cmd==='back' || cmd==='resume') back();
     else if (cmd==='next') browse(1);
     else if (cmd==='leave') leaveGame();
     else if (cmd==='rename') rename();
+    else if (cmd==='garden-book')openBook();
+    else if (cmd==='treat'){
+      let cured=false;
+      void commit(p=>{
+        if(p.id!==plant.id)return p;
+        const next=treatFungus(p,plant.fungusAt,Date.now());
+        cured=next.fungusAt===null && next.deadAt===null && p.fungusAt===plant.fungusAt;
+        return next;
+      }).then(ok=>{if(ok && cured){setPath([]);react('gnatCure');}});
+      return 'care';
+    }
     else if (cmd==='graduate') openMove();
     else if (cmd==='pour-extra') return give('water',true);
     else {
       const [type,value]=cmd.split(':');
       if (type==='give') return give(value);
       if (type==='game') activity.enter(value);
-      else if (type==='cut') commit(p=>p.id===plant.id?takeCutting(p,value):p);
-      else if (type==='new') {commit(p=>p.id===plant.id?replant(p,value):p);setPath([]);}
       else go(cmd,cmd==='care' && soil==='rootRot'?toyCards('care',plant,now).findIndex(c=>c.command==='give:drain'):0);
     }
     return 'tap';
@@ -269,17 +296,15 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
             : food ? <span className="lcd-food" data-tone={food.tone}>{food.label}</span>
             : <span className="battery" aria-hidden="true"><b/><b/><b/></span>}
         </span>
-        {showMeters && <span className="lcd-menu-key" aria-hidden="true">♥ Menu</span>}
+        {showMeters && <span className="lcd-menu-key" aria-hidden="true">{sick?'♥ First Aid':'♥ Menu'}</span>}
         {browsing && <BranchIcons active={branch}/>}
         <span className={game?'lcd-art':'lcd-art lcd-plant'}>
-          {game?<GameArt game={game}/>:<PlantPixel key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={moodOf(plant,now)} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} reaction={feedback?.effect}/>}
-          {browsing && choice.jar!==undefined && <span className="lcd-keepsake"><JarArt progress={choice.jar}/></span>}
-          {browsing && choice.leaf && <span className="lcd-keepsake"><PressedLeaf stage={choice.leaf}/></span>}
+          {game?<GameArt game={game}/>:<PlantPixel key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={moodOf(plant,now)} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
         </span>
         {browsing ? <MenuItem item={choice}/> : showMeters ? <div className="lcd-readout">
           <ReadoutMeter name="Growth" label={ageText} detail={ageText+' old · '+(growth.next?growth.next+' · ':'')+growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>
           <ReadoutMeter name="Water" label={water.label==='Seed watered'?'Watered':water.label.replace(/^In /,'')} detail={water.detail} tone={water.tone} value={water.fraction}/>
-          <ReadoutMeter name="Mood" label={moodOf(plant,now)} detail={moodOf(plant,now)} value={({happy:4,content:3,quiet:2,lonely:1,sleeping:0})[moodOf(plant,now)]} steps={4}/>
+          {sick?<span className="fungus-alarm" role="status"><Cross aria-hidden="true"/>Fungus · {minutesLabel} left</span>:<ReadoutMeter name="Mood" label={moodOf(plant,now)} detail={moodOf(plant,now)} value={({happy:4,content:3,quiet:2,lonely:1,sleeping:0})[moodOf(plant,now)]} steps={4}/>}
         </div> : <span className="lcd-status">{status}{ready && <small className="lcd-hint">Hold Back to exit</small>}</span>}
       </div>
       <span className="shell-name" aria-hidden="true">PLANTIGOCHI</span>
@@ -306,7 +331,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,ca
         }}>
         <button className="toy-back" data-audio="toy" aria-label="Back on toy" title="Back · Hold to return to plant" aria-description="Hold to return to your plant." onContextMenu={e=>e.preventDefault()} onClick={()=>press('back')}><CornerUpLeft/></button>
         <button data-audio="toy" aria-label={playing?'Play left':'Previous toy item'} title="Previous" onClick={()=>press('left')}><ChevronLeft/></button>
-        <button ref={heart} data-audio="toy" className={'accept toy-heart'+(lesson==='water'?' teaching-heart':'')} aria-label={playing?'Play heart':choice?'Choose '+choice.label:'Open toy menu'} title="Choose" aria-disabled={Boolean(choice && (choice.locked || !choice.command))} onClick={()=>press('heart')}><Heart/></button>
+        <button ref={heart} data-audio="toy" className={'accept toy-heart'+(lesson==='water'?' teaching-heart':'')} aria-label={playing?'Play heart':choice?'Choose '+choice.label:plant.deadAt!==null?'Start again':sick?'Open First Aid':'Open toy menu'} title="Choose" aria-disabled={Boolean(choice && (choice.locked || !choice.command))} onClick={()=>press('heart')}><Heart/></button>
         <button data-audio="toy" aria-label={playing?'Play right':'Next toy item'} title="Next" onClick={()=>press('right')}><ChevronRight/></button>
       </div>
       <span className="sr-only" role="status">{description}</span>

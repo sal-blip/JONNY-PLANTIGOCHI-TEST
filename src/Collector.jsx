@@ -1,5 +1,7 @@
 import React,{useEffect,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {ChevronDown,ChevronLeft,ChevronRight,Waves} from 'lucide-react';
+import GardenKeepsakes from './GardenKeepsakes.jsx';
+import {ROOT_TIME,replant,takeCutting} from './game.js';
 import GardenDialog from './GardenDialog.jsx';
 import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,roomLight} from './roomArt.js';
 import {drawPottedPlant} from './roomPlant.js';
@@ -25,14 +27,14 @@ function firstVacantRoom(plants){
   return 0;
 }
 
-export default function Collector({active,plant,moving,now,move,relocate,shareLink,startClose,purr}) {
+export default function Collector({active,plant,moving,initialPanel,commit,now,move,relocate,shareLink,startClose,purr}) {
   const graduates=plant.graduates;
   const count=gardenViews(graduates);
   const [room,setRoom]=useState(()=>moving?firstVacantRoom(graduates):0);
   const page=clamp(room,count-1);
   const [slot,setSlot]=useState(null),[notice,setNotice]=useState('');
   const [carry,setCarry]=useState(null),[busy,setBusy]=useState(false),[postcard,setPostcard]=useState(null);
-  const [panel,setPanel]=useState(null),[ghost,setGhost]=useState(null),[cat,setCat]=useState(false);
+  const [panel,setPanel]=useState(initialPanel || null),[ghost,setGhost]=useState(null),[cat,setCat]=useState(false);
   const [dropOver,setDropOver]=useState(null);
   const gesture=useRef(null),ignoreClick=useRef(false),edge=useRef(null),catTimer=useRef(null);
   const stage=useRef(null),menuButton=useRef(null),ghostCanvas=useRef(null);
@@ -42,7 +44,7 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
   const [visible,setVisible]=useState([page,page]);
   const mounted=useRef(false),pending=useRef(false);
   const collection=useMemo(()=>new Map(graduates.map(p=>[p.slot,p])),[graduates]);
-  const picking=moving===plant.id && plant.stage==='grown' && plant.deadAt===null;
+  const picking=moving===plant.id && plant.stage==='grown' && plant.fungusAt==null && plant.deadAt===null;
   const source=carry && collection.get(carry.from)?.id===carry.id?collection.get(carry.from):null;
   const inHand=carry?.confirmed && source;
   const placing=Boolean(inHand) || picking;
@@ -101,7 +103,7 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
     const observer=new ResizeObserver(size);observer.observe(el);
     return ()=>observer.disconnect();
   },[count]);
-  useEffect(()=>{if(active)menuButton.current?.focus({preventScroll:true});},[active]);
+  useEffect(()=>{if(active && !initialPanel)menuButton.current?.focus({preventScroll:true});},[active]);
   function relax(){
     clearTimeout(zoomTimer.current);
     const el=lens.current;
@@ -124,6 +126,27 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
     setRoom(target);
     el.scrollTo({left:(target+.5)*camera.current-el.clientWidth/2,
       behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+  }
+  const jarProgress=plant.jar?Math.max(0,Math.min(1,(now-plant.jar.cutAt)/ROOT_TIME)):null;
+  function openKeepsake(kind){
+    if(placing || pending.current)return;
+    setNotice('');setSlot(null);setPanel(kind);
+  }
+  async function useKeepsake(kind,value){
+    if(pending.current)return;
+    pending.current=true;setBusy(true);setNotice('');
+    let changed=false;
+    try{
+      const ok=await commit(p=>{
+        if(p.id!==plant.id)return p;
+        const next=kind==='cut'?takeCutting(p,value):replant(p,value);
+        changed=kind==='cut'?!p.jar && !!next.jar:next.id!==p.id;
+        return next;
+      });
+      if(!mounted.current)return;
+      if(!ok || !changed)setNotice('Your garden changed or could not save. Check the plant and try again.');
+      else if(kind==='replant'){setPanel(null);startClose();}
+    }finally{pending.current=false;if(mounted.current)setBusy(false);}
   }
   function closePanel(){
     setPanel(null);setPostcard(null);
@@ -252,7 +275,7 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
     setBusy(true);setNotice('');
     try{
       const image=document.createElement('canvas');image.width=ROOM_WIDTH*3;image.height=ROOM_HEIGHT*3;
-      drawRoom(image,{hour,plants:potted[page],roomIndex:page,time:0,reducedMotion:true});
+      drawRoom(image,{hour,plants:potted[page],jarProgress,leafCount:plant.book.length,roomIndex:page,time:0,reducedMotion:true});
       const blob=await new Promise(resolve=>image.toBlob(resolve,'image/png'));
       if(!blob)throw Error();
       const file=new File([blob],'plantigochi-'+viewName(page).toLowerCase().replaceAll(' ','-')+'.png',{type:'image/png'});
@@ -296,7 +319,7 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
         {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} worldHeight={worldHeight} plants={potted[k]} hour={hour}
-          placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
+          openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
     <button className="room-corner room-return" aria-label="Back to Plantigochi" title="Back to Plantigochi"
@@ -318,19 +341,22 @@ export default function Collector({active,plant,moving,now,move,relocate,shareLi
       <p className="room-guide">{placeName(carry.from)} · {viewName(viewForSlot(carry.from))}</p>
       <div className="menu-items"><button onClick={confirmMove}>Move</button><button onClick={cancelCarry}>Keep here</button></div>
     </GardenDialog>}
-    {panel && panel!=='move' && <GardenDialog page={panel==='menu'?'menu':'garden-detail'} title={panel==='menu'?viewName(page):panel==='share'?'Game link':'Garden postcard'}
+    {panel && panel!=='move' && <GardenDialog page={panel==='menu'?'menu':'garden-detail'} title={panel==='menu'?viewName(page):panel==='share'?'Game link':panel==='jar'?'Cutting Jar':panel==='book'?'Leaf Book':'Garden postcard'}
       back={panel==='menu'?null:()=>{setPostcard(null);setPanel('menu');}} close={closePanel}>
       {panel==='menu' && <>
         <p className="room-count">Room {page+1} of {count} · {graduates.length} {graduates.length===1?'plant':'plants'}</p>
         <div className="menu-items">
           <button disabled={page===0} onClick={()=>{travel(page-1);closePanel();}}>Previous room</button>
           <button disabled={page===count-1} onClick={()=>{travel(page+1);closePanel();}}>Next room</button>
+          <button disabled={placing} onClick={()=>openKeepsake('jar')}>Cutting Jar</button>
+          <button disabled={placing} onClick={()=>openKeepsake('book')}>Leaf Book</button>
           <button onClick={()=>shareLink(()=>setPanel('share'))}>Game link</button>
           <button disabled={busy} onClick={prepare}>Postcard</button>
           <button disabled={busy} onClick={()=>{setPanel(null);startClose();}}>Back to keychain</button>
         </div>
         <p className="room-guide">{notice || (picking?'Choose an open circle, then select Move in.':graduates.length?'Tap a plant, choose Move, then tap an open circle. Swipe sideways for more spots.':'Swipe sideways to explore. Grown plants can move here from the keychain.')}</p>
       </>}
+      {['jar','book'].includes(panel) && <><GardenKeepsakes key={panel} kind={panel} plant={plant} now={now} act={useKeepsake} openJar={()=>openKeepsake('jar')} busy={busy}/>{notice && <p role="status">{notice}</p>}</>}
       {panel==='share' && <GameLink showAddress/>}
       {panel==='postcard' && postcard && <div className="room-postcard"><img src={postcard.url} alt={'Your '+viewName(page)+' postcard'}/>
         <div className="menu-items">{navigator.canShare?.({files:[postcard.file]}) && <button onClick={shareCard}>Share image</button>}

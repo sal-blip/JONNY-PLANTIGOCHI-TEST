@@ -1,5 +1,5 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {reminderSchedule} from './reminderSchedule.js';
+import {reminderRequest,reminderSchedule} from './reminderSchedule.js';
 import {STAGES,STAGE_NAMES} from './game.js';
 import {mayChangeAlerts} from './useGardenSave.js';
 import {alertKey as KEY,withReminderLock} from './alertCleanup.js';
@@ -10,16 +10,21 @@ function supported(){return window.isSecureContext && typeof window.Notification
 async function api(method,token,body){
   const res=await fetch('/api/alerts/reminder',{method,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
   if(!res.ok)throw Error('Reminder sync failed');
+  return res.json();
 }
 
 export function usePlantAlerts(plant,offline,epoch){
   const [settings,setSettings]=useState(device),[busy,setBusy]=useState(false),[notice,setNotice]=useState('');
   const [verified,setVerified]=useState(null),[retry,bump]=useState(0);
+  const [nextDue,setNextDue]=useState(null);
   const lock=useRef(false),work=useRef(Promise.resolve()),last=useRef(plant);
   const capable=supported(),denied=capable && Notification.permission==='denied';
   const optedIn=Boolean(capable && settings.enabled && settings.token && Notification.permission==='granted');
-  const enabled=optedIn && settings.token===verified;
   const schedule=plant?JSON.stringify(reminderSchedule(plant,settings.company===true)):null;
+  const enrolled=optedIn;
+  const enabled=Boolean(enrolled && verified?.token===settings.token && verified?.schedule===schedule);
+
+
   const refresh=useCallback(()=>{setSettings(device());bump(n=>n+1);},[]);
   useEffect(()=>{
     const visible=()=>{if(!document.hidden)refresh();};
@@ -43,7 +48,8 @@ export function usePlantAlerts(plant,offline,epoch){
         await cache.put('/notice-schedule',Response.json({disabled:true}));
         if(navigator.onLine && (d.pendingDelete || d.enabled)){
           await api('DELETE',d.token);
-          await cache.delete('/notice-server-sync');
+          await cache.delete('/notice-ack-v31');
+          await cache.delete('/notice-test-id');
           const current=device();
           if(current.token===d.token && (!current.enabled || Notification.permission!=='granted')){
             const next={...current,enabled:false,pendingDelete:false};persist(next);if(active)setSettings(next);
@@ -57,30 +63,30 @@ export function usePlantAlerts(plant,offline,epoch){
         const next={...d,enabled:false,pendingDelete:true};persist(next);setSettings(next);setVerified(null);
         setNotice('Enable alerts again to reconnect this device.');return;
       }
-      setVerified(d.token);
-      if(!schedule)return;
-      const data=JSON.parse(schedule);
+      const data=schedule?JSON.parse(schedule):null;
       const lastNudge=Number(await (await cache.match('/notice-company-time'))?.text()) || 0;
-      if(data.companyDue && lastNudge){
+      if(data?.companyDue && lastNudge){
         const stretch=await (await cache.match('/notice-stretch'))?.text();
         data.companyDue=stretch===data.id+'-'+data.companyAt?null:Math.max(data.companyDue,lastNudge+86400000);
       }
       if(!active)return;
-      await cache.put('/notice-schedule',Response.json(data));
-      if(!navigator.onLine)return;
-      const previous=await (await cache.match('/notice-server-sync'))?.text();
-      const signature=JSON.stringify([d.token,sub.endpoint,data.id,data.due,data.criticalDue,data.companyDue]);
-      if(previous===signature)return;
-      const now=Date.now(),future=t=>t>now?t:null;
-      const body={endpoint:sub.endpoint,due:future(data.due),criticalDue:future(data.criticalDue),companyDue:future(data.companyDue)};
-      if(d.awaitingFirstReminder && !body.due && !body.criticalDue && !body.companyDue)return;
-      await api('PUT',d.token,body);
-      await cache.put('/notice-server-sync',new Response(signature));
-      if(d.awaitingFirstReminder)persist({...d,awaitingFirstReminder:false});
-      if(active)setNotice('');
+      await cache.put('/notice-schedule',Response.json(data || {awaitingSeed:true}));
+      const body=reminderRequest(data,sub);
+      const signature=JSON.stringify([d.token,body]);
+      const ack=await (await cache.match('/notice-ack-v31'))?.json();
+      // Refresh the server's next queued time periodically, even after a previous successful PUT.
+      if(ack?.signature===signature && (Date.now()-ack.at<60000 || !navigator.onLine)){
+        if(active){setVerified({token:d.token,schedule});setNextDue(ack.nextDue);setNotice('');}
+        return;
+      }
+      if(!navigator.onLine){if(active){setVerified(null);setNotice('Sync pending · offline');}return;}
+      const result=await api('PUT',d.token,body);
+      await cache.put('/notice-ack-v31',Response.json({signature,nextDue:result.nextDue,at:Date.now()}));
+      if(active){setVerified({token:d.token,schedule});setNextDue(result.nextDue);setNotice('');}
+
     };
     work.current=work.current.catch(()=>{}).then(()=>withReminderLock(run)).catch(()=>{
-      if(active)setNotice('Reminders will sync when the connection returns.');
+      if(active){setVerified(null);setNotice('Permission granted · reminder sync pending. We’ll retry automatically.');}
     });
     return ()=>{active=false;};
   },[schedule,optedIn,retry,capable,offline,settings.token,settings.enabled,settings.pendingDelete]);
@@ -112,18 +118,18 @@ export function usePlantAlerts(plant,offline,epoch){
           await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:key});
         }
         const token=d.token || Array.from(crypto.getRandomValues(new Uint8Array(32)),n=>n.toString(16).padStart(2,'0')).join('');
-        const next={...d,enabled:true,token,pendingDelete:false,awaitingFirstReminder:d.awaitingFirstReminder ?? (!d.token && (!plant || (plant.stage==='seed' && plant.wateredAt===null)))};
-        persist(next);setVerified(token);setSettings(next);return 'enabled';
+        const next={...d,enabled:true,token,pendingDelete:false};
+        persist(next);setVerified(null);setSettings(next);return 'enabled';
       });
     }catch{setNotice('Could not update alerts. Try again when online.');return 'failed';}
     finally{lock.current=false;setBusy(false);}
   }
   useEffect(()=>{
     const prev=last.current;last.current=plant;
-    if(!enabled || !prev || !plant || prev.id!==plant.id || plant.deadAt!==null || STAGES.indexOf(plant.stage)<=STAGES.indexOf(prev.stage))return;
+    if(!enrolled || !prev || !plant || prev.id!==plant.id || plant.deadAt!==null || STAGES.indexOf(plant.stage)<=STAGES.indexOf(prev.stage))return;
     navigator.serviceWorker.ready.then(reg=>reg.active?.postMessage({type:'milestone',id:plant.id,stage:plant.stage,label:STAGE_NAMES[plant.stage]})).catch(()=>{});
-  },[plant,enabled]);
+  },[plant,enrolled]);
   const toggleCompany=()=>{try{const d=device();if(!d.enabled || d.token!==settings.token)return;const next={...d,company:!d.company};persist(next);setSettings(next);}catch{setNotice('Could not save the company reminder setting.');}};
-  return {enabled,busy,notice,toggle:()=>changeEnabled(!enabled),enable:()=>changeEnabled(true),capable,denied,
-    verifying:optedIn && !enabled,canEnable:offline==='ready' && navigator.onLine,company:!!settings.company,toggleCompany};
+  return {enabled,enrolled,nextDue,busy,notice,toggle:()=>changeEnabled(!enrolled),enable:()=>changeEnabled(true),capable,denied,
+    canEnable:offline==='ready' && navigator.onLine,company:!!settings.company,toggleCompany};
 }

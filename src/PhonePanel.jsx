@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Bell, Check, Download, HardDrive, Upload } from 'lucide-react';
 import { backupLimit } from './gardenScenes.js';
 import { readPlant, STAGE_NAMES } from './game.js';
+import NotificationTest from './NotificationTest.jsx';
 import InstallHelp from './InstallHelp.jsx';
 import {downloadFile} from './Recovery.jsx';
 
@@ -43,14 +44,18 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, recover
       <InstallHelp phone={phone}/>
       <div className="offline-state" role="status">{phone.offline === 'ready' ? <Check size={15}/> : <HardDrive size={15}/>} {offlineText}</div>
     </section>}
-    {page === 'alerts' && <section className="phone-section">
-      <p>Get growth reminders and a rescue alert when your plant is very thirsty or its roots need drainage. Delivery is checked hourly while the game is closed.</p>
-      {alerts.capable && !alerts.denied ? <button className="alert-control" aria-pressed={alerts.enabled} onClick={alerts.toggle} disabled={alerts.busy || phone.offline !== 'ready'}>
-        <Bell size={16}/>{alerts.busy ? 'Updating…' : alerts.enabled ? 'Turn off alerts' : 'Enable plant alerts'}</button>
+    {(page === 'alerts' || page==='test') && <section className="phone-section">
+      {page==='alerts' && <p>Growth, thirst, root rot, and fungus reminders are checked hourly.</p>}
+      {alerts.capable && !alerts.denied ? <button className="alert-control" aria-pressed={alerts.enrolled} onClick={alerts.toggle} disabled={alerts.busy || phone.offline !== 'ready'}>
+        <Bell size={16}/>{alerts.busy ? 'Updating…' : alerts.enrolled ? 'Turn off alerts' : 'Enable plant alerts'}</button>
         : <p className="support-hint">{alerts.denied ? 'Notifications are blocked. You can allow them in the browser or device settings.' : 'On iPhone or iPad, add this game to the Home Screen and open its icon to enable alerts. Other devices need a browser that supports Web Push.'}</p>}
-      {alerts.enabled && <button className="alert-control" aria-pressed={alerts.company} onClick={alerts.toggleCompany}>
+      {page==='alerts' && alerts.enrolled && <button className="alert-control" aria-pressed={alerts.company} onClick={alerts.toggleCompany}>
         Company reminders · {alerts.company?'On':'Off'}</button>}
-      <p className="backup-notice" role="status">{alerts.notice}</p>
+      <p className="backup-notice" role="status">{alerts.notice || (alerts.enrolled && (alerts.enabled ?
+        (alerts.nextDue?'Reminders confirmed · Next '+new Date(alerts.nextDue).toLocaleString(undefined,{weekday:'short',hour:'numeric',minute:'2-digit'}):
+        plant.stage==='seed' && plant.wateredAt===null?'Permission granted · Water your seed to schedule its first reminder.':'Reminders confirmed · No upcoming reminder.')
+        :'Permission granted · Sync pending'))}</p>
+      <NotificationTest alerts={alerts}/>
     </section>}
     {page === 'saves' && <section className="phone-section">
       <p>{saveOK ? 'Your garden saves on this device.' : 'Device storage is unavailable. Download a backup before closing the game.'} Use a backup to move your plant to another phone.</p>

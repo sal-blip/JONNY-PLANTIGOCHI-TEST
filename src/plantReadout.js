@@ -1,4 +1,4 @@
-import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, condition, deathDeadline, nextMilestone} from './game.js';
+import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, condition, soilDeadline, nextMilestone} from './game.js';
 
 export const GROWTH_STEPS = 4;
 const clamp = value => Math.min(1, Math.max(0, value));
@@ -33,7 +33,7 @@ export function waterReadout(plant, now) {
   const fraction = plant.lastDrink === null
     ? Number(plant.wateredAt !== null)
     : clamp(1 - (now - plant.lastDrink) / WATER_INTERVAL);
-  if (soil === 'dead') return {fraction:0, label:'Pressed leaf', detail:'Visit the Leaf Book'};
+  if (soil === 'dead') return {fraction:0, label:'Pressed leaf', detail:'Heart opens the garden book'};
   if (plant.stage === 'seed') {
     const watered = plant.wateredAt !== null;
     const remaining = plant.plantedAt + HOUR - now;
@@ -42,11 +42,11 @@ export function waterReadout(plant, now) {
       : {fraction, label:'First sip', detail:'Water once to start growth', tone:'due'};
   }
   if (soil === 'rootRot') return {
-    fraction:0, label:'Drain now', detail:'Drain within ' + timeLeft(deathDeadline(plant) - now), tone:'urgent',
+    fraction:0, label:'Drain now', detail:'Drain within ' + timeLeft(soilDeadline(plant) - now), tone:'urgent',
   };
   if (soil === 'dry' || soil === 'critical') return {
     fraction, label:soil === 'critical' ? 'Critical' : 'Due now',
-    detail:(soil === 'critical' ? 'Critical' : 'Water now') + ' · ' + timeLeft(deathDeadline(plant) - now) + ' left',
+    detail:(soil === 'critical' ? 'Critical' : 'Water now') + ' · ' + timeLeft(soilDeadline(plant) - now) + ' left',
     tone:soil === 'critical' ? 'urgent' : 'due',
   };
   const dryIn = timeLeft(plant.lastDrink + WATER_INTERVAL - now);
@@ -58,7 +58,7 @@ export function waterReadout(plant, now) {
 }
 
 export function foodReadout(plant, now) {
-  if (plant.deadAt !== null) return {label:'', detail:'Visit the Leaf Book'};
+  if (plant.deadAt !== null) return {label:'', detail:'Heart opens the garden book'};
   if (plant.stage === 'seed') return {label:'Food at sprout', detail:'Unlocks after sprouting'};
   const remaining=plant.fedAt+FOOD_INTERVAL-now;
   return {label:remaining<=0?'Feed now':'Food '+timeLeft(remaining),detail:careStatus(plant,'food',now).hint,tone:remaining<=0?'due':undefined};

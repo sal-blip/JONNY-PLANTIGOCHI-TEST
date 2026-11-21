@@ -132,18 +132,18 @@ export function JarArt({ progress = 0 }) {
     <Canvas>
       <path opacity=".2" d="M30 41h36v1H30z M25 40h3v1h-3z M68 40h4v1h-4z" />
       <path fill="#80cfde" d="M32 25h4v1h5v-1h6v1h6v-1h7v1h3v10h-2v2H35v-2h-3z" />
-      <g fill="#34774e">
+      {progress !== null && <g fill="#34774e">
         <path d="M43 7h2v4h1v4h2v7h1v6h-2v-6h-1v-6h-2v-4h-1z M46 16h3v-2h2v-2h1v-2h2v3h-1v2h-2v2h-3v2h-2z" />
         <g transform="translate(31 2) scale(.78)"><Blade /></g>
         <path d="M52 10V8h2V6h2V5h6v1h-1v3h-2v2h-3v1h-3v-1h3V9h2V8h-2v1h-2v1z" />
-      </g>
+      </g>}
       <path fill="#306981" d="M34 18h27v2H34z M35 21h1v2h-1v1h-2v12h1v2h2v1h24v-1h2v-2h1V24h-2v-1h-1v-2h1v1h2v2h1v13h-1v2h-3v1H35v-1h-2v-2h-1V24h1v-2h2z" />
       <path fill="#3d94b0" d="M33 26h4v1h5v-1h5v1h6v-1h6v1h4v1h-5v-1h-5v1h-7v-1h-4v1h-6v-1h-3z" />
-      <g fill="none" stroke="#855333" strokeWidth="1.1" strokeDasharray={`${rootDraw} 80`}>
+      {progress !== null && <g fill="none" stroke="#855333" strokeWidth="1.1" strokeDasharray={`${rootDraw} 80`}>
         <path d="M48 26v3h-2v2h-2v1h-2v3h-2v1h-2" />
         <path d="M48 27v3h2v2h2v2h2v2h3" strokeDasharray={`${Math.max(0, rootDraw-6)} 80`} />
         <path d="M45 31v2h1v3h-1v1 M52 32h3v-1h2" opacity=".61" strokeDasharray={`${Math.max(0, rootDraw-15)} 80`} />
-      </g>
+      </g>}
       <path fill="#ecffff" d="M36 29h1v5h-1z M36 35h1v1h-1z M59 34h1v2h-1z M58 36h1v1h-1z" />
       {amount >= 1 && <g className="activity-pixel-flash"><Glint x={66} y={10} /><Glint x={26} y={21} /></g>}
     </Canvas>

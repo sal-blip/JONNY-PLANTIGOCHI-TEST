@@ -20,16 +20,30 @@ async function notifyGarden(event) {
   const cache=await caches.open('plantigochi-notices');
   const schedule=await (await cache.match('/notice-schedule'))?.json();
   if(!schedule||schedule.disabled)return;
+  if(event?.type==='test'){
+    if(![1,2].includes(event.step) || await cached(cache,'/notice-test-id')!==event.testId)return;
+    const receipt='/notice-test-received-'+event.step;
+    if(await cached(cache,receipt)===event.testId)return;
+    await self.registration.showNotification('Plantigochi test '+event.step+' of 2',{
+      body:event.step===1?'First push · 5-second test':'Second push · 15-second test',
+      icon:'/icons/icon-192.png',badge:'/leaf.svg',tag:'plantigochi-test-'+event.step,data:{action:'test'}
+    });
+    await cache.put(receipt,new Response(event.testId));
+    return;
+  }
   const p=await activePlant(), now=Date.now();
   if(p!==undefined && (!p || p.id!==schedule.id || p.deadAt!==null))return;
   if(schedule.expires && now>=schedule.expires)return;
   async function notify(kind,title,body,identity,action) {
     const key='/notice-delivered-'+kind;
     if(await cached(cache,key)===identity)return false;
-    await self.registration.showNotification(title,{body,icon:'/icons/icon-192.png',badge:'/leaf.svg',tag:'plantigochi-'+kind,data:{action}});
+    await self.registration.showNotification(title,{body,icon:'/icons/icon-192.png',badge:'/leaf.svg',tag:'plantigochi-'+kind,data:action==='fungus'?{action,plantId:schedule.id,episode:schedule.fungusAt}:{action}});
     await cache.put(key,new Response(identity));return true;
   }
   const id=schedule.id??'legacy';
+  if(schedule.fungusDue && now>=schedule.fungusDue && (!p || p.fungusAt===schedule.fungusAt)){
+    await notify('fungus','Your plant needs First Aid','Open First Aid and give your plant one drop of G-NAT ASSASSIN.',id+'-'+schedule.fungusAt,'fungus');
+  }
   if(schedule.criticalDue && now>=schedule.criticalDue) {
     if(p && (p.lastDrink!==schedule.lastDrink || p.rotAt!==schedule.rotAt))return;
     const rot=schedule.reason==='rot';
@@ -57,7 +71,7 @@ async function notifyGarden(event) {
   }
 }
 function queue(event,data){pending=pending.catch(()=>{}).then(()=>notifyGarden(data));event.waitUntil(pending);}
-self.addEventListener('push',event=>queue(event));
+self.addEventListener('push',event=>{let data;try{data=event.data?.json();}catch{}queue(event,data);});
 self.addEventListener('message',event=>{if(event.data?.type==='milestone')queue(event,event.data);});
 function isInstalledWindow(client){
   return new Promise(resolve=>{
@@ -76,7 +90,9 @@ self.addEventListener('notificationclick',event=>{
     const candidates=windows.filter(c=>new URL(c.url).origin===self.location.origin);
     const installed=await Promise.all(candidates.map(isInstalledWindow));
     const garden=candidates.find((_,i)=>installed[i]);
-    if(garden){await garden.focus();if(action)garden.postMessage({type:'plant-care',action});return;}
-    return self.clients.openWindow(action==='drain'||action==='water'?'/?care='+action:'/');
+    if(garden){await garden.focus();if(action)garden.postMessage({type:'plant-care',...event.notification.data});return;}
+    let path=['drain','water','fungus','test'].includes(action)?'/?care='+action:'/';
+    if(action==='fungus')path+='&plant='+encodeURIComponent(event.notification.data.plantId)+'&episode='+event.notification.data.episode;
+    return self.clients.openWindow(path);
   })());
 });

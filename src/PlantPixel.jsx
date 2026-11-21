@@ -1,5 +1,7 @@
 import React from "react";
+import {BottlePreview, GnatDose, OutbreakArt, outbreakLabels, outbreakLevel} from "./GnatArt.jsx";
 import "./PlantPixel.css";
+export {GnatBottle} from "./GnatArt.jsx";
 
 // Glyphs identify a material's outline, shade, smaller details, lit surface and midtone.
 // A leaf's detail color picks out its vein; clay and soil use the same cells for modeling.
@@ -16,6 +18,7 @@ const ink = {
   dryLeaf: ramp("#6d6547", "#97894d", "#d6d098", "#a7ae69", "#9b9e5b"),
   wilted: ramp("#755543", "#94714c", "#d6b87c", "#be9f69", "#a38756"),
   rotted: ramp("#54484a", "#705c55", "#b6ab85", "#979672", "#857c62"),
+  paleLeaf: ramp("#476945", "#68834d", "#c6ce88", "#91ad72", "#7e975e"),
   seed: ramp("#634339", "#986342", "#edbd83", "#c58b59", "#ae754d"),
   oldSeed: ramp("#654b44", "#896c58", "#caaa82", "#a58b69"),
   soil: ramp("#594038", "#80573f", "#be9270", "#a77754"),
@@ -264,6 +267,7 @@ const faces = {
   hungry: draw(["##........##", "##........##", ".....##", ".....##"]),
   lowLight: draw(["###......###", ".#........#.", ".....##"]),
   dead: draw(["#.#......#.#", ".#........#.", "#.#......#.#", ".....##"]),
+  bothered: draw([".#........#.", "##........##", ".....##", "....#..#"]),
 };
 const blink = draw(["............","###......###",".....#.#","......#"]);
 const zSmall = draw(["###", "..#", ".#.", "###"], "twilight");
@@ -282,12 +286,12 @@ const splitHeart = draw([".##...##", "#::#.#:+#", "#:#..#::#", ".#:#..:#", "..#.
 
 const stageName = { seed: "Sleeping Monstera seed", sprout: "Monstera sprout", young: "Young Monstera", split: "Monstera with its first split leaf", grown: "Grown Monstera with a broad canopy" };
 const healthName = { dry: "dry with cracked soil", critical: "critically thirsty and slumping", soggy: "soggy and dripping", rootRot: "root rot with mottled leaves and damaged roots", dead: "dead and still" };
-const effectName = { water: "being watered", food: "receiving food", sun: "receiving sunlight", talk: "hearing kind words", drain: "draining excess water", overwater: "an extra pour", growth: "growing", death: "a fallen leaf", replant: "newly planted", gameWin: "celebrating a game win", gameLoss: "a game loss" };
+const effectName = { water: "being watered", food: "receiving food", sun: "receiving sunlight", talk: "hearing kind words", drain: "draining excess water", overwater: "an extra pour", growth: "growing", death: "a fallen leaf", replant: "newly planted", gameWin: "celebrating a game win", gameLoss: "a game loss", gnatCure: "one drop of G-NAT ASSASSIN reaches the soil and the fungus gnats scatter" };
 
 const leafHealth = { dry: "dryLeaf", critical: "wilted", soggy: "wetLeaf", rootRot: "rotted" };
 
-function Canopy({ stage, condition, lowLight }) {
-  const drooping = condition === "critical" || condition === "rootRot";
+function Canopy({ stage, condition, lowLight, severity }) {
+  const drooping = condition === "critical" || condition === "rootRot" || severity === 3;
   return <g className={'plant-canopy' + (lowLight && !drooping ? ' plant-seeking-light' : '')}>
     {foliage[stage].map(({ stem }, i) => <path key={i} d={stem} fill="none" stroke={ink[leafHealth[condition] || "leaf"]["#"]} strokeWidth="2" />)}
     <g className={drooping ? undefined : "plant-pixel-sway"}>
@@ -299,7 +303,7 @@ function Canopy({ stage, condition, lowLight }) {
           const py = y + (drooping ? 3 : 0);
           const sideFrame = mirror && frame ? 3 - frame : frame;
           const bladeTone = kind === little ? "youngLeaf" : i % 2 ? "emerald" : "leaf";
-          const material = leafHealth[condition] || (lowLight ? "dimLeaf" : bladeTone);
+          const material = leafHealth[condition] || (severity >= 2 ? "paleLeaf" : lowLight ? "dimLeaf" : bladeTone);
           return <g key={i}>
             <Pixels image={drooping ? wilted[0] : kind[sideFrame]} material={material} x={px} y={py} mirror={mirror} />
             {condition === "rootRot" && <Pixels image={spots} x={px + (mirror ? -9 : 4)} y={py + 4} />}
@@ -310,9 +314,9 @@ function Canopy({ stage, condition, lowLight }) {
   </g>;
 }
 
-function Stem({ stage, condition, lowLight }) {
-  const material = leafHealth[condition] || (lowLight ? "dimLeaf" : "youngLeaf");
-  const limp = condition === "critical" || condition === "rootRot";
+function Stem({ stage, condition, lowLight, severity }) {
+  const material = leafHealth[condition] || (severity >= 2 ? "paleLeaf" : lowLight ? "dimLeaf" : "youngLeaf");
+  const limp = condition === "critical" || condition === "rootRot" || severity === 3;
   if (stage === "seed") return <>
     {limp ? <Pixels image={shrunkSeed} x={30} y={18} /> : <g className="plant-pixel-breathe">
       <g className="plant-pixel-rest"><Pixels image={seed} x={29} y={15} /></g>
@@ -406,22 +410,27 @@ function EventArt({ kind }) {
   return <g className={`plant-event plant-event-${kind}`} data-effect={kind}>{art}</g>;
 }
 
-export default function PlantPixel({ stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false }) {
+export default function PlantPixel({ stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false, outbreak = 0, showBottle = false }) {
   const growth = Object.hasOwn(stageName, stage) ? stage : "seed";
   const soil = Object.hasOwn(healthName, condition) ? condition : "healthy";
   const feeling = ["happy", "content", "quiet", "lonely"].includes(mood) ? mood : "content";
   const effect = Object.hasOwn(effectName, reaction) && (soil !== "dead" || reaction === "death") ? reaction : null;
-  const expression = soil !== "healthy" ? soil : growth === "seed" ? "asleep" : hungry ? "hungry" : lowLight ? "lowLight" : feeling;
+  const severity = soil === "dead" ? 0 : outbreakLevel(outbreak);
+  const curing = effect === "gnatCure";
+  const active = curing ? 0 : severity;
+  const expression = soil !== "healthy" ? soil : active >= 2 ? "bothered" : growth === "seed" ? "asleep" : hungry ? "hungry" : lowLight ? "lowLight" : feeling;
   const subject = growth === "seed" && soil !== "healthy" ? "Monstera seed" : stageName[growth];
-  const label = [subject, healthName[soil], soil !== "dead" && feeling, soil !== "dead" && hungry && "needs food", soil !== "dead" && lowLight && "needs light", effectName[effect]].filter(Boolean).join(", ");
+  const label = [subject, healthName[soil], outbreakLabels[active], showBottle && soil !== "dead" && !curing && "G-NAT ASSASSIN treatment bottle", soil !== "dead" && feeling, soil !== "dead" && hungry && "needs food", soil !== "dead" && lowLight && "needs light", effectName[effect]].filter(Boolean).join(", ");
   return <svg className="plant-pixel" viewBox="0 0 72 40" xmlns="http://www.w3.org/2000/svg"
-    role="img" aria-label={label} shapeRendering="crispEdges" data-stage={growth} data-condition={soil} data-mood={feeling} data-effect={effect ?? undefined}>
+    role="img" aria-label={label} shapeRendering="crispEdges" data-stage={growth} data-condition={soil} data-mood={feeling} data-outbreak={active || undefined} data-effect={effect ?? undefined}>
     <g fill="currentColor">
-      <g className="plant-body">{soil === "dead" ? <Remains stage={growth} /> : foliage[growth] ?
-        <Canopy stage={growth} condition={soil} lowLight={lowLight} /> : <Stem stage={growth} condition={soil} lowLight={lowLight} />}</g>
+      <g className="plant-body"><g className="plant-outbreak-posture">{soil === "dead" ? <Remains stage={growth} /> : foliage[growth] ?
+        <Canopy stage={growth} condition={soil} lowLight={lowLight} severity={active} /> : <Stem stage={growth} condition={soil} lowLight={lowLight} severity={active} />}</g></g>
       <Pot condition={soil} expression={expression} />
-      <Feeling stage={growth} mood={feeling} hungry={hungry} lowLight={lowLight} condition={soil} reaction={effect} />
-      {effect && <EventArt kind={effect} />}
+      <Feeling stage={growth} mood={feeling} hungry={hungry} lowLight={lowLight} condition={soil} reaction={effect || active} />
+      {active > 0 && <OutbreakArt severity={active}/>}
+      {showBottle && !curing && soil !== "dead" && <BottlePreview/>}
+      {curing ? <GnatDose severity={severity}/> : effect && <EventArt kind={effect} />}
     </g>
   </svg>;
 }

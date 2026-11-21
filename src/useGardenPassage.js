@@ -15,10 +15,10 @@ export function useGardenPassage(){
   },[]);
   useEffect(()=>()=>animation.current?.cancel(),[]);
 
-  function settle(enter,moving){
+  function settle(enter,moving,panel){
     if(animation.current || !track.current)return;
     const from=progress.current,to=enter?1:0;
-    if(enter)setRoom(previous=>previous || {moving});
+    if(enter)setRoom(previous=>previous || {moving,panel});
     setInside(false);
     const el=track.current;
     progress.current=to;el.style.transform=pose(to);
@@ -69,5 +69,5 @@ export function useGardenPassage(){
     if(suppressClick.current && e.detail!==0){suppressClick.current=false;return;}
     settle(true);
   }
-  return {room,inside,track,handle,reset,enter:moving=>settle(true,moving),leave:()=>settle(false),start,drag,release,activate};
+  return {room,inside,track,handle,reset,enter:(moving,panel)=>settle(true,moving,panel),leave:()=>settle(false),start,drag,release,activate};
 }

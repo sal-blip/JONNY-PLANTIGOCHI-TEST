@@ -20,10 +20,12 @@ test('push destination is restricted to HTTPS browser push services', () => {
 
 function testDB(){
   const sqlite = new DatabaseSync(':memory:');
-  const migration=fs.readdirSync('drizzle').find(s=>s.endsWith('.sql'));
-  sqlite.exec(fs.readFileSync('drizzle/'+migration,'utf8'));
+  for (const migration of fs.readdirSync('drizzle').filter(s=>s.endsWith('.sql')).sort()) {
+    sqlite.exec(fs.readFileSync('drizzle/'+migration,'utf8'));
+  }
   return {
     prepare(sql){ return {bind(...args){const q=sqlite.prepare(sql);return {
+      async first(column){const row=q.get(...args);return column ? row?.[column] ?? null : row ?? null;},
       async all(){return {results:q.all(...args)};}, async run(){return {meta:q.run(...args)};}
     };}};},
     async batch(statements){for(const s of statements) await s.run();},

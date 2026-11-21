@@ -60,3 +60,5 @@
 .placement-actions button[aria-label]{padding:3px;min-width:30px;display:grid;place-items:center}
 .placement-actions button:last-child{margin-left:4px}.placement-actions svg{width:17px;height:17px}
 .placement-actions button:disabled{opacity:.32}
+
+.keepsake-details{text-align:center;color:var(--ink)}.keepsake-details p{margin:.5rem 0 1rem}.keepsake-print{width:80px;height:70px;margin:auto;color:#496650}.keepsake-print svg{width:100%;height:100%}.leaf-pages{display:flex;justify-content:center;align-items:center;gap:1rem}.leaf-pages button{border:0;background:transparent;text-decoration:underline;min-height:40px;color:inherit}

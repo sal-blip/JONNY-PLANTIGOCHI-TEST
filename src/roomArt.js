@@ -1,6 +1,7 @@
 import {BASE_WIDTH,BASE_HEIGHT,placesFor,CAT_SEAT,drawScenery} from './roomScenery.js';
 import {drawRoomCat} from './roomCat.js';
 import {drawPottedPlant} from './roomPlant.js';
+import {drawKeepsake,keepsakeFor} from './roomKeepsakes.js';
 
 export {BASE_WIDTH as ROOM_WIDTH, BASE_HEIGHT as ROOM_HEIGHT, placesFor, CAT_SEAT};
 
@@ -14,7 +15,8 @@ export function roomLight(hour) {
 
 export function drawRoom(canvas,{
   hour,plants=[],roomIndex=0,time=0,reducedMotion=false,awake=false,
-  highlighted=-1,lifted=-1,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false
+  highlighted=-1,lifted=-1,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false,
+  jarProgress=null,leafCount=0
 }={}) {
   const ctx=canvas.getContext('2d');
   if(!ctx)return;
@@ -40,7 +42,13 @@ export function drawRoom(canvas,{
       plant,styleIndex:slot+roomIndex*places.length,night:1-light.day,time,reducedMotion,selected});
     ctx.restore();
   }
-  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant,separatePlanes});
+  const object=keepsakeFor(roomIndex);
+  function paintKeepsake(id){
+    if(object?.id===id)drawKeepsake(ctx,object,{
+      jarProgress,leafCount,night:1-light.day,selected:highlighted===id&&!placing,time,reducedMotion,
+    });
+  }
+  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant,drawKeepsake:paintKeepsake,separatePlanes});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   places.forEach((spot,i)=>{if(spot.layer==='floor')drawOccupant(i);});
   ctx.restore();

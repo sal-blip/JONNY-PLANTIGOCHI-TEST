@@ -8,6 +8,8 @@ export const WATER_INTERVAL = 4 * HOUR;
 export const MATURE_CARE_DELAY = 4 * HOUR;
 const CRITICAL_WATER_AGE = 12 * HOUR;
 const ROT_RESCUE_WINDOW = 12 * HOUR;
+export const FUNGUS_WINDOW = 12 * HOUR;
+const nextOutbreak = now => now + 36 * HOUR + Math.floor(Math.random() * (DAY + 1));
 export const KEY = 'jonny.plantigochi.v1';
 export const ACTIONS = ['water', 'sun', 'talk', 'food'];
 export const STAGES = ['seed', 'sprout', 'young', 'split', 'grown'];
@@ -38,7 +40,7 @@ export const plantName = name => typeof name === 'string' && /^[A-Za-z -]{1,12}$
 export function newPlant(now = Date.now(), name = 'Monstera') {
   return { version: 3, name:plantName(name), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
-    ...blankHealth, jar: null, book: [], dewCleared: 0 };
+    ...blankHealth, outbreakDue:null, fungusAt:null, jar: null, book: [], dewCleared: 0 };
 }
 
 export function condition(p, now = Date.now()) {
@@ -51,9 +53,27 @@ export function condition(p, now = Date.now()) {
   return p.extraPour !== null ? 'soggy' : 'healthy';
 }
 
-export function deathDeadline(p) {
+export function soilDeadline(p) {
   if (p.lastDrink === null || p.deadAt !== null) return null;
   return p.rotAt === null ? p.lastDrink + DAY : p.rotAt + ROT_RESCUE_WINDOW;
+}
+
+export function deathDeadline(p) {
+  const soil=soilDeadline(p);
+  return soil===null || p.fungusAt==null ? soil : Math.min(soil,p.fungusAt+FUNGUS_WINDOW);
+}
+
+export function discoverFungus(saved, now) {
+  const p=wake(saved,now);
+  if(p.deadAt!==null || p.stage==='seed' || p.fungusAt!=null || p.outbreakDue==null || now<p.outbreakDue ||
+     p.rotAt!==null || condition(p,now)==='critical')return p;
+  return {...settle(p,now),fungusAt:now,outbreakDue:null};
+}
+
+export function treatFungus(saved, outbreak, now) {
+  const p=wake(saved,now);
+  if(p.deadAt!==null || outbreak==null || p.fungusAt!==outbreak)return p;
+  return {...settle(p,now),fungusAt:null,outbreakDue:nextOutbreak(now),message:'Ahh. No more gnats!'};
 }
 
 export function criticalReminder(p) {
@@ -73,6 +93,7 @@ export function moodOf(p, now = Date.now()) {
 }
 export function growthHolds(p, now) {
   const holds = [];
+  if (p.fungusAt!=null) holds.push('First Aid');
   if (p.rotAt !== null) holds.push('Drain');
   else if (now >= p.lastDrink + CRITICAL_WATER_AGE) holds.push('Water');
   if (now >= p.fedAt + FOOD_INTERVAL) holds.push('Food');
@@ -85,7 +106,7 @@ function eligibleUntil(p) {
 export function earnedAt(p, now) {
   if (p.stage === 'seed') return Math.min(HOUR, Math.max(0, now - p.plantedAt));
   if (p.stage === 'grown') return WEEK;
-  const end = Math.min(now, eligibleUntil(p), p.deadAt ?? Infinity, p.rotAt ?? Infinity);
+  const end = Math.min(now, eligibleUntil(p), p.deadAt ?? Infinity, p.rotAt ?? Infinity, p.fungusAt ?? Infinity);
   return Math.min(WEEK, p.earned + Math.max(0, end - p.anchor));
 }
 export function milestoneDue(p) {
@@ -93,10 +114,10 @@ export function milestoneDue(p) {
   if (!next) return null;
   if (p.stage === 'seed') return p.wateredAt === null ? null : Math.max(p.wateredAt,p.plantedAt + HOUR);
   const due = p.anchor + Math.max(0, next.age - p.earned);
-  return p.rotAt === null && due <= eligibleUntil(p) ? due : null;
+  return p.fungusAt==null && p.rotAt === null && due <= eligibleUntil(p) ? due : null;
 }
 function sprout(p, now) {
-  return {...p, stage:'sprout', earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
+  return {...p, stage:'sprout', outbreakDue:nextOutbreak(now), fungusAt:null, earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
     companyAt:now, accompanied:false, given:[], message:'Ohayō! Look who finally leafed out.'};
 }
 function settle(p, now) {
@@ -112,7 +133,7 @@ export function wake(p, now = Date.now(), visible = true) {
     p = {...p,stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'};
   }
   if (now < deadline) return p;
-  const cause = p.rotAt === null ? 'Thirst' : 'Root rot';
+  const cause = deadline<soilDeadline(p) ? 'Fungus' : p.rotAt===null ? 'Thirst' : 'Root rot';
   const leaf = {id:p.id,name:plantName(p.name),stage:p.stage,generation:p.generation,plantedAt:p.plantedAt,diedAt:deadline,cause};
   return {...settle(p,deadline),deadAt:deadline,book:[...p.book,leaf],message:'A leaf for your book.'};
 }
@@ -125,7 +146,7 @@ const optionalStamp = n => n === null || stamp(n);
 const generation = n => Number.isSafeInteger(n) && n >= 1;
 const validId = id => typeof id === 'string' && id.length > 0 && id.length <= 100;
 const validLeaf = leaf => leaf && validId(leaf.id) && STAGES.slice(1).includes(leaf.stage) && generation(leaf.generation)
-  && stamp(leaf.plantedAt) && stamp(leaf.diedAt) && leaf.diedAt >= leaf.plantedAt && ['Thirst','Root rot'].includes(leaf.cause);
+  && stamp(leaf.plantedAt) && stamp(leaf.diedAt) && leaf.diedAt >= leaf.plantedAt && ['Thirst','Root rot','Fungus'].includes(leaf.cause);
 
 function validGarden(p) {
   if (!validId(p.id) || !generation(p.generation) || ![p.lastDrink,p.extraPour,p.rotAt,p.deadAt].every(optionalStamp)) return false;
@@ -157,6 +178,11 @@ export function readPlant(text, now = Date.now(), visible = true) {
         anchor:now,fedAt:p.lastDrink===null?null:now,litAt:p.lastDrink===null?null:now,
         companyAt:p.lastDrink===null?null:now,accompanied:false});
     }
+    if (!Object.hasOwn(p,'fungusAt')) p.fungusAt=null;
+    if (!Object.hasOwn(p,'outbreakDue')) p.outbreakDue=p.deadAt===null && p.stage!=='seed' ? nextOutbreak(now) : null;
+    if(!optionalStamp(p.fungusAt) || !optionalStamp(p.outbreakDue) ||
+       (p.fungusAt!==null && p.outbreakDue!==null) ||
+       (p.stage==='seed' && (p.fungusAt!==null || p.outbreakDue!==null)))return null;
     if (!stamp(p.earned) || p.earned>WEEK || !stamp(p.anchor) || typeof p.accompanied!=='boolean'
       || ![p.companyAt,p.fedAt,p.litAt].every(n=>p.stage==='seed'?n===null:stamp(n))
       || !Array.isArray(p.graduates) || !p.graduates.every(g=>g && validId(g.id) && g.id!==p.id &&
@@ -181,7 +207,7 @@ export function restore(text, now = Date.now(), visible = true) {
 
 export function takeCutting(saved, stem, now = Date.now()) {
   const p = wake(saved, now);
-  if (p.deadAt !== null || p.stage !== 'grown' || p.jar || !['left','right'].includes(stem)) return p;
+  if (p.deadAt !== null || p.stage !== 'grown' || p.fungusAt!=null || p.jar || !['left','right'].includes(stem)) return p;
   return { ...p, jar: { cutAt: now, generation: p.generation + 1, stem } };
 }
 
@@ -198,7 +224,7 @@ export function replant(saved, source, now = Date.now()) {
 
 export function graduate(saved, id, slot, now = Date.now()) {
   const p = wake(saved,now);
-  if (p.id!==id || p.stage!=='grown' || p.deadAt!==null || !canPlaceAt(p.graduates,slot)) return p;
+  if (p.id!==id || p.stage!=='grown' || p.fungusAt!=null || p.deadAt!==null || !canPlaceAt(p.graduates,slot)) return p;
   const room=viewForSlot(slot);
   const potStyle=placesFor(room).findIndex(spot=>slotFor(room,spot)===slot)%6;
   const graduate = {id:p.id,name:plantName(p.name),species:'monstera',potStyle,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
