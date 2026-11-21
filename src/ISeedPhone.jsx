@@ -12,157 +12,6 @@ const apps=[
   {id:'postcard',label:'Postcard'},
 ];
 
-// Transparent pixel sprites, drawn at the resolution of the room’s furnishings.
-const colors={
-  k:'#433f38',b:'#75523d',m:'#aa7952',o:'#d3a369',y:'#efd091',i:'#fff0ca',
-  r:'#a9584b',p:'#d87f68',l:'#eeab86',g:'#46694e',v:'#719166',s:'#aac588',
-  t:'#446c70',a:'#75a4a0',u:'#b5d5bb',q:'#7c6373',h:'#b497a4',w:'#faf6df',
-};
-const sprites={
-  plantigochi:[
-    '    kk                ',
-    '  kkukkk  gggg        ',
-    ' ku  ku kggsssggg     ',
-    ' ku  ku gsisssssvg    ',
-    '  kkkukkssiissgvvvg   ',
-    '   ukksssisssgg gvg   ',
-    '  gsssssvvvvvvvvvvg   ',
-    ' gsssvggkkkkkkggvvvg  ',
-    'gsivggkkauuuuukgggvvg ',
-    'gssvgkauuiuuuuakgvvvg ',
-    'gvgvgkauuuuuuuakgvvg  ',
-    'g gg gautggssuakgvg   ',
-    ' gggvkausvvvsuakgvg   ',
-    ' gvvvkaauvvuuuakgvg   ',
-    '  ggvggkkuuuukkggg    ',
-    '   gvgvvggkkkggvvg    ',
-    '    gvvoovuugssvg     ',
-    '    gvvoovuugsssg     ',
-    '      gvvvvvvvvg      ',
-    '        gggggvg       ',
-    '            gg        ',
-  ],
-  postcard:[
-    '                      ',
-    '                      ',
-    '   kkkkkkkkkkkkkkk    ',
-    '   kiiiiiiiiiiiiiik   ',
-    '   kiaaaaaaaaaaaayk   ',
-    '   kiaaaaaaayiaaayk   ',
-    '   kiauauaaaiiaaayk   ',
-    '   kiaaaavvaaavaayk   ',
-    '   kiaaavgsvavvvayk   ',
-    '   kiavvvggvvvgvvykk  ',
-    '   kivgggggsvggvvyik  ',
-    '   kissssggvgggvvyik  ',
-    '   kiuuasssssgsssyik  ',
-    '   kiiiiiiiiiiiiiimk  ',
-    '   kyyyyyyyyyyyyyyok  ',
-    '    kbbbbbbbbbbbbbbk  ',
-  ],
-  shop:[
-    '     kkkkkkkkkkkk     ',
-    '    kpppiiippiiipk    ',
-    '    kplliiipliiilk    ',
-    '   kppliiiipliiiipk   ',
-    '   kpppiiipppliiipk   ',
-    '  krppliiipppliiippk  ',
-    ' krpppliippppliiippkk ',
-    ' krppkrrrkrrrkrrrkrkk ',
-    '  kkk kkk kkk kkk kk  ',
-    '   bm             mb  ',
-    '   bm    s  g     mb  ',
-    '   bm   vsvvg  iy mb  ',
-    '   bm    gg    yo mb  ',
-    '   bm   pooo   yy mb  ',
-    '  kyyyyyyyyyyyyyyyyk  ',
-    '  kmmommmmmmmmmommmk  ',
-    '   bmooooiooioooomb   ',
-    '   bmoooyyyyyoooomb   ',
-    '   bmmmmmmmmmmmmmmb   ',
-    '  kbbbbbbbbbbbbbbbbk  ',
-  ],
-  inventory:[
-    '         kkkk         ',
-    '      kkkooookkk      ',
-    '   kkkiiiyyyyiookkk   ',
-    '  kiooooooiiooooooyk  ',
-    ' kiooooobbkkbbooooyyk ',
-    ' kyookbbmmmmmbbkooyyk ',
-    '  kokbmmmooooommbkok  ',
-    ' kyykkbbbbbbbbbbkkoyk ',
-    'kyiiykkmmmmmmmmkkyooyk',
-    ' kyyiiykkmmmmkkyoooyk ',
-    '  koyiiyyykkyooooook  ',
-    '  kmkoyiiykkoyoookmk  ',
-    '  komkkoyokkookkmmmk  ',
-    '  kmommkkbkkbkmmoomk  ',
-    '  kmommmmmkkmmoioomk  ',
-    '   kmmoommkkmmoiomk   ',
-    '     kkmomkkmmomkk    ',
-    '       kkmkkkmkk      ',
-    '         kkkk         ',
-  ],
-  journal:[
-    '     kkkkkkkkkkkk     ',
-    '    kbrrrrrrrrrpkk    ',
-    '   kbprrppppppppkik   ',
-    '   kbprrrrrrrrrpkyk   ',
-    '   kbprrriiirrrpkyk   ',
-    '   kbprriysirrrpkyk   ',
-    '   kbprriygsirrpkik   ',
-    '   kbprrrigysirpkyk   ',
-    '   kbprrrrigyirpkyk   ',
-    '   kbprrrrgirrrpkyk   ',
-    '   kbprrrrrrrrrpkyk   ',
-    '   kbprrrrrrrrrpkyk   ',
-    '   kbpplppppppppkyk   ',
-    '   kbrrrrrrrrrrrkiik  ',
-    '    kkkkkkkkkkkkiiyk  ',
-    '    kiiiiiiiiiiiyyk   ',
-    '    kyyyrrryyyyyybk   ',
-    '     kkkkrprkkkkkk    ',
-    '         r r          ',
-  ],
-  library:[
-    '              gv      ',
-    '          vsg gsg     ',
-    '           gvgg       ',
-    '         kkggkg       ',
-    '    kkk  kaaik  kk    ',
-    '   kriik kaauk kvsk   ',
-    '   kpppk kaatk kvssk  ',
-    '   krppk ktttk  kvgk  ',
-    '   krrpk kaatk  kvgsk ',
-    '   kripk kaauk  kvsgk ',
-    '   kriik ktttk  kgsik ',
-    '   krrpk ktttk   kvsk ',
-    '   krrpk kaatk   kvsgk',
-    '   krrrk kaatk   kvgvk',
-    '   kriik kaiik   kviik',
-    '   krrrk ktttk    kggk',
-    '  kkkkkkkkkkkkkkkkkkkk',
-    '  kyooooooooooooooook ',
-    '   kbbbbbbbbbbbbbbbk  ',
-  ],
-};
-
-function AppIcon({id}){
-  const canvas=useRef(null);
-  useEffect(()=>{
-    const ctx=canvas.current.getContext('2d');
-    if(!ctx)return;
-    ctx.clearRect(0,0,24,24);
-    const rows=sprites[id],top=Math.floor((24-rows.length)/2);
-    rows.forEach((row,y)=>{
-      [...row].forEach((pixel,x)=>{
-        if(colors[pixel]){ctx.fillStyle=colors[pixel];ctx.fillRect(x+1,y+top,1,1);}
-      });
-    });
-  },[id]);
-  return <canvas className="iseed-app-icon" width="24" height="24" ref={canvas} aria-hidden="true"/>;
-}
-
 const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'short',day:'numeric'});
 const clockLabel=new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'});
 
@@ -258,8 +107,8 @@ export function ISeedHome({plant,open,busy=false}){
     <ScreenLandscape night={night}/>
     <div className="iseed-home-clock"><time dateTime={now.toISOString()}>{clockLabel.format(now)}</time><span>{dateLabel.format(now)}</span></div>
     <nav className="iseed-launcher" aria-label="iSEED apps">
-      {apps.map(app=><button type="button" key={app.id} className={'iseed-app app-'+app.id} data-handset-no-pull="" disabled={busy} onClick={()=>open(app.id)}>
-        <span className="iseed-icon-tile"><AppIcon id={app.id}/></span><span>{app.label}</span>
+      {apps.map((app,index)=><button type="button" key={app.id} className={'iseed-app app-'+app.id} data-handset-no-pull="" disabled={busy} onClick={()=>open(app.id)}>
+        <span className="iseed-icon-tile" aria-hidden="true" style={{backgroundPositionX:(index*100/(apps.length-1))+'%'}}/><span>{app.label}</span>
       </button>)}
     </nav>
     <div className="iseed-dock">
@@ -274,7 +123,7 @@ function SmallClock(){
   return <time className="iseed-small-time" dateTime={now.toISOString()}>{clockLabel.format(now)}</time>;
 }
 
-export default function ISeedPhone({page,title,back,home,lower,locked=false,corner,pocket,children}){
+export default function ISeedPhone({page,title,back,home,lower,locked=false,lowerLocked=locked,corner,pocket,children}){
   const atHome=page==='phone' || page==='home',atToy=page==='plantigochi';
   const pane=useRef(null),heading=useRef(null),lastPage=useRef(page);
   useLayoutEffect(()=>{
@@ -284,19 +133,19 @@ export default function ISeedPhone({page,title,back,home,lower,locked=false,corn
     if(!locked)heading.current?.focus({preventScroll:true});
   },[page,atToy,locked]);
 
-  return <section className="iseed-handset" aria-label="iSEED handset" data-handset-no-pull={locked?'':undefined}>
-    <button type="button" className="iseed-bezel" data-phone-bezel="" data-handset-pull="" aria-label="Put down iSEED" onClick={lower} disabled={locked}>
+  return <section className="iseed-handset" aria-label="iSEED handset" data-handset-no-pull={lowerLocked?'':undefined}>
+    <button type="button" className="iseed-bezel" data-phone-bezel="" data-handset-pull="" aria-label="Put down iSEED" onClick={lower} disabled={lowerLocked}>
       <span className="iseed-earpiece" aria-hidden="true"><i/><b/><i/></span>
     </button>
     <div className={'iseed-screen'+(atHome?' is-home':atToy?' is-toy':'')}>
       {!atToy && <header className="iseed-header">
-        {atHome?<button type="button" className="iseed-open-garden" onClick={lower} disabled={locked}
+        {atHome?<button type="button" className="iseed-open-garden" onClick={lower} disabled={lowerLocked}
           aria-label="Open garden" title="Open garden" data-handset-no-pull=""><Flower2 aria-hidden="true"/><span>Garden</span></button>:
           back && <button type="button" className="iseed-back" aria-label="Back" onClick={back} disabled={locked} data-handset-no-pull=""><ChevronLeft aria-hidden="true"/></button>}
         <h1 ref={heading} tabIndex="-1">{atHome?'iSEED':title}</h1>
         {!atHome && <SmallClock/>}
       </header>}
-      <div className="iseed-pocket-pane" hidden={!atToy} inert={!atToy?'':undefined} aria-hidden={!atToy || undefined}
+      <div className="iseed-pocket-pane" data-handset-scroll="" hidden={!atToy} inert={!atToy?'':undefined} aria-hidden={!atToy || undefined}
         data-phone-page={atToy?'plantigochi':undefined}>{pocket}</div>
       <div ref={pane} className={'iseed-contents'+(atHome?' is-launcher':'')} hidden={atToy} inert={atToy?'':undefined}
         aria-hidden={atToy || undefined} data-phone-page={atToy?undefined:page}

@@ -52,7 +52,7 @@ export function drawRoom(canvas,{
       jarProgress,leafCount,night:1-light.day,selected:highlighted===id&&!placing,time,reducedMotion,
     });
   }
-  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant,drawKeepsake:paintKeepsake,separatePlanes,phoneSelected:highlighted==='phone' && !placing});
+  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant,drawKeepsake:paintKeepsake,separatePlanes});
   if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,onPhotoReady,playingItemId,time,reducedMotion});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   places.forEach((spot,i)=>{if(spot.layer==='floor')drawOccupant(i);});

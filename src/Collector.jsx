@@ -1,5 +1,5 @@
 import React,{forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import {ChevronLeft,ChevronRight,Smartphone,X} from 'lucide-react';
+import {ChevronLeft,ChevronRight,ChevronUp,X} from 'lucide-react';
 import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces,prepareRoomPhotos} from './roomShopArt.js';
@@ -423,6 +423,7 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
   const panelTitle={item:catalog[item?.sku]?.name || 'My items',jar:'Cutting Jar',book:'Leaf Book'};
   const available=active && !globalMenuOpen;
   return <section className="collector" aria-label="Collector garden" aria-hidden={!available || undefined} inert={!available?'':undefined}
+    data-room-placing={placing?'':undefined} data-room-blocked={!available || panel || busy?'':undefined}
     onPointerDownCapture={e=>{if(e.isPrimary)ignoreClick.current=false;}}
     onClickCapture={e=>{
       if(ignoreClick.current && e.detail!==0){e.preventDefault();e.stopPropagation();}
@@ -450,13 +451,13 @@ const Collector=forwardRef(function Collector({active,recordActive=active,plant,
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
         {Object.keys(potted).map(k=><RoomView key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} worldHeight={worldHeight} plants={potted[k]} hour={hour}
-          garden={plant} playingItemId={active && plant.sound ? playingRecordId : null} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} openPhone={openPhone} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
+          garden={plant} playingItemId={active && plant.sound ? playingRecordId : null} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
-    <button ref={roomReturn} className={'room-corner room-return'+(placing?'':' room-phone-pickup')} data-room-focus=""
+    <button ref={roomReturn} className={'room-corner room-return'+(placing?'':' room-phone-pickup')} data-room-focus="" data-room-pickup={placing?undefined:''}
       aria-label={placing?'Cancel move':'Pick up iSEED'} title={placing?'Cancel move':'Pick up iSEED'}
       disabled={!available || busy} onClick={placing?cancelPlacement:()=>{roomOpener.current=roomReturn.current;openPhone();}}>
-      {placing?<X aria-hidden="true"/>:<><Smartphone aria-hidden="true"/><span>Pick up iSEED</span></>}
+      {placing?<X aria-hidden="true"/>:<><ChevronUp aria-hidden="true"/><span>Swipe up for iSEED</span></>}
     </button>
     {!placing && !panel && !message && <nav className="room-hint room-navigation" aria-label="Garden rooms">
       <button aria-label="Previous room" disabled={page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>

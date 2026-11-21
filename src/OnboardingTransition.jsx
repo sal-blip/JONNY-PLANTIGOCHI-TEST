@@ -43,7 +43,7 @@ export function transitionOnboarding(update,kind='scene'){
 
 // Keep the last committed screen visible while storage settles or the browser
 // captures it. The incoming screen is the only mounted scene after the swap.
-export default function OnboardingTransition({scene,children}){
+export default function OnboardingTransition({scene,visible=true,children}){
   const [shown,setShown]=useState(scene);
   const previous=useRef(children);
   useLayoutEffect(()=>{if(scene===shown)previous.current=children;},[shown,scene,children]);
@@ -51,8 +51,8 @@ export default function OnboardingTransition({scene,children}){
     if(scene===null || scene===shown)return;
     let current=true;
     const show=()=>{if(current)setShown(scene);};
-    if(shown===null)show();else transitionOnboarding(show);
+    if(shown===null || !visible)show();else transitionOnboarding(show);
     return ()=>{current=false;};
-  },[scene,shown]);
+  },[scene,shown,visible]);
   return scene===shown?children:previous.current;
 }

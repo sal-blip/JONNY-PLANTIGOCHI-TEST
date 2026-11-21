@@ -5,7 +5,6 @@ import {decorPlaces} from './roomShopArt.js';
 import {catalog,canSetItem,lifeOf} from './gardenEconomy.js';
 import {drawRoomDepth} from './roomScenery.js';
 import {keepsakeFor} from './roomKeepsakes.js';
-import {phoneFor} from './roomPhone.js';
 import {slotFor,speciesName,viewName} from './gardenLayout.js';
 import './roomTargets.css';
 
@@ -29,18 +28,18 @@ function targetBounds(targets){
 }
 
 export default function RoomView({index,onScreen,running,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
-  garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,openPhone,panelOpen=false,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
+  garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null);
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
   const scene=useRef(null);
   const [focused,setFocused]=useState(null);
   const spots=placesFor(index%2),below=worldHeight-above-ROOM_HEIGHT;
-  const object=keepsakeFor(index),phone=phoneFor(index);
+  const object=keepsakeFor(index);
   const blocked=busy || panelOpen || !onScreen || !running;
-  const selectedFixture=!placing && [object?.id,phone?.id].includes(selectedKeepsake)?selectedKeepsake:null;
+  const selectedFixture=!placing && object?.id===selectedKeepsake?selectedKeepsake:null;
   const active=focused ?? selectedFixture ?? selected ?? carry?.from ?? (cat?'cat':null);
   const decor=decorPlaces(index);
-  const highlighted=active==='cat' || active===phone?.id || active===object?.id || decor.some(d=>d.slot===active) || shopItems.some(item=>item.id===active)
+  const highlighted=active==='cat' || active===object?.id || decor.some(d=>d.slot===active) || shopItems.some(item=>item.id===active)
     ?active:spots.findIndex(spot=>slotFor(index,spot)===active);
   const lifted=dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
   const [photoReady,setPhotoReady]=useState(0);
@@ -77,21 +76,10 @@ export default function RoomView({index,onScreen,running,worldHeight,plants,hour
     const swapping=shopMove.from!=null;
     return {exchange:true,label:(swapping?'Swap with ':'Replace ')+catalog[occupant.sku].name+' at '+name};
   }
-  function addFixture(fixture,click,attrs){
-    if(!fixture || placing)return;
-    targets.push({key:fixture.id,focus:fixture.id,x:fixture.hitX,y:fixture.hitY,w:fixture.hitWidth,h:fixture.hitHeight,
-      label:'Open '+fixture.name,click,attrs:{'aria-haspopup':'dialog',...attrs}});
-  }
-  if(openKeepsake)addFixture(object,()=>openKeepsake(object.id,index),{'data-keepsake':object?.id,className:'room-cat-target room-keepsake-target'});
-  if(openPhone && phone){
-    // The caption and handset are one button. Reserve the caption's space
-    // before partitioning adjacent plant, pot and decoration controls.
-    const studio=index%2===1;
-    const left=Math.min(phone.hitX-phone.hitWidth/2,phone.x-(studio?48:22));
-    const right=Math.max(phone.hitX+phone.hitWidth/2,phone.x+(studio?0:22));
-    const top=phone.hitY-phone.hitHeight/2,bottom=studio?phone.hitY+phone.hitHeight/2:phone.y+21;
-    addFixture({...phone,hitX:(left+right)/2,hitY:(top+bottom)/2,hitWidth:right-left,hitHeight:bottom-top},
-      ()=>openPhone(index),{'data-room-phone':'','data-side-caption':studio?'':undefined});
+  if(object && openKeepsake && !placing){
+    targets.push({key:object.id,focus:object.id,x:object.hitX,y:object.hitY,w:object.hitWidth,h:object.hitHeight,
+      label:'Open '+object.name,click:()=>openKeepsake(object.id,index),
+      attrs:{'aria-haspopup':'dialog','data-keepsake':object.id,className:'room-cat-target room-keepsake-target'}});
   }
   if(!placing && index%2===0)targets.push({key:'cat',focus:'cat',x:CAT_SEAT.x,y:CAT_SEAT.y-11*CAT_SEAT.size,
     w:48,h:34,label:'Say hello to the cat',click:()=>petCat(index),attrs:{'data-audio':'cat',className:'room-cat-target'}});
@@ -142,7 +130,6 @@ export default function RoomView({index,onScreen,running,worldHeight,plants,hour
           onFocus={e=>{if(e.currentTarget.matches(':focus-visible'))setFocused(focus);}}
           onBlur={()=>setFocused(null)} onPointerDown={()=>setFocused(null)} onClick={click}>
           {exchange && <ArrowLeftRight className="room-exchange-mark" aria-hidden="true"/>}
-          {key===phone?.id && !blocked && <span className="room-phone-caption" aria-hidden="true">iSEED</span>}
         </button>;
       })}
       {cat && <div className="cat-affection" key={cat.number} style={{left:(CAT_SEAT.x/ROOM_WIDTH*100)+'%',top:((CAT_SEAT.y-23)/ROOM_HEIGHT*100)+'%'}}>

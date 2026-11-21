@@ -66,15 +66,17 @@
 .iseed-home-clock span {font:600 clamp(14px,3.6vmin,18px)/1.2 var(--display);color:#375346}
 .iseed-launcher {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(8px,4.3cqh,26px) 5px;justify-self:center;width:min(100%,540px)}
 .iseed-app {appearance:none;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-width:0;min-height:65px;margin:0;padding:2px 0;border:none;background:transparent;color:#20382d;cursor:pointer;touch-action:manipulation}
-.iseed-app>span:last-child {font:650 clamp(14px,3.75vmin,17px)/1.2 var(--display);text-align:center;padding:2px 5px;background:#edf2d4ed;border-radius:4px}
-.iseed-icon-tile {display:grid;place-items:center;width:clamp(44px,14.5vmin,70px);aspect-ratio:1;border:2px solid #456052;border-radius:clamp(10px,3.2vmin,16px);background:linear-gradient(#f8edc9,#e4e9c1 48%,#c1cfaa 50%,#dfdfb8);box-shadow:inset 1px 2px #fff2c8,inset -1px -2px #96a88c,0 2px #526e5b}
-.app-plantigochi .iseed-icon-tile {background:linear-gradient(#f2efcd,#dfe8cd 48%,#b7d0b0 50%,#cfe1c2)}
-.app-inventory .iseed-icon-tile {background:linear-gradient(#f6ebd2,#e7dab2 48%,#d4c29e 50%,#e8d7ad)}
-.app-journal .iseed-icon-tile {background:linear-gradient(#eee6df,#dcdad1 48%,#c6c2b8 50%,#dedad2)}
-.app-library .iseed-icon-tile {background:linear-gradient(#e7efcc,#dce6c5 48%,#c0d2af 50%,#dbe6c5)}
-.app-postcard .iseed-icon-tile {background:linear-gradient(#e0eedb,#d3e4d5 48%,#b5cdbf 50%,#d7e6d5)}
-.iseed-app-icon {display:block;width:80%;height:80%;image-rendering:pixelated}
-.iseed-app:active .iseed-icon-tile {transform:translateY(2px);box-shadow:inset 0 1px #91aa8b}
+.iseed-app>span:last-child {
+  font:650 clamp(14px,3.7vmin,17px)/1.15 var(--display);
+  padding:3px 7px;text-align:center;color:#fffbea;background:#334d40df;border-radius:6px;
+}
+.iseed-icon-tile {
+  display:block;width:clamp(47px,16.5vmin,78px);aspect-ratio:1;
+  background-image:url('/art/iseed-launcher.png');background-size:600% 100%;
+  background-repeat:no-repeat;image-rendering:pixelated;
+  filter:drop-shadow(0 2px 1px #3147355e);
+}
+.iseed-app:active .iseed-icon-tile {transform:translateY(2px);filter:drop-shadow(0 1px #3147355e)}
 .iseed-dock {grid-row:4;justify-self:center;width:min(100%,480px);padding:8px clamp(10px,3cqw,20px);border:1px solid #638569;border-radius:11px;background:linear-gradient(#f3f1d9ed,#d1dcc0ed);box-shadow:inset 0 1px #f4f5df,0 2px 0 #38584075}
 .iseed-dock .wallet {display:flex;align-items:center;gap:7px;padding:0;color:#2c4635}
 .iseed-dock .wallet strong {font:700 clamp(14px,3.6vw,17px)/1.12 var(--display)}
@@ -110,7 +112,7 @@
   .iseed-launcher {grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;width:min(100%,710px)}
   .iseed-home-clock time {font-size:24px}.iseed-home-clock span {font-size:14px}
   .iseed-app {min-height:55px;gap:2px}
-  .iseed-icon-tile {width:40px;border-radius:9px}
+  .iseed-icon-tile {width:44px}
   .iseed-app>span:last-child {font-size:13px;padding:1px 3px}
   .iseed-dock {padding-block:5px}
   .iseed-pocket-pane .seed-portrait {height:min(58cqh,150px)}
@@ -119,7 +121,7 @@
   .iseed-home {grid-template-rows:minmax(48px,1fr) auto minmax(1px,.14fr) auto;padding-top:44px;gap:3px}
   .iseed-launcher {row-gap:2px}
   .iseed-home-clock time {font-size:23px}
-  .iseed-icon-tile {width:39px;border-radius:9px}
+  .iseed-icon-tile {width:41px}
   .iseed-app {min-height:49px;gap:1px}
   .iseed-app>span:last-child {font-size:12px}
 }

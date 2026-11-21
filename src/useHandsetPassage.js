@@ -10,7 +10,7 @@ const durationFor = distance => 360 * Math.sqrt(distance);
 
 // A scroller must have been at its top when the finger first landed. Reaching
 // the top partway through a scroll should never turn that scroll into a pull.
-function canStart(layer, target, x, y) {
+function canLower(layer, target, x, y) {
   if (!layer?.contains(target) || !target.closest || target.closest('[data-handset-no-pull]')) return false;
   const handle = target.closest(bezel);
   // The bezel is itself the accessible put-down button. A tap uses its native
@@ -33,6 +33,13 @@ function canStart(layer, target, x, y) {
   return true;
 }
 
+function canRaise(target) {
+  if (!target.closest || target.closest('[data-room-placing], [data-room-blocked], [data-handset-no-pull], [inert], dialog')) return false;
+  const handle = target.closest('[data-room-pickup], .room-phone-pickup');
+  if (handle) return !handle.disabled;
+  return Boolean(target.closest('.room-picture') && !target.closest(controls + ', [data-scene-object]'));
+}
+
 function usable(element) {
   if (!element?.isConnected || typeof element.focus !== 'function' || element.disabled ||
       element.closest('[inert], [hidden], [aria-hidden=true]')) return false;
@@ -41,16 +48,15 @@ function usable(element) {
     rect.top < window.innerHeight && rect.left < window.innerWidth;
 }
 
-export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
+export function useHandsetPassage({initiallyRaised = true, blocked = false, onLower, onRaise} = {}) {
   const phoneRef = useRef(null);
   const options = useRef({blocked, onLower, onRaise});
-  const [raised, setRaised] = useState(true);
+  const [raised, setRaised] = useState(initiallyRaised);
   const [transitioning, setTransitioning] = useState(false);
-  const settled = useRef(true);
-  const progress = useRef(0);
+  const settled = useRef(initiallyRaised);
+  const progress = useRef(initiallyRaised ? 0 : 1);
   const finger = useRef(null);
   const animation = useRef(null);
-  const focusFrame = useRef(0);
   const previousFocus = useRef({phone: null, room: null});
   const pendingFocus = useRef(false);
   const suppressUntil = useRef(0);
@@ -62,10 +68,11 @@ export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
     if (phoneRef.current) phoneRef.current.style.transform = 'translate3d(0,' + value * 100 + '%,0)';
   }, []);
 
+  useLayoutEffect(() => { draw(progress.current); }, [draw]);
+
   const stopAnimation = useCallback(() => {
     if (animation.current) cancelAnimationFrame(animation.current.frame);
     animation.current = null;
-    cancelAnimationFrame(focusFrame.current);
     pendingFocus.current = false;
   }, []);
 
@@ -91,21 +98,23 @@ export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
   // motion mode where there may be no intervening animation frame at all.
   useLayoutEffect(() => {
     if (transitioning || !pendingFocus.current) return;
-    focusFrame.current = requestAnimationFrame(() => {
-      pendingFocus.current = false;
-      if (document.hidden || document.querySelector('dialog[open]')) return;
-      const layer = phoneRef.current;
-      if (!layer) return;
-      const surface = raised ? layer : document;
-      const candidates = [
-        previousFocus.current[raised ? 'phone' : 'room'],
-        surface.querySelector(raised ? '[data-handset-focus]' : '[data-room-focus]'),
-        ...surface.querySelectorAll(raised ? '.toy-heart' : '[data-room-phone]'),
-      ];
-      const target = candidates.find(node => usable(node) && layer.contains(node) === raised);
-      target?.focus({preventScroll: true});
-    });
-    return () => cancelAnimationFrame(focusFrame.current);
+    pendingFocus.current = false;
+    if (document.hidden || document.querySelector('dialog[open]')) return;
+    const layer = phoneRef.current;
+    if (!layer) return;
+    const surface = raised ? layer : document;
+    const primary = surface.querySelector(raised ? '[data-handset-focus]' : '[data-room-focus]');
+    const previous = previousFocus.current[raised ? 'phone' : 'room'];
+    const setup = raised && primary?.disabled ? layer.querySelector('.iseed-pocket-pane') : null;
+    // Home stays locked during setup. Resume at the welcome heading, naming
+    // keys or watering lesson, even if the player used the bezel to leave.
+    const candidates = [
+      setup?.contains(previous) && previous,
+      setup?.querySelector('.lesson-done, h1[tabindex], .toy-heart'),
+      previous, primary, raised && layer.querySelector('.toy-heart'),
+    ];
+    const target = candidates.find(node => usable(node) && layer.contains(node) === raised);
+    target?.focus({preventScroll: true});
   }, [raised, transitioning]);
 
   const travel = useCallback((up, origin) => {
@@ -142,24 +151,32 @@ export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
     finish(true, false);
   }, [finish]);
 
-  const begin = useCallback((type, id, x, y, target) => {
+  const begin = useCallback((type, id, x, y, target, fromPhone) => {
     suppressUntil.current = 0;
     const layer = phoneRef.current;
-    if (options.current.blocked || !settled.current || animation.current ||
-        !canStart(layer, target, x, y)) return;
-    finger.current = {type, id, x, y, height: Math.max(1, layer.getBoundingClientRect().height), claimed: false};
+    if (!layer || options.current.blocked || settled.current !== fromPhone || animation.current || finger.current) return;
+    if (fromPhone ? !canLower(layer, target, x, y) : !canRaise(target)) return;
+    finger.current = {type, id, x, y, fromPhone, height: Math.max(1, layer.getBoundingClientRect().height), claimed: false};
   }, []);
 
   const gestureProps = useMemo(() => ({
     onPointerDownCapture(event) {
       if (event.pointerType !== 'touch' && event.isPrimary && event.button === 0) {
-        begin('pointer', event.pointerId, event.clientX, event.clientY, event.target);
+        begin('pointer', event.pointerId, event.clientX, event.clientY, event.target, true);
       }
     },
     onTouchStartCapture(event) {
       if (event.touches.length !== 1) return;
       const point = event.touches[0];
-      begin('touch', point.identifier, point.clientX, point.clientY, event.target);
+      begin('touch', point.identifier, point.clientX, point.clientY, event.target, true);
+    },
+  }), [begin]);
+
+  const roomGestureProps = useMemo(() => ({
+    onPointerDownCapture(event) {
+      if (event.isPrimary && event.button === 0) {
+        begin('pointer', event.pointerId, event.clientX, event.clientY, event.target, false);
+      }
     },
   }), [begin]);
 
@@ -170,7 +187,7 @@ export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
         // Keep the gesture present through travel so a zero-distance cancel
         // still clears transitioning in reduced motion.
         suppressUntil.current = performance.now() + 500;
-        travel(true);
+        travel(drag.fromPhone);
       } else {
         finger.current = null;
       }
@@ -181,23 +198,30 @@ export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
       if (options.current.blocked || !event.cancelable) { cancel(); return; }
       const dy = point.clientY - drag.y;
       const dx = Math.abs(point.clientX - drag.x);
+      const distance = drag.fromPhone ? dy : -dy;
       if (!drag.claimed) {
-        if (dy < -6 || (dx > 7 && dx > Math.abs(dy))) { finger.current = null; return; }
-        if (dy < 6 || dy < dx * 1.25) return;
+        const horizontal = dx > 7 && (drag.fromPhone ? dx > Math.abs(dy) : distance < dx * 1.25);
+        if (distance < -6 || horizontal) { finger.current = null; return; }
+        if (distance < 6 || distance < dx * 1.25) return;
         rememberFocus();
         drag.claimed = true;
         setTransitioning(true);
       }
       event.preventDefault();
-      if (!reduced()) draw(clamp(dy / drag.height));
+      // Garden panning owns horizontal motion. On an upward pull, consume the
+      // pointer before the garden can capture it or move the camera.
+      if (!drag.fromPhone) event.stopPropagation();
+      if (!reduced()) draw(clamp((drag.fromPhone ? 0 : 1) + dy / drag.height));
     }
-    function end(point, type) {
+    function end(point, type, event) {
       const drag = finger.current;
       if (!drag || drag.type !== type || (type === 'pointer' ? point.pointerId : point.identifier) !== drag.id) return;
       if (!drag.claimed) { finger.current = null; return; }
       suppressUntil.current = performance.now() + 500;
-      const enough = point.clientY - drag.y >= Math.max(42, Math.min(100, drag.height * .16));
-      travel(!enough || options.current.blocked);
+      if (!drag.fromPhone) event.stopPropagation();
+      const distance = (point.clientY - drag.y) * (drag.fromPhone ? 1 : -1);
+      const enough = distance >= Math.max(42, Math.min(100, drag.height * .16));
+      travel(enough && !options.current.blocked ? !drag.fromPhone : drag.fromPhone);
     }
     function pointerMove(event) {
       if (finger.current?.type !== 'pointer') return;
@@ -205,9 +229,13 @@ export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
       move(event, event, 'pointer');
     }
     function touchMove(event) {
-      if (finger.current?.type !== 'touch') return;
+      const drag = finger.current;
+      if (!drag) return;
       if (event.touches.length !== 1) { cancel(); return; }
-      move(event, event.touches[0], 'touch');
+      if (drag.type === 'touch') move(event, event.touches[0], 'touch');
+      // Pointer events arbitrate with the garden camera, but native touch
+      // still needs to know a claimed swipe was handled, before the next tap.
+      else if (!drag.fromPhone && drag.claimed && event.cancelable) event.preventDefault();
     }
     function touchStart(event) {
       suppressUntil.current = 0;
@@ -221,9 +249,9 @@ export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
         event.stopImmediatePropagation();
       }
     }
-    function pointerEnd(event) { end(event, 'pointer'); }
+    function pointerEnd(event) { end(event, 'pointer', event); }
     function touchEnd(event) {
-      for (const point of event.changedTouches) end(point, 'touch');
+      for (const point of event.changedTouches) end(point, 'touch', event);
     }
     function interrupt() {
       cancel();
@@ -260,9 +288,9 @@ export function useHandsetPassage({blocked = false, onLower, onRaise} = {}) {
 
   useLayoutEffect(() => {
     if (!blocked || !finger.current) return;
-    if (finger.current.claimed) travel(true);
+    if (finger.current.claimed) travel(finger.current.fromPhone);
     else finger.current = null;
   }, [blocked, travel]);
 
-  return {phoneRef, raised, transitioning, raise, lower, resetRaised, gestureProps};
+  return {phoneRef, raised, transitioning, raise, lower, resetRaised, gestureProps, roomGestureProps};
 }

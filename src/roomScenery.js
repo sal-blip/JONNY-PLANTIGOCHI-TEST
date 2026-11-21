@@ -1,4 +1,3 @@
-import {drawRoomPhone,phoneFor} from './roomPhone.js';
 import {placesFor} from './gardenLayout.js';
 export {placesFor} from './gardenLayout.js';
 // The apartment is one 800 × 320 game world. All scenery is drawn from live,
@@ -596,7 +595,7 @@ function coffee(b){
   p([137,238,249,238,259,242,264,247,262,250,252,252,136,252,126,249,126,246,129,243],wood.lit);
   l(137,239,247,239,wood.pale);l(131,244,137,241,wood.gold);l(138,253,252,253,wood.mid);
   for(let i=0;i<10;i++){const x=136+hash(220+i)%100,y=241+hash(i+75)%9;r(x,y,4+i%7,1,i%2?wood.gold:wood.mid);}
-  // The teacup sits beside the handset on the near corner of the table.
+  // The teacup sits on the near corner of the table.
   o(256,248,7,2,'#ad8265');o(256,247,6,1,'#e2c79f');
   r(252,241,8,6,'#b49b7e');r(253,242,6,4,'#e1cdab');r(254,240,5,1,'#eedec0');
   r(253,241,6,1,'#795e48');r(259,241,3,1,'#b49b7e');r(262,242,1,2,'#b49b7e');r(259,244,3,1,'#a88c70');
@@ -842,7 +841,7 @@ function placeOccupant(ctx,draw,panel,slot) {
  * drawOccupant(slot,panel) callback paints in panel-local coordinates, in depth
  * order. A numeric slot identifies a plant and 'cat' identifies the sofa seat.
  */
-export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,phoneSelected=false,separatePlanes=false}={}){
+export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,separatePlanes=false}={}){
   if(!ctx)return;
   const day=clamp(Number.isFinite(light.day)?light.day:1),warmth=clamp(Number.isFinite(light.warmth)?light.warmth:0);
   const hour=Number.isFinite(light.hour)?((light.hour%24)+24)%24:12;
@@ -871,9 +870,6 @@ export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,draw
     if(!panel)placeOccupant(ctx,drawOccupant,panel,'cat');
     furniture(ctx,b,day,warmth,panel,true);
     if(panel)placeOccupant(ctx,drawKeepsake,panel,'book');
-    ctx.save();ctx.translate(panel*BASE_WIDTH,0);
-    drawRoomPhone(ctx,phoneFor(panel),{night:1-day,selected:phoneSelected});
-    ctx.restore();
     paintLayer('table');
     if(!reducedMotion)details(b,day,clock,panel);
   }

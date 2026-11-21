@@ -22,25 +22,6 @@
   stroke-width:2.5;
   pointer-events:none;
 }
-.room-phone-caption {
-  position:absolute;
-  left:50%;
-  bottom:1px;
-  transform:translateX(-50%);
-  pointer-events:none;
-  max-width:100%;
-  padding:1px 3px 2px;
-  border-radius:3px;
-  background:#f5e8cde8;
-  color:#45392d;
-  box-shadow:0 1px 0 #715b45b3;
-  font:650 clamp(10px,1.35vmin,12px)/1.15 var(--display,system-ui),sans-serif;
-}
-.scene-target[data-side-caption] .room-phone-caption {
-  left:1px;
-  bottom:50%;
-  transform:translateY(50%);
-}
 @media (forced-colors:active) {
   .room-frame .room-interior .scene-target:focus-visible {outline-color:Highlight}
 }

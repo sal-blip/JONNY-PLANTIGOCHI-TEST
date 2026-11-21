@@ -66,7 +66,7 @@ function InstalledGame({phone}){
     return ()=>navigator.serviceWorker?.removeEventListener('message',rescue);
   },[]);
   if(!storage.phase && storage.issue)return <Recovery {...storage}/>;
-  if(!storage.phase)return <main aria-busy="true" aria-label="Opening your garden"/>;
+  if(!storage.phase)return <main className="garden-loading" aria-busy="true" aria-label="Opening your garden"/>;
   return <InstalledSession alertVisitId={alertVisitId} key={storage.epoch || 'original'} storage={storage} phone={phone} careMessage={careMessage}/>;
 }
 function InstalledSession({phone,storage,careMessage,alertVisitId}){
@@ -94,15 +94,16 @@ function InstalledSession({phone,storage,careMessage,alertVisitId}){
   }else if(phase==='name'){
     screen=<NameEditor initial={storage.draft} onDraft={d=>storage.setup('name',d)}
       onSave={name=>storage.setup('water',name)} onCancel={()=>storage.setup('welcome')} issue={storage.issue}/>;
-  }else{
-    screen=<GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}/>;
   }
-  const setupScreen=phase==='tour' || phase==='welcome' || phase==='name' || Boolean(offer);
-  return <OnboardingTransition scene={scene}>{setupScreen?
-    <div className="garden setup-handset"><ISeedPhone page="plantigochi" title="Plantigochi" locked pocket={screen}/></div>:screen}</OnboardingTransition>;
+  return <GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage} setupScene={scene} setupScreen={screen}/>;
 }
-function GardenApp({storage,phone,careMessage,alerts}) {
+
+// The room can be explored before naming the first seed. Its empty collection
+// is display data only. The naming step creates the first plant in storage.
+const emptyRoom={graduates:[],book:[],jar:null,deadAt:null};
+function GardenApp({storage,phone,careMessage,alerts,setupScene,setupScreen}) {
   const {plant,current,commit,replace,issue}=storage;
+  const roomGarden=plant ?? emptyRoom;
   const saveOK=!issue;
   const lesson=storage.phase==='water' || storage.phase==='watered' ? storage.phase : null;
   const roomRef=useRef(null);
@@ -114,47 +115,51 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   const openDebug=useCallback(()=>setPage('debug'),[]);
   const [sharing, setSharing] = useState(false);
   const [intro, setIntro] = useState(false);
-  const passage=useHandsetPassage({blocked:Boolean(lesson || intro || page || sharing)});
+  const [pickedUp,setPickedUp]=useState(false);
+  const passage=useHandsetPassage({initiallyRaised:false,blocked:Boolean(intro || page || sharing),onRaise:()=>setPickedUp(true)});
   const {raised,transitioning,resetRaised}=passage;
   const roomActive=!raised && !transitioning;
-  const toyActive=raised && !transitioning && app==='plantigochi' && !intro && !page && !sharing;
+  const toyActive=raised && !transitioning && app==='plantigochi' && !setupScreen && !intro && !page && !sharing;
   const tilt = useGardenTilt(!toyActive);
   const [leafReady, setLeafReady] = useState(false);
   const menuButton = useRef(null), shareButton = useRef(null), restoreFocus = useRef(null);
   const [playingRecordId,setPlayingRecordId]=useState(null);
   const recordActive=!raised || app!=='plantigochi';
   const apps=useGardenPhoneApps({page:app,open:setApp,plant,commit,roomRef,raised,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement});
+  const gardenLife=lifeOf(roomGarden);
+  const soundEnabled=Boolean(plant?.sound);
   useEffect(()=>{
-    if(!recordActive || !plant.sound || !lifeOf(plant).items.some(i=>i.id===playingRecordId && i.sku==='record' && i.slot!==null))setPlayingRecordId(null);
-  },[recordActive,plant.sound,lifeOf(plant).items,playingRecordId]);
+    if(!recordActive || !soundEnabled || !gardenLife.items.some(i=>i.id===playingRecordId && i.sku==='record' && i.slot!==null))setPlayingRecordId(null);
+  },[recordActive,soundEnabled,gardenLife.items,playingRecordId]);
   const [coinsMessage,setCoinsMessage]=useState('');
   const day=localDay(now);
   useEffect(()=>{
-    if(document.hidden || day<=lifeOf(plant).day)return;
+    if(!plant || document.hidden || day<=gardenLife.day)return;
     let credited=false;
     void commit(p=>{const next=checkIn(p,Date.now());credited=next!==p;return next;})
       .then(saved=>{if(saved && credited && !lesson)setCoinsMessage('+10 Garden Coins · Visit iSEED');});
-  },[day,lifeOf(plant).day,lesson,commit]);
+  },[day,gardenLife.day,plant?.id,lesson,commit]);
   useEffect(()=>{if(coinsMessage){const timer=setTimeout(()=>setCoinsMessage(''),6500);return ()=>clearTimeout(timer);}},[coinsMessage]);
-  const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, recordPlaying:Boolean(playingRecordId), sleeping:plant.stage === 'seed', intro, leafReady});
+  const { play, unlock, running } = useGardenSound({enabled:soundEnabled, ambience:plant?.ambience !== false, recordPlaying:Boolean(playingRecordId), sleeping:plant?.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
   const scenery = useRef(null);
-  const scene = selectedScene(plant);
+  const scene = selectedScene(roomGarden);
   const photo = page === 'photo' && draftPhoto ? draftPhoto : scene === 'photo' ? plant.photo : null;
   const time = new Date(now);
   const TimeIcon = time.getHours() >= 6 && time.getHours() < 18 ? Sun : Moon;
 
   useEffect(()=>{
     function refresh() {
-      if(document.hidden || !current.current)return;
+      if(document.hidden)return;
       const t=Date.now();setNow(t);
-      if(wake(current.current,t)!==current.current) void commit(p=>wake(p,t));
+      if(current.current && wake(current.current,t)!==current.current) void commit(p=>wake(p,t));
     }
     const timer=setInterval(refresh,1000);
     document.addEventListener('visibilitychange',refresh);
     return ()=>{clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};
   },[commit,current]);
   useEffect(()=>{
+    if(!current.current)return;
     function rescue(action,plantId,episode,lastDrink) {
       if(action==='test'){roomRef.current?.reset();resetRaised();setApp('plantigochi');setPage('test');return;}
       const time=Date.now(), p=wake(current.current,time);
@@ -174,7 +179,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     const lastDrink=careMessage ? careMessage.lastDrink : url.searchParams.has('drink') ? Number(url.searchParams.get('drink')) : null;
     if(url.searchParams.has('care')){for(const k of ['care','plant','episode','drink'])url.searchParams.delete(k);history.replaceState(null,'',url);}
     if(action)rescue(action,plantId,episode,lastDrink);
-  },[current,careMessage,resetRaised]);
+  },[current,Boolean(plant),careMessage,resetRaised]);
 
   useEffect(() => {
     if (!intro || leafReady) return;
@@ -267,13 +272,13 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   function enterBook(){
     if(roomRef.current?.showBook())passage.lower();
   }
-  const showGlobalMenu=!lesson && !intro && !page && !sharing && !transitioning && (raised || !roomOverlayOpen);
+  const showGlobalMenu=Boolean(plant) && !setupScreen && !lesson && !intro && !page && !sharing && !transitioning && (raised || !roomOverlayOpen);
   const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
     hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
-  const introAudible = plant.sound && running;
+  const introAudible = soundEnabled && running;
   const parent = page === 'test' ? 'debug' : (page === 'reset' || page === 'debug') ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
-  const pocket=<div className="pocket-floor" data-handset-pull="">
+  const pocket=plant && <div className="pocket-floor" data-handset-pull="">
     <div key={photo ? 'photo' : scene} ref={scenery} className="scenery" style={photo ? undefined : {backgroundImage:'url(/scenes/' + scene + '.webp)'}} aria-hidden="true">
       {photo && <img className="custom-photo" src={photo.src} style={photoStyle(photo)} alt="" draggable="false"/>}
     </div>
@@ -293,15 +298,19 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     {!lesson && !intro && !page && <button className="garden-pull"
       aria-label="Open garden" onClick={passage.lower}><i aria-hidden="true"/>Garden</button>}
   </div>;
+  // Start the welcome tour on pickup and preserve it when the phone is put down.
+  const phoneContent=(!setupScreen || pickedUp || raised || transitioning) &&
+    <OnboardingTransition scene={setupScene} visible={raised}>{setupScreen ?? pocket}</OnboardingTransition>;
+  const lowerLocked=Boolean(page || intro || sharing || apps.busy);
   return <main ref={tilt.garden} data-handset-position={transitioning?'moving':raised?'raised':'lowered'}
     className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')}
     aria-label="Plantigochi pocket garden" onClickCapture={event=>{
       const button=event.target.closest?.('button');
-      if(plant.sound && button && !button.disabled && !button.dataset.audio)void play('tap');
+      if(soundEnabled && button && !button.disabled && !button.dataset.audio)void play('tap');
     }}>
-    <div className="garden-room-layer" inert={!roomActive?'':undefined} aria-hidden={!roomActive || undefined}>
+    <div className="garden-room-layer" {...passage.roomGestureProps} inert={!roomActive?'':undefined} aria-hidden={!roomActive || undefined}>
       <Collector ref={roomRef} playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} recordActive={recordActive}
-        onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={roomActive} plant={plant} commit={commit} now={now}
+        onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={roomActive} plant={roomGarden} commit={commit} now={now}
         raisePhone={passage.raise} onPlacementCancel={passage.raise}
         move={async(slot,id)=>{const ok=await commit(p=>graduate(p,id,slot,Date.now()));
           return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
@@ -316,18 +325,20 @@ function GardenApp({storage,phone,careMessage,alerts}) {
         const ok=saved && moved && current.current?.graduates.some(g=>g.id===id && g.slot===to);
         return {ok:Boolean(ok),storedCount:ok?storedCount:0};
       }}
-        purr={()=>{if(plant.sound)play('purr');}}/>
+        purr={()=>{if(soundEnabled)play('purr');}}/>
+      {roomActive && !roomOverlayOpen && !page && coinsMessage && <div className="coin-toast" role="status">{coinsMessage}</div>}
       {!raised && <div className="garden-corners global-menu-corner" hidden={!showGlobalMenu}><div className="garden-actions">{menuTrigger}</div></div>}
     </div>
     <div className={'handset-layer'+(page==='photo'?' previewing-photo':'')} ref={passage.phoneRef} {...passage.gestureProps}
       inert={!raised || transitioning?'':undefined} aria-hidden={!raised || undefined}>
-      <ISeedPhone page={page==='photo'?'plantigochi':app} title={app==='plantigochi'?'Plantigochi':app==='phone'?'iSEED':apps.title}
-        home={()=>setApp('phone')} back={apps.back} lower={passage.lower} locked={Boolean(lesson || page || intro || sharing || apps.busy)}
-        corner={raised?menuTrigger:null} pocket={pocket}>
+      <ISeedPhone page={setupScreen || page==='photo'?'plantigochi':app} title={app==='plantigochi'?'Plantigochi':app==='phone'?'iSEED':apps.title}
+        home={()=>setApp('phone')} back={apps.back} lower={passage.lower} locked={Boolean(setupScreen || lesson || lowerLocked)} lowerLocked={lowerLocked}
+        corner={raised?menuTrigger:null} pocket={phoneContent}>
         {app==='phone'?<ISeedHome plant={plant} open={apps.openApp} busy={apps.busy}/>:apps.content}
       </ISeedPhone>
     </div>
-    {!saveOK && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
+    <div className="garden-arrival" aria-hidden="true"/>
+    {!saveOK && plant && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>
       <div className="intro-shade" aria-hidden="true"/>
       {['left','right'].map(side => <div key={side} className={'foliage ' + side} aria-hidden="true">
