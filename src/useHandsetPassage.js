@@ -241,10 +241,15 @@ export function useHandsetPassage({blocked = false, onChange} = {}) {
       else if (drag.claimed && event.cancelable) event.preventDefault();
     }
     function touchStart(event) {
-      suppressUntil.current = 0;
+      pointerStart();
       if (event.touches.length > 1) cancel();
     }
-    function pointerStart() { suppressUntil.current = 0; }
+    function pointerStart() {
+      suppressUntil.current = 0;
+      // Moving focus after a swipe can make a fresh document draw a keyboard ring.
+      rootRef.current?.setAttribute('data-pointer-navigation', '');
+    }
+    function keyboardStart() { rootRef.current?.removeAttribute('data-pointer-navigation'); }
     function click(event) {
       if (event.detail && performance.now() < suppressUntil.current) {
         suppressUntil.current = 0;
@@ -268,7 +273,7 @@ export function useHandsetPassage({blocked = false, onChange} = {}) {
     motion?.addEventListener?.('change', motionChange);
     // A claimed gesture continues even when the source panel becomes inert.
     const listeners = [
-      [window, 'pointerdown', pointerStart], [window, 'pointermove', pointerMove, false],
+      [window, 'keydown', keyboardStart], [window, 'pointerdown', pointerStart], [window, 'pointermove', pointerMove, false],
       [window, 'pointerup', pointerEnd], [window, 'pointercancel', pointerCancel],
       [window, 'touchstart', touchStart], [window, 'touchmove', touchMove, false],
       [window, 'touchend', touchEnd], [window, 'touchcancel', cancel],
