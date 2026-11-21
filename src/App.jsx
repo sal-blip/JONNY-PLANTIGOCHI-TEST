@@ -17,6 +17,7 @@ import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.
 import {SetupWelcome,NameEditor} from './PlantSetup.jsx';
 import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
+import {checkIn,lifeOf,localDay,milestone} from './gardenEconomy.js';
 import Collector from './Collector.jsx';
 import {useGardenPassage} from './useGardenPassage.js';
 import './collector.css';
@@ -111,7 +112,20 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   const tilt = useGardenTilt(intro || page !== null || room!==null);
   const [leafReady, setLeafReady] = useState(false);
   const menuButton = useRef(null), shareButton = useRef(null), restoreFocus = useRef(null);
-  const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, sleeping:plant.stage === 'seed', intro, leafReady});
+  const [recordPlaying,setRecordPlaying]=useState(false);
+  useEffect(()=>{
+    if(!passage.inside || !plant.sound || !lifeOf(plant).items.some(i=>i.sku==='record' && i.slot!==null))setRecordPlaying(false);
+  },[passage.inside,plant.sound,lifeOf(plant).items]);
+  const [coinsMessage,setCoinsMessage]=useState('');
+  const day=localDay(now);
+  useEffect(()=>{
+    if(document.hidden || day<=lifeOf(plant).day)return;
+    let credited=false;
+    void commit(p=>{const next=checkIn(p,Date.now());credited=next!==p;return next;})
+      .then(saved=>{if(saved && credited && !lesson)setCoinsMessage('+10 Garden Coins · Visit the garden shop');});
+  },[day,lifeOf(plant).day,lesson,commit]);
+  useEffect(()=>{if(coinsMessage){const timer=setTimeout(()=>setCoinsMessage(''),6500);return ()=>clearTimeout(timer);}},[coinsMessage]);
+  const { play, unlock, running } = useGardenSound({enabled:plant.sound, ambience:plant.ambience !== false, recordPlaying, sleeping:plant.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
   const scenery = useRef(null);
   const scene = selectedScene(plant);
@@ -259,11 +273,12 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
       <small className="garden-credit">© 2026 Waz Lab</small>
     </div>
+    {coinsMessage && !room && !page && <div className="coin-toast" role="status">{coinsMessage}</div>}
     {!lesson && !intro && !page && <button className="garden-pull" ref={passage.handle}
       aria-label="Open garden" onClick={passage.activate}><i aria-hidden="true"/>Garden</button>}
     </div>
     <div className="room-floor" inert={!passage.inside?'':undefined} aria-hidden={!passage.inside||undefined}>
-    {room!==null && <Collector active={passage.inside} plant={plant} moving={room.moving} initialPanel={room.panel} commit={commit} now={now}
+    {room!==null && <Collector recordPlaying={recordPlaying} onRecordPlaying={setRecordPlaying} active={passage.inside} plant={plant} moving={room.moving} initialPanel={room.panel} commit={commit} now={now}
       move={async slot=>{const id=room.moving;const ok=await commit(p=>graduate(p,id,slot,Date.now()));
         return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
       relocate={async (id,from,to)=>{
@@ -284,7 +299,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
     {page === 'welcome' && <WelcomeTour phone={phone} onClose={closeOnboarding}/>}
     {page === 'rename' && <NameEditor rename original={plant.name} onCancel={closeOnboarding} issue={issue}
-      onSave={async name=>{if(await commit(p=>({...p,name})))closeOnboarding();}}/>}
+      onSave={async name=>{if(await commit(p=>p.name===name?p:milestone({...p,name},'rename-'+now,'Renamed '+p.name+' to '+name+'.',now)))closeOnboarding();}}/>}
     {page && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} onDebug={page==='settings'?openDebug:undefined} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
       {page === 'menu' && <MenuItems items={phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}

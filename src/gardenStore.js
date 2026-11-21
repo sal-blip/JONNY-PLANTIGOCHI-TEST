@@ -1,4 +1,5 @@
 import {beginAlertVisit,answerAlertInvite} from './alertInvitation.js';
+import {milestone} from './gardenEconomy.js';
 import {KEY, newPlant, readPlant} from './game.js';
 
 const databaseName = 'plantigochi.pocket.garden';
@@ -93,7 +94,7 @@ export function gardenStore(legacyStorage, visible) {
         let plant=current.plant;
         switch(current.phase+'-'+next){
           case 'tour-welcome': case 'welcome-name': case 'name-welcome': case 'name-name': break;
-          case 'name-water': plant=newPlant(Date.now(),draft);break;
+          case 'name-water': plant=newPlant(Date.now(),draft);plant=milestone(plant,'name','Named the seed '+plant.name+'.',plant.plantedAt);break;
           case 'watered-game': break;
           default:throw new SaveIssue('Open the current setup step and try again.');
         }
@@ -123,6 +124,7 @@ export function gardenStore(legacyStorage, visible) {
         onClear(storage);
         storage.removeItem(KEY);
         storage.removeItem('plantigochi.tilt');
+        storage.removeItem('plantigochi.care-library.v1');
         storage.removeItem('plantigochi-save-signal');
         records.clear();
         return save(records,null,{epoch:crypto.randomUUID(),phase:'tour'});

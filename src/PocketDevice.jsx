@@ -1,3 +1,4 @@
+import {earnWin,lifeOf} from './gardenEconomy.js';
 import React, {useState,useRef,useEffect,useCallback} from 'react';
 import {Cross,ChevronLeft,ChevronRight,Compass,CornerUpLeft,Droplet,Gamepad2,Heart,Sprout} from 'lucide-react';
 import DeviceShell from './DeviceShell.jsx';
@@ -78,12 +79,13 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
     else if(last.stage!==plant.stage) react('growth');
     previous.current={id:plant.id,stage:plant.stage,dead:plant.deadAt};
   },[plant.id,plant.stage,plant.deadAt,react]);
-  const recordRound=useCallback((name,phase,level)=>{
-    const id=plant.id, time=Date.now();
+  const recordRound=useCallback((name,phase,level,receipt,time)=>{
+    const id=plant.id;
     void commit(old=>{
       let p=wake(old,time);
       if(p.id!==id || p.deadAt!==null)return p;
       if(name==='dew')p=saveDewCheckpoint(p,phase==='won'?level:0);
+      if(phase==='won')p=earnWin(p,receipt,time,time);
       return company(p,time);
     });
     react(phase==='won'?'gameWin':'gameLoss');
@@ -298,6 +300,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   return <>{lesson && <aside className="water-lesson" aria-live="polite">
       <strong>{lesson==='watered'?'First drink saved':'A first drink for '+plant.name}</strong>
       {lesson==='watered'?<><p>{plant.stage==='seed'?'Your seed sprouts when it is an hour old.':'Your seed has sprouted.'}</p>
+        <p>You have {lifeOf(plant).balance} Garden Coins. Find your first pot in Garden → Shop.</p>
         <button ref={lessonDone} className="lesson-done" onClick={finishLesson}>Meet my plant</button></>:
         <p>{!section?'Press the heart to open your toy menu.':section==='home'?'Press the heart to choose Care.':'Press the heart to choose Water.'}</p>}
     </aside>}<div className={'inspect-view'+(near?' close-up':'')}>

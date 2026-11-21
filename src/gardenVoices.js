@@ -197,12 +197,12 @@ function sleepyBreathing(ctx) {
   return buffer;
 }
 
-export function startGardenBed(ctx, bus, sleeping = false) {
+export function startGardenBed(ctx, bus, sleeping = false, volume = 1) {
   const noteBuffer = bufferFor(ctx, 'garden', () => gardenScore(ctx));
   const score = sleeping ? [noteBuffer, bufferFor(ctx, 'sleep', () => sleepyBreathing(ctx))] : [noteBuffer];
   const mix = ctx.createGain(), start = ctx.currentTime, fadeIn = 0.85;
   mix.gain.setValueAtTime(0, start);
-  mix.gain.linearRampToValueAtTime(1, start + fadeIn);
+  mix.gain.linearRampToValueAtTime(volume, start + fadeIn);
   mix.connect(bus);
   let remaining = score.length;
   const sources = score.map(buffer => {
@@ -223,7 +223,7 @@ export function startGardenBed(ctx, bus, sleeping = false) {
     stopped = true;
     const now = ctx.currentTime;
     mix.gain.cancelScheduledValues(now);
-    mix.gain.setValueAtTime(Math.max(0, Math.min(1, (now - start) / fadeIn)), now);
+    mix.gain.setValueAtTime(volume * Math.max(0, Math.min(1, (now - start) / fadeIn)), now);
     const end = now + 0.32;
     mix.gain.linearRampToValueAtTime(0, end);
     sources.forEach(source => source.stop(end));

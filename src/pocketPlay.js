@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer } from 'react';
+import { useCallback, useEffect, useReducer, useRef } from 'react';
 
 const keys = ['left','heart','right'];
 export const gameNames = { dew: 'Dew Catch', echo: 'Leaf Echo' };
@@ -112,10 +112,13 @@ export function usePocketPlay(plant,paused,onFinish) {
   const exit=useCallback(()=>dispatch({type:'exit'}),[]);
   const active = game && canPlay(game.name,plant) ? game : null;
   useEffect(() => { if (game && !active) dispatch({type:'exit'}); },[game,active]);
+  const lastResult=useRef(null);
   useEffect(() => {
-    if (!active || !['won','lost','retry'].includes(active.phase)) return;
-    onFinish(active.name,active.phase,active.level);
-  },[active?.name,active?.phase,active?.level,onFinish]);
+    if (!active || !['won','lost','retry'].includes(active.phase)) {lastResult.current=null;return;}
+    if (lastResult.current===active)return;
+    lastResult.current=active;
+    onFinish(active.name,active.phase,active.level,crypto.randomUUID(),Date.now());
+  },[active,onFinish]);
   useEffect(() => {
     if (!active || paused) return;
     const delay = {fall:tickMs, lost:1800, watch:active.lit ? 850 : 300, retry:1100}[active.phase];

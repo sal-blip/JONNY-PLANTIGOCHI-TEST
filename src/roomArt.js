@@ -2,6 +2,8 @@ import {BASE_WIDTH,BASE_HEIGHT,placesFor,CAT_SEAT,drawScenery} from './roomScene
 import {drawRoomCat} from './roomCat.js';
 import {drawPottedPlant} from './roomPlant.js';
 import {drawKeepsake,keepsakeFor} from './roomKeepsakes.js';
+import {slotFor} from './gardenLayout.js';
+import {drawRoomDecor} from './roomShopArt.js';
 
 export {BASE_WIDTH as ROOM_WIDTH, BASE_HEIGHT as ROOM_HEIGHT, placesFor, CAT_SEAT};
 
@@ -16,7 +18,7 @@ export function roomLight(hour) {
 export function drawRoom(canvas,{
   hour,plants=[],roomIndex=0,time=0,reducedMotion=false,awake=false,
   highlighted=-1,lifted=-1,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false,
-  jarProgress=null,leafCount=0
+  jarProgress=null,leafCount=0,shopItems=[],onPhotoReady
 }={}) {
   const ctx=canvas.getContext('2d');
   if(!ctx)return;
@@ -32,14 +34,16 @@ export function drawRoom(canvas,{
       drawRoomCat(ctx,{...CAT_SEAT,time,reducedMotion,night:1-light.day,awake,selected:highlighted==='cat'});
       return;
     }
+    const place=places[slot],address=slotFor(roomIndex,place);
+    const shopPot=shopItems.find(item=>item.slot===address && (item.sku==='terra' || item.sku==='wave'));
     if(slot===lifted)return;
-    const place=places[slot],plant=plants[slot],selected=slot===highlighted;
-    const preview=!plant && !place.shelf;
+    const plant=plants[slot],selected=slot===highlighted || Boolean(shopPot && highlighted===shopPot.id);
+    const preview=!plant && !place.shelf && !shopPot;
     if(preview && (placing || !selected))return;
     ctx.save();
     if(preview)ctx.globalAlpha=selected ? .9 : .45;
     drawPottedPlant(ctx,{x:place.x*BASE_WIDTH,y:place.y*BASE_HEIGHT+place.front*(worldHeight-above-BASE_HEIGHT),size:place.size,
-      plant,styleIndex:slot+roomIndex*places.length,night:1-light.day,time,reducedMotion,selected});
+      plant,potSku:shopPot?.sku,styleIndex:slot+roomIndex*places.length,night:1-light.day,time,reducedMotion,selected});
     ctx.restore();
   }
   const object=keepsakeFor(roomIndex);
@@ -49,6 +53,7 @@ export function drawRoom(canvas,{
     });
   }
   drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant,drawKeepsake:paintKeepsake,separatePlanes});
+  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,onPhotoReady});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   places.forEach((spot,i)=>{if(spot.layer==='floor')drawOccupant(i);});
   ctx.restore();

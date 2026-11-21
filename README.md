@@ -28,6 +28,14 @@ Swipe up on the Garden tab or tap it. The collector opens onto a tall pot shelf 
 
 Each two-view apartment has twelve display spots. Filling it opens another pair of views. Slot numbers and graduate IDs survive reloads and backup transfers. The current species is Monstera. The room uses live Canvas 2D game graphics, with its own scene objects, layered plant and cat sprites, and phone-local daylight. The postcard captures those game objects at their saved positions as a shareable PNG.
 
+## Garden shop and journal
+
+Open the garden's waves menu to visit **Shop** or **Journal**. The first gameplay visit each local day earns 10 Garden Coins. Successful seed watering, safe top-ups and watering a thirsty plant earn 2 coins up to three times a day. Winning a Dew Catch level or Leaf Echo round earns 3 coins up to five times a day. The wallet, room items and journal travel with your garden backup.
+
+Choose an item, tap a placement circle and confirm the purchase. A 10-coin terracotta pot is affordable on day one. Bought plants arrive grown. Each purchased pot or decoration is a physical item that can move around the room. Frames accept a personal photo, and the record player includes Jason Singh’s orchid-biodata recording *Earth Day* for offline listening. [Recording and attribution](public/records/earth-day-credits.txt)
+
+**My Plantigochi** combines milestones and notes. **My real plants** keeps personal observations and care logs by plant. **Care library** includes offline guides and searches English Wikipedia for credited cultivation and propagation sections. The last six opened species guides are available offline on that device.
+
 ## Run locally
 
 Use Node.js 22 or newer.

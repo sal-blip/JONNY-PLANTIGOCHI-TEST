@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { playButton, playReveal, startGardenBed } from './gardenVoices.js';
 
-export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady }) {
+export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady, recordPlaying=false }) {
   const context = useRef(null), effects = useRef(null), note = useRef(0);
   const [readyContext, setReadyContext] = useState(null);
   const [visible, setVisible] = useState(() => !document.hidden);
@@ -73,8 +73,8 @@ export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady }
       playReveal(readyContext,bus);
       return hush;
     }
-    if (!intro && ambience) return startGardenBed(readyContext,readyContext.destination,sleeping);
-  }, [enabled,visible,intro,leafReady,ambience,readyContext,sleeping,hush]);
+    if (!intro && ambience) return startGardenBed(readyContext,readyContext.destination,sleeping,recordPlaying ? 0.18 : 1);
+  }, [enabled,visible,intro,leafReady,ambience,readyContext,sleeping,hush,recordPlaying]);
   useEffect(() => () => {
     hush();
     const ctx = context.current;

@@ -32,14 +32,14 @@ export function photoStyle(photo) {
   return { objectPosition: position, transformOrigin: position, transform: 'scale(' + photoZoom + ')' };
 }
 
-export async function preparePhoto(file) {
+export async function preparePhoto(file, edges = [1600, 1280, 1024, 800]) {
   // Only the canvas JPEG is retained, so the original and its metadata stay out of saves.
   const url = URL.createObjectURL(file);
   const image = new Image();
   try {
     image.src = url;
     await image.decode();
-    for (const edge of [1600, 1280, 1024, 800]) {
+    for (const edge of edges) {
       const ratio = Math.min(1, edge / Math.max(image.naturalWidth, image.naturalHeight));
       const canvas = document.createElement('canvas');
       canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));

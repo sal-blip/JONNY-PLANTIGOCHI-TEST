@@ -1,4 +1,5 @@
 import {canPlaceAt,viewForSlot,placesFor,slotFor} from './gardenLayout.js';
+import {carryPot,catalog,earnWater,milestone,validGardenLife} from './gardenEconomy.js';
 import { validPhoto } from './gardenScenes.js';
 
 export const HOUR = 60 * 60 * 1000;
@@ -74,7 +75,7 @@ export function discoverFungus(saved, now) {
 export function treatFungus(saved, outbreak, now) {
   const p=wake(saved,now);
   if(p.deadAt!==null || outbreak==null || p.fungusAt!==outbreak)return p;
-  return {...settle(p,now),fungusAt:null,outbreakDue:nextOutbreak(now),message:'Ahh. No more gnats!'};
+  return milestone({...settle(p,now),fungusAt:null,outbreakDue:nextOutbreak(now),message:'Ahh. No more gnats!'},'fungus-'+outbreak,p.name+' recovered from fungus.',now);
 }
 
 export function criticalReminder(p) {
@@ -126,8 +127,8 @@ export function milestoneDue(p) {
   return p.fungusAt==null && p.rotAt === null && due <= eligibleUntil(p) ? due : null;
 }
 function sprout(p, now) {
-  return {...p, stage:'sprout', outbreakDue:nextOutbreak(now), fungusAt:null, earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
-    companyAt:now, accompanied:false, given:[], message:'Ohayō! Look who finally leafed out.'};
+  return milestone({...p, stage:'sprout', outbreakDue:nextOutbreak(now), fungusAt:null, earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
+    companyAt:now, accompanied:false, given:[], message:'Ohayō! Look who finally leafed out.'},'sprout',p.name+' sprouted.',now);
 }
 function settle(p, now) {
   return {...p, earned:earnedAt(p,now), anchor:Math.max(now,p.anchor)};
@@ -139,12 +140,12 @@ export function wake(p, now = Date.now(), visible = true) {
   const elapsed = earnedAt(p,Math.min(now,deadline));
   const target = elapsed >= WEEK ? 'grown' : elapsed >= 5*DAY ? 'split' : elapsed >= 3*DAY ? 'young' : 'sprout';
   if (STAGES.indexOf(target) > STAGES.indexOf(p.stage)) {
-    p = {...p,stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'};
+    p = milestone({...p,stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'},target,p.name+' reached '+STAGE_NAMES[target].toLowerCase()+'.',Math.min(now,deadline));
   }
   if (now < deadline) return p;
   const cause = deadline<soilDeadline(p) ? 'Fungus' : p.rotAt===null ? 'Thirst' : 'Root rot';
   const leaf = {id:p.id,name:plantName(p.name),stage:p.stage,generation:p.generation,plantedAt:p.plantedAt,diedAt:deadline,cause};
-  return {...settle(p,deadline),deadAt:deadline,book:[...p.book,leaf],message:'A leaf for your book.'};
+  return milestone({...settle(p,deadline),deadAt:deadline,book:[...p.book,leaf],message:'A leaf for your book.'},'death',p.name+' left a pressed leaf. Cause: '+cause+'.',deadline);
 }
 export function company(p, now = Date.now()) {
   p = wake(p,now);
@@ -203,9 +204,9 @@ export function readPlant(text, now = Date.now(), visible = true) {
     if (p.dewRunCleared !== undefined && (!Number.isInteger(p.dewRunCleared) || p.dewRunCleared < 0 || p.dewRunCleared > p.dewCleared)) {
       p.dewRunCleared = 0;
     }
-    if (!validGarden(p)) return null;
+    if (!validGarden(p) || !validGardenLife(p)) return null;
     p.name=plantName(p.name);
-    for (const item of [...p.book,...p.graduates]) item.name=plantName(item.name);
+    for (const item of [...p.book,...p.graduates]) item.name=item.source==='shop' && catalog[item.species]?.kind==='plant'?catalog[item.species].name:plantName(item.name);
     return wake(p, now, visible);
   } catch { return null; }
 }
@@ -237,8 +238,8 @@ export function graduate(saved, id, slot, now = Date.now()) {
   const room=viewForSlot(slot);
   const potStyle=placesFor(room).findIndex(spot=>slotFor(room,spot)===slot)%6;
   const graduate = {id:p.id,name:plantName(p.name),species:'monstera',potStyle,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
-  return {...p,...newPlant(now),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
-    dewCleared:p.dewCleared,graduates:[...p.graduates,graduate]};
+  return milestone({...p,...newPlant(now),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
+    dewCleared:p.dewCleared,graduates:[...p.graduates,graduate]},'graduated',p.name+' graduated to the garden.',now,p.id);
 }
 
 // Check both identity and source against the latest transaction so a stale
@@ -248,7 +249,7 @@ export function relocateGraduate(p, id, from, to) {
   if (index < 0 || !canPlaceAt(p.graduates,to)) return p;
   const graduates=p.graduates.slice();
   graduates[index]={...graduates[index],slot:to};
-  return {...p,graduates};
+  return carryPot(p,{...p,graduates},from,to);
 }
 
 const happy = {
@@ -300,14 +301,18 @@ export function care(saved, action, now = Date.now(), confirmed = false) {
   const status = careStatus(p, action, now);
   if (status.locked || (status.confirm && !confirmed)) return p;
   if (p.stage !== 'seed') p=settle(p,now);
-  if (action === 'drain') return { ...p, lastDrink: now, extraPour: null, rotAt: null, message: 'Ahh. My roots can breathe.' };
-  if (p.stage === 'seed') return wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now);
+  if (action === 'drain') {
+    const drained={...p,lastDrink:now,extraPour:null,rotAt:null,message:'Ahh. My roots can breathe.'};
+    return p.rotAt===null?drained:milestone(drained,'drain-'+p.rotAt,p.name+' recovered from root rot.',now);
+  }
+  if (p.stage === 'seed') return earnWater(wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now),now);
   if (action === 'water') {
     if (status.confirm) {
       if (p.extraPour === null) return { ...p, extraPour: now, message: 'Squelch. My socks are soaked.' };
       return { ...p, rotAt: now, message: 'My roots! Drain my pot.' };
     }
-    p = { ...p, lastDrink: now, extraPour: null, message: 'A little sip. Very sophisticated.' };
+    if(condition(p,now)==='critical')p=milestone(p,'rescue-'+p.lastDrink,p.name+' perked up after a rescue watering.',now);
+    p = earnWater({ ...p, lastDrink: now, extraPour: null, message: 'A little sip. Very sophisticated.' },now);
   }
   if (action === 'talk') p=company(p,now);
   if (action === 'food') p={...p,fedAt:now};

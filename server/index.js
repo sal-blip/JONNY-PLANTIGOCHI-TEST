@@ -1,7 +1,7 @@
 import { reminderAPI } from './reminders.js';
 import { assets } from './generated-assets.js';
 
-const mime = { html:'text/html; charset=utf-8', css:'text/css; charset=utf-8', js:'text/javascript; charset=utf-8', webmanifest:'application/manifest+json', svg:'image/svg+xml', png:'image/png', webp:'image/webp', woff2:'font/woff2' };
+const mime = { html:'text/html; charset=utf-8', css:'text/css; charset=utf-8', js:'text/javascript; charset=utf-8', webmanifest:'application/manifest+json', svg:'image/svg+xml', png:'image/png', webp:'image/webp', woff2:'font/woff2', m4a:'audio/mp4', txt:'text/plain; charset=utf-8' };
 export default {
   async fetch(request, env, ctx) {
     const path = new URL(request.url).pathname;

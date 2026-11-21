@@ -25,8 +25,9 @@ export default defineConfig({
       },
       workbox: {
         cacheId: 'plantigochi',
+        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         importScripts: ['/plant-alerts.js'],
-        globPatterns: ['**/*.{html,js,css,woff2,svg,png,webp,webmanifest}'],
+        globPatterns: ['**/*.{html,js,css,woff2,svg,png,webp,webmanifest,m4a,txt}'],
         inlineWorkboxRuntime: true,
         cleanupOutdatedCaches: true,
         clientsClaim: true,

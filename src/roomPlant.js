@@ -89,6 +89,13 @@ const ceramics = [
   { // indigo ceramic with pooling blue glaze
     day:['#3c5057','#4b646c','#658186','#809a9d','#a7b6ac','#c9cdb6'], wall:[9,9,10,10,10,10,10,9,9,8,7,6], motif:'glaze' },
 ];
+const shopPots = {
+  terra: {day:['#754c3e','#a05c43','#c27650','#d78c60','#e5a572','#f0be88'],wall:[11,11,10,10,9,9,8,8,7,7,6,6],motif:'red-clay'},
+  wave: {day:['#345565','#527c93','#95b1b6','#bdcfc6','#d4decb','#eee8cd'],wall:[9,10,10,11,11,11,10,10,9,7,6,7],motif:'blue-wave'},
+};
+const goldLeaf=['#30573e','#427749','#6f9b55','#95ae65','#b9be70','#dec97b','#f0df9b'];
+const snakeLeaf=['#324f48','#3f6656','#57816b','#71957c','#9da574','#beae6c','#dbcb84'];
+const pothosInk=38,snakeInk=45;
 
 const leftEdge = -29, topEdge = -54, width = 59, height = 58;
 const shadowSoft = 1, shadowFirm = 2, soilShadow = 3, soil = 4, soilLight = 5, loam = 6;
@@ -130,8 +137,8 @@ function makeGrid() {
   return { cells,dot,span,line };
 }
 
-function ceramic(grid,style) {
-  const { wall,motif }=ceramics[style];
+function ceramic(grid,style,finish) {
+  const { wall,motif }=shopPots[finish] || ceramics[style];
   const { span,dot,line }=grid;
   span(-8,0,21,shadowSoft); span(-10,1,27,shadowSoft);
   span(-7,2,20,shadowSoft); span(-5,0,16,shadowFirm); span(-4,1,13,shadowFirm);
@@ -145,7 +152,18 @@ function ceramic(grid,style) {
     span(-radius+3,y,Math.max(1,Math.floor(radius/2)-1-(row>>2)),clay+4);
     if (row===wall.length-2) span(-radius+1,y,radius,clay+2);
   });
-  if(motif==='flutes'){
+  if(motif==='red-clay'){
+    span(-9,-10,19,clay+1); span(-8,-9,16,clay+4); span(-6,-9,6,clay+5);
+    span(-6,-3,11,clay+1); span(-4,-2,9,clay+3);
+    span(2,-7,3,clay+1); dot(3,-8,clay+1); dot(3,-6,clay+4);
+  }else if(motif==='blue-wave'){
+    // Three overlapping seigaiha crests wrap around the glazed bowl.
+    for(const [x,y] of [[-5,-9],[3,-9],[-1,-6]]){
+      span(x-1,y,3,clay); dot(x-2,y+1,clay); dot(x+2,y+1,clay); dot(x-3,y+2,clay+1); dot(x+3,y+2,clay+1);
+      span(x-1,y+2,3,clay+1); dot(x-2,y+3,clay+1); dot(x+2,y+3,clay+1);
+    }
+    span(-5,-2,10,clay);
+  }else if(motif==='flutes'){
     for(const [x,tone] of [[-7,4],[-4,3],[0,3],[4,2],[7,1]]) {
       const end=x-Math.sign(x);
       line(x,-9,end,-4,clay+tone); line(x+1,-8,end+1,-4,clay+tone-1);
@@ -237,10 +255,71 @@ function canopy(grid,hash,pose) {
   line(rootX+5*side,-18,rootX+5*side,-16,soilLight);
 }
 
-function sprite(style,hash,pose) {
+// Pothos blades have an uninterrupted heart outline and irregular gold marbling.
+const heartLeaves=[
+  ['   22    22','  2332  2232',' 233542223331','2335653333331','2356532433321','135532343321',' 1333234331','  13323431','   123431','    1341','     11'],
+  [' 22  22','23322232','23555331','13453231',' 134231','  1331','   11'],
+  [' 2 22','232321','13531',' 131','  1'],
+];
+function trailingPothos(grid,hash,pose){
+  const {line,dot}=grid,mirror=hash&1?-1:1,lean=((hash>>>4)%3)-1;
+  const x=v=>v*mirror+lean;
+  const ivy=(points)=>{
+    for(let i=1;i<points.length;i++){
+      const [ax,ay]=points[i-1],[bx,by]=points[i];
+      line(x(ax),ay,x(bx),by,i%3===1?stemDark:stem);
+    }
+  };
+  const upper=-35-(hash>>>7)%3;
+  ivy([[0,-14],[-2,-21],[-4,-26],[-1,-31],[4,upper],[10,upper+2]]);
+  ivy([[0,-14],[-6,-20],[-12,-21],[-16,-16],[-18,-10],[-16,-5],[-20,-2]]);
+  ivy([[1,-14],[4,-21],[8,-25],[13,-24],[16,-20],[18,-15],[17,-9],[20,-6]]);
+  ivy([[0,-15],[-1,-20],[3,-24],[5,-26]]);
+  const blades=[
+    [-4,-27,0,1],[4,upper,0,1],[10,upper+2,1,-1],[8,-25,0,-1],
+    [-10,-22,1,-1],[-15,-17,0,1],[-18,-10,1,-1],[-19,-3,2,1],
+    [15,-21,1,-1],[18,-15,1,1],[18,-8,2,-1],[3,-23,0,1],[-2,-18,1,1],
+  ];
+  for(const [ax,ay,kind,direction] of blades){
+    const rows=heartLeaves[kind], tipSway=ay> -11?pose:0;
+    const axNative=x(ax)+tipSway, sign=mirror*direction;
+    if(tipSway)line(x(ax),ay,axNative,ay,stem);
+    rows.forEach((row,ry)=>[...row].forEach((cell,rx)=>{
+      if(cell!==' ')dot(axNative+(rx-(kind===0?6:kind===1?3:2))*sign,ay+ry-1,pothosInk+Number(cell));
+    }));
+  }
+}
+
+function uprightSnake(grid,hash,pose){
+  const {dot}=grid,mirror=hash&1?1:-1,taller=(hash>>>3)%4;
+  // Each lance has a golden margin and broken transverse bands of pale green.
+  const spears=[[-4,-11,24,2],[1,5,34+taller,2],[4,13,24,2],[-2,-7,33,2],
+    [-4,-14,17,2],[3,9,18,2],[0,0,26,3]];
+  spears.forEach(([base,tip,length,full],i)=>{
+    for(let n=0;n<length;n++){
+      const t=n/(length-1),center=Math.round((base+(tip-base)*(t**1.23))*mirror+(t>.75?pose*.6:0));
+      const half=t>.92?0:t>.75?1:full;
+      for(let k=-half;k<=half;k++){
+        const band=(n+(k>=0?1:0)+i*3)%6;
+        let shade=k<0?2:1;
+        if(band===2 || (band===3 && k<0))shade=k<0?4:3;
+        if(k===-half)shade=i%3===1?5:4;
+        if(k===half && half>0)shade=i%2?0:5;
+        if(!half)shade=5;
+        dot(center+k,-15-n,snakeInk+shade);
+      }
+    }
+  });
+}
+
+function sprite(style,hash,pose,species,finish) {
   const grid=makeGrid();
-  ceramic(grid,style);
-  if(hash!==null)canopy(grid,hash,pose);
+  ceramic(grid,style,finish);
+  if(hash!==null){
+    if(species==='golden-pothos')trailingPothos(grid,hash,pose);
+    else if(species==='snake-plant')uprightSnake(grid,hash,pose);
+    else canopy(grid,hash,pose);
+  }
   // Merge adjacent cells of a single color into horizontal runs. Keeping the
   // drawing indexed makes room lighting independent of the cached plant pose.
   const runs=[];
@@ -267,32 +346,34 @@ function litColor(hex,night,selected) {
   };
   return 'rgb('+shift(r,r*.58+5,255)+','+shift(g,g*.62+9,230)+','+shift(b,b*.74+16,169)+')';
 }
-function colors(style,night,selected) {
-  const step=Math.max(0,Math.min(48,Math.round(night*48))),key=(style*49+step)*2+Number(selected);
+function colors(style,night,selected,finish) {
+  const step=Math.max(0,Math.min(48,Math.round(night*48))),key=[finish || style,step,selected].join('/');
   if(!blended.has(key)){
     const n=step/48;
     blended.set(key,[null,'rgba(53,42,49,.14)','rgba(47,37,44,.28)',
-      ...[...common,...ceramics[style].day,...leaves.flat()].map(ink=>litColor(ink,n,selected))]);
+      ...[...common,...(shopPots[finish] || ceramics[style]).day,...leaves.flat(),...goldLeaf,...snakeLeaf].map(ink=>litColor(ink,n,selected))]);
   }
   return blended.get(key);
 }
 
 /** Draw at logical room coordinates. x/y is the bottom center of the ceramic,
  * size 1 gives a roughly 22px rim, and time is elapsed milliseconds. */
-export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,night=0,time=0,reducedMotion=false,selected=false}) {
+export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,potSku=null,night=0,time=0,reducedMotion=false,selected=false}) {
   if(!ctx || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(size) || size<=0)return;
   const hash=plant?identity(plant):null;
   const chosen=Number.isInteger(plant?.potStyle)?plant.potStyle:hash===null?styleIndex:hash>>>12;
   const style=((Math.trunc(chosen)||0)%ceramics.length+ceramics.length)%ceramics.length;
+  const finish=Object.hasOwn(shopPots,potSku)?potSku:null;
+  const species=plant?.species==='pothos'?'golden-pothos':plant?.species;
   const pose=hash===null || reducedMotion || !Number.isFinite(time)?0:Math.round(Math.sin(time*.00115+(hash%83)*.12)*.82);
-  const key=style+':'+hash+':'+pose;
+  const key=[style,hash,pose,species,finish].join(':');
   let runs=poses.get(key);
   if(!runs) {
-    runs=sprite(style,hash,pose);
+    runs=sprite(style,hash,pose,species,finish);
     if(poses.size>=192)poses.delete(poses.keys().next().value);
     poses.set(key,runs);
   }
-  const ink=colors(style,Number.isFinite(night)?night:0,selected);
+  const ink=colors(style,Number.isFinite(night)?night:0,selected,finish);
   // The moving reflection is clipped to the painted leaves and ceramic runs.
   // A stationary reflection on the rim also works with reduced motion.
   const sweep=reducedMotion ? -8 : (time%3600)*.035-45;
