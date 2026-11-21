@@ -1,5 +1,6 @@
 import React,{forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useMemo,useRef,useState} from 'react';
-import {ChevronLeft,ChevronRight,ChevronUp,Smartphone,X} from 'lucide-react';
+import {ChevronLeft,ChevronRight,Smartphone,X} from 'lucide-react';
+import SwipeCue from './SwipeCue.jsx';
 import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces,prepareRoomPhotos} from './roomShopArt.js';
@@ -468,11 +469,11 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       </div>
     </div></div>
     <div className="room-controls" hidden={!available || Boolean(panel)}>
-      <button ref={roomReturn} className={'room-corner '+(placing?'room-return':'room-toy-return')} data-room-focus="" data-room-return={placing?undefined:''}
-        aria-label={placing?'Cancel move':'Return to Plantigochi'} title={placing?'Cancel move':'Return to Plantigochi'}
-        disabled={!available || busy} onClick={placing?cancelPlacement:event=>leaveRoom(event,returnToToy)}>
-        {placing?<X aria-hidden="true"/>:<><ChevronUp aria-hidden="true"/><span>Plantigochi</span></>}
-      </button>
+      {placing
+        ? <button type="button" ref={roomReturn} className="room-corner room-return" data-room-focus=""
+            aria-label="Cancel move" title="Cancel move" disabled={!available || busy} onClick={cancelPlacement}><X aria-hidden="true"/></button>
+        : <SwipeCue ref={roomReturn} data-room-focus="" data-room-return="" aria-label="Return to Plantigochi"
+            hint="Swipe up or down to return to Plantigochi" disabled={!available || busy} onClick={event=>leaveRoom(event,returnToToy)}/>}
       {!placing && <button type="button" className="room-corner room-open-phone" data-room-open-phone=""
         aria-label="Open iSEED" title="Open iSEED" disabled={!available || busy} onClick={event=>leaveRoom(event,raisePhone)}>
         <Smartphone aria-hidden="true"/>

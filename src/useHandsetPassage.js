@@ -16,7 +16,7 @@ function canStart(surface, layer, target, x, y) {
     if (handle) return !handle.disabled;
     return Boolean(target.closest('.room-picture') && !target.closest(controls + ', [data-scene-object]'));
   }
-  const handle = target.closest(surface === 'toy' ? '[data-toy-handle], .garden-pull' : '[data-phone-bezel]');
+  const handle = target.closest(surface === 'toy' ? '[data-toy-handle]' : '[data-phone-bezel]');
   if (handle) return !handle.disabled;
   if (target.closest(controls)) return false;
 

@@ -19,6 +19,7 @@ import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
 import {checkIn,itemsFromClosingRooms,lifeOf,localDay,milestone} from './gardenEconomy.js';
 import Collector from './Collector.jsx';
+import SwipeCue from './SwipeCue.jsx';
 import {useHandsetPassage} from './useHandsetPassage.js';
 import ISeedPhone,{ISeedHome} from './ISeedPhone.jsx';
 import {useGardenPhoneApps} from './GardenPhoneApps.jsx';
@@ -301,8 +302,8 @@ function GardenApp({storage,phone,careMessage,alerts,setupScene,setupScreen}) {
       <small className="garden-credit">© 2026 Waz Lab</small>
     </div>
     {coinsMessage && toyActive && <div className="coin-toast" role="status">{coinsMessage}</div>}
-    {!lesson && !intro && !page && <button className="garden-pull"
-      data-toy-handle="" aria-label="Open garden" onClick={e=>go('garden',e)}><i aria-hidden="true"/>Garden</button>}
+    {!lesson && !intro && !page && <SwipeCue data-toy-handle="" aria-label="Open garden"
+      hint="Swipe up to enter the garden" onClick={e=>go('garden',e)}/>}
   </div>;
   return <main ref={passage.rootRef} data-surface={surface} data-transitioning={transitioning?'':undefined}
     data-toy-background={background} data-toy-photo-preview={page==='photo'?'':undefined}

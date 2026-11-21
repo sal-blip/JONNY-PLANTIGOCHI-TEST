@@ -37,12 +37,45 @@
   padding-right: 0;
 }
 
-.standalone-toy-layer .garden-pull:active {
-  background-color: #253a33ec;
+.swipe-cue {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: max(6px, calc(env(safe-area-inset-bottom) + 2px));
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #fff9e6;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
 }
-
-.standalone-toy-layer .garden-pull:focus-visible {
-  outline-color: #f5f4d7;
+.swipe-cue svg {
+  pointer-events: none;
+  width: 23px;
+  height: 27px;
+  filter: drop-shadow(0 1px 1px #17291ef2) drop-shadow(0 0 2px #203125a6);
+}
+.swipe-cue path { opacity: .7; }
+.swipe-cue:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -3px;
+  box-shadow: inset 0 0 0 2px #263c30;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .swipe-cue path { animation: swipe-cue-rise 4.8s ease-in-out infinite; }
+  .swipe-cue path:nth-child(2) { animation-delay: .15s; }
+  .swipe-cue path:nth-child(3) { animation-delay: .3s; }
+  [inert] .swipe-cue path { animation-play-state: paused; }
+  @keyframes swipe-cue-rise {
+    0%, 32%, 100% { opacity: .36; transform: translateY(0); }
+    13% { opacity: 1; transform: translateY(-2px); }
+  }
 }
 
 .garden[data-toy-background="garden"]:not([data-toy-photo-preview]) .standalone-toy-layer .scenery {
