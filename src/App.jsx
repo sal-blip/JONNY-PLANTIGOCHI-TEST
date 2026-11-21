@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, ChevronRight, Waves, Moon, ImagePlus, Music2, Play, Move, Share, Trash2, Sun, Volume2, VolumeX } from 'lucide-react';
+import { Check, ChevronRight, Waves, Moon, ImagePlus, Music2, Move, Share, Trash2, Sun, Volume2, VolumeX } from 'lucide-react';
 import PhotoBackground from './PhotoBackground.jsx';
 import { scenes, selectedScene, photoStyle } from './gardenScenes.js';
 import PhonePanel from './PhonePanel.jsx';
@@ -142,6 +142,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
   },[current,careMessage,resetPassage]);
 
   useEffect(() => {
+    if (!intro || leafReady) return;
     let active = true;
     const image = new Image();
     image.src = '/art/intro-leaf.webp';
@@ -150,7 +151,7 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     else if (image.complete) ready();
     else { image.onload = ready; image.onerror = ready; }
     return () => { active = false; };
-  }, []);
+  }, [intro, leafReady]);
   const finishIntro = useCallback(() => {
     setIntro(false);
   }, []);
@@ -198,10 +199,6 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     const enabled = !current.current.sound;
     commit(old => ({...old, sound:enabled}));
     if (enabled) { unlock(); play('care'); }
-  }
-  function replay() {
-    setPage(null); setIntro(true);
-    if (current.current.sound) unlock();
   }
   function introSound() {
     if (plant.sound && running) { commit(old => ({...old,sound:false})); return; }
@@ -293,8 +290,6 @@ function GardenApp({storage,phone,careMessage,alerts}) {
           onClick={() => commit(old => ({...old,ambience:old.ambience === false}))}><Music2/>Garden ambience<span className="setting-value">{plant.sound && plant.ambience !== false ? 'On' : 'Off'}</span></button>
         <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
-        <button onClick={()=>open('welcome')}><Play/>Welcome tour<ChevronRight className="row-end"/></button>
-        <button data-audio="intro" onClick={replay}><Play/>Replay intro<ChevronRight className="row-end"/></button>
         <button disabled={['checking','downloading'].includes(phone.updateStatus)}
           onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
           {phone.updateStatus==='ready'?'Restart to update':'Check for updates'}</button>
