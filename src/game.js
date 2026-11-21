@@ -85,6 +85,14 @@ export function criticalReminder(p) {
 export const FOOD_INTERVAL = 2 * DAY;
 export const LIGHT_INTERVAL = DAY;
 export const EARLY_WINDOW = 8 * HOUR;
+export function timeLeft(ms, showDays = true) {
+  const minutes = Math.max(1, Math.ceil(ms / 60000));
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+  if (days && showDays) return days + 'd ' + hours % 24 + 'h';
+  if (hours) return hours + 'h' + (minutes % 60 ? ' ' + minutes % 60 + 'm' : '');
+  return minutes + 'm';
+}
 export function moodOf(p, now = Date.now()) {
   if (p.stage === 'seed') return 'sleeping';
   const elapsed = now - p.companyAt;
@@ -266,20 +274,21 @@ export function careStatus(p, action, now = Date.now()) {
     if (soil === 'rootRot') return { hint: 'Drain first', locked: true };
     if (soil === 'dry') return { hint: 'Dry soil' };
     if (soil === 'critical') return { hint: 'Very thirsty' };
-    if (soil === 'healthy' && now >= p.lastDrink + WATER_INTERVAL - WATER_TOP_UP_WINDOW) {
-      return {hint:'Safe to top up',topUp:true};
+    if (soil === 'healthy') {
+      const opensAt = p.lastDrink + WATER_INTERVAL - WATER_TOP_UP_WINDOW;
+      if (now >= opensAt) return {hint:'Safe to top up',topUp:true};
+      return {hint:'Safe top-up in ' + timeLeft(opensAt - now), confirm:true};
     }
     if (soil === 'soggy' && now < p.extraPour + HOUR) return { hint: 'Soil soaked', locked: true };
-    return { hint: soil === 'soggy' ? 'Still wet' : 'Soil damp', confirm: true };
+    return { hint:'Still wet', confirm:true };
   }
   if (action==='talk') return {hint:moodOf(p,now)==='happy'?'Happy · Say hello':'Say hello'};
-  const due = action==='food' ? p.fedAt + FOOD_INTERVAL : p.litAt + LIGHT_INTERVAL;
   if (!['food','sun'].includes(action)) return {hint:'',locked:true};
-  const label = action==='food'?'Food':'Light';
-  if (now>=due) return {hint:label+' overdue'};
-  const minutes=Math.ceil((due-now)/60000);
-  const left=minutes>=60?Math.ceil(minutes/60)+'h':minutes+'m';
-  return {hint:label+' in '+left,locked:now<due-EARLY_WINDOW};
+  const due = action === 'food' ? p.fedAt + FOOD_INTERVAL : p.litAt + LIGHT_INTERVAL;
+  const opensAt = due - EARLY_WINDOW;
+  if (now < opensAt) return {hint:'Ready in ' + timeLeft(opensAt - now, false), locked:true, opensAt};
+  if (now < due) return {hint:'Ready now · Due in ' + timeLeft(due - now), locked:false};
+  return {hint:action === 'food' ? 'Feed now' : 'Give light now'};
 }
 
 export function needsPourConfirmation(p, now = Date.now()) {

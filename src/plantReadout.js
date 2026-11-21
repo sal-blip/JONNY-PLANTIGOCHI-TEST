@@ -1,16 +1,8 @@
-import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, condition, soilDeadline, nextMilestone} from './game.js';
+import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, condition, soilDeadline, nextMilestone, timeLeft} from './game.js';
 
+export {timeLeft};
 export const GROWTH_STEPS = 4;
 const clamp = value => Math.min(1, Math.max(0, value));
-
-export function timeLeft(ms) {
-  const minutes = Math.max(1, Math.ceil(ms / 60000));
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-  if (days) return days + 'd ' + hours % 24 + 'h';
-  if (hours) return hours + 'h' + (minutes % 60 ? ' ' + minutes % 60 + 'm' : '');
-  return minutes + 'm';
-}
 
 export function growthReadout(plant, now) {
   const next = nextMilestone(plant);
@@ -50,12 +42,13 @@ export function waterReadout(plant, now) {
     tone:soil === 'critical' ? 'urgent' : 'due',
   };
   const dryIn = timeLeft(plant.lastDrink + WATER_INTERVAL - now);
-  if (careStatus(plant,'water',now).topUp) {
+  const water = careStatus(plant,'water',now);
+  if (water.topUp) {
     return {fraction, label:'Top up', detail:'Safe to top up · Dry in ' + dryIn};
   }
   return {
     fraction, label:soil === 'soggy' ? 'Too wet' : 'In ' + dryIn,
-    detail:(soil === 'soggy' ? 'Too wet' : 'Damp soil') + ' · Dry in ' + dryIn,
+    detail:soil === 'soggy' ? 'Too wet · Dry in ' + dryIn : water.hint,
     tone:soil === 'soggy' ? 'due' : undefined,
   };
 }
@@ -64,5 +57,8 @@ export function foodReadout(plant, now) {
   if (plant.deadAt !== null) return {label:'', detail:'Heart opens the garden book'};
   if (plant.stage === 'seed') return {label:'Food at sprout', detail:'Unlocks after sprouting'};
   const remaining=plant.fedAt+FOOD_INTERVAL-now;
-  return {label:remaining<=0?'Feed now':'Food '+timeLeft(remaining),detail:careStatus(plant,'food',now).hint,tone:remaining<=0?'due':undefined};
+  const food = careStatus(plant,'food',now);
+  if (food.locked) return {label:'Food ' + timeLeft(food.opensAt - now, false), detail:food.hint};
+  if (remaining <= 0) return {label:'Feed now', detail:food.hint, tone:'due'};
+  return {label:'Food ready', detail:food.hint};
 }

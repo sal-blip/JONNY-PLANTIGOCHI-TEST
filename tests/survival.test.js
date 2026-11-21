@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {HOUR as H,DAY,ROOT_TIME,care,careStatus,condition,criticalReminder,deathDeadline,newPlant,readPlant,replant,takeCutting,wake} from '../src/game.js';
-import {waterReadout} from '../src/plantReadout.js';
+import {foodReadout,waterReadout} from '../src/plantReadout.js';
 import {stepGame,canPlay,dewRules,dewCheckpoint,saveDewCheckpoint,LEVELS} from '../src/pocketPlay.js';
 
 const sprout=()=>wake(care(newPlant(0),'water',0),H);
@@ -153,6 +153,8 @@ test('the last half hour allows one safe top-up on healthy soil',()=>{
   const p=sprout(), opens=p.lastDrink+3.5*H;
   assert.equal(care(p,'water',opens-1),p);
   assert.equal(careStatus(p,'water',opens-1).confirm,true);
+  assert.equal(waterReadout(p,p.lastDrink).detail,'Safe top-up in 3h 30m');
+  assert.equal(waterReadout(p,opens-1).detail,'Safe top-up in 1m');
   for(const time of [opens,p.lastDrink+4*H-1]){
     assert.equal(careStatus(p,'water',time).topUp,true);
     assert.equal(waterReadout(p,time).label,'Top up');
@@ -171,4 +173,27 @@ test('the last half hour allows one safe top-up on healthy soil',()=>{
   assert.equal(care(wet,'water',opens),wet);
   const rotten=care(wet,'water',p.lastDrink+H,true);
   assert.equal(careStatus(rotten,'water',opens).locked,true);
+});
+
+test('food and light prompts follow the same early-care windows as their actions',()=>{
+  const plant = sprout();
+  for (const [action,clock,interval] of [['food','fedAt',2*DAY],['sun','litAt',DAY]]) {
+    const due = plant[clock] + interval;
+    const opens = due - 8*H;
+    const watered = {...plant,lastDrink:opens-1};
+    assert.equal(careStatus(watered,action,opens-1).hint,'Ready in 1m');
+    assert.equal(care(watered,action,opens-1),watered);
+    assert.equal(careStatus(watered,action,opens).hint,'Ready now · Due in 8h');
+    const tended = care(watered,action,opens);
+    assert.equal(tended[clock],opens);
+    assert.equal(careStatus(tended,action,opens).locked,true);
+    assert.equal(careStatus(watered,action,due-1).hint,'Ready now · Due in 1m');
+    assert.equal(careStatus(watered,action,due).hint,action==='food'?'Feed now':'Give light now');
+    if (action === 'food') {
+      assert.equal(foodReadout(plant,plant.fedAt+60000).label,'Food 39h 59m');
+      assert.equal(foodReadout(watered,opens-1).label,'Food 1m');
+      assert.equal(foodReadout(watered,opens).label,'Food ready');
+      assert.equal(foodReadout(watered,due).label,'Feed now');
+    }
+  }
 });
