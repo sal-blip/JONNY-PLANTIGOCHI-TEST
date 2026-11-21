@@ -7,6 +7,7 @@ const names = {water:'Water', sun:'Sunlight', talk:'Kind words', food:'Plant foo
 const guide = [
   ['Toy controls','Arrows browse. Heart picks. Back goes up.'],
   ['Wake a seed','Water once. Sprouts at one hour old.'],
+  ['Top up','Damp soil? Top up in the last 30 min.'],
   ['Thirst','Dry at 4h. Critical at 12h. Water by 24h.'],
   ['Root rot','Two extra wet pours 1h apart. Drain within 12h.'],
   ['Company','Talk or finish a game. Quiet at 12h, lonely at 24h.'],

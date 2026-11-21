@@ -50,6 +50,9 @@ export function waterReadout(plant, now) {
     tone:soil === 'critical' ? 'urgent' : 'due',
   };
   const dryIn = timeLeft(plant.lastDrink + WATER_INTERVAL - now);
+  if (careStatus(plant,'water',now).topUp) {
+    return {fraction, label:'Top up', detail:'Safe to top up · Dry in ' + dryIn};
+  }
   return {
     fraction, label:soil === 'soggy' ? 'Too wet' : 'In ' + dryIn,
     detail:(soil === 'soggy' ? 'Too wet' : 'Damp soil') + ' · Dry in ' + dryIn,

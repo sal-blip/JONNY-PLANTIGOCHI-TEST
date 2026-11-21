@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {HOUR as H,DAY,ROOT_TIME,care,condition,criticalReminder,deathDeadline,newPlant,readPlant,replant,takeCutting,wake} from '../src/game.js';
+import {HOUR as H,DAY,ROOT_TIME,care,careStatus,condition,criticalReminder,deathDeadline,newPlant,readPlant,replant,takeCutting,wake} from '../src/game.js';
+import {waterReadout} from '../src/plantReadout.js';
 import {stepGame,canPlay,dewRules,dewCheckpoint,saveDewCheckpoint,LEVELS} from '../src/pocketPlay.js';
 
 const sprout=()=>wake(care(newPlant(0),'water',0),H);
@@ -146,4 +147,28 @@ test('losing resets the saved run and keeps the best level through reload and re
   const cleared=saveDewCheckpoint(restored,1);
   assert.equal(dewCheckpoint(cleared),1);assert.equal(cleared.dewCleared,8);
   assert.equal(dewCheckpoint(replant(wake(cleared,H+DAY),'seed',H+DAY)),1);
+});
+
+test('the last half hour allows one safe top-up on healthy soil',()=>{
+  const p=sprout(), opens=p.lastDrink+3.5*H;
+  assert.equal(care(p,'water',opens-1),p);
+  assert.equal(careStatus(p,'water',opens-1).confirm,true);
+  for(const time of [opens,p.lastDrink+4*H-1]){
+    assert.equal(careStatus(p,'water',time).topUp,true);
+    assert.equal(waterReadout(p,time).label,'Top up');
+    const watered=care(p,'water',time);
+    assert.equal(watered.lastDrink,time);
+    assert.equal(watered.extraPour,null);
+    assert.equal(watered.rotAt,null);
+    assert.equal(waterReadout(watered,time).fraction,1);
+    assert.equal(care(watered,'water',time),watered);
+    assert.equal(condition(watered,time+4*H),'dry');
+  }
+  const soaked=care(p,'water',opens-1,true);
+  assert.equal(careStatus(soaked,'water',opens).locked,true);
+  const wet=care(p,'water',p.lastDrink,true);
+  assert.equal(careStatus(wet,'water',opens).confirm,true);
+  assert.equal(care(wet,'water',opens),wet);
+  const rotten=care(wet,'water',p.lastDrink+H,true);
+  assert.equal(careStatus(rotten,'water',opens).locked,true);
 });

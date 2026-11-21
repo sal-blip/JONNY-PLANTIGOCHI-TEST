@@ -4,7 +4,9 @@ import {readFileSync, readdirSync} from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
 import test from 'node:test';
 import {reminderAPI} from '../server/reminders.js';
-import {newPlant} from '../src/game.js';
+import {care,newPlant,wake} from '../src/game.js';
+
+import {reminderRequest,reminderSchedule} from '../src/reminderSchedule.js';
 
 const origin = 'https://garden.example';
 const endpoint = 'https://web.push.apple.com/plantigochi-test-device';
@@ -166,7 +168,6 @@ test('sync after reopening retains an overdue unresolved reminder until dispatch
 });
 
 test('client projection retains overdue care and fungus times, with stable event identities', async () => {
-  const {reminderRequest, reminderSchedule} = await import('../src/reminderSchedule.js');
   const now = Date.now();
   const lastDrink = now - 13 * hour;
   const plant = {
@@ -181,12 +182,13 @@ test('client projection retains overdue care and fungus times, with stable event
   assert.deepEqual(body.keys, keys);
   assert.ok(schedule.criticalDue < now && schedule.criticalDue > 0);
   assert.equal(body.criticalDue, schedule.criticalDue);
+  assert.equal(body.dryDue,lastDrink+4*hour);
   assert.ok(schedule.fungusDue <= now && schedule.fungusDue > 0);
   assert.equal(body.fungusDue, schedule.fungusDue);
   assert.ok(body.expires > now);
   assert.equal(body.expires, schedule.expires);
   const again = reminderRequest(reminderSchedule({...plant}, false), subscription);
-  for (const slot of ['criticalDue','fungusDue']) {
+  for (const slot of ['dryDue','criticalDue','fungusDue']) {
     assert.ok(body.eventIds[slot]);
     assert.equal(again.eventIds[slot], body.eventIds[slot]);
   }
@@ -431,7 +433,6 @@ test('an enabled Apple subscription presents a harmless update for a stale push'
 });
 
 test('fungus notifies once at six hours, opens First Aid, and ignores stale schedules after a cure', async t => {
-  const {reminderSchedule} = await import('../src/reminderSchedule.js');
   const sw = await alertWorker();
   const outbreak = Date.now();
   let clock = outbreak;
@@ -444,21 +445,119 @@ test('fungus notifies once at six hours, opens First Aid, and ignores stale sche
   await sw.cache.put('/notice-schedule', Response.json(schedule));
   clock = schedule.fungusDue - 1;
   await sw.push();
-  assert.equal(sw.displayed.length, 0);
+  assert.deepEqual(sw.displayed.map(n=>n.options.data.action),['water']);
   clock++;
   sw.setPlant({...plant, fungusAt:null});
   await sw.push();
-  assert.equal(sw.displayed.length, 0);
+  assert.equal(sw.displayed.length,1);
   sw.setPlant(plant);
   await sw.push();
   await sw.push();
-  assert.equal(sw.displayed.length, 1);
-  assert.equal(sw.displayed[0].options.data.action, 'fungus');
+  assert.deepEqual(sw.displayed.map(n=>n.options.data.action),['water','fungus']);
   sw.setPlant({...plant, fungusAt:null});
-  await sw.click(sw.displayed[0]);
+  await sw.click(sw.displayed[1]);
   assert.equal(sw.navigations.length, 1);
   const target = new URL(sw.navigations[0], origin);
   assert.equal(target.searchParams.get('care'), 'fungus');
   assert.equal(target.searchParams.get('plant'), plant.id);
   assert.equal(target.searchParams.get('episode'), String(outbreak));
+});
+
+const firstSprout = start => wake(care(newPlant(start-hour),'water',start-hour),start);
+
+test('regular dry and rescue pushes are sent once per drink and expire at the next threshold', async t => {
+  const app=await fixture(t), start=Date.now();
+  let clock=start;
+  t.mock.method(Date,'now',()=>clock);
+  const plant=firstSprout(start);
+  const sync=p=>app.put(reminderRequest(reminderSchedule(p,false),{endpoint}));
+  assert.equal((await (await sync(plant)).json()).nextDue,start+4*hour);
+  clock+=4*hour-1;
+  assert.equal(await app.tick(),0);
+  clock++;
+  assert.equal(await app.tick(),1);
+  for(const time of [clock, start+12*hour-1]){
+    clock=time;
+    assert.equal((await (await sync(plant)).json()).nextDue,start+12*hour);
+    assert.equal(await app.tick(),0);
+  }
+  clock++;
+  assert.equal(await app.tick(),1);
+  assert.equal((await (await sync(plant)).json()).nextDue,null);
+  assert.equal(await app.tick(),0);
+  assert.deepEqual(app.sends.map(({init})=>init.headers.Topic),['plantigochi-care','plantigochi-care']);
+
+  // A scheduler recovering later should deliver only the current level of thirst.
+  for(const [delay,count] of [[12*hour,1],[24*hour,0]]){
+    const current=firstSprout(clock);
+    assert.equal((await sync(current)).status,200);
+    clock+=delay;
+    assert.equal(await app.tick(),count);
+    assert.equal(await app.tick(),0);
+  }
+});
+
+test('a safe top-up replaces both outstanding timers and cancellation clears them',async t=>{
+  const app=await fixture(t), start=Date.now();
+  let clock=start;
+  t.mock.method(Date,'now',()=>clock);
+  const p=firstSprout(start);
+  const sync=async plant=>(await app.put(reminderRequest(reminderSchedule(plant,false),{endpoint}))).json();
+  await sync(p);
+  clock+=3.5*hour;
+  const watered=care(p,'water',clock);
+  assert.equal((await sync(watered)).nextDue,clock+4*hour);
+  clock=start+4*hour;
+  assert.equal(await app.tick(),0);
+  clock=watered.lastDrink+4*hour;
+  assert.equal(await app.tick(),1);
+  clock=start+12*hour;
+  assert.equal(await app.tick(),0);
+  assert.equal((await sync(watered)).nextDue,watered.lastDrink+12*hour);
+  await app.cancel(owner);
+  clock=watered.lastDrink+12*hour;
+  assert.equal(await app.tick(),0);
+  for(const other of [newPlant(start),{...p,rotAt:start},wake(p,start+24*hour)]){
+    assert.equal(reminderSchedule(other,false).dryDue,null);
+  }
+});
+
+test('the worker shows current thirst, drops stale water alerts and opens the matching watering cycle',async t=>{
+  const sw=await alertWorker(), start=Date.now(), p=firstSprout(start);
+  const schedule=reminderSchedule(p,false);
+  let clock=start;
+  t.mock.method(Date,'now',()=>clock);
+  sw.setPlant(p);
+  await sw.cache.put('/notice-schedule',Response.json(schedule));
+  clock=schedule.dryDue-1;
+  await sw.push();
+  assert.equal(sw.displayed.length,0);
+  clock++;
+  await sw.push();
+  await sw.push();
+  assert.equal(sw.displayed.length,1);
+  assert.match(sw.displayed[0].title,/ready for a drink/);
+  clock=schedule.criticalDue;
+  sw.setPlant(care(p,'water',clock));
+  await sw.push();
+  assert.equal(sw.displayed.length,1);
+  sw.setPlant(p);
+  await sw.push();
+  await sw.push();
+  assert.equal(sw.displayed.length,2);
+  assert.match(sw.displayed[1].title,/very thirsty/);
+  for(const note of sw.displayed){
+    assert.equal(note.options.tag,'plantigochi-care');
+    await sw.click(note);
+    const url=new URL(sw.navigations.at(-1),origin);
+    assert.equal(url.searchParams.get('care'),'water');
+    assert.equal(url.searchParams.get('plant'),p.id);
+    assert.equal(url.searchParams.get('drink'),String(start));
+  }
+  clock=schedule.expires;
+  const late=await alertWorker();
+  late.setPlant(p);
+  await late.cache.put('/notice-schedule',Response.json(schedule));
+  await late.push();
+  assert.equal(late.displayed.length,0);
 });

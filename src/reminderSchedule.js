@@ -1,9 +1,11 @@
-import {criticalReminder,deathDeadline,milestoneDue,nextMilestone,HOUR,DAY} from './game.js';
+import {criticalReminder,deathDeadline,milestoneDue,nextMilestone,HOUR,DAY,WATER_INTERVAL} from './game.js';
 
 export function reminderSchedule(plant,companyEnabled,lastNudge=0) {
   const next=nextMilestone(plant);
   return {
     id:plant.id, stage:plant.stage,nextStage:({seed:'sprout',sprout:'young',young:'split',split:'grown'})[plant.stage] ?? null,next:next?.label ?? null,due:milestoneDue(plant),
+    dryDue:plant.stage!=='seed' && plant.deadAt===null && plant.rotAt===null && plant.lastDrink!==null
+      ? plant.lastDrink+WATER_INTERVAL : null,
     criticalDue:criticalReminder(plant), expires:deathDeadline(plant),
     fungusAt:plant.fungusAt??null,
     fungusDue:plant.deadAt===null && plant.fungusAt!=null?plant.fungusAt+6*HOUR:null,
@@ -15,11 +17,12 @@ export function reminderSchedule(plant,companyEnabled,lastNudge=0) {
 }
 
 export function reminderRequest(schedule,subscription){
-  const {due=null,criticalDue=null,companyDue=null,fungusDue=null,expires=null}=schedule || {};
+  const {due=null,dryDue=null,criticalDue=null,companyDue=null,fungusDue=null,expires=null}=schedule || {};
   const id=schedule?.id;
   return {endpoint:subscription.endpoint,keys:subscription.toJSON?.().keys ?? subscription.keys,
-    due,criticalDue,companyDue,fungusDue,expires,eventIds:{
+    due,dryDue,criticalDue,companyDue,fungusDue,expires,eventIds:{
       due:due===null?null:id+'-growth-'+schedule.nextStage,
+      dryDue:dryDue===null?null:id+'-dry-'+dryDue,
       criticalDue:criticalDue===null?null:id+'-'+schedule.reason+'-'+criticalDue,
       companyDue:companyDue===null?null:id+'-company-'+schedule.companyAt,
       fungusDue:fungusDue===null?null:id+'-fungus-'+schedule.fungusAt

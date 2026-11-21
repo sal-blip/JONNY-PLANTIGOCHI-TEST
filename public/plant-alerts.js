@@ -38,7 +38,10 @@ async function notifyGarden(event, show) {
   async function notify(kind,title,body,identity,action) {
     const key='/notice-delivered-'+kind;
     if(await cached(cache,key)===identity)return false;
-    await show(title,{body,tag:'plantigochi-'+kind,data:action==='fungus'?{action,plantId:schedule.id,episode:schedule.fungusAt}:{action}});
+    const data={action};
+    if(action==='fungus'){data.plantId=schedule.id;data.episode=schedule.fungusAt;}
+    if(action==='water'){data.plantId=schedule.id;data.lastDrink=schedule.lastDrink;}
+    await show(title,{body,tag:'plantigochi-'+kind,data});
     await cache.put(key,new Response(identity));return true;
   }
   const id=schedule.id??'legacy';
@@ -49,8 +52,12 @@ async function notifyGarden(event, show) {
     if(p && (p.lastDrink!==schedule.lastDrink || p.rotAt!==schedule.rotAt))return;
     const rot=schedule.reason==='rot';
     await notify('care',rot?'Your Monstera needs drainage':'Your Monstera is very thirsty',
-      rot?'Open Care and drain the pot to save its roots.':'Open Care to water your plant.',id+'-'+schedule.criticalDue,rot?'drain':'water');
+      rot?'Open Care and drain the pot to save its roots.':'Water it to help it recover.',id+'-'+schedule.criticalDue,rot?'drain':'water');
     return;
+  }
+  if(!event && schedule.dryDue && now>=schedule.dryDue && schedule.reason==='thirst' &&
+     (!p || (p.lastDrink===schedule.lastDrink && p.rotAt===null))){
+    await notify('care','Your Monstera is ready for a drink','Open Care to water your plant.',id+'-dry-'+schedule.dryDue,'water');
   }
   if(event?.type==='milestone' && event.id===id){
     if(p && p.stage!==event.stage)return;
@@ -126,6 +133,9 @@ self.addEventListener('notificationclick',event=>{
       }catch{/* The Home Screen window may have closed since it replied. */}
     }
     let path=['drain','water','fungus','test'].includes(action)?'/?care='+action:'/';
+    if(action==='water' && event.notification.data.plantId && Number.isSafeInteger(event.notification.data.lastDrink)){
+      path+='&plant='+encodeURIComponent(event.notification.data.plantId)+'&drink='+event.notification.data.lastDrink;
+    }
     if(action==='fungus')path+='&plant='+encodeURIComponent(event.notification.data.plantId)+'&episode='+event.notification.data.episode;
     return self.clients.openWindow(path);
   })());

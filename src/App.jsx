@@ -10,7 +10,7 @@ import { useGardenSound } from './GardenSound.js';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
-import {wake,graduate,relocateGraduate} from './game.js';
+import {wake,graduate,relocateGraduate,condition} from './game.js';
 import {useGardenSave} from './useGardenSave.js';
 import WelcomeTour from './WelcomeTour.jsx';
 import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.jsx';
@@ -57,7 +57,7 @@ function InstalledGame({phone}){
   const [careMessage,setCareMessage]=useState(null);
   useEffect(()=>{
     function rescue(e){
-      if(e.data?.type==='plant-care' && ['water','drain','fungus','test'].includes(e.data.action))setCareMessage({action:e.data.action,plantId:e.data.plantId,episode:e.data.episode});
+      if(e.data?.type==='plant-care' && ['water','drain','fungus','test'].includes(e.data.action))setCareMessage({action:e.data.action,plantId:e.data.plantId,episode:e.data.episode,lastDrink:e.data.lastDrink});
     }
     navigator.serviceWorker?.addEventListener('message',rescue);
     return ()=>navigator.serviceWorker?.removeEventListener('message',rescue);
@@ -130,19 +130,25 @@ function GardenApp({storage,phone,careMessage,alerts}) {
     return ()=>{clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};
   },[commit,current]);
   useEffect(()=>{
-    function rescue(action,plantId,episode) {
+    function rescue(action,plantId,episode,lastDrink) {
       if(action==='test'){resetPassage();setPage('test');return;}
-      const p=wake(current.current);
-      if(action!=='fungus' && (p.deadAt!==null || p.stage==='seed'))return;
-      if(action==='drain'?p.rotAt===null:action==='water'?p.rotAt!==null||Date.now()<p.lastDrink+12*3600000:action!=='fungus')return;
+      const time=Date.now(), p=wake(current.current,time);
+      if(action==='water'){
+        const soil=condition(p,time);
+        const sameCycle=(plantId==null || plantId===p.id) && (lastDrink==null || lastDrink===p.lastDrink);
+        if(!sameCycle || (soil!=='dry' && soil!=='critical'))action='home';
+      }else if(action==='drain'){
+        if(p.deadAt!==null || p.rotAt===null)return;
+      }else if(action!=='fungus')return;
       setIntro(false);setPage(null);resetPassage();setCareTarget({action,stale:action==='fungus' && (p.id!==plantId || p.fungusAt!==episode || p.deadAt!==null),seq:Date.now()});
     }
     const url=new URL(location.href);
     const action=careMessage?.action ?? url.searchParams.get('care');
     const plantId=careMessage?.plantId ?? url.searchParams.get('plant');
     const episode=careMessage?.episode ?? Number(url.searchParams.get('episode'));
-    if(url.searchParams.has('care')){for(const k of ['care','plant','episode'])url.searchParams.delete(k);history.replaceState(null,'',url);}
-    if(action)rescue(action,plantId,episode);
+    const lastDrink=careMessage ? careMessage.lastDrink : url.searchParams.has('drink') ? Number(url.searchParams.get('drink')) : null;
+    if(url.searchParams.has('care')){for(const k of ['care','plant','episode','drink'])url.searchParams.delete(k);history.replaceState(null,'',url);}
+    if(action)rescue(action,plantId,episode,lastDrink);
   },[current,careMessage,resetPassage]);
 
   useEffect(() => {

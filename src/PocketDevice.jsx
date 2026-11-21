@@ -67,8 +67,8 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   const screen=path.at(-1), paused=screen?.id==='pause';
   const previous=useRef({id:plant.id,stage:plant.stage,dead:plant.deadAt});
   const serial=useRef(0);
-  const react=useCallback(effect=>{
-    setFeedback({effect,id:++serial.current});
+  const react=useCallback((effect,waterFrom)=>{
+    setFeedback({effect,waterFrom,id:++serial.current});
     clearTimeout(speech.current);speech.current=setTimeout(()=>setFeedback(null),2500);
   },[]);
   useEffect(()=>{
@@ -92,6 +92,8 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   useEffect(()=>{
     if(!careTarget)return;
     activity.exit();
+    setFeedback(null);
+    if(careTarget.action==='home'){setPath([]);return;}
     setPath([frame('home'),frame(careTarget.action==='fungus'?(careTarget.stale?'pastAid':'aid'):'care',careTarget.action==='drain'?4:0)]);
   },[careTarget,activity.exit]);
   const gameOwner=useRef(plant.id);
@@ -101,7 +103,9 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   const game=activity.game, lost=game?.phase==='lost', playing=game && !paused;
   const section=screen?.id;
   const browsing=Boolean(section && !playing);
-  const soil=condition(plant,now), mood=soil==='healthy'?moodOf(plant,now):healthLabels[soil];
+  const soil=condition(plant,now);
+  const displayMood=soil==='dry' || soil==='critical'?'sad':moodOf(plant,now);
+  const mood=soil==='healthy'?displayMood:healthLabels[soil];
   const cards=browsing?toyCards(section,plant,now):[];
   const index=Math.min(screen?.index??0,cards.length-1), choice=cards[index];
   const branch=browsing?(section==='home'?choice.command:parentBranch[section]??section):undefined;
@@ -154,7 +158,17 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
     const state=careStatus(live,action,time);
     if (state.locked) return false;
     if (state.confirm && !confirmed) {go('pour');return 'tap';}
-    void commit(p=>p.id===plant.id?care(p,action,time,confirmed):p).then(ok=>{if(ok)react(confirmed?'overwater':action);});
+    let effect, waterFrom;
+    void commit(p=>{
+      if(p.id!==plant.id)return p;
+      const before=wake(p,time);
+      const next=care(before,action,time,confirmed);
+      if(next!==before){
+        effect=action==='water' && careStatus(before,action,time).confirm?'overwater':action;
+        if(effect==='water')waterFrom=condition(before,time);
+      }
+      return next;
+    }).then(ok=>{if(ok && effect)react(effect,waterFrom);});
     if (section==='pour') setPath(old=>old.slice(0,-1));
 
     return 'care';
@@ -299,12 +313,12 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
         {showMeters && <span className="lcd-menu-key" aria-hidden="true">{sick?'♥ First Aid':'♥ Menu'}</span>}
         {browsing && <BranchIcons active={branch}/>}
         <span className={game?'lcd-art':'lcd-art lcd-plant'}>
-          {game?<GameArt game={game}/>:<PlantPixel key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={moodOf(plant,now)} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
+          {game?<GameArt game={game}/>:<PlantPixel key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={displayMood} waterFrom={feedback?.waterFrom} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
         </span>
         {browsing ? <MenuItem item={choice}/> : showMeters ? <div className="lcd-readout">
           <ReadoutMeter name="Growth" label={ageText} detail={ageText+' old · '+(growth.next?growth.next+' · ':'')+growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>
           <ReadoutMeter name="Water" label={water.label==='Seed watered'?'Watered':water.label.replace(/^In /,'')} detail={water.detail} tone={water.tone} value={water.fraction}/>
-          {sick?<span className="fungus-alarm" role="status"><Cross aria-hidden="true"/>Fungus · {minutesLabel} left</span>:<ReadoutMeter name="Mood" label={moodOf(plant,now)} detail={moodOf(plant,now)} value={({happy:4,content:3,quiet:2,lonely:1,sleeping:0})[moodOf(plant,now)]} steps={4}/>}
+          {sick?<span className="fungus-alarm" role="status"><Cross aria-hidden="true"/>Fungus · {minutesLabel} left</span>:<ReadoutMeter name="Mood" label={displayMood} detail={displayMood} value={({happy:4,content:3,quiet:2,lonely:1,sad:1,sleeping:0})[displayMood]} steps={4}/>}
         </div> : <span className="lcd-status">{status}{ready && <small className="lcd-hint">Hold Back to exit</small>}</span>}
       </div>
       <span className="shell-name" aria-hidden="true">PLANTIGOCHI</span>

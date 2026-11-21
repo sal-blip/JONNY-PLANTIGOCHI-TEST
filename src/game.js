@@ -5,6 +5,7 @@ export const HOUR = 60 * 60 * 1000;
 export const DAY = 24 * HOUR;
 export const WEEK = 7 * DAY;
 export const WATER_INTERVAL = 4 * HOUR;
+const WATER_TOP_UP_WINDOW = HOUR / 2;
 export const MATURE_CARE_DELAY = 4 * HOUR;
 const CRITICAL_WATER_AGE = 12 * HOUR;
 const ROT_RESCUE_WINDOW = 12 * HOUR;
@@ -265,6 +266,9 @@ export function careStatus(p, action, now = Date.now()) {
     if (soil === 'rootRot') return { hint: 'Drain first', locked: true };
     if (soil === 'dry') return { hint: 'Dry soil' };
     if (soil === 'critical') return { hint: 'Very thirsty' };
+    if (soil === 'healthy' && now >= p.lastDrink + WATER_INTERVAL - WATER_TOP_UP_WINDOW) {
+      return {hint:'Safe to top up',topUp:true};
+    }
     if (soil === 'soggy' && now < p.extraPour + HOUR) return { hint: 'Soil soaked', locked: true };
     return { hint: soil === 'soggy' ? 'Still wet' : 'Soil damp', confirm: true };
   }

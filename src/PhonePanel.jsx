@@ -45,7 +45,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, recover
       <div className="offline-state" role="status">{phone.offline === 'ready' ? <Check size={15}/> : <HardDrive size={15}/>} {offlineText}</div>
     </section>}
     {(page === 'alerts' || page==='test') && <section className="phone-section">
-      {page==='alerts' && <p>Growth, thirst, root rot, and fungus reminders are checked hourly.</p>}
+      {page==='alerts' && <p>Water reminders are due 4 and 12 hours after a drink. We check for them hourly, along with growth, root rot, and fungus reminders.</p>}
       {alerts.capable && !alerts.denied ? <button className="alert-control" aria-pressed={alerts.enrolled} onClick={alerts.toggle} disabled={alerts.busy || (alerts.enrolled ? phone.offline !== 'ready' : !alerts.canEnable)}>
         <Bell size={16}/>{alerts.busy ? 'Updating…' : alerts.enrolled ? 'Turn off alerts' : 'Enable plant alerts'}</button>
         : <p className="support-hint">{alerts.denied ? 'Notifications are blocked. You can allow them in the browser or device settings.' : 'On iPhone or iPad, add this game to the Home Screen and open its icon to enable alerts. Other devices need a browser that supports Web Push.'}</p>}
