@@ -1,5 +1,5 @@
 import {beginAlertVisit,answerAlertInvite} from './alertInvitation.js';
-import {milestone} from './gardenEconomy.js';
+import {checkIn,lifeOf,milestone} from './gardenEconomy.js';
 import {stageGardenReminder} from './gardenReminder.js';
 import {KEY,newPlant,readPlant} from './game.js';
 import {canonicalFrameBlob,frameOriginalIds,originalIdsFromRaw,packGardenBackup,prepareRestoredGarden} from './gardenBackup.js';
@@ -79,7 +79,7 @@ function openDB(){
 const revisionOf=setup=>Number.isSafeInteger(setup.revision)?setup.revision:0;
 const stale=()=>new SaveIssue('This garden changed in another window. Review the current garden and try again.');
 function resultOf(plant,setup){
-  return {plant,phase:setup.phase || (plant?'game':'welcome'),epoch:setup.epoch,revision:revisionOf(setup),draft:setup.draft || '',invite:setup.invite || null};
+  return {plant,firstDay:setup.firstDay ?? null,phase:setup.phase || (plant?'game':'welcome'),epoch:setup.epoch,revision:revisionOf(setup),draft:setup.draft || '',invite:setup.invite || null};
 }
 export function gardenStore(legacyStorage,visible){
   let database,checkedOriginals=false;
@@ -199,7 +199,8 @@ export function gardenStore(legacyStorage,visible){
       return change(expected,(records,raw,setup)=>{
         const current=snapshot(records,raw,setup);
         const prior=current.invite;
-        const invite=action==='open' ? beginAlertVisit(prior,visit,current.phase==='welcome',enabled)
+        const resumeOffer=action==='open' && !enabled && current.phase==='watered' && prior?.round===1 && !prior.closed && prior.visit!==visit;
+        const invite=resumeOffer ? {...prior,visit} : action==='open' ? beginAlertVisit(prior,visit,current.phase==='watered',enabled)
           : answerAlertInvite(prior,visit,action==='defer');
         if(invite===prior)return current;
         const phase=action!=='open' && current.phase==='welcome'?'name':current.phase;
@@ -212,14 +213,23 @@ export function gardenStore(legacyStorage,visible){
       return change(expected,(records,raw,setup)=>{
         const current=snapshot(records,raw,setup);
         if(current.phase!==expected.phase)throw stale();
-        let plant=current.plant;
+        let plant=current.plant,firstDay=current.firstDay;
         switch(current.phase+'-'+next){
           case 'tour-welcome': case 'welcome-name': case 'name-welcome': case 'name-name': break;
-          case 'name-water':plant=newPlant(Date.now(),draft);plant=milestone(plant,'name','Named the seed '+plant.name+'.',plant.plantedAt);break;
+          case 'name-water':
+            plant=newPlant(Date.now(),draft);
+            plant=checkIn(plant,plant.plantedAt);
+            firstDay={id:plant.id,visitCoins:lifeOf(plant).balance};
+            plant=milestone(plant,'name','Named the seed '+plant.name+'.',plant.plantedAt);
+            break;
+          case 'game-game':
+            if(!firstDay || firstDay.id!==plant.id || plant.stage==='seed')throw stale();
+            firstDay=null;
+            break;
           case 'watered-game':break;
           default:throw new SaveIssue('Open the current setup step and try again.');
         }
-        return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,invite:setup.invite,phase:next,...(next==='name'?{draft}:{})});
+        return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,invite:setup.invite,firstDay,phase:next,...(next==='name'?{draft}:{})});
       });
     },
     async update(expected,fn,options){
@@ -236,7 +246,12 @@ export function gardenStore(legacyStorage,visible){
         const phase=current.phase==='water' && plant.wateredAt!==null?'watered':current.phase;
         if(plant===current.plant && phase===current.phase)return current;
         updateOriginals(records,current.plant,plant,staged);
-        return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,phase,invite:setup.invite});
+        let firstDay=current.firstDay?.id===plant.id?current.firstDay:null;
+        if(firstDay && phase==='watered' && current.phase==='water'){
+          const checkedIn=checkIn(current.plant,plant.wateredAt);
+          firstDay={...firstDay,drinkCoins:lifeOf(plant).balance-lifeOf(checkedIn).balance};
+        }
+        return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,phase,invite:setup.invite,firstDay});
       });
     },
     async replace(expected,backup){

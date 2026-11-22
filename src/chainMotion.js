@@ -61,6 +61,13 @@ export function projectedGravity(x,y,z=-1) {
   return {x:mag<.045?0:x/norm,y:mag<.045?0:y/norm,z:Number.isFinite(z)?limit(z,-1,1):-1};
 }
 
+// When a phone is almost level its gravity points through the LCD. Give the
+// suspended chain a screen-down resting direction until tilt is meaningful.
+export function hangingGravity(x,y,z) {
+  const g=projectedGravity(x,y,z);
+  return Math.hypot(g.x,g.y)<.16 ? {x:0,y:1,z:g.z} : g;
+}
+
 function collide(p,i) {
   const radius=radiusAt(i), thickness=i===RING?3.3:2.4;
   p.x=limit(p.x,radius+1,599-radius);p.y=limit(p.y,radius+1,564-radius);

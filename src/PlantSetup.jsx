@@ -30,7 +30,7 @@ export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answe
   }
   const inviting=Boolean(offer && !candidate);
   const blocked=inviting && alerts.denied;
-  const title=candidate?'Bring your garden home':offer===2?'Get plant alerts?':'Welcome to your pocket garden';
+  const title=candidate?'Bring your garden home':offer===2?'Get plant alerts?':'Meet your seed';
   useLayoutEffect(()=>{heading.current?.focus({preventScroll:true});},[title]);
   let copy='A sleepy Monstera is waiting. Give it a name, then use the heart on your keychain to give it its first drink.';
   if(candidate)copy=candidate.plant.name+' · Generation '+candidate.plant.generation+' · '+candidate.plant.graduates.length+' collected';
@@ -111,7 +111,7 @@ export function NameEditor({original='Monstera',initial='',onDraft,onSave,onCanc
         <button aria-label="Next toy item" disabled={busy} onClick={()=>move(1)}><ChevronRight/></button>
       </div>
     </div></div>
-    <p className="name-instructions">Arrows browse. Heart picks a letter or <b>Done</b>.<br/>Back erases. Hold Back to cancel.</p>
+    <p className="name-instructions">{!draft && selected==='Done'?<>Press ♥ to keep <b>{original}</b>. Use the arrows to pick letters.</>:<>Arrows browse. Heart picks a letter or <b>Done</b>.</>}<br/>Back erases. Hold Back to cancel.</p>
     {issue && <p role="alert">{issue}</p>}
   </section>;
   return rename?<dialog className="seed-setup name-modal" ref={dialog} aria-labelledby="plant-name-title" onCancel={e=>e.preventDefault()}>{content}</dialog>:<main className="seed-setup">{content}</main>;

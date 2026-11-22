@@ -59,7 +59,7 @@ function GameArt({game}) {
   return <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>;
 }
 
-export default function PocketDevice({plant,now,resting,commit,sound,openMove,openBook,careTarget,rename,lesson,finishLesson}) {
+export default function PocketDevice({plant,now,resting,commit,sound,openMove,openBook,careTarget,rename,lesson,finishLesson,firstDay,sproutWelcome,dismissSprout,reminder}) {
   const [path,setPath]=useState([]);
   const [closeUp,setCloseUp]=useState(false), [feedback,setFeedback]=useState(null);
   const retreat=useRef(null), held=useRef(null), pressed=useRef(null), speech=useRef(null), heart=useRef(null);
@@ -299,12 +299,23 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   },[lesson]);
   const near=resting && (closeUp || Boolean(section) || Boolean(game));
   return <>{lesson && <aside className="water-lesson" aria-live="polite">
-      <strong>{lesson==='watered'?'First drink saved':'A first drink for '+plant.name}</strong>
-      {lesson==='watered'?<><p>{plant.stage==='seed'?'Your seed sprouts when it is an hour old.':'Your seed has sprouted.'}</p>
-        <p>You have {lifeOf(plant).balance} Garden Coins. Swipe up to the garden. Tap the phone at the lower right to shop for your first pot.</p>
-        <button ref={lessonDone} className="lesson-done" onClick={finishLesson}>Meet my plant</button></>:
-        <p>{!section?'Press the heart to open your toy menu.':section==='home'?'Press the heart to choose Care.':'Press the heart to choose Water.'}</p>}
-    </aside>}<div className={'inspect-view'+(near?' close-up':'')}>
+      <strong>{lesson==='watered'?plant.name+' had its first drink':'A first drink for '+plant.name}</strong>
+      {lesson==='watered'?<>
+        <p>{firstDay?.drinkCoins!=null?'First visit +'+firstDay.visitCoins+' · Watering +'+firstDay.drinkCoins+' Garden Coins':'Your wallet holds '+lifeOf(plant).balance+' Garden Coins.'}</p>
+        <p>{plant.stage==='seed'?waterReadout(plant,now).detail+'.':plant.name+' has sprouted!'}</p>
+        <p>Swipe up to the garden. The iSEED shop has a pot for 10 coins.</p>
+        {reminder && plant.stage==='seed' && <button className="lesson-done" disabled={reminder.busy || !reminder.canEnable}
+          onClick={()=>reminder.enable()}>Remind me</button>}
+        <button ref={lessonDone} className="lesson-done" disabled={reminder?.busy} onClick={finishLesson}>Back to {plant.name}</button>
+        {reminder?.notice && <p role="status">{reminder.notice}</p>}
+      </>:<p>{!section?'Press the heart to open your toy menu.':section==='home'?'Press the heart to choose Care.':'Press the heart to choose Water.'}</p>}
+    </aside>}
+    {sproutWelcome && !section && !game && <aside className="water-lesson" aria-label="First sprout">
+      <strong>{plant.name} sprouted!</strong><p>Your first leaf is here. Dew Catch is open.</p>
+      <button className="lesson-done" onClick={async()=>{if(await dismissSprout())activity.enter('dew');}}>Play Dew Catch</button>
+      <button className="lesson-done" onClick={dismissSprout}>Stay with {plant.name}</button>
+    </aside>}
+    <div className={'inspect-view'+(near?' close-up':'')}>
     <div className="device">
       <div className="inspect-shell"><DeviceShell/></div>
       <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} data-branch={branch} role="group" aria-label={description}>

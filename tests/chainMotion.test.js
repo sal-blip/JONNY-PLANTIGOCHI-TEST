@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  EYELET, LINK, RING, RING_REACH, dragChain, flickChain, gripChain, leafContact,
+  EYELET, LINK, RING, RING_REACH, dragChain, flickChain, gripChain, hangingGravity, leafContact,
   partPose, projectedGravity, releaseChain, restingChain, stepChain,
 } from '../src/chainMotion.js';
 
@@ -147,4 +147,18 @@ test('holding at the end of a swipe does not throw the ring on release',()=>{
   releaseChain(chain,320);
   assert.equal(Math.hypot(p.vx,p.vy,p.vz),0);
   assert.equal(chain.toss,null);
+});
+
+test('an upward flick settles below the eyelet with level or upright phone readings',()=>{
+  for(const sample of [[0,0,-1],[.04,.07,-.99],[0,1,0]]){
+    const chain=restingChain();
+    gripChain(chain,RING,0);
+    dragChain(chain,150,85,30);
+    const releasedY=ring(chain).y;
+    releaseChain(chain,36);
+    settle(chain,hangingGravity(...sample));
+    assert.ok(ring(chain).y>releasedY+100);
+    assert.ok(ring(chain).y>EYELET.y+50);
+  }
+  assert.deepEqual(hangingGravity(1,0,0),projectedGravity(1,0,0));
 });

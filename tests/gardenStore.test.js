@@ -264,3 +264,23 @@ test('orphaned or missing originals preserve the recoverable garden and its prev
   await store().read();
   assert.equal(await garden.readFrameOriginal(oldId),null);
 });
+
+test('first drink receipt survives restart and sprout welcome is acknowledged once',async t=>{
+  const {store}=installation(t),garden=store();
+  const fresh=await garden.read();
+  const naming=await garden.setup(fresh,'name','Ivy');
+  const water=await garden.setup(naming,'water','Ivy');
+  assert.equal(water.firstDay.visitCoins,10);
+  const {care,HOUR,wake}=await import('../src/game.js');
+  const drink=await garden.update(water,p=>care(p,'water',p.plantedAt));
+  const resumed=await store().read();
+  assert.equal(resumed.phase,'watered');
+  assert.deepEqual(resumed.firstDay,drink.firstDay);
+  assert.equal(resumed.firstDay.drinkCoins,2);
+  assert.equal(resumed.plant.gardenLife.balance,12);
+  const playing=await garden.setup(resumed,'game');
+  const sprout=await garden.update(playing,p=>wake(p,p.plantedAt+HOUR));
+  assert.equal(sprout.firstDay.id,sprout.plant.id);
+  assert.equal((await garden.setup(sprout,'game')).firstDay,null);
+  assert.equal((await store().read()).firstDay,null);
+});

@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef } from 'react';
-import { EYELET, LINK, RING, dragChain, flickChain, gripChain, outsideLeafPath, partPose, projectedGravity, releaseChain, restingChain, stepChain } from './chainMotion.js';
+import { EYELET, LINK, RING, dragChain, flickChain, gripChain, outsideLeafPath, partPose, hangingGravity, releaseChain, restingChain, stepChain } from './chainMotion.js';
 import './DeviceShell.css';
 
 // Each atlas region maps back to the original 600 × 565 moulding coordinates.
@@ -46,7 +46,7 @@ function useHardware(frontRef) {
     if(!device||!garden)return;
     const parts=[...device.querySelectorAll('[data-chain-part]')];
     const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    let chain=restingChain(), gravity=projectedGravity(0,1,0), frame=0, last=null, pointer=null;
+    let chain=restingChain(), gravity=hangingGravity(0,1,0), frame=0, last=null, pointer=null;
     let usingSensors=false;
     function paint() {
       const poses=indices.map(i=>partPose(chain,i));
@@ -70,8 +70,13 @@ function useHardware(frontRef) {
     }
     function restore() {stop();chain=restingChain();paint();}
     function orient({detail}) {
-      if(!detail?.active||document.hidden||reduced?.matches){usingSensors=false;gravity=projectedGravity(0,1,0);stop();return;}
-      const next=projectedGravity(detail.x,detail.y,detail.z);
+      if(!detail?.active){
+        usingSensors=false;gravity=hangingGravity(0,1,0);
+        if(!document.hidden && !reduced?.matches){chain.quiet=0;wake();}
+        return;
+      }
+      if(document.hidden || reduced?.matches)return;
+      const next=hangingGravity(detail.x,detail.y,detail.z);
       if(usingSensors && Math.hypot(next.x-gravity.x,next.y-gravity.y,next.z-gravity.z)<.016)return;
       usingSensors=true;gravity=next;chain.quiet=0;wake();
     }
@@ -118,7 +123,7 @@ function useHardware(frontRef) {
       releaseChain(chain,event.timeStamp,!!reduced?.matches||event.type!=='pointerup');
       svg.classList.remove('chain-held');
       if(svg.hasPointerCapture(id))svg.releasePointerCapture(id);
-      if(reduced?.matches)stop();else wake();
+      if(reduced?.matches)restore();else wake();
     }
     function cancelInteraction() {
       if(pointer){const id=pointer.id;pointer=null;releaseChain(chain,0,true);
@@ -129,8 +134,8 @@ function useHardware(frontRef) {
       if(!event.target.closest?.('[data-retrieve]')||!['Enter',' '].includes(event.key))return;
       event.preventDefault();event.stopPropagation();restore();
     }
-    function visible() {if(document.hidden)cancelInteraction();}
-    function preference() {if(reduced?.matches)cancelInteraction();}
+    function visible() {if(document.hidden)cancelInteraction();else if(reduced?.matches)restore();else wake();}
+    function preference() {cancelInteraction();if(reduced?.matches)restore();else wake();}
     device.addEventListener('pointerdown',down);svg.addEventListener('pointermove',move);
     svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
     svg.addEventListener('lostpointercapture',end);svg.addEventListener('keydown',key);

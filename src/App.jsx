@@ -78,10 +78,12 @@ function InstalledGame({phone}){
 function InstalledSession({phone,storage,careMessage,consumeCareMessage,alertVisitId}){
   const alerts=usePlantAlerts(storage.plant,phone.offline,storage.epoch);
   const {invite,alertVisit,phase}=storage;
-  const fresh=!invite && phase==='welcome';
-  const returning=invite?.round===1 && invite.visit!==alertVisitId;
+  const sproutVisit=useRef(null);
+  if(storage.firstDay?.id && storage.firstDay.id===storage.plant?.id && storage.plant.stage==='sprout')sproutVisit.current=alertVisitId;
+  const fresh=!invite && phase==='watered';
+  const returning=invite?.round===1 && invite.visit!==alertVisitId && (phase==='watered' || (phase==='game' && !storage.firstDay && sproutVisit.current!==alertVisitId));
   const needsVisit=alerts.capable && phase!=='tour' && (
-    fresh || returning || (alerts.enrolled && invite?.closed)
+    fresh || returning || (alerts.enrolled && invite && !invite.done)
   );
   useEffect(()=>{
     if(needsVisit)void alertVisit(alertVisitId,'open',alerts.enrolled);
@@ -91,23 +93,27 @@ function InstalledSession({phone,storage,careMessage,consumeCareMessage,alertVis
   let scene=phase, screen;
   if(phase==='tour'){
     screen=<WelcomeTour phone={phone} issue={storage.issue} onBegin={()=>storage.setup('welcome')}/>;
-  }else if(needsVisit && !storage.issue && !alerts.enrolled){
+  }else if(phase!=='watered' && needsVisit && !storage.issue && !alerts.enrolled){
     scene=null;
     screen=<main aria-busy="true" aria-label="Opening your garden"/>;
-  }else if(phase==='welcome' || offer){
-    scene=offer?'alert-invite':'welcome';
-    screen=<SetupWelcome {...storage} alerts={alerts} offer={offer} answer={answer}/>;
+  }else if(phase==='welcome' || (phase==='game' && offer)){
+    scene=phase==='game'?'alert-invite':'welcome';
+    screen=<SetupWelcome {...storage} alerts={alerts} offer={phase==='game'?offer:null} answer={answer}/>;
   }else if(phase==='name'){
     screen=<NameEditor initial={storage.draft} onDraft={d=>storage.setup('name',d)}
       onSave={name=>storage.setup('water',name)} onCancel={()=>storage.setup('welcome')} issue={storage.issue}/>;
   }
-  return <GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}
+  async function finishDrink(){
+    if(offer && !(await answer(!alerts.denied)))return false;
+    return storage.setup('game');
+  }
+  return <GardenApp finishDrink={finishDrink} drinkReminder={Boolean(offer)} alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}
     consumeCareMessage={consumeCareMessage} setupScene={scene} setupScreen={screen}/>;
 }
 
 // The room behind setup is display data. Naming creates the first saved plant.
 const emptyRoom={graduates:[],book:[],jar:null,deadAt:null};
-function GardenApp({storage,phone,careMessage,consumeCareMessage,alerts,setupScene,setupScreen}) {
+function GardenApp({finishDrink,drinkReminder,storage,phone,careMessage,consumeCareMessage,alerts,setupScene,setupScreen}) {
   const {plant,current,commit,replace,issue}=storage;
   const roomGarden=plant ?? emptyRoom;
   const saveOK=!issue;
@@ -312,7 +318,9 @@ function GardenApp({storage,phone,careMessage,consumeCareMessage,alerts,setupSce
       {photo && <img className="custom-photo" src={photo.src} style={photoStyle(photo)} alt="" draggable="false"/>}
     </div>}
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
-      <PocketDevice lesson={lesson} finishLesson={()=>storage.setup('game')} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={enterGraduation} openBook={enterBook} resting={toyActive} commit={commit} sound={play}/>
+      <PocketDevice lesson={lesson} finishLesson={finishDrink} firstDay={storage.firstDay}
+        sproutWelcome={toyActive && !lesson && plant.stage==='sprout' && plant.deadAt===null && plant.fungusAt==null && storage.firstDay?.id===plant.id}
+        dismissSprout={()=>storage.setup('game')} reminder={drinkReminder && !alerts.denied?alerts:null} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={enterGraduation} openBook={enterBook} resting={toyActive} commit={commit} sound={play}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
     <div hidden={page === 'photo' || !!lesson} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
