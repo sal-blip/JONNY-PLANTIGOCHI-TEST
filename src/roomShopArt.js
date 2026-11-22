@@ -1,3 +1,4 @@
+import {spriteOffset as oakOrigin,spritePalette as oakColors,spriteRows as oakRows} from './oakFrameSprite.js';
 import {spriteOffset as deckOrigin, spritePalette as deckColors, spriteRows as deckRows} from './recordPlayerSprite.js';
 import {spriteOffset as catOrigin, spritePalette as catColors, spriteRows as catRows} from './manekiNekoSprite.js';
 import {drawPottedPlant} from './roomPlant.js';
@@ -26,7 +27,7 @@ const colors={
   Q:'#542f3a',C:'#913e42',A:'#bd6655',R:'#e47d66',P:'#e4a292',
   U:'#344752',V:'#546a75',S:'#789598',L:'#aebfb9',T:'#c7d0bb',Z:'#527e76',
   v:'#698a93',s:'#93aeb0',l:'#cfdbcf',
-  ...Object.fromEntries([...catColors, ...deckColors, printedLabelHighlight, printedLabelShadow].map(color => [color, color])),
+  ...Object.fromEntries([...catColors, ...deckColors, ...oakColors, printedLabelHighlight, printedLabelShadow].map(color => [color, color])),
 };
 const glazingAlpha={v:.73,s:.55,l:.68};
 const codes=Object.keys(colors);
@@ -125,19 +126,9 @@ function turntable(g, phase) {
 }
 
 const frameData={
-  oak:{left:-14,top:-29,w:29,h:28,aperture:{x:-8,y:-24,w:17,h:17}},
+  oak:{aperture:{x:-8,y:-24,w:17,h:17}},
   lacquer:{left:-17,top:-25,w:35,h:24,aperture:{x:-11,y:-20,w:23,h:13}},
 };
-
-function oakPrint({rect,poly}){
-  // Fuji at first light: snow, the near ridge and a narrow reflection on the lake.
-  rect(-8,-24,17,17,'L');rect(-8,-18,17,7,'P');
-  rect(-6,-22,3,3,'A');rect(-5,-23,1,1,'A');rect(-5,-19,1,1,'A');
-  poly([[-8,-13],[-5,-15],[-3,-15],[1,-20],[3,-21],[5,-18],[8,-15],[8,-12],[-8,-12]],'V');
-  poly([[-1,-17],[2,-21],[3,-21],[6,-17],[3,-18],[2,-17],[1,-18]],'F');
-  poly([[-8,-16],[-5,-14],[-3,-14],[-1,-12],[2,-12],[6,-14],[8,-14],[8,-10],[-8,-10]],'Z');
-  rect(-8,-10,17,3,'S');rect(-7,-10,6,1,'T');rect(-2,-9,5,1,'L');rect(5,-8,3,1,'V');
-}
 
 function lacquerPrint({rect,poly,line}){
   // A moonlit fishing boat under a rising moon.
@@ -149,38 +140,22 @@ function lacquerPrint({rect,poly,line}){
   line(-9,-11,-7,-10,'K');rect(-7,-10,5,1,'K');rect(-2,-11,1,1,'K');
 }
 
-function pictureFrame(g,sku){
-  const {rect,line,poly}=g,{left:x,top:y,w,h,aperture:a}=frameData[sku];
-  const far=x+w-1,bottom=y+h-1,oak=sku==='oak';
-  rect(x+4,-2,4,2,oak?'D':'K');rect(far-7,-2,4,2,oak?'D':'K');
-  rect(x,y,w,h,oak?'D':'K');
-  rect(x+1,y+1,w-2,h-2,oak?'N':'C');
-  if(oak){
-    // Four mitred oak rails with end-grain at the joints and an inset shadow.
-    poly([[x+1,y+1],[far-1,y+1],[far-4,y+4],[x+4,y+4]],'O');
-    poly([[x+1,y+1],[x+3,y+3],[x+3,bottom-3],[x+1,bottom-1]],'N');
-    poly([[far-3,y+3],[far-1,y+1],[far-1,bottom-1],[far-3,bottom-3]],'E');
-    poly([[x+1,bottom-1],[x+4,bottom-4],[far-4,bottom-4],[far-1,bottom-1]],'M');
-    rect(x+5,y+1,14,1,'J');rect(x+10,y+3,8,1,'N');rect(x+1,y+6,1,12,'O');
-    rect(far-2,y+12,1,6,'N');rect(x+7,bottom-1,9,1,'N');
-    line(x+1,y+1,x+3,y+3,'E');line(far-1,y+1,far-3,y+3,'E');
-    line(x+1,bottom-1,x+3,bottom-3,'D');line(far-1,bottom-1,far-3,bottom-3,'D');
-  }else{
-    // Built-up urushi lacquer, from nearly black to a narrow vermilion gleam.
-    rect(x+1,y+1,w-2,2,'A');rect(x+1,y+2,2,h-4,'C');
-    rect(x+3,y+1,12,1,'R');rect(x+1,y+5,1,6,'A');
-    rect(far-2,y+3,2,h-5,'Q');rect(x+2,bottom-2,w-3,2,'Q');rect(x+5,bottom-1,12,1,'C');
-  }
-  rect(x+3,y+3,w-6,h-6,oak?'D':'B');rect(x+4,y+4,w-8,h-8,oak?'I':'W');
+function lacquerFrame(g){
+  const {rect,line}=g,{left:x,top:y,w,h,aperture:a}=frameData.lacquer;
+  const far=x+w-1,bottom=y+h-1;
+  rect(x+4,-2,4,2,'K');rect(far-7,-2,4,2,'K');
+  rect(x,y,w,h,'K');rect(x+1,y+1,w-2,h-2,'C');
+  // Built-up urushi lacquer, from nearly black to a narrow vermilion gleam.
+  rect(x+1,y+1,w-2,2,'A');rect(x+1,y+2,2,h-4,'C');
+  rect(x+3,y+1,12,1,'R');rect(x+1,y+5,1,6,'A');
+  rect(far-2,y+3,2,h-5,'Q');rect(x+2,bottom-2,w-3,2,'Q');rect(x+5,bottom-1,12,1,'C');
+  rect(x+3,y+3,w-6,h-6,'B');rect(x+4,y+4,w-8,h-8,'W');
   rect(a.x-1,a.y-1,a.w+2,1,'H');rect(a.x-1,a.y,1,a.h,'G');
   rect(a.x+a.w,a.y,1,a.h+1,'F');rect(a.x,a.y+a.h,a.w,1,'F');
-  if(oak)oakPrint(g);
-  else{
-    lacquerPrint(g);
-    // Paired maki-e sprigs stay on the lacquer, outside the paper and photo.
-    line(x+1,y+6,x+6,y+1,'O');rect(x+2,y+2,2,1,'J');rect(x+4,y+3,2,1,'O');rect(x+7,y+1,2,1,'J');
-    line(far-7,bottom-1,far-1,bottom-5,'O');rect(far-4,bottom-1,2,1,'J');rect(far-2,bottom-6,1,2,'J');
-  }
+  lacquerPrint(g);
+  // Paired maki-e sprigs stay on the lacquer, outside the paper and photo.
+  line(x+1,y+6,x+6,y+1,'O');rect(x+2,y+2,2,1,'J');rect(x+4,y+3,2,1,'O');rect(x+7,y+1,2,1,'J');
+  line(far-7,bottom-1,far-1,bottom-5,'O');rect(far-4,bottom-1,2,1,'J');rect(far-2,bottom-6,1,2,'J');
 }
 
 function makeSprite(paint){
@@ -189,7 +164,7 @@ function makeSprite(paint){
 const recordFrames=labelOrbit.map((_,phase)=>makeSprite(g=>turntable(g,phase)));
 const sprites={
   neko:makeSprite(g=>drawPixelSprite(g,catOrigin,catColors,catRows)),record:recordFrames[0],
-  oak:makeSprite(g=>pictureFrame(g,'oak')),lacquer:makeSprite(g=>pictureFrame(g,'lacquer')),
+  oak:makeSprite(g=>drawPixelSprite(g,oakOrigin,oakColors,oakRows)),lacquer:makeSprite(lacquerFrame),
 };
 
 export function framePhotoBounds(sku,x,y,size=1){

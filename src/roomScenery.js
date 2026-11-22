@@ -861,30 +861,123 @@ function studioDesk(b) {
   l(sx-11,236,sx+11,236,wood.mid,2);o(sx,sy+1,18,4,wood.dark);o(sx,sy-1,18,4,wood.lit);
   o(sx,sy-2,15,2,'#cb9a70');r(sx-12,sy-2,9,1,wood.gold);
 }
+const camelliaStudy={
+  x:3,y:4,
+  inks:{
+    k:'#645b4a',b:'#8b7558',i:'#aa926d',s:'#4c6757',g:'#65816b',
+    m:'#839673',h:'#a4ac83',u:'#923f3e',r:'#b64d43',v:'#cd604c',
+    p:'#df8062',f:'#eab48b',t:'#b88849',y:'#e8bd69',
+  },
+  rows:[
+    '........................uuuu.............',
+    '.......................uuuvuu..u.........',
+    '......................uuvvvvvuuur........',
+    '......................uuvvvvvuurpru......',
+    '.....................urrrvvvvvppppr......',
+    '..............u.....urpppvvvvvppppru.....',
+    '............uvvu....rpvvvvvvuuupppu......',
+    '............uvuu...urvvvvvftttfppru......',
+    '...........uvuuu...urvvvvttytytpvvvru....',
+    's...........uuugg...rrvvvtytytvvvvvvu....',
+    'sgsssss....guuugg...urvvvvttttvvvvvru....',
+    '.sgggggs....ggggg...urrrvvvtvvvvvvvru....',
+    '.sshgggmsss.ggggg...uurrvpvvvvrvrruu.....',
+    '..sshhggggs...g.b....urrrvpppvruuuu.sssss',
+    '..sssghgggss....b.....uuuuvvvvuussssgggs.',
+    '...ssgghgggs.....b......buuvrrussggggss..',
+    '....ssgghgggs.....b.....bkuuuuggggmmss...',
+    '....ssssghhgss....b....bk...ggggmmssss...',
+    '.....ssssggggs.....b..bk...sggmmsssss....',
+    '.......sssssgs.....b.bk....gmmsssss......',
+    '........s...bs......bbbb..smssssss.......',
+    '..............b.....bk..bbsssss..........',
+    '...............bb...bk...................',
+    '.................bbbk....................',
+    '..........g........bk....................',
+    '..........ggg......ik....................',
+    '.........gmgg.....ik.....................',
+    '.........gmgg.....ik.....................',
+    '.........gmggg...ik......s...............',
+    '.........gmggg..bk...sgggggssss..........',
+    '........gmggg..bk...bssmmggggsss.........',
+    '........gmggg.bbbbbb..sggmmmgggss........',
+    '.........ggggbk.......ssssssmmggggs......',
+    '.........ggg.bk.........ssssssggggggs....',
+    '...........gik...........sssssssssss.....',
+    '..........ibk................s...........',
+    '.........ikk........................rrr..',
+    '.......bkk..........................r.r..',
+    '......bk............................prr..',
+    '....................................rrr..',
+  ],
+};
+
 function easel(b) {
-  const {r,p,l,o}=b;
-  const legs=[[725,135,-15],[748,135,18],[747,138,6]];
-  o(740,231,27,4,'#a38a68');
-  for(const [x,y,d] of legs){
-    p([x,y,x+5,y,x+5+d,231,x+1+d,231],wood.shade);l(x+2,y+3,x+2+d,228,wood.lit);
+  const {r,p,l,o}=b,x=741;
+  const ink='#634d3e',walnut='#856345',beech='#ae8054',edge='#c39969',gold='#d7b07c';
+
+  // The third leg swings backward from a single pivot, landing on the more
+  // distant part of the floor. Each of the two main legs has the same front cut.
+  p([711,228,744,215,754,214,772,230,769,234,714,234],'rgba(64,46,38,.12)');
+  o(749,217,8,2,'rgba(60,44,37,.20)');
+  p([738,123,743,122,751,215,750,217,746,217],ink);
+  p([739,126,741,126,750,214,747,215],'#926c4d');
+  r(746,216,5,1,'#6e5740');
+  // Each stave widens toward its front foot. Identical native scanlines keep
+  // the pairing readable even after the canvas and the tray cover the middle.
+  for(const side of [-1,1]){
+    const foot=x+side*28;
+    o(foot+2,232,6,1,'rgba(62,45,40,.20)');
+    for(let y=103;y<=231;y++){
+      const spread=Math.round(3+(y-103)*25/128),width=y<162?4:5;
+      const left=x+side*spread-2;
+      r(left,y,width,1,ink);
+      r(left+1,y,width-2,1,beech);r(left+1,y,1,1,edge);
+      if(width===5)r(left+3,y,1,1,'#936b4b');
+    }
+    r(foot-2,230,5,2,'#775f49');r(foot-1,230,3,1,'#a3825b');
   }
-  l(717,208,759,208,wood.mid,3);l(719,207,757,207,wood.gold);
-  // Adjustable mast, ratchet holes and copper screw retain the canvas.
-  p([735,86,741,84,746,192,739,192],wood.dark);l(738,88,742,190,wood.lit,2);
-  for(let y=90;y<125;y+=5)r(738,y,2,1,wood.shade);
-  p([717,119,766,116,771,165,715,168],wood.dark);
-  p([719,120,765,118,768,163,718,166],'#ecdcb2');
-  p([721,122,763,120,765,160,720,163],'#a8c3ba');
-  o(748,132,5,5,'#e9c591');
-  p([720,151,728,145,735,147,744,137,749,139,756,146,764,142,766,161,720,163],'#789a90');
-  p([720,155,731,149,737,151,745,145,752,149,765,146,766,161,720,163],'#638679');
-  p([720,158,730,153,741,155,749,151,765,154,766,160,720,163],'#5a796f');
-  l(731,158,745,156,'#a4b296');l(727,161,736,160,'#afbd9b');
-  p([712,168,770,165,772,168,712,172],wood.dark);l(714,168,768,166,wood.gold);
-  trim(b,732,113,13,4,false);r(738,113,3,3,'#bda06b');
-  // Artist's palette leaning by the lower stretcher, with individual paint dabs.
-  o(753,194,9,5,'#b98b61');o(757,193,2,1,'#8b6c50');
-  for(const [dx,dy,c] of [[-6,-1,'#837d91'],[-3,-3,'#759789'],[1,-3,'#c08c68'],[4,0,'#d8c9a4']])r(753+dx,194+dy,2,1,c);
+
+  // Crosspiece under the carriage. Both pin heads enter the front staves,
+  // while the darker rear foot stays beyond it.
+  r(721,187,41,4,ink);r(722,187,39,1,edge);r(722,188,39,2,'#9d754f');
+  for(const pin of [722,760]){r(pin-1,187,3,3,'#806445');r(pin,187,1,1,'#ddbc82');}
+  // Sliding mast with a short visible rack, held by the lower carriage block.
+  r(x-3,92,7,94,ink);r(x-2,93,5,92,beech);r(x-2,93,1,92,edge);
+  r(x-2,91,5,2,'#a17a55');r(x-1,91,3,1,gold);
+  for(let yy=97;yy<113;yy+=4)r(x,yy,2,1,'#805e43');
+  r(x-5,182,11,7,walnut);r(x-4,182,9,2,edge);
+  r(x-2,184,5,3,'#755e45');r(x-1,184,3,2,'#b49262');r(x,184,1,1,'#e3c28a');
+
+  // A wrapped cream sheet with restrained paper tooth. The shallow shadowed
+  // right and bottom edges show the board thickness; the art is native pixels.
+  r(714,115,54,53,'#776953');
+  r(715,114,52,53,'#b6a58a');r(715,114,51,52,'#eaddbd');
+  // One pixel of backing board remains above the sheet, growing darker
+  // toward the shaded corner. The clamp jaw covers its center when drawn last.
+  r(715,114,51,1,'#c5b295');r(716,114,15,1,'#cfbfa1');
+  r(756,114,10,1,'#b7a286');r(766,115,1,2,'#ad987d');
+  r(716,115,49,50,'#f5e9cd');
+  r(716,115,49,1,'#fbefd4');r(716,116,1,47,'#f4e4c6');
+  r(716,165,49,1,'#ded0b1');r(765,116,1,49,'#d6c6a5');
+  for(const [dx,dy,w] of [[3,3,4],[36,3,3],[2,29,2],[33,45,3],[10,47,3]])r(716+dx,115+dy,w,1,'#efe2c6');
+  for(const [row,pixels] of camelliaStudy.rows.entries()){
+    for(let col=0;col<pixels.length;){
+      const first=col,c=pixels[col++];
+      while(col<pixels.length && pixels[col]===c)col++;
+      if(c!=='.')r(716+camelliaStudy.x+first,116+camelliaStudy.y+row,col-first,1,camelliaStudy.inks[c]);
+    }
+  }
+
+  // The board sits behind the upturned shelf lip. Both matching ends cap its
+  // grain, and a squared jaw overlaps the board at its upper edge.
+  p([711,166,768,166,772,169,772,172,711,172,709,170],ink);
+  p([712,166,768,166,770,168,710,168],gold);
+  r(710,168,62,2,beech);r(711,168,59,1,'#c99563');
+  r(712,170,58,1,'#986d4d');r(715,169,16,1,'#bf8b5e');r(754,169,11,1,'#a47652');
+  r(735,109,13,7,ink);r(736,109,11,2,edge);r(736,111,11,3,beech);
+  r(736,114,11,2,'#8c6549');r(737,114,9,1,'#c39a69');
+  r(x-1,110,3,3,'#816744');r(x-1,110,2,2,'#bfa673');r(x-1,110,1,1,'#e9d399');
 }
 function hangingPrints(b){
   const {r,l,p,o}=b;

@@ -299,40 +299,70 @@ def library(d):
 
 
 def postcard(d):
-    """A sent postcard, its airmail envelope, and a mountain lake print."""
-    ink='#484552'
-    # The envelope flap peeks behind the card, tilted in the opposite direction.
-    d.polygon([(5,15),(31,6),(36,7),(44,31),(14,41),(9,40)],fill=ink)
-    d.polygon([(6,16),(32,8),(35,8),(42,30),(14,39),(10,39)],fill='#d1ab7d')
-    d.polygon([(7,16),(32,8),(34,9),(22,25)],fill='#efd6a2')
-    d.line([(9,17),(21,26),(33,12)],fill='#ae8865')
-    # A cream card with bottom edge thickness and a few diagonally striped corners.
-    d.polygon([(4,10),(6,8),(41,13),(44,14),(41,37),(39,39),(3,33)],fill=ink)
-    d.polygon([(5,11),(7,10),(42,15),(39,37),(4,32)],fill='#bc9979')
-    d.polygon([(5,10),(41,15),(38,35),(4,31)],fill='#f0dfba')
-    d.line([(6,10),(25,13)],fill='#fff2d1');d.line([(5,30),(26,33)],fill='#fff0d1')
-    d.line([(7,10),(9,11)],fill='#b56458');d.line([(16,12),(19,12)],fill='#76959a')
-    d.line([(6,29),(8,31)],fill='#77929a');d.line([(14,31),(17,32)],fill='#b96758')
-    d.line([(33,34),(36,35)],fill='#789397')
-    # A square polychrome print has a pale vermilion sky, dark mountain and lake.
-    d.polygon([(8,13),(29,16),(27,32),(6,29)],fill='#977666')
-    d.polygon([(9,14),(28,16),(26,30),(7,28)],fill='#e4ab87')
-    d.polygon([(9,14),(28,16),(27,20),(8,18)],fill='#eac19a')
-    d.rectangle((12,15,13,16),fill='#ffe4a8')
-    d.polygon([(8,22),(12,19),(15,21),(20,16),(22,17),(26,23),(27,22),(26,26),(8,25)],fill='#758d94')
-    d.polygon([(16,21),(20,16),(22,17),(24,20),(22,19),(21,20),(20,18)],fill='#edf0d3')
-    d.polygon([(8,22),(10,21),(13,23),(16,22),(20,24),(25,21),(27,22),(26,26),(8,25)],fill='#547c75')
-    d.polygon([(8,25),(15,25),(24,24),(26,25),(26,29),(7,27)],fill='#82b2a5')
-    d.line([(10,26),(15,26)],fill='#c3d7b4');d.line([(18,26),(21,25)],fill='#c8d8b6')
-    d.line([(17,27),(20,27)],fill='#629398')
-    d.polygon([(7,26),(10,27),(14,27),(16,29),(7,28)],fill='#486e64')
-    # Offset postal vignette and copper cancellation arcs are visible at native scale.
-    d.polygon([(33,15),(40,16),(39,22),(32,21)],fill='#a9645b')
-    d.polygon([(34,16),(39,17),(38,20),(33,20)],fill='#da9276')
-    d.polygon([(35,18),(36,16),(37,18),(37,20),(35,20)],fill='#f4d9a3')
-    d.line([(30,19),(32,18),(34,18)],fill='#6e7d78');d.line([(30,20),(31,22),(34,23),(36,22)],fill='#6e7d78')
-    d.line([(29,25),(37,26)],fill='#aa9376');d.line([(29,27),(36,28)],fill='#aa9376')
-    d.line([(29,29),(33,29)],fill='#b7a287')
+    """A tea-paper postcard with a sprout postage stamp and a folded airmail corner."""
+    card = Image.new('RGBA', (38, 27))
+    p = ImageDraw.Draw(card)
+    edge = '#53494b'
+    paper = '#f5e6be'
+    sunlit = '#fff1cd'
+    # A single, stiff postcard. The thin far edge catches light and the lower
+    # two exposed paper fibres give it thickness against the gold enamel.
+    p.polygon([(0,1),(1,0),(36,0),(37,1),(37,24),(35,26),(1,26),(0,25)],fill=edge)
+    p.rectangle((1,1,36,24),fill=paper)
+    p.line([(2,25),(35,25),(36,24)],fill='#bf9d76')
+    p.line([(1,1),(34,1)],fill=sunlit)
+    p.line([(1,2),(1,20)],fill='#fdf0cc')
+    p.line([(12,24),(34,24)],fill='#e4cda3')
+
+    # Off-white nicks at the edges leave a perforated border around the print.
+    # The two leaves sit at different heights, each with its own exposed stem.
+    p.rectangle((22,2,34,15),fill='#879196')
+    p.rectangle((23,3,33,14),fill='#374862')
+    p.line([(24,3),(32,3)],fill='#5b6e80')
+    p.line([(23,4),(23,10)],fill='#4f6077')
+    for x in (23,26,29,32):
+        p.point([(x,2),(x,15)],fill=paper)
+    for y in (3,6,9,12):
+        p.point([(22,y),(34,y)],fill=paper)
+    p.line([(27,13),(27,12),(28,12),(28,10),(29,8),(30,7)],fill='#b5c894')
+    p.line([(26,9),(28,11)],fill='#9eba84')
+    p.polygon([(24,6),(25,7),(26,7),(27,8),(27,9),(26,9),(24,8)],fill='#8fbd8a')
+    p.line([(24,6),(26,7)],fill='#c5dca6')
+    p.polygon([(29,8),(29,6),(30,5),(32,4),(32,6),(31,7)],fill='#a4c98d')
+    p.line([(30,6),(32,4)],fill='#d1e3aa')
+
+    # Grey-indigo cancellation extends from the round dater onto the stamp.
+    # A few missing ink pixels keep the rim from looking machine-perfect.
+    cancel='#66737a'
+    p.line([(17,11),(18,9),(20,8),(22,8),(24,10),(25,12),(25,14),
+            (23,16),(20,17),(18,16),(16,14),(16,12)],fill=cancel)
+    p.line([(19,12),(22,12)],fill='#788386')
+    p.point([(18,10),(23,14),(19,15)],fill='#8c918b')
+    p.line([(7,10),(9,9),(11,9),(13,10),(15,10),(17,9)],fill='#82908d')
+    p.line([(7,13),(9,12),(11,12),(13,13),(15,13)],fill='#82908d')
+
+    # The Japanese postal mark and two short address rules leave blank paper.
+    p.line([(7,3),(12,3)],fill='#ad6259')
+    p.line([(7,5),(12,5)],fill='#ad6259')
+    p.line([(9,5),(9,7)],fill='#ad6259')
+    p.line([(18,19),(32,19)],fill='#ac9782')
+    p.line([(18,22),(28,22)],fill='#ae9984')
+
+    # Airmail colours occupy the small folded lower corner only.
+    p.polygon([(1,15),(1,24),(10,24)],fill='#a88774')
+    p.polygon([(1,16),(1,23),(8,23)],fill='#fcedc4')
+    p.polygon([(1,17),(1,20),(4,23),(6,23)],fill='#c7675d')
+    p.polygon([(1,22),(1,23),(3,23)],fill='#4f6a7b')
+    p.line([(2,16),(10,24)],fill='#dbc39a')
+
+    # Integer column and row offsets keep the lettering and border on their
+    # native grid while laying the card down at a slight counterclockwise angle.
+    for y in range(card.height):
+        for x in range(card.width):
+            colour=card.getpixel((x,y))
+            if colour[3]:
+                row=y-x//7
+                d.point((4+x+row//7,13+row),fill=colour)
 
 
 # One palette for each enamel backing: rim, upper reflecting edge, sky, ground,
