@@ -1,5 +1,6 @@
 import {drawSelectionContour} from './roomContour.js';
-import {spriteOffset, spritePalette as goldLeaf, spriteRows} from './goldenPothosSprite.js';
+import * as pothosFoliage from './goldenPothosSprite.js';
+import * as snakeFoliage from './snakePlantSprite.js';
 
 // Each graduate is inked on a small logical grid. Transparent cells in each
 // blade reveal the stem, other leaves, or the actual room through the splits.
@@ -94,7 +95,7 @@ const shopPots={
   terra:{lift:3,tones:['#563d38','#75473b','#985239','#b76644','#cc7950','#df9061','#eca579','#f4c394']},
   wave:{lift:2,tones:['#34475c','#254f7c','#416c93','#7292ac','#96a9af','#c0c7bc','#dedfca','#f4ecd5','#fbf2df']},
 };
-const snakeLeaf=['#293e3a','#305749','#3c6f5d','#578a70','#78a18a','#a4bc93','#a89953','#d8be62','#efe19a'];
+const goldLeaf=pothosFoliage.spritePalette,snakeLeaf=snakeFoliage.spritePalette;
 const pothosInk=38,snakeInk=pothosInk+goldLeaf.length,glazeInk=snakeInk+snakeLeaf.length;
 
 const originalBounds={leftEdge:-29,topEdge:-54,width:59,height:58};
@@ -322,55 +323,15 @@ function canopy(grid,hash,pose) {
   line(rootX+5*side,-18,rootX+5*side,-16,soilLight);
 }
 
-function trailingPothos(grid,hash,pose){
-  // The nursery specimen trails to the right; planted copies keep their original handedness.
-  const direction=hash&1?1:-1;
+function drawFoliageRows(grid,{spriteRows,spriteOffset},firstInk,direction,swayAt){
   for(let row=0;row<spriteRows.length;row++){
-    const y=spriteOffset.y+row;
-    // The crown and the two vine joints stay fixed while the canopy and pendant blade sway.
-    const sway=y<=-28 || y>=-13?pose:0;
+    const y=spriteOffset.y+row,sway=swayAt(y);
     const cells=spriteRows[row];
     for(let col=0;col<cells.length;col++){
       const shade=cells.charCodeAt(col)-65;
-      if(shade>=0)grid.dot((spriteOffset.x+col)*direction+sway,y,pothosInk+shade);
+      if(shade>=0)grid.dot((spriteOffset.x+col)*direction+sway,y,firstInk+shade);
     }
   }
-}
-
-const snakeSpears=[
-  // base, quarter, waist, high edge, needle tip, height, half-width, light plane
-  [-3,-5,-8,-13,-16,29,3,0], [2,4,7,9,9,34,3,0],
-  [-1,-2,-3,-5,-6,36,4,1], [3,6,11,15,18,24,3,1],
-  [-4,-7,-10,-12,-12,17,3,0], [1,2,4,4,3,25,4,1],
-];
-function uprightSnake(grid,hash,pose){
-  const {dot}=grid,mirror=hash&1?1:-1,variation=(hash>>>3)%3;
-  snakeSpears.forEach(([base,low,waist,high,tip,height,radius,lit],i)=>{
-    const length=height+(i===2?variation:0),axis=[base,low,waist,high,tip];
-    for(let n=0;n<length;n++){
-      const t=n/(length-1),part=Math.min(3,Math.floor(t*4)),f=t*4-part;
-      const mid=Math.round((axis[part]+(axis[part+1]-axis[part])*f)*mirror+(t>.67?pose*.66:0));
-      const spread=t<.18?.45+2.8*t:t<.72?1:t<.9?1-(t-.72)*2.3:(1-t)*5.7;
-      const left=Math.round(radius*spread),right=Math.max(0,left-(lit&&t<.8?1:0));
-      for(let x=-left;x<=right;x++){
-        // A shallow chevron and a broken second band run across opposite planes.
-        const seam=Math.round((t-.5)*1.4)*mirror;
-        const band=(n+(x<seam?Math.floor((seam-x)/2):Math.floor((x-seam)/3))+i*3)%11;
-        let tone=x<seam?3:1;
-        if(band===2 || band===3&&x<seam)tone=x<seam?5:3;
-        if(band===7 && (x<seam || i%2))tone=x<seam?4:2;
-        if(x===seam && left>=2)tone=lit?2:1;
-        if(!lit && tone>=3&&tone<=5)tone--;
-        // The brightly rimmed Laurentii cultivar has a golden stripe along both edges.
-        if(x===-left)tone=lit?7:6;
-        if(x===right)tone=lit&&right>0?7:6;
-        if(x===right-1&&right>=2)tone=(n%7<4)?0:1;
-        if(left>=3&&lit&&x===-left+1&&n%13<8)tone=8;
-        if(t>.96)tone=lit?8:6;
-        dot(mid+x,-15-n,snakeInk+tone);
-      }
-    }
-  });
 }
 
 function sprite(style,hash,pose,species,finish) {
@@ -385,9 +346,13 @@ function sprite(style,hash,pose,species,finish) {
       span:(x,y,w,t)=>grid.span(x,y-lift,w,t),
       line:(a,b,c,d,t)=>grid.line(a,b-lift,c,d-lift,t),
     }:grid;
-    if(species==='golden-pothos')trailingPothos(foliage,hash,pose);
-    else if(species==='snake-plant')uprightSnake(foliage,hash,pose);
-    else canopy(foliage,hash,pose);
+    if(species==='golden-pothos'){
+      // The crown and vine joints stay fixed while the canopy and pendant blade sway.
+      drawFoliageRows(foliage,pothosFoliage,pothosInk,hash&1?1:-1,y=>y<=-28 || y>=-13?pose:0);
+    }else if(species==='snake-plant'){
+      // The five folded blades flex above the crown. The central shoot stays rooted.
+      drawFoliageRows(foliage,snakeFoliage,snakeInk,hash&1?-1:1,y=>y< -31?pose:0);
+    }else canopy(foliage,hash,pose);
   }
   // Merge adjacent cells of a single color into horizontal runs. Keeping the
   // drawing indexed makes room lighting independent of the cached plant pose.

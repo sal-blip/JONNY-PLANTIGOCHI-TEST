@@ -41,3 +41,16 @@ python "$review/scripts/encode-sprite.py" /tmp/pothos-foliage.png \
 ```
 
 To encode a revised master in the candidate checkout, run the encoder without `--check`. Preserve the original master and the approved native renders until the comparison passes.
+
+## Snake plant reference
+
+The five Laurentii blades use a 65 × 67 transparent grid anchored at (32, 60). The neutral nursery specimen uses pot style 0 on the living-room windowsill (258, 139) at 0.86×. Its native shop anchor is (36, 57) at 1×. The drawing recipe preserves each blade’s fold, irregular crossbands and pale margins. [Drawing recipe](references/snake-plant/draw-snake.py) · [Foliage master](references/snake-plant/foliage.png) · [Approved shop tile](references/snake-plant/approved/shop.png) · [Approved room](references/snake-plant/approved/room.png)
+
+```sh
+review=.agents/skills/plantigochi-sprite-review
+python "$review/references/snake-plant/draw-snake.py" /tmp/snake-foliage.png
+python "$review/scripts/encode-sprite.py" /tmp/snake-foliage.png src/snakePlantSprite.js --anchor 32 60 --check
+node "$review/scripts/render-comparison.mjs" \
+  --before ../plantigochi-before --after . --sku snake-plant --room 0 --slot 3 \
+  --out /tmp/snake-review --verify-after "$review/references/snake-plant/approved"
+```

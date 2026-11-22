@@ -1,6 +1,6 @@
 # Design and implementation decisions
 
-These choices are in effect as of the approved Golden pothos release. This record explains the constraints another developer would otherwise have to infer by playing the game.
+These choices guide work on the current game. This record explains the constraints another developer would otherwise have to infer by playing the game.
 
 | Area | Decision and reason | Follow through when changing it |
 | --- | --- | --- |
@@ -10,5 +10,7 @@ These choices are in effect as of the approved Golden pothos release. This recor
 | Saves and reminders | The garden lives in device IndexedDB. A care change and its pending reminder schedule commit together. The hosted Worker handles scheduled Web Push so a closed game can receive reminders. | Check offline saves, old tabs, retry after closing and reminder consent. [Save guide](gameplay-and-saves.md) · [Notification guide](pwa-and-release.md) |
 | Picture frames | The frame is pixel art. The player's photo uses its original file, with a small JPEG preview available in the save. | Keep original files in portable backups and preserve previews from earlier versions. [Save guide](gameplay-and-saves.md) |
 | Garden art | The approved Golden pothos uses three large heart-shaped leaves, a smaller side leaf and a visible trailing vine. New items get their own silhouette, reviewed individually in the room and shop before integration. | Match approved native pixels at rest, then check motion, selection, lighting and different pots. [Sprite review skill](../../.agents/skills/plantigochi-sprite-review/SKILL.md) |
+
+The approved snake plant has five folded Laurentii blades with broken silver-green bands and cream-gold margins. Its upper leaves sway above a fixed crown. The shop, room and potted variants use the same foliage grid. [Approved native renders and editable master](../../.agents/skills/plantigochi-sprite-review/SKILL.md#snake-plant-reference)
 
 The unfurnished move-in room, gift cutting, furniture-store overhaul and separate installable variant remain deferred. Daily rewards and the iSEED shop already exist in the current game. [Historical roadmap](../plantigochi-roadmap.md)
