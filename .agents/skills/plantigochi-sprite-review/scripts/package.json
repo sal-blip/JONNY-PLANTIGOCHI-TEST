@@ -1,0 +1,7 @@
+{
+  "name": "plantigochi-sprite-review-tools",
+  "private": true,
+  "dependencies": {
+    "@napi-rs/canvas": "0.1.100"
+  }
+}

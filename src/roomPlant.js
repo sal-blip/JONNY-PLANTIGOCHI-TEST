@@ -1,4 +1,5 @@
 import {drawSelectionContour} from './roomContour.js';
+import {spriteOffset, spritePalette as goldLeaf, spriteRows} from './goldenPothosSprite.js';
 
 // Each graduate is inked on a small logical grid. Transparent cells in each
 // blade reveal the stem, other leaves, or the actual room through the splits.
@@ -93,7 +94,6 @@ const shopPots={
   terra:{lift:3,tones:['#563d38','#75473b','#985239','#b76644','#cc7950','#df9061','#eca579','#f4c394']},
   wave:{lift:2,tones:['#34475c','#254f7c','#416c93','#7292ac','#96a9af','#c0c7bc','#dedfca','#f4ecd5','#fbf2df']},
 };
-const goldLeaf=['#203f37','#285846','#377553','#548e57','#7dac60','#aebe68','#ddc976','#f4e5a3','#385f54'];
 const snakeLeaf=['#293e3a','#305749','#3c6f5d','#578a70','#78a18a','#a4bc93','#a89953','#d8be62','#efe19a'];
 const pothosInk=38,snakeInk=pothosInk+goldLeaf.length,glazeInk=snakeInk+snakeLeaf.length;
 
@@ -322,70 +322,19 @@ function canopy(grid,hash,pose) {
   line(rootX+5*side,-18,rootX+5*side,-16,soilLight);
 }
 
-// Broad ascending, oblique and newly unrolled heart leaves use individually
-// painted color clusters. The pale sectors follow the midrib of each blade.
-const heartLeaves=[
-  {notch:8, rows:[
-    '    33      33','  34443    34432',' 3445543  3444321','34456553 244333210',
-    '345667743344333210','345667654344543210','234556443445432110',' 2343434434432210',
-    '  233343454332210','   1234465432210','    12345433210','     1235432210',
-    '      01243210','       0123210','        01210','         010','          0',
-  ]},
-  {notch:10, rows:[
-    '     23444    2','   23344443  221','  23344667432221',' 234456677543210',
-    '234455676433210','233456754332210','12356764333210',' 235643432210',
-    '  1343432210','  123432210','   1232210','   012210','   0120','    00',
-  ]},
-  {notch:5, rows:[
-    '  33    22',' 3443  2321','344553233210','345665433210','23456343210',
-    '1235433210',' 12343210','  123210','   1220','    00',
-  ]},
-  {notch:4, rows:[
-    '  34   2',' 3443 221','345643321','235643210',' 12343210','  123210','   120','    0',
-  ]},
-];
 function trailingPothos(grid,hash,pose){
-  const {dot,line,span}=grid,mirror=hash&1?-1:1,lean=((hash>>>4)%3)-1;
-  const crest=-39-((hash>>>7)%3);
-  const X=(v,y)=>v*mirror+lean+(y<-26 || Math.abs(v)>15?pose:0);
-  function vine(nodes){
-    for(let i=1;i<nodes.length;i++){
-      const [a,b]=nodes[i-1],[c,d]=nodes[i];
-      line(X(a,b),b,X(c,d),d,pothosInk+(i%3===1?0:1));
-      if(i===1)line(X(a,b)-1,b,X(c,d)-1,d,pothosInk+2);
+  // The nursery specimen trails to the right; planted copies keep their original handedness.
+  const direction=hash&1?1:-1;
+  for(let row=0;row<spriteRows.length;row++){
+    const y=spriteOffset.y+row;
+    // The crown and the two vine joints stay fixed while the canopy and pendant blade sway.
+    const sway=y<=-28 || y>=-13?pose:0;
+    const cells=spriteRows[row];
+    for(let col=0;col<cells.length;col++){
+      const shade=cells.charCodeAt(col)-65;
+      if(shade>=0)grid.dot((spriteOffset.x+col)*direction+sway,y,pothosInk+shade);
     }
   }
-  vine([[0,-15],[-3,-22],[-1,-30],[-5,-35],[-7,crest]]);
-  vine([[0,-16],[-5,-22],[-10,-25],[-15,-23],[-19,-18],[-22,-10],[-19,-6],[-20,-2]]);
-  vine([[0,-16],[4,-25],[8,-32],[13,-34],[14,-31]]);
-  vine([[3,-21],[9,-24],[14,-23],[16,-19],[16,-14]]);
-  vine([[1,-21],[4,-26],[5,-28]]);
-  const leavesAt=[
-    [-7,crest,0,1,0], [13,-34,2,-1,1], [-15,-23,1,1,0],
-    [16,-18,3,-1,1],[-22,-10,2,-1,0],[-20,-2,3,1,1], [5,-29,1,1,0],
-  ];
-  for(const [ax,ay,kind,direction,back] of leavesAt){
-    const {notch,rows}=heartLeaves[kind],sign=direction*mirror;
-    const origin=X(ax,ay),tip=ay>-15?pose:0;
-    rows.forEach((row,ry)=>{
-      const turn=ry>rows.length*.62?tip:0;
-      for(let rx=0;rx<row.length;rx++){
-        if(row[rx]===' ')continue;
-        const shade=Number(row[rx]);
-        // Turned-away leaves share the emerald shadow but carry less golden light.
-        const lit=back&&shade>=3&&shade<=7?shade-1:shade;
-        dot(origin+(rx-notch)*sign+turn,ay+ry-3,pothosInk+lit);
-      }
-    });
-  }
-  // A fresh rolled spear and a knuckled aerial root at the bend of the runner.
-  line(X(0,-25),-25,X(2,-34),-34,pothosInk+2);
-  line(X(2,-34),-34,X(4,-38),-38,pothosInk+5);
-  dot(X(4,-38),-38,pothosInk+7);
-  const root=X(-15,-20);
-  line(root,-20,root-2*mirror,-17,loam);
-  line(root-2*mirror,-17,root-2*mirror,-14,soilLight);
-  span(X(0,-15)-1,-15,3,stemDark);
 }
 
 const snakeSpears=[
