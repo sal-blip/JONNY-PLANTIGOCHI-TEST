@@ -1,5 +1,7 @@
 # JONNY-PLANTIGOCHI-TEST
 
+**Working on the game?** Start with the [developer guide](docs/development/README.md) for feature entry points, design decisions, test commands and release instructions. Coding agents can also start at [AGENTS.md](AGENTS.md).
+
 Plantigochi is a small React game about raising a cheeky Monstera in a leaf-shaped pocket keychain. The first seed starts sleeping. It sprouts when an hour has elapsed since planting and it has received water. The timer includes time spent with the browser closed.
 
 Under steady care the Monstera grows from seed through Sprout, Young (day 3), First Split (day 5) and Grown (day 7). Critical thirst, rot, overdue food or overdue light pause earned growing time. Feeding recurs every 48 hours and sunlight every 24 hours. Each becomes available eight hours early. Kind words or completing a game give 30 minutes of happiness. Content plants become quiet after 12 hours without company and lonely after 24 hours. Press the heart to open the plant menu. Your Monstera stays centered while one item and its short description appear underneath. The arrows move the highlight, the heart selects, and the hooked-arrow Back key returns to the previous selection. The LCD is display-only. The browser saves progress and sound preferences.
@@ -26,7 +28,7 @@ Stonewashed Pocket uses a [denim photograph](https://www.pexels.com/photo/photo-
 
 The installed game opens on the leaf keychain with the player's own garden softly blurred behind it. Three small chevrons at the bottom point the way into the garden. Swipe up to fade out the toy and work in the room. Swipe up or down over an open part of the room to bring the toy back. On either screen, you can also tap the chevrons or focus them and press Enter or Space. Choose **Backgrounds → My garden** for the live room, or select a theme or personal photo. Swipe left to visit the adjoining plant studio, or use the room arrows. At full growth, choose **Growth → Move to garden**, select a spot and confirm. The graduate and new sleeping seed save together. A graduate can move later. Tap it and then an empty spot, or drag it to a shelf, windowsill, coffee table, desk or floor. Hold a dragged plant at an edge to travel to the adjoining view. Cancel returns it to its saved place.
 
-Each two-view apartment has twelve display spots. Filling it opens another pair of views. Slot numbers and graduate IDs survive reloads and backup transfers. The current species is Monstera. The room uses live Canvas 2D game graphics, with its own scene objects, layered plant and cat sprites, and phone-local daylight. The postcard captures those game objects at their saved positions as a shareable PNG.
+The living room and studio each have twelve plant spots. The garden opens another pair of views for every twelve residents, and existing placements keep their rooms accessible. Slot numbers and graduate IDs survive reloads and backup transfers. The current species is Monstera. The room uses live Canvas 2D game graphics, with its own scene objects, layered plant and cat sprites, and phone-local daylight. The postcard captures those game objects at their saved positions as a shareable PNG.
 
 Tap an oak or lacquer picture frame in the room or in **iSEED → Inventory** to choose a photo. New uploads keep the original image file on this device and display its detail wherever the frame is shown. Selecting the frame opens a larger view. To restore full detail to a photo added in an earlier version, choose **Change photo** and select the original again. Garden backups include the original files for new frame photos.
 
@@ -42,18 +44,23 @@ To rearrange the room, tap a decoration or pot, choose **Move to another spot**,
 
 ## Run locally
 
-Use Node.js 22 or newer.
+Use Node.js 24 for the tested development setup.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Run `npm test` to verify watering, elapsed time, saved progress, and all five growth stages. Use `npm run build` for a static production build in `dist/`.
+Run `npm test` for the automated suite and `npm run build` to produce the installable web app and its server Worker in `dist/`. The browser route opens the installation tour. See the [PWA and release guide](docs/development/pwa-and-release.md) for installed-app checks and notification testing.
 
 ## Project layout
 
-`src/game.js` contains the growth rules and save format. `src/App.jsx` handles the interactive keychain and care panel. The original plant sprites and leaf shell live in `src/PlantPixel.jsx` and `public/art/device.svg`.
+| Area | Developer guide |
+| --- | --- |
+| Core simulation, games, economy and local saves | [Gameplay and saves](docs/development/gameplay-and-saves.md) |
+| Keychain, garden, iSEED, graphics and sound | [Interface and art](docs/development/interface-and-art.md) |
+| PWA, reminders, backend and deployment | [PWA and release](docs/development/pwa-and-release.md) |
+| Product decisions, approved references and future plans | [Developer index](docs/development/README.md#where-to-record-a-change) |
 
 ## Install on a phone
 

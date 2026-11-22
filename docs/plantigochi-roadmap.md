@@ -1,5 +1,7 @@
 # Plantigochi implementation roadmap
 
+This is a historical planning and verification record. For current behavior, active decisions and development entry points, use the [developer guide](development/README.md).
+
 | Status at start | Feature and acceptance criteria |
 | --- | --- |
 | Built | Installable offline keychain, LCD button controls, hold Back to exit, glass menu, six scenes and own photo, tilt, chain flick, intro, synth, Dew Catch and Leaf Echo. Keep 20 Dew levels, three shared strikes and reset to level one. |
@@ -38,7 +40,7 @@ Mobile Chromium checks covered picking up and dragging plants, placing them acro
 
 ## Future idea for move-in day
 
-Deferred for future consideration.
+The unfurnished-room and separate-install proposals are deferred. Daily check-ins and the iSEED shop have since shipped in the furnished game. The bullets below preserve the original proposal.
 
 - New players could start with an unfurnished garden room. A gift pothos cutting could give them something to pot on day one while their Monstera follows its seven-day growth cycle.
 - Daily check-ins could award Garden Coins to spend in a laptop shop. The room’s existing furniture could become pieces players buy and arrange over time. Players who already have furnished rooms would keep them.
