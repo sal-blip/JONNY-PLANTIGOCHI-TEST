@@ -13,4 +13,6 @@ These choices guide work on the current game. This record explains the constrain
 
 The approved snake plant has five folded Laurentii blades with broken silver-green bands and cream-gold margins. Its upper leaves sway above a fixed crown. The shop, room and potted variants use the same foliage grid. [Approved native renders and editable master](../../.agents/skills/plantigochi-sprite-review/SKILL.md#snake-plant-reference)
 
+The iSEED Shop tile uses a brass-rimmed oval sprout sign above the awning. The tile background shows at the sides of the sign. A small two-leaf plant sits in the window. The Shop illustration occupies the first 48 × 48 cell of the five-app launcher atlas. [Approved native tile](../../.agents/skills/plantigochi-sprite-review/references/iseed-shop/approved/tile.png) · [Atlas drawing source](../../scripts/render-iseed-launcher.py)
+
 The unfurnished move-in room, gift cutting, furniture-store overhaul and separate installable variant remain deferred. Daily rewards and the iSEED shop already exist in the current game. [Historical roadmap](../plantigochi-roadmap.md)

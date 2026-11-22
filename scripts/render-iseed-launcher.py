@@ -26,66 +26,94 @@ def goods_l(d,name,*xy):
     d.line(xy,fill=goods_palette[name],width=1)
 
 def shop(d):
-    p=lambda c,*a:goods_p(d,c,*a)
-    r=lambda c,*a:goods_r(d,c,*a)
-    l=lambda c,*a:goods_l(d,c,*a)
-    # An angular glass gable peeks out behind the folded shop canopy.
-    p('ink',(7,14),(19,5),(22,4),(33,7),(42,14),(42,34),(36,40),(8,39))
-    p('pine',(10,13),(20,6),(22,5),(33,8),(40,14),(36,17))
-    p('glass',(12,13),(21,6),(29,12),(24,14))
-    p('ice',(14,12),(20,7),(21,7),(18,12))
-    p('sky',(22,7),(30,12),(24,12))
-    l('milk',(12,12),(20,6),(22,6))
-    l('fern',(18,13),(21,7),(25,13))
-    p('sage',(24,6),(32,8),(39,13),(33,13))
-    l('mint',(26,7),(32,9),(36,12))
-    l('fern',(29,8),(34,13))
-    r('wood',9,13,26,2)
-    # Greenhouse side wall, glazed in shadow with a stepped structural return.
-    p('pine',(34,16),(42,15),(42,34),(35,39))
-    p('fern',(36,18),(41,16),(41,33),(36,36))
-    p('sky',(37,21),(40,19),(40,29),(37,32))
-    l('mint',(37,23),(39,20))
-    l('pine',(36,28),(40,25))
-    l('sage',(37,34),(40,32))
-    # Painted lintels frame a warm window and a bottle-green half-glazed door.
-    r('wood',8,18,27,21); r('warm',9,22,25,15)
-    r('pine',9,23,13,11);r('wheat',10,24,11,8)
-    r('milk',10,24,9,2);r('gold',20,26,1,6)
-    r('cedar',10,32,11,1);r('warm',14,24,1,8)
-    r('pine',23,22,11,17);r('fern',24,23,9,15)
-    r('deep',25,24,7,9);r('glass',26,25,5,7)
-    l('ice',(26,28),(29,25));r('sky',30,28,1,4)
-    r('sage',25,33,7,1);r('pine',25,35,7,3);r('gold',30,34,2,1)
-    r('cedar',22,23,1,15);r('wheat',22,23,1,9)
-    # Two little plants fill the display window; neither encroaches on the door.
-    p('pine',(12,31),(9,28),(10,27),(13,28),(13,26),(15,27),(15,28),(17,26),(18,26),(17,29),(14,31))
-    r('sage',10,27,2,1);r('mint',16,27,2,1)
-    r('deep',10,31,7,2);r('clay',11,31,5,2);r('gold',11,31,4,1)
-    r('fern',18,29,2,3);r('rose',17,27,2,2);r('brick',19,28,2,2);r('wheat',18,27,1,1)
-    r('cedar',9,34,13,2);r('milk',9,34,12,1)
-    r('pine',9,36,13,2);r('sage',10,36,11,1)
-    # Striped canvas projects over the doorway. Each stripe narrows towards its
-    # fold and has a darker hanging scallop with a one-pixel hem highlight.
-    p('ink',(10,12),(34,12),(40,18),(39,21),(36,23),(33,22),(30,24),(26,22),
-      (23,24),(20,22),(16,24),(13,22),(9,24),(5,23),(4,21),(5,18))
-    p('rose',(10,13),(33,13),(38,18),(37,20),(6,20),(6,18))
-    p('petal',(11,14),(32,14),(34,15),(10,15))
-    p('milk',(13,13),(17,13),(14,18),(10,18))
-    p('milk',(21,13),(24,13),(24,18),(19,18))
-    p('milk',(28,13),(31,13),(34,18),(29,18))
-    p('brick',(6,19),(10,19),(10,21),(8,22),(6,21))
-    p('wheat',(11,19),(15,19),(15,21),(13,22),(11,21))
-    p('brick',(16,19),(20,19),(20,21),(18,22),(16,21))
-    p('wheat',(21,19),(25,19),(25,21),(23,22),(21,21))
-    p('brick',(26,19),(30,19),(30,21),(28,22),(26,21))
-    p('wheat',(31,19),(34,19),(35,21),(33,22),(31,21))
-    p('wine',(35,18),(38,19),(38,20),(36,21))
-    l('petal',(6,19),(10,19));l('petal',(16,19),(20,19));l('petal',(26,19),(30,19))
-    # Painted plinth and the tiny stone doorstep.
-    r('ink',7,38,29,3);r('cedar',8,38,26,1);r('warm',9,39,12,1)
-    p('ink',(23,38),(33,38),(35,40),(35,41),(21,41),(21,40))
-    r('wheat',23,39,10,1);r('cedar',22,40,12,1)
+    """A seed shop with a small brass-rimmed sign and a sunlit display."""
+    timber='#724b42'
+    edge='#483b40'
+    ivory='#ffedbb'
+    red='#cb655c'
+    wine='#9f4c50'
+
+    # Warm plaster, sill and threshold. Straight uprights frame the shop window.
+    d.rectangle((8,18,39,39),fill=edge)
+    d.rectangle((9,20,38,37),fill='#deb88b')
+    d.rectangle((9,24,10,36),fill='#f7d8a5')
+    d.rectangle((37,23,38,37),fill='#ba8b71')
+    d.rectangle((9,38,38,39),fill=timber)
+    d.rectangle((8,40,39,40),fill='#99765f')
+    d.line((10,38,25,38),fill='#ecc397')
+
+    # Keep the room behind the glass pale so the single stem reads in silhouette.
+    d.rectangle((11,23,25,34),fill=timber)
+    d.rectangle((12,24,24,33),fill='#d6dfc4')
+    d.line((12,24,24,24),fill='#b8c9ae')
+    d.line((12,33,24,33),fill='#bccbb0')
+    d.line((12,27,14,25),fill='#f2f0cf')
+    d.point((12,28),fill='#e5ead1')
+
+    # The two small leaf blades branch at different heights. One pixel of
+    # uninterrupted glass separates the left tip from the upper right leaf.
+    d.line((18,28,18,31),fill='#3c634e')
+    d.line((15,28,18,30),fill='#3c634e')
+    d.polygon([(14,27),(16,27),(17,28),(17,29),(15,29),(14,28)],fill='#407257')
+    d.line((14,27,15,27),fill='#6b9766')
+    d.line((18,29,21,27),fill='#456d52')
+    d.polygon([(20,27),(21,26),(23,26),(22,27),(21,28),(20,28)],fill='#49795a')
+    d.line((21,26,22,26),fill='#80a96c')
+    d.rectangle((15,31,21,31),fill='#a75e4c')
+    d.rectangle((16,32,20,33),fill='#be7657')
+    d.line((16,31,20,31),fill='#eaab79')
+    d.line((16,32,16,33),fill='#d59264')
+    d.rectangle((10,35,25,36),fill=timber)
+    d.line((10,35,24,35),fill='#f0cc8a')
+
+    # Bottle-green entrance, blue glass and a single brass latch.
+    d.rectangle((26,22,36,39),fill='#6b5249')
+    d.rectangle((27,23,35,38),fill='#3d6257')
+    d.rectangle((28,25,34,31),fill='#80aba1')
+    d.line((28,28,31,25),fill='#c4d1ae',width=2)
+    d.line((31,29,33,27),fill='#a9c3ae')
+    d.line((27,32,35,32),fill='#b1b18b')
+    d.rectangle((29,34,33,37),fill='#547866')
+    d.point((34,33),fill='#ffdc90')
+    d.rectangle((25,39,37,40),fill='#f5d39a')
+    d.rectangle((24,41,38,41),fill='#855f50')
+
+    # Canvas fills the roofline. The striping widens towards the viewer and
+    # each finished edge drops two pixels under the awning's shaded lip.
+    d.polygon([(6,18),(10,12),(12,11),(36,11),(38,12),(42,18),(42,21),(40,24),
+               (38,24),(36,22),(35,23),(32,24),(30,24),(28,22),(26,24),
+               (23,24),(21,23),(20,22),(18,24),(15,24),(13,23),(12,22),
+               (10,24),(8,24),(6,22)],fill=edge)
+    stripes=[(11,15,7,12,red,'#df8175',wine),
+             (16,20,13,19,'#f1d29c',ivory,'#d4ad7d'),
+             (21,25,20,26,red,'#e68779',wine),
+             (26,30,27,33,'#f1d29c',ivory,'#caa77e'),
+             (31,36,34,41,red,'#dc7c70',wine)]
+    d.polygon([(11,13),(36,13),(41,19),(41,21),(7,21),(7,19)],fill=red)
+    for top_l,top_r,lip_l,lip_r,body,light,hem in stripes:
+        d.polygon([(top_l,13),(top_r,13),(lip_r,19),(lip_l,19)],fill=body)
+        d.line((top_l,13,top_r,13),fill=light)
+        d.rectangle((lip_l,19,lip_r,20),fill=light)
+        d.rectangle((lip_l,21,lip_r,21),fill=hem)
+        d.rectangle((lip_l+1,22,lip_r-1,22),fill=hem)
+    d.line((10,12,37,12),fill='#945a4c')
+
+    # The independent green shop emblem sits directly above the awning.
+    sign_green='#355747'
+    brass='#edbd75'
+    d.polygon([(14,4),(32,4),(34,6),(34,12),(32,14),(14,14),(12,12),(12,6)],fill=edge)
+    d.polygon([(15,5),(31,5),(33,7),(33,11),(31,13),(15,13),(13,11),(13,7)],fill=brass)
+    d.polygon([(15,6),(31,6),(32,7),(32,11),(31,12),(15,12),(14,11),(14,7)],fill=sign_green)
+    d.point((15,9),fill='#a4aa7a')
+    d.point((31,9),fill='#a4aa7a')
+    # Two separate blades with a dark gap above their single vertical stalk.
+    d.polygon([(17,7),(20,7),(21,8),(21,9),(20,9),(18,9),(17,8)],fill='#b0cf9c')
+    d.line((18,7,19,7),fill='#e6e8b5')
+    d.polygon([(25,8),(26,7),(29,7),(29,8),(27,9),(25,9)],fill='#f0d18e')
+    d.line((27,7,28,7),fill=ivory)
+    d.line((21,9,23,11),fill='#a7c797')
+    d.line((25,9,23,11),fill='#ebd899')
+    d.line((23,10,23,11),fill='#c4d4a0')
 
 def inventory(d):
     p=lambda c,*a:goods_p(d,c,*a)
