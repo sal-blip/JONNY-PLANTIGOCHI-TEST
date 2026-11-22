@@ -38,28 +38,26 @@ const torso = [
 
 // A front-facing kitten with a continuous cream mask between the calico ear patches.
 const head = [
-  '...........................',
-  '.kkk...................kkk.',
-  '.kghk.................kkdk.',
-  '.kgghk...............kkddk.',
-  '.kgpghkk..kkkkkkk..kkkdpdk.',
-  '.kgppgghkkkhhghhkkkkddppdk.',
-  '.kgpppgghhhgghhhhkkddpppdk.',
-  '.kgppppgggggghhhhhddppppdk.',
-  '.kgpppppgggghhhhhhdpppppdk.',
-  '.kgpggggggghhhhhhhdddddpdk.',
-  '.kgggghhhhhhhhhhhhhhhddddk.',
-  '.kgggghhhhhhhhhhhhhhhhdhhk.',
-  'kkggghhhhhhhhhhhhhhhhhhhhkk',
-  'khghhhhhhhhhhhhhhhhhhhhhhhk',
-  'khhhhhhhhhhhhhhhhhhhhhhhhhk',
-  'khhppphhhhhhhhhhhhhhhppphhk',
-  'kkhhhhhhhhhhhhhhhhhhhhhhhhk',
-  '.kkhhhhhhhhhhhhhhhhhhhhhkk.',
-  '..kkkhcchhhhhhhhhhhccchkk..',
-  '....kkhhccccccccccchhkk....',
-  '.....kkkkkhhhhhhhkkkkk.....',
-  '.........kkkkkkkkk.........',
+  '.........................',
+  '.kkk.................kkk.',
+  '.kgh.................kdk.',
+  '.kggk...............kddk.',
+  '.kgphkk..kkkkkkk..kkkpdk.',
+  '.kgpgghkkkhhghhkkkkddpdk.',
+  '.kgppgghhhgghhhhkkddppdk.',
+  '.kgppppgggghhhhhhdppppdk.',
+  '.kgpgggggghhhhhhhddddpdk.',
+  '.kggghhhhhhhhhhhhhhhdddk.',
+  '.kggghhhhhhhhhhhhhhhhhhk.',
+  'kkgghhhhhhhhhhhhhhhhhhhkk',
+  'khghhhhhhhhhhhhhhhhhhhhhk',
+  'khhhhhhhhhhhhhhhhhhhhhhhk',
+  'khhpphhhhhhhhhhhhhhhpphhk',
+  'kkhhhhhhhhhhhhhhhhhhhhhhk',
+  '.kkhhhhhhhhhhhhhhhhhhhkk.',
+  '....khhccccccccccchhk....',
+  '....kkkkkhhhhhhhkkkkk....',
+  '........kkkkkkkkk........',
 ];
 
 const chest = [
@@ -142,12 +140,12 @@ function catPose(awake, blink, breath, tailLift) {
   });
   stamp(3, 23, farPaw);
   stamp(12, 24, nearPaw);
-  const hx=1, hy=awake?0:2;
+  const hx=2, hy=awake?2:4;
   stamp(hx,hy,head);
-  stamp(hx+7,hy+10,blink?shutEyes:awake?openEyes:drowsyEyes);
-  stamp(hx+10,hy+14,muzzle);
-  for(const y of [14,17]){
-    stamp(0,hy+y,['sss']);stamp(hx+25,hy+y,['sss']);
+  stamp(hx+6,hy+9,blink?shutEyes:awake?openEyes:drowsyEyes);
+  stamp(hx+9,hy+13,muzzle);
+  for(const y of [13,16]){
+    stamp(hx-1,hy+y,['sss']);stamp(hx+23,hy+y,['sss']);
   }
   const runs = Array.from({ length: letters.length + 1 }, () => []);
   for (let y = 0; y < HEIGHT; y++) {
