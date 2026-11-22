@@ -60,24 +60,23 @@ const head = [
   '........kkkkkkkkk........',
 ];
 
-const chest = [
-  '.....ccchhccsk',
-  '...kccchhhhhhck',
-  '..kchhhhhchhhck',
-  '.kchhhchhhhhhck',
-  '.kchhchhhchhck',
-  '.kschhhhchccsk',
-  'ksschccchhccsk',
-  'kccssscssccck',
-  'kcccsksscssk',
-  '.kkk..kssck',
+// Paired forelegs run from the breast down to the toes in one silhouette.
+const forequarters = [
+  '.........ccchhhhccsk',
+  '.......kcchhhhhhhccsk',
+  '......kchhhhhhhhhhccsk',
+  '.....kchhhhhhhhhhhhcsk',
+  '.....kchhhhhhhhhhhhcck',
+  '....kcchhhcchhhhhhhcck',
+  '....kchhhcsccchhhhhcsk',
+  '...kchhhcsk.sccchhhcsk',
+  '..kchhhcsk..scchhhhcck',
+  '.kchhhhcck..kchhhhhhck',
+  '.kchcchcsk.kchchhcchck',
+  '..kbbbbbkk.kchchhcscsk',
+  '............kkbbbbbbk',
 ];
-
-const nearPaw = [
-  '....kssck', '...kcchhck', '.kkchhhccck', 'kchhhhhccsk',
-  'kchschscsk', '.kkbbbbbkk',
-];
-const farPaw = ['...kccsk', '.kkchccck', 'kchhhccsk', 'kcsccscsk', '.kbbbbbkk'];
+const hindPaw = ['...kccsk', '.kkchccck', 'kchhhccsk', 'kcsccscsk', '.kbbbbbkk'];
 const openEyes = ['.kk.......kk.', 'khkk.....khkk', 'kkkk.....kkkk', '.bb.......bb.'];
 const drowsyEyes = ['.............', '.kk.......kk.', 'k..k.....k..k'];
 const shutEyes = ['.............', 'k..k.....k..k', '.kk.......kk.'];
@@ -112,11 +111,22 @@ function catPose(awake, blink, breath, tailLift) {
       }
     }
   }
-  stamp(11, 9 - breath, torso);
-  stamp(5, 17, chest);
-  stamp(20, 24, farPaw);
-  // Trace the tail all the way from the rump through its curled, dark tip.
-  const path = [[37,16],[39,16],[41,17],[42,19],[43,21],[42,23],[40,25],[37,26],[33,26],[30,25],[28,24],[27,22-tailLift],[26,21-tailLift]];
+  // The tucked hind leg passes behind the belly and supports its far paw.
+  stamp(21,21,['..ssccsk','.ssccccsk','sccchhcsk','scchhhhck']);
+  stamp(20,24,hindPaw);
+  stamp(11,9-breath,torso);
+  // Continue the copper flank down the outside of the haunch. The root shares
+  // its contour with the torso; the underside gains an edge as it curls forward.
+  stamp(38, 15 - breath, [
+    'aagak',
+    'raagak',
+    '.raagak',
+    '..raagk',
+    '..rraagk',
+  ]);
+  // Paint the bend and its rounded tip along one connected path in every pose.
+  const path = [[41,17-breath],[42,19-breath],[43,21],[42,23],[40,25],
+    [37,26],[33,26],[30,25],[28,24],[27,22-tailLift],[26,21-tailLift]];
   function tailPass(radius, colorAt) {
     let previous = path[0];
     for (let i = 0; i < path.length; i++) {
@@ -126,7 +136,11 @@ function catPose(awake, blink, breath, tailLift) {
         const xx = px + Math.round((x-px)*j/count), yy = py + Math.round((y-py)*j/count);
         for (let ry = -radius; ry <= radius; ry++) {
           const span = Math.abs(ry) === radius && radius > 1 ? radius-1 : radius;
-          for (let rx = -span; rx <= span; rx++) dot(xx + rx, yy + ry, colorAt(i,ry));
+          for (let rx = -span; rx <= span; rx++) {
+            const at = (yy+ry)*WIDTH+xx+rx;
+            if (radius===2 && i<3 && pixels[at]) continue;
+            dot(xx+rx,yy+ry,colorAt(i,ry));
+          }
         }
       }
       previous = path[i];
@@ -134,12 +148,18 @@ function catPose(awake, blink, breath, tailLift) {
   }
   tailPass(2, () => 'k');
   tailPass(1, (i, row) => {
-    if (i >= 10) return row < 0 ? 'd' : 't';
-    if (i === 3 || i === 7) return 'r';
+    if (i >= 8) return row < 0 ? 'd' : 't';
+    if (i === 5) return 'r';
     return row < 0 ? 'g' : row === 0 ? 'a' : 'r';
   });
-  stamp(3, 23, farPaw);
-  stamp(12, 24, nearPaw);
+  // Stretch one fur row at the wrist as the shoulders rise. The toe pads
+  // stay on the cushion throughout the breath.
+  const wrist=7;
+  forequarters.forEach((row,i)=>{
+    const y=17+i;
+    if(breath && i===wrist)stamp(2,y-1,[row]);
+    stamp(2,y-(i<wrist?breath:0),[row]);
+  });
   const hx=2, hy=awake?2:4;
   stamp(hx,hy,head);
   stamp(hx+6,hy+9,blink?shutEyes:awake?openEyes:drowsyEyes);
