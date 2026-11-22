@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
 import {drawRoom} from '../../../../../src/roomArt.js';
+import {addApprovedSofa} from '../sofa/approved-backdrop.mjs';
 
 const require=createRequire(new URL('../../scripts/render-comparison.mjs',import.meta.url));
 const {createCanvas,loadImage}=require('@napi-rs/canvas');
@@ -21,6 +22,7 @@ for(const [hour,file] of [[12,'room.png'],[2,'night-room.png']]){
   assert.equal(frozen.height,canvas.height);
   const reference=createCanvas(400,320).getContext('2d');
   reference.drawImage(frozen,0,0);
+  await addApprovedSofa(reference,hour);
   for(const [label,rect] of regions){
     const actual=canvas.getContext('2d').getImageData(...rect).data;
     const expected=reference.getImageData(...rect).data;

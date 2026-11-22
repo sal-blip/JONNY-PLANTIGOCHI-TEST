@@ -259,43 +259,66 @@ def journal(d):
 
 
 def library(d):
-    """An open field guide with an illustrated leaf plate and cultivation notes."""
-    edge='#303f48'
-    teal='#487d74'
-    green='#466c50'
-    # Broad, open volume with a recessed central binding and heavy cloth boards.
-    d.polygon([(3,12),(6,10),(16,9),(22,12),(24,14),(30,11),(40,10),(43,11),(45,36),(42,38),(32,38),(26,41),(23,42),(18,39),(6,39),(3,37)],fill=edge)
-    d.polygon([(4,13),(16,11),(23,15),(25,16),(31,13),(42,12),(44,35),(40,37),(30,37),(24,40),(19,37),(6,37)],fill=teal)
-    d.line([(5,36),(17,36),(22,38)],fill='#86b6a0');d.line([(27,38),(32,36),(41,35)],fill='#8ebaa2')
-    # Two independent page blocks with clear top and lower edges.
-    d.polygon([(5,10),(8,8),(16,8),(21,10),(24,13),(27,11),(33,8),(41,8),(43,33),(40,35),(32,35),(26,38),(23,39),(19,36),(15,35),(6,35)],fill='#705f51')
-    d.polygon([(6,11),(16,9),(21,11),(24,14),(24,37),(19,34),(15,33),(7,33)],fill='#e3cda0')
-    d.polygon([(6,10),(9,9),(16,9),(21,11),(23,13),(23,34),(19,32),(15,31),(7,31)],fill='#f1dfac')
-    d.polygon([(7,10),(15,9),(20,11),(22,13),(22,20),(19,18),(7,18)],fill='#faedbd')
-    d.line([(7,32),(15,32),(20,34)],fill='#fff0bd')
-    d.polygon([(25,14),(28,12),(33,10),(40,9),(42,32),(39,34),(32,34),(26,37)],fill='#c3a985')
-    d.polygon([(25,13),(31,10),(35,9),(40,9),(42,31),(37,32),(31,32),(26,35)],fill='#ead6a8')
-    d.polygon([(27,13),(33,10),(40,10),(41,22),(32,23),(27,26)],fill='#fae7b4')
-    d.line([(25,15),(25,32)],fill='#c4a37a');d.line([(27,35),(32,33),(40,33)],fill='#fff0bf')
-    # Pressed botanical cutting: serrate lance leaves attach to a visible stem.
-    d.line([(12,29),(14,25),(16,21),(17,15)],fill='#6d8057',width=1)
-    d.polygon([(15,24),(12,23),(9,20),(9,17),(13,18),(15,20)],fill=green)
-    d.polygon([(10,18),(13,19),(14,21),(12,20)],fill='#77a36b')
-    d.polygon([(16,19),(14,16),(14,13),(16,13),(18,15),(18,17)],fill=green)
-    d.line([(15,14),(17,17)],fill='#87aa73')
-    d.polygon([(15,24),(16,21),(19,19),(21,19),(20,22),(18,24)],fill=green)
-    d.line([(16,23),(19,21)],fill='#87aa73')
-    d.polygon([(14,27),(17,25),(20,25),(19,27),(16,28)],fill='#698451')
-    d.line([(10,29),(13,29)],fill='#c7b184')
-    # The right-hand plate has a heading, three annotation lines, and a drop
-    # diagram beside them. A berry-colored bookmark hangs off the far edge.
-    d.line([(28,15),(33,13),(37,13)],fill='#75604e');d.line([(29,17),(33,16)],fill='#af8b6a')
-    d.line([(29,20),(32,19)],fill='#aa9070');d.line([(29,22),(31,21)],fill='#c3a47c')
-    d.polygon([(36,17),(39,21),(39,23),(37,25),(34,24),(33,22)],fill='#497a78')
-    d.line([(36,19),(35,22)],fill='#9ec3aa');d.point((38,23),fill='#386777')
-    d.line([(28,28),(33,26),(37,26)],fill='#9f8262');d.line([(29,30),(34,28)],fill='#b89a79')
-    d.polygon([(37,32),(40,32),(41,40),(39,39),(37,41)],fill='#885049')
-    d.line([(38,33),(38,38)],fill='#ca7657')
+    """Three botanical reference volumes on a short cedar shelf."""
+    ink = '#3e4144'
+    paper = '#e8d5a8'
+    ivory = '#f7e9bd'
+    cedar = '#bd885d'
+    # Low cedar ledge. Its rear edge is obscured by the weight of the volumes.
+    d.polygon([(3,36),(8,33),(39,33),(44,35),(44,38),(41,40),(5,40),(3,38)],fill='#5c504a')
+    d.polygon([(4,36),(9,34),(39,34),(42,35),(40,37),(6,37)],fill='#e3b984')
+    d.polygon([(4,37),(40,37),(43,35),(43,37),(40,39),(5,39)],fill=cedar)
+    d.line([(7,38),(26,38)],fill='#dba675')
+
+    # Slim teal volume. Cover boards overhang its pale cut fore edge at the head.
+    d.polygon([(5,15),(9,11),(16,11),(17,12),(17,33),(14,36),(6,36),(5,35)],fill=ink)
+    d.polygon([(6,15),(10,12),(15,12),(12,15)],fill=paper)
+    d.line([(8,14),(11,12),(14,12)],fill=ivory)
+    d.polygon([(6,16),(13,16),(13,34),(12,35),(6,35)],fill='#426c69')
+    d.line([(6,16),(6,34)],fill='#72948a')
+    d.line([(12,17),(12,34)],fill='#395a59')
+    d.line([(7,19),(11,19)],fill='#cdbd8b')
+    d.line([(7,21),(10,21)],fill='#8eaa94')
+    d.rectangle((8,28,10,31),fill='#c3d1ac')
+    d.line([(8,32),(10,32)],fill='#66867b')
+
+    # Taller cream-linen guide, seen from above. Matching green head and foot
+    # caps frame a single pressed leaf, with enough blank cloth for its outline.
+    d.polygon([(13,10),(18,5),(28,5),(29,6),(29,33),(26,36),(14,36),(13,35)],fill=ink)
+    d.polygon([(14,10),(18,6),(27,6),(24,10)],fill='#b79977')
+    d.polygon([(16,9),(19,6),(26,6),(23,9)],fill=paper)
+    d.line([(18,8),(20,7),(24,7)],fill='#fff1cb')
+    d.polygon([(26,11),(28,8),(28,32),(26,34)],fill='#536d5f')
+    d.polygon([(14,11),(25,11),(25,35),(14,35)],fill='#dcca9f')
+    d.rectangle((15,12,23,32),fill='#f1dfb1')
+    d.line([(15,13),(15,30)],fill='#fff0c7')
+    d.rectangle((14,10,25,13),fill='#466951')
+    d.line([(15,10),(24,10)],fill='#819776')
+    d.line([(15,13),(24,13)],fill='#b1a478')
+    d.rectangle((14,32,25,35),fill='#486a54')
+    d.line([(15,32),(24,32)],fill='#b8a77d')
+    # Broad spear-shaped specimen and a fine rising midrib on the linen spine.
+    d.polygon([(17,24),(17,21),(18,19),(20,18),(22,16),(23,16),
+               (23,20),(22,22),(20,24),(18,25)],fill='#4f765a')
+    d.polygon([(17,22),(18,20),(20,19),(22,17),(20,21),(18,24)],fill='#7e9a68')
+    d.line([(17,27),(18,24),(20,22),(21,20)],fill='#506954')
+    d.line([(18,28),(21,28)],fill='#a89072')
+
+    # The persimmon guide tips toward its neighbour. Its thin front board,
+    # pale page block, and back board remain separate across the sloping head.
+    d.polygon([(25,16),(29,11),(35,9),(36,10),(43,31),(40,35),
+               (33,37),(32,36)],fill=ink)
+    d.polygon([(26,16),(32,14),(35,10),(42,31),(39,34),(33,36)],fill='#995e57')
+    d.polygon([(26,15),(29,12),(35,10),(32,14)],fill=paper)
+    d.line([(28,14),(30,12),(34,11)],fill='#fff0c8')
+    d.polygon([(33,14),(35,11),(42,31),(40,33)],fill='#895658')
+    d.polygon([(26,16),(32,14),(39,34),(33,36)],fill='#b96c60')
+    d.line([(26,16),(32,14)],fill='#d78e72')
+    d.line([(27,18),(32,32)],fill='#ca7d68')
+    # Only two full-width bands cross the warm cloth; a quiet middle separates
+    # them and keeps the grouping distinct from the illustrated main guide.
+    d.line([(28,21),(33,19)],fill='#f0c58d')
+    d.line([(32,32),(37,30)],fill='#e7ba87')
 
 
 def postcard(d):

@@ -497,80 +497,186 @@ function rug(b) {
   }
 }
 
-function sofa(b){
-  const {r,l,p,o}=b;const ink='#374b46',deep='#48675e',shade='#597a6a',mid='#739583',lit='#90ae92',pale='#b1c2a0';
-  o(214,224,98,7,'#997c5f');o(211,224,77,4,'#876c54');
-  // The exposed oak frame has a back rail, cantilevered arms, dowels and legs.
-  for(const [xx,yy,dx] of [[117,212,-3],[291,212,4],[136,207,-1],[279,207,1]]){
-    p([xx,yy,xx+6,yy,xx+5+dx,yy+18,xx+1+dx,yy+18],wood.dark);
-    l(xx+2,yy+2,xx+2+dx,yy+16,wood.lit);
+function sofa(b) {
+  const {r,l,o} = b;
+  const center=205, baySpacing=54, centers=[center-baySpacing,center,center+baySpacing];
+  const wood={ink:'#504236',shade:'#77573e',face:'#a57a54',bevel:'#c69a6b',lit:'#dfb783'};
+  const fabric={rim:'#496559',shade:'#597b6b',mid:'#789989',lit:'#93ad95',piping:'#a8bba0'};
+  // Each timber profile is cut from one outline. Coordinates reflect pixel centers,
+  // so both arms and their front and rear uprights have identical width at every row.
+  function timberPair(left,right,y,height,color) {
+    r(left,y,right-left+1,height,color);r(2*center-right,y,right-left+1,height,color);
   }
-  p([113,173,117,162,123,157,288,157,299,162,304,174,304,204,298,215,119,215,113,207],ink);
-  p([116,172,120,164,126,160,286,160,296,164,301,173,298,202,119,203],deep);
-  // Three plump, piped back cushions sit slightly behind the seat pads.
-  for(const [x,w] of [[122,52],[176,58],[236,58]]){
-    p([x,168,x+4,162,x+w-6,162,x+w-2,164,x+w,170,x+w-1,184,x+w-4,189,x+3,190,x,186],shade);
-    p([x+2,169,x+5,164,x+w-7,164,x+w-3,167,x+w-2,182,x+w-5,187,x+4,188,x+2,184],mid);
-    l(x+6,165,x+w-8,165,lit);l(x+3,169,x+3,181,lit);
-    l(x+6,185,x+10,187,shade);l(x+w-5,182,x+w-8,186,shade);
-    r(x+w*.50,176,2,1,shade);r(x+w*.50+1,177,2,1,lit);
+  function windowEdge(left,right,y,height,color) {
+    r(left,y,1,height,color);r(2*center-right,y,1,height,color);
   }
-  p([123,189,292,188,300,197,295,207,124,208,117,200],ink);
-  for(const [x,w] of [[122,54],[176,57],[233,59]]){
-    p([x+4,189,x+w-4,189,x+w+1,197,x+w-1,201,x-1,201,x-3,198],lit);
-    p([x-2,198,x+w,198,x+w-1,204,x+1,204],mid);
-    l(x+5,190,x+w-5,190,pale);l(x,202,x+w-3,202,shade);
+  function rowsAt(x,y,halfWidths,color) {
+    for (let row=0;row<halfWidths.length;row++) {
+      const half=halfWidths[row];r(x-half,y+row,2*half+1,1,color);
+    }
   }
-  // The middle pad dips a pixel under the cat. Its paws land ahead of the
-  // piping and its tail no longer straddles the left cushion seam.
-  l(179,198,187,198,mid);r(188,198,34,1,'#8ca990');
-  l(188,199,221,199,mid);l(222,198,230,198,mid);
-  p([114,191,118,187,124,188,128,194,128,207,293,207,293,194,297,189,304,189,309,193,
-     309,209,302,216,119,216,114,211],deep);
-  r(129,209,163,3,shade);r(128,213,166,2,ink);
-  trim(b,118,215,184,5);
-  // Proper fore-and-aft arm rails, not merely oval caps.
-  for(const [x,side] of [[108,1],[295,1]]){
-    p([x,190,x+4,184,x+12,184,x+15,188,x+12,193,x+2,194],wood.dark);
-    p([x+1,189,x+5,185,x+12,185,x+13,187,x+10,190,x+2,191],wood.lit);
-    l(x+4,186,x+11,186,wood.gold);slat(b,x+3,193,20,4);r(x+4,198,1,2,wood.gold);
+  function rearPosts() {
+    timberPair(118,122,176,46,wood.ink);
+    timberPair(119,121,177,43,wood.shade);
+    windowEdge(119,121,181,37,wood.face);
   }
-  // Small geometric sashiko pillow well away from the visitor's cat seat.
-  p([246,165,250,159,266,158,275,170,271,184,254,188,244,178],'#9c7553');
-  p([248,166,252,161,265,160,273,170,269,182,255,185,246,176],'#d6a35f');
-  for(const [px,py] of [[252,167],[260,165],[255,175],[265,173],[260,181]]){
-    l(px-2,py,px,py-2,'#eed195');l(px,py-2,px+2,py,'#eed195');r(px,py+2,1,1,'#bd8d53');
+  function backFrame() {
+    // A bent oak crest rolls over the padded back. Both end stiles continue
+    // down to the rear arm joints, so the crest stays legible in the full room.
+    rowsAt(center,148,[78,81,83,84,85,86,87],wood.ink);
+    r(118,155,175,24,wood.ink);
+    rowsAt(center,149,[77,80,82,83,84],wood.bevel);
+    r(129,149,152,1,wood.lit);
+    rowsAt(center,151,[79,81,82,82,82],wood.face);
+    r(124,155,163,2,wood.shade);
+    // The upholstered panel sits inside the rail and remains visible above and
+    // between the backs of the three loose cushions.
+    rowsAt(center,156,[78,80,81,82],fabric.shade);
+    r(123,160,165,26,'#567568');
+    r(127,156,157,1,'#8ba18a');
+    timberPair(118,122,155,24,wood.ink);
+    timberPair(119,121,155,22,wood.face);
+    windowEdge(119,121,156,19,wood.bevel);
+    timberPair(119,121,155,1,wood.bevel);
+    timberPair(120,121,158,1,wood.shade);
   }
-  // Padding rolls outward over the exposed wooden return. The woven throw
-  // lies across the right seat, bunches at the arm, then falls forward.
-  p([290,189,294,182,300,180,306,182,309,186,307,190,302,193,296,194],deep);
-  p([292,188,296,183,300,182,305,184,307,186,304,189,298,191],mid);
-  l(296,183,301,182,lit);l(300,192,307,189,wood.gold);
-  p([275,180,284,177,292,178,298,182,299,187,293,192,293,199,289,205,
-    286,215,279,218,267,214,265,208,268,201,263,198,252,198,251,194,259,190,268,186],'#8d6258');
-  p([275,181,284,178,291,179,296,182,297,186,291,191,283,194,273,200,
-    265,197,253,197,253,194,261,191,269,187],'#c99279');
-  p([275,195,283,192,291,189,291,199,286,206,285,214,279,216,268,212,267,208,270,201],'#a97766');
-  p([253,194,262,191,269,187,281,181,284,181,273,188,266,193,256,196],'#ddb69a');
-  p([270,201,277,196,284,194,282,200,277,205,275,214,270,212,269,207],'#c18a71');
-  p([285,195,289,192,288,199,284,205,282,214,279,215,280,204],'#c38d74');
-  for(const [xx,yy] of [[267,192],[276,186],[284,183],[283,190]]){
-    l(xx-2,yy+1,xx,yy-1,'#ead0aa');l(xx,yy-1,xx+2,yy,'#ead0aa');
+  // Each cushion takes one third of the actual upholstered span at this depth.
+  // The end cushions run underneath the arm caps, which are drawn last.
+  function armEdge(y) {
+    if (y<176) return 123;
+    if (y<=194) return 124-Math.floor(Math.min(y-176,16)/2);
+    return 117;
   }
-  l(255,196,264,195,'#dbae8e');l(264,195,275,188,'#dbae8e');
-  l(267,209,272,212,'#d1a383');l(274,213,281,215,'#d8ad8b');l(282,214,286,211,'#d8ad8b');
-  for(const [x,y] of [[268,211],[271,213],[274,214],[277,215],[280,216],[283,215],[285,213]])
-    l(x,y,x-1,y+3,'#d6b18d');
-  // Low-contrast flecks follow the warp of the upholstery and build soft
-  // cushion edges under the crisp window light.
-  for(let i=0;i<130;i++){
-    const xx=124+hash(i*17+1)%164,yy=166+hash(i*23)%18;
-    if(xx<171||xx>179&&xx<231)r(xx,yy,1+(i%5===0),1,i%3?'#789a85':'#6d8e7a');
+  function cushionBounds(bay,y) {
+    const left=armEdge(y), width=2*(center-left)+1;
+    const cut=left+Math.round(width/3);
+    if (bay===0) return [left,cut-1];
+    if (bay===2) return [2*center-cut+1,2*center-left];
+    return [cut,2*center-cut];
   }
-  for(const xx of [127,181,239]){
-    l(xx,192,xx+26,192,'#a0b89a');l(xx+5,200,xx+24,200,'#7e9d86');
+  function drawCushion(bay,back) {
+    const first=back?158:186, last=back?185:207;
+    for(let y=first;y<=last;y++) {
+      const [left,right]=cushionBounds(bay,y);
+      const d=y-first, bottom=last-y;
+      // Round just the loose corners at the two interior joints. At the arms
+      // the upholstery compresses to the frame and has no freestanding outline.
+      const corner=d===0?3:d===1||bottom===0?2:d===2||bottom===1?1:0;
+      const a=left+(bay===0?0:corner), z=right-(bay===2?0:corner);
+      const sideSeam=back?'#638375':'#698a77';
+      r(left,y,right-left+1,1,sideSeam);
+      r(a,y,z-a+1,1,fabric.shade);
+      let face;
+      if (back) {
+        face=d===0?'#668575':d===1?'#8da593':bottom===0?'#5a796a':bottom<3?'#6a8a77':fabric.mid;
+      } else {
+        // Broad seat top, rounded piped nose, then the short vertical front.
+        face=d===0?'#6d8d79':d===1?'#8ba58e':y<198?fabric.lit:bottom===0?'#5a7969':bottom<3?'#6c8c78':fabric.mid;
+      }
+      r(a+1,y,z-a-1,1,face);
+      if (bay>0) r(a,y,1,1,'#526f61');
+      if (bay<2) r(z,y,1,1,sideSeam);
+    }
+    const y=back?160:188;
+    const [left,right]=cushionBounds(bay,y);
+    const x=Math.round((left+right)/2);
+    if (back) {
+      l(left+3,y+4,left+6,y+1,'#8da796');r(left+7,y,right-left-15,1,'#98ad99');
+      l(right-7,y,right-3,y+2,'#89a391');
+      l(left+3,180,left+7,183,'#6d8d79');l(right-4,178,right-6,181,'#6b8978');
+      for(let i=0;i<7;i++)r(x+(i*13)%37-18,165+(i*7)%13,1+i%2,1,'#809d8b');
+    } else {
+      r(left+5,y,right-left-11,1,'#9fb59a');
+      l(left+2,189,left+5,y,'#9bb296');
+      l(right-7,196,right-3,195,'#8ea990');
+      r(x-10,192,2,1,'#91ac92');r(x+8,194,3,1,'#90aa90');
+      // The front welt rolls down over the stuffing in the middle of each bay.
+      // Its outer end disappears beneath the arm at the same height on each side.
+      const [lipLeft,lipRight]=cushionBounds(bay,198);
+      for(let sx=lipLeft+1;sx<lipRight;sx++) {
+        const t=(sx-lipLeft)/(lipRight-lipLeft);
+        const lip=197+Math.round(2*(1-(2*t-1)**2));
+        r(sx,197,1,lip-196,fabric.lit);
+        r(sx,lip,1,1,'#a7b99c');
+        r(sx,lip+1,1,1,'#87a28d');
+        if(t>0.15&&t<0.85)r(sx,204,1,1,'#789784');
+      }
+      // Short angled folds give the seat a slight pinch at each sewn corner.
+      l(left+3,190,left+8,188,'#89a38b');
+      l(right-6,189,right-4,190,'#8aa48b');
+    }
   }
-  r(140,216,2,2,'#d2aa77');r(280,216,2,2,'#d2aa77');
+  function pillow(x) {
+    // Shallow scoops beneath the four piped corners give the face a stuffed square
+    // profile. The lower cheek rounds down into a short, compressed seat contact.
+    const y=164;
+    const rim='#9c7755',turn='#b28c62',shade='#c29c6d',oat='#d9b881',light='#e7c998',hem='#efdab0';
+    const width=[10,13,15,15,14,14,15,15,16,16,16,16,16,16,16,15,15,14,14,15,14,11,7];
+    rowsAt(x+2,y+2,width,'#5c7965');
+    for(let i=0;i<width.length;i++){
+      const h=width[i];
+      if(i===0){r(x-12,y,10,1,rim);r(x+3,y,10,1,rim);continue;}
+      r(x-h,y+i,2*h+1,1,rim);
+      if(i>20)continue;
+      const half=h-1;
+      r(x-half,y+i,half*2+1,1,turn);
+      if(i<3||i>19)continue;
+      const edge=(i<7?2:3)+(i>16?1:0);
+      r(x-half+1,y+i,2*half-edge,1,shade);
+      if(i>17)continue;
+      const crown=i<=5?half-3:i<15?half-2:half-4;
+      r(x-crown-1,y+i,2*crown,1,oat);
+    }
+    // Long, curved light and seam catches turn with the stuffing rather than
+    // boxing the pillow into a little picture frame.
+    b.p([x-12,y+6,x-9,y+4,x-6,y+4,x-4,y+5,x+4,y+5,x+7,y+6,
+      x+6,y+8,x+2,y+9,x-2,y+10,x-6,y+13,x-10,y+14,x-13,y+12], '#e4c38d');
+    b.p([x+12,y+6,x+14,y+8,x+14,y+14,x+12,y+16,x+8,y+18,x+3,y+19,
+      x-4,y+18,x-7,y+17,x-1,y+17,x+3,y+16,x+7,y+14,x+10,y+11], '#cba574');
+    l(x-12,y+2,x-9,y+1,hem);r(x-9,y+1,5,1,hem);
+    l(x-5,y+2,x-2,y+3,light);r(x-1,y+3,5,1,light);
+    l(x+5,y+2,x+10,y+1,light);l(x+12,y+3,x+9,y+6,shade);
+    l(x-13,y+3,x-10,y+5,'#c9a779');l(x-11,y+5,x-8,y+6,light);
+    l(x-12,y+17,x-9,y+15,'#b99a70');l(x-10,y+17,x-7,y+16,light);
+    l(x+12,y+17,x+10,y+16,turn);
+    l(x-12,y+5,x-14,y+8,light);r(x-14,y+8,1,6,light);
+    l(x-13,y+15,x-11,y+17,light);l(x-10,y+18,x-6,y+19,'#d7b986');
+    l(x-5,y+20,x+6,y+20,'#caa878');l(x+7,y+19,x+11,y+17,'#bd9a6d');
+    l(x+12,y+16,x+14,y+14,'#be986c');
+    // A small covered button draws the cloth in from either side. Its window-lit
+    // top and shaded lower lip use the same light direction on both cushions.
+    l(x-4,y+10,x-2,y+11,'#c8a575');l(x+1,y+11,x+3,y+10,'#d0ac78');
+    l(x-3,y+13,x-1,y+12,'#ead09c');l(x+1,y+12,x+3,y+13,'#dfbe89');
+    r(x-1,y+10,3,3,'#ac885f');r(x-1,y+10,2,1,'#f0d79f');r(x-1,y+11,2,1,'#d6b27c');
+  }
+  function arms() {
+    for(let y=176;y<=194;y++){
+      const depth=y-176,outer=117-Math.floor(Math.min(depth,16)/2),inner=outer+6;
+      timberPair(outer,inner,y,1,wood.ink);
+      if(y===176||y===194)continue;
+      timberPair(outer+1,inner-1,y,1,y<192?wood.bevel:wood.face);
+      if(y<191)windowEdge(outer+1,inner-1,y,1,wood.lit);
+    }
+    // Each front stile is continuous from the underside of its nose to the floor.
+    // The rails meet these uprights below the upholstered seat.
+    timberPair(111,116,195,30,wood.ink);timberPair(111,115,225,4,wood.ink);
+    timberPair(112,115,195,29,wood.face);timberPair(112,114,224,4,wood.face);
+    windowEdge(112,115,196,27,wood.bevel);
+    timberPair(113,114,198,2,wood.shade);windowEdge(113,114,198,1,wood.lit);
+  }
+  o(center,224,93,6,'rgba(54,43,37,.19)');
+  backFrame();
+  rearPosts();
+  // The low load-bearing rail spans the three bays and meets both front stiles.
+  r(114,207,183,10,wood.ink);
+  r(116,208,179,7,wood.face);r(117,208,177,1,wood.bevel);r(117,215,177,1,wood.shade);
+  for(const post of [118,290]){
+    r(post,210,3,3,wood.shade);r(post,210,2,1,wood.bevel);
+  }
+  for(let bay=0;bay<3;bay++) drawCushion(bay,true);
+  for(let bay=0;bay<3;bay++) drawCushion(bay,false);
+  pillow(centers[0]);pillow(centers[2]);
+  arms();
 }
 
 // The shade's bamboo winding follows a hand-cut, asymmetric native pixel contour.

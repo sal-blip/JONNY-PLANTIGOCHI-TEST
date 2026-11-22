@@ -1,3 +1,4 @@
+import * as terraPot from './terracottaPotSprite.js';
 import * as wavePot from './blueWavePotSprite.js';
 import {drawSelectionContour} from './roomContour.js';
 import * as pothosFoliage from './goldenPothosSprite.js';
@@ -93,7 +94,7 @@ const ceramics = [
     day:['#3c5057','#4b646c','#658186','#809a9d','#a7b6ac','#c9cdb6'], wall:[9,9,10,10,10,10,10,9,9,8,7,6], motif:'glaze' },
 ];
 const shopPots={
-  terra:{lift:3,tones:['#563d38','#75473b','#985239','#b76644','#cc7950','#df9061','#eca579','#f4c394']},
+  terra:{lift:3,tones:terraPot.spritePalette},
   wave:{lift:2,tones:wavePot.spritePalette},
 };
 const goldLeaf=pothosFoliage.spritePalette,snakeLeaf=snakeFoliage.spritePalette;
@@ -143,46 +144,13 @@ function makeGrid({leftEdge,topEdge,width,height}) {
 // Bought pots have their own silhouettes, firing marks and glazed surfaces.
 function craftedPot(grid,finish){
   const {span,dot}=grid;
-  const p=(x,y,n,c)=>span(x,y,n,glazeInk+c);
-  const d=(x,y,c)=>dot(x,y,glazeInk+c);
-  const ridge=(y,half,edge,light)=>{
-    for(let x=-half;x<=half;x++){
-      const bow=Math.abs(x)>half*.72?-1:0;
-      d(x,y+bow,x>half*.55?edge:light);
-    }
-  };
   span(-12,1,30,shadowSoft);span(-9,2,24,shadowSoft);span(-8,0,19,shadowFirm);span(-6,1,17,shadowFirm);
-  if(finish==='terra'){
-    // The undercut collar, gently tapered wall and raised foot are distinct fired pieces.
-    const walls=[12,12,12,11,11,11,10,10,10,9,9,9,8,8,8];
-    walls.forEach((r,i)=>{
-      const y=i-16;
-      p(-r,y,2*r+1,0);p(-r+1,y,2*r-1,2);p(-r+1,y,2*r-4,3);
-      p(-r+2,y,r+6,4);p(-r+3,y,r-1,5);
-      if(i<9)p(-r+4,y,3,6);
-    });
-    p(-7,-2,15,1);p(-9,-1,19,1);p(-8,-1,14,4);p(-6,-1,6,5);p(-7,0,15,0);
-    // Throwing ridges curve around the wall and catch a broken raking highlight.
-    ridge(-8,9,2,3);p(-6,-7,8,5);p(-5,-7,3,6);
-    ridge(-4,7,2,3);p(-4,-3,5,5);
-    d(5,-11,3);d(4,-10,5);d(-5,-5,4);
-    // Rolled lip with a light front-left arc and a deep oxide shadow along its underside.
-    p(-8,-22,16,2);p(-12,-21,24,3);p(-14,-20,28,4);
-    for(let y=-19;y<=-16;y++){p(-15,y,30,0);p(-14,y,28,3);p(-13,y,22,5);}
-    p(-14,-15,28,1);p(-12,-14,24,1);p(-10,-13,20,2);
-    p(-13,-16,23,4);p(-11,-15,18,4);p(-9,-15,11,5);
-    p(-13,-20,25,6);p(-10,-21,18,6);p(-7,-21,8,7);
-    p(-14,-19,25,6);p(-12,-18,21,5);p(-9,-17,17,6);
-    span(-8,-20,16,soil);span(-11,-19,22,soilShadow);span(-9,-18,18,soil);
-    span(-8,-18,4,soilLight);span(2,-19,3,loam);dot(-2,-19,soilLight);
-    p(-14,-18,2,7);p(-10,-17,7,7);p(11,-17,3,2);p(13,-18,1,3);
-  }else{
-    for(let row=0;row<wavePot.spriteRows.length;row++){
-      const cells=wavePot.spriteRows[row];
-      for(let col=0;col<cells.length;col++){
-        const shade=cells.charCodeAt(col)-65;
-        if(shade>=0)d(wavePot.spriteOffset.x+col,wavePot.spriteOffset.y+row,shade);
-      }
+  const art=finish==='terra'?terraPot:wavePot;
+  for(let row=0;row<art.spriteRows.length;row++){
+    const cells=art.spriteRows[row];
+    for(let col=0;col<cells.length;col++){
+      const shade=cells.charCodeAt(col)-65;
+      if(shade>=0)dot(art.spriteOffset.x+col,art.spriteOffset.y+row,glazeInk+shade);
     }
   }
 }

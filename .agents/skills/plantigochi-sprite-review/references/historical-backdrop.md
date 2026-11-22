@@ -32,9 +32,10 @@ do
 done
 ```
 
-Each comparison’s `before/room.png` renders the current subject against today’s scenery. The lamp’s historical captures include the previous table. Its checker compares the illuminated area with those original pixels. The new table supplies full-room reference images at noon and night with its two plant mounts empty and occupied. The wave pot and record player also use the earlier room imagery to isolate their subjects, then check them through the current renderer. [Lamp](floor-lamp/README.md) · [Open coffee table](coffee-table/README.md) · [Blue wave pot](blue-wave-pot/README.md) · [Record player](record-player/README.md)
+Each comparison’s `before/room.png` renders the current subject against today’s scenery. The lamp’s historical captures include the previous table. Its checker compares the illuminated area with those original pixels. The table supplies full-room images at noon and night with its two plant mounts empty and occupied. Its checker reproduces the archived plant compositions, then substitutes the approved sofa region for a second full-scene check against today’s game. The four sofa references cover the resting and awake cat under both lights. [Sofa](sofa/README.md) The wave pot and record player also use the earlier room imagery to isolate their subjects, then check them through the current renderer. [Lamp](floor-lamp/README.md) · [Open coffee table](coffee-table/README.md) · [Blue wave pot](blue-wave-pot/README.md) · [Record player](record-player/README.md)
 
 ```sh
+node "$review/references/sofa/verify.mjs"
 node "$review/references/floor-lamp/verify.mjs"
 node "$review/references/coffee-table/verify.mjs"
 node "$review/references/blue-wave-pot/verify-planted.mjs" .
