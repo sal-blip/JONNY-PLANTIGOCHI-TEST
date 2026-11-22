@@ -1,8 +1,7 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Leaf} from 'lucide-react';
 import InstallHelp from './InstallHelp.jsx';
-import {exportGardenRaw} from './useGardenSave.js';
-import {downloadFile} from './Recovery.jsx';
+import {exportGardenRaw,downloadCurrentGarden} from './useGardenSave.js';
 import {transitionOnboarding} from './OnboardingTransition.jsx';
 import './WelcomeTour.css';
 
@@ -34,7 +33,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
   const [splash,setSplash]=useState(()=>!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const heading=useRef(null), dialog=useRef(null), touch=useRef(null), requested=useRef(0);
   const [canExport,setCanExport]=useState(false);
-  const [exportError,setExportError]=useState('');
+  const [exportNotice,setExportNotice]=useState(''),[exporting,setExporting]=useState(false);
   const installed=phone.standalone;
   const card=step===last && installed?{lead:'Your pocket',name:'garden',copy:'Your seed is ready to meet you.'}:cards[step];
   useLayoutEffect(()=>{
@@ -50,11 +49,11 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
     return ()=>{active=false;};
   },[installed,step]);
   async function exportExisting(){
+    setExporting(true);setExportNotice('');
     try {
-      const raw=await exportGardenRaw();
-      if(raw==null){setCanExport(false);return;}
-      downloadFile(new Blob([raw],{type:'application/json'}),'plantigochi-backup.json');
-    }catch{setExportError('Could not read this browser garden. Try again.');}
+      setExportNotice(await downloadCurrentGarden('plantigochi-backup'));
+    }catch{setExportNotice('Could not download this browser garden. Try again.');}
+    finally{setExporting(false);}
   }
   useEffect(()=>{
     if(!splash)return;
@@ -112,8 +111,9 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
       <nav className="tour-dots" aria-label="Welcome screens">{cards.map((c,i)=>
         <button key={c.name} aria-label={'Show '+titleOf(c)} aria-current={step===i?'step':undefined}
           onClick={()=>go(i)}><i/></button>)}</nav>
-      {step===last && canExport && <button className="tour-skip" onClick={exportExisting}>Export existing garden</button>}
-      {(exportError || issue) && <span role="alert">{exportError || issue}</span>}
+      {step===last && canExport && <button className="tour-skip" disabled={exporting} onClick={exportExisting}>Export existing garden</button>}
+      {issue && <span role="alert">{issue}</span>}
+      {exportNotice && <span role="status">{exportNotice}</span>}
     </footer>
   </div>;
   return onClose ? <dialog className="welcome-modal" ref={dialog} aria-labelledby="welcome-title"

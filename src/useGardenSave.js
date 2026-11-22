@@ -1,11 +1,31 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {gardenStore,SaveIssue} from './gardenStore.js';
+import {deviceGarden as store,SaveIssue} from './gardenStore.js';
 import {KEY} from './game.js';
+import {downloadFile} from './gardenBackup.js';
 import {retireAlerts,finishAlertCleanup,withReminderLock} from './alertCleanup.js';
 
-const store=gardenStore(()=>localStorage,()=>!document.hidden);
 export const exportGardenRaw=store.exportRaw;
 export const mayChangeAlerts=store.mayChangeAlerts;
+
+export function downloadOriginalSave(raw){
+  downloadFile(new Blob([raw],{type:'application/json'}),'plantigochi-original.json');
+  return 'Downloaded the original save as JSON. It contains any saved photo previews.';
+}
+
+export async function downloadCurrentGarden(name,raw){
+  let copy;
+  try{copy=await store.exportBackup(raw);}
+  catch(error){if(raw==null)throw error;}
+  if(raw!=null && !copy)return downloadOriginalSave(raw);
+  if(!copy)throw Error('No saved garden was found on this device.');
+  if(raw!=null && copy.extension==='json' && !copy.missingOriginals)return downloadOriginalSave(raw);
+  downloadFile(copy.blob,name+'.'+copy.extension);
+  if(copy.missingOriginals){
+    const count=copy.missingOriginals;
+    return 'Backup downloaded. '+count+(count===1?' original photo was':' original photos were')+' unavailable. Saved previews are included.';
+  }
+  return copy.extension==='plantigochi'?'Garden and original photos downloaded.':'Garden backup downloaded.';
+}
 
 function issueMessage(error){
   return error?.name==='QuotaExceededError'?'Device storage is full. Free space and try again.':
@@ -88,7 +108,7 @@ export function useGardenSave(){
     }
   }),[accept,fail,enqueue]);
   const epoch=view?.epoch,id=view?.plant?.id;
-  const commit=useCallback(fn=>save(()=>store.update({epoch,plant:{id}},fn)),[save,epoch,id]);
+  const commit=useCallback((fn,options)=>save(()=>store.update({epoch,plant:{id}},fn,options)),[save,epoch,id]);
   const target=view || recovery;
   const replace=backup=>save(()=>store.replace(target,backup));
   const alertVisit=useCallback((visit,action,enabled)=>save(()=>store.alertVisit({epoch},visit,action,enabled)),[save,epoch]);

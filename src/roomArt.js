@@ -18,18 +18,21 @@ export function roomLight(hour) {
 export function drawRoom(canvas,{
   hour,plants=[],roomIndex=0,time=0,reducedMotion=false,awake=false,
   highlighted=-1,lifted=-1,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false,
-  jarProgress=null,leafCount=0,shopItems=[],playingItemId=null,onPhotoReady
+  jarProgress=null,leafCount=0,shopItems=[],playingItemId=null,photos,foregroundCanvas=null
 }={}) {
   const ctx=canvas.getContext('2d');
   if(!ctx)return;
   const view=roomIndex%2;
   const light=roomLight(hour);
   const places=placesFor(view);
-  ctx.save();
-  ctx.setTransform(canvas.width/BASE_WIDTH,0,0,canvas.height/worldHeight,0,0);
-  ctx.clearRect(0,0,BASE_WIDTH,worldHeight);ctx.translate(0,above);
-  ctx.imageSmoothingEnabled=false;
-  function drawOccupant(slot){
+  function startLayer(ctx){
+    ctx.save();
+    ctx.setTransform(ctx.canvas.width/BASE_WIDTH,0,0,ctx.canvas.height/worldHeight,0,0);
+    ctx.clearRect(0,0,BASE_WIDTH,worldHeight);ctx.translate(0,above);
+    ctx.imageSmoothingEnabled=false;
+  }
+  startLayer(ctx);
+  function drawOccupant(ctx,slot){
     if(slot==='cat'){
       drawRoomCat(ctx,{...CAT_SEAT,time,reducedMotion,night:1-light.day,awake,selected:highlighted==='cat'});
       return;
@@ -52,9 +55,13 @@ export function drawRoom(canvas,{
       jarProgress,leafCount,night:1-light.day,selected:highlighted===id&&!placing,time,reducedMotion,
     });
   }
-  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant,drawKeepsake:paintKeepsake,separatePlanes});
-  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,onPhotoReady,playingItemId,time,reducedMotion});
+  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,separatePlanes});
+  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
-  places.forEach((spot,i)=>{if(spot.layer==='floor')drawOccupant(i);});
+  // In the live room they also sit in front of the native-resolution photo apertures.
+  const front=foregroundCanvas?.getContext('2d');
+  if(front)startLayer(front);
+  places.forEach((spot,i)=>{if(spot.layer==='floor')drawOccupant(front || ctx,i);});
+  if(front)front.restore();
   ctx.restore();
 }

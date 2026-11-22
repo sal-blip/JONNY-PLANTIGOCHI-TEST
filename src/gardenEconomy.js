@@ -1,5 +1,6 @@
 import {canPlaceAt,gardenViews,viewForSlot} from './gardenLayout.js';
 import {backupLimit,validPhoto} from './gardenScenes.js';
+import {validOriginalId} from './frameUpload.js';
 import {decorPlaces} from './roomShopArt.js';
 
 export const catalog = {
@@ -64,7 +65,7 @@ export function validGardenLife(plant) {
   const placed=new Set();
   for(const item of g.items){
     const kind=catalog[item.sku]?.kind;
-    if(!['frame','pot','decor'].includes(kind) || (item.photo!==undefined && (kind!=='frame' || !validPhoto(item.photo))))return false;
+    if(!['frame','pot','decor'].includes(kind) || (item.photo!==undefined && (kind!=='frame' || !validFramePhoto(item.photo))))return false;
     if(item.slot===null)continue;
     const view=itemView(item);
     if(view<0 || view>=gardenViews(plant.graduates) || placed.has(item.slot))return false;
@@ -127,10 +128,12 @@ export function storeItem(plant,id,from) {
   const g=lifeOf(plant),item=g.items.find(i=>i.id===id && i.slot!==null && i.slot===from);
   return item?update(plant,{items:g.items.map(i=>i===item?{...i,slot:null}:i)}):plant;
 }
-export function framePhoto(plant,id,photo,expectedSrc) {
-  if(photo && !validPhoto(photo))return plant;
+const validFramePhoto=photo=>validPhoto(photo) && (photo.originalId===undefined || validOriginalId(photo.originalId));
+export const framePhotoIdentity=photo=>photo?.originalId ?? photo?.src;
+export function framePhoto(plant,id,photo,expected) {
+  if(photo && !validFramePhoto(photo))return plant;
   const g=lifeOf(plant), item=g.items.find(i=>i.id===id && catalog[i.sku]?.kind==='frame');
-  if(!item || item.photo?.src!==expectedSrc || (!photo && !item.photo))return plant;
+  if(!item || framePhotoIdentity(item.photo)!==expected || (!photo && !item.photo))return plant;
   const next={...item};
   if(photo)next.photo=photo;
   else delete next.photo;

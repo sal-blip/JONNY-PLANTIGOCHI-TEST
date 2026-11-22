@@ -1,0 +1,21 @@
+.frame-photo {
+  position:absolute;
+  display:block;
+  overflow:hidden;
+  pointer-events:none;
+  user-select:none;
+}
+.frame-photo img {
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  image-rendering:auto;
+}
+.frame-photo::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:rgb(23 35 60 / var(--frame-shade,0));
+}
+.room-frame .room-foreground {position:absolute;inset:0;pointer-events:none}

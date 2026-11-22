@@ -96,7 +96,7 @@ export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRe
     if(page==='journal' && journal.editing){setJournal(leaveEditor);return;}
     navigate(page==='item'?'inventory':'phone');
   }
-  async function change(operation,report=true){
+  async function change(operation,report=true,frameOriginal){
     if(pending.current)return false;
     const origin=route.current,sourceId=plant.id;
     pending.current=true;setBusy(true);setNotice(null);
@@ -108,7 +108,7 @@ export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRe
         if(next===current)return current;
         if(!fitsBackupChange(current,next)){tooBig=true;return current;}
         changed=true;return next;
-      });
+      },{frameOriginal});
       if(saved && changed)return true;
       if(report)showError(tooBig?'Your garden is near its backup limit. Remove a frame photo and try again.':
         'Could not save this change. Check the entry or item and try again.',origin);
@@ -138,8 +138,8 @@ export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRe
     if(item.id===playingRecordId)onSelectRecord(null);
     if(inSameApp(origin))navigate('inventory');
   }
-  function savePhoto(photo,expectedSrc){
-    return change(p=>framePhoto(p,item.id,photo,expectedSrc),false);
+  function savePhoto(photo,expected,frameOriginal){
+    return change(p=>framePhoto(p,item.id,photo,expected),false,frameOriginal);
   }
   function journalPage(tab){
     if(tab==='library' || tab!==journal.tab){

@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {decorPlaces,drawRoomDecor,framePhotoBounds} from '../src/roomShopArt.js';
+
+test('live photos fit the rounded apertures of shelf and freestanding frames',()=>{
+  assert.deepEqual(framePhotoBounds('oak',317,240,1),{left:309,top:216,width:17,height:17});
+  assert.deepEqual(framePhotoBounds('lacquer',264,143,.84),{left:255,top:126,width:19,height:11});
+  assert.equal(framePhotoBounds('record',104,234,1),null);
+});
+
+test('postcards crop directly from the source photo at the destination canvas resolution',()=>{
+  const view=2,spot=decorPlaces(view).find(p=>p.stand);
+  const photo={x:75,y:50},item={id:'frame',sku:'oak',slot:spot.slot,photo};
+  const original={naturalWidth:720,naturalHeight:480};
+  const calls=[];
+  const canvas={
+    save(){},restore(){},fillRect(){},
+    drawImage(...args){calls.push({args,smoothing:this.imageSmoothingEnabled});},
+  };
+  drawRoomDecor(canvas,view,[item],{photos:new Map([[item.id,original]])});
+  assert.deepEqual(calls,[{args:[original,180,0,480,480,309,216,17,17],smoothing:true}]);
+});

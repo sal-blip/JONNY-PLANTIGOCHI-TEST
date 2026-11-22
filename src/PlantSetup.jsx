@@ -25,7 +25,7 @@ export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answe
     if(!f)return;
     try{
       const garden=await readGardenBackup(f);
-      setCandidate({plant:garden,apply:()=>replace(garden)});setNotice('');
+      setCandidate({plant:garden.plant,apply:()=>replace(garden)});setNotice('');
     }catch(error){setCandidate(null);setNotice(error.message);}
   }
   const inviting=Boolean(offer && !candidate);
@@ -40,7 +40,8 @@ export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answe
     <div className="seed-portrait"><PlantPixel stage={plant?.stage || 'seed'}/></div>
     <h1 ref={heading} tabIndex="-1">{title}</h1>
     <p>{copy}</p>
-    <div className="seed-actions">{candidate?<><button onClick={async()=>{if(!await candidate.apply()){setCandidate(null);setNotice('');}}}>Restore this garden</button>
+    <div className="seed-actions">{candidate?<><button onClick={async()=>{try{if(await candidate.apply())return;}catch{}
+      setCandidate(null);setNotice('Restore did not finish. Keep your backup and select it again.');}}>Restore this garden</button>
       <button onClick={()=>{setCandidate(null);if(offer)void answer(true);else setup('name');}}>Start fresh instead</button></>:
       inviting?<AlertChoices alerts={alerts} offer={offer} answer={answer}/>:
       <button onClick={()=>setup('name')}>Name your seed</button>}
@@ -48,7 +49,7 @@ export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answe
     </div>
     {inviting && !blocked && <small className="alert-invite-status" role="status">{alerts.notice || (!navigator.onLine?
       'You can continue offline and turn on alerts when you reconnect.':!alerts.canEnable?'Preparing plant alerts…':'')}</small>}
-    <input ref={file} hidden type="file" accept=".json,application/json" aria-label="Garden backup" onChange={choose}/>
+    <input ref={file} hidden type="file" accept=".plantigochi,.json,application/json" aria-label="Garden backup" onChange={choose}/>
     {(notice||issue) && <p role="alert">{notice || issue}</p>}
   </section></main>;
 }

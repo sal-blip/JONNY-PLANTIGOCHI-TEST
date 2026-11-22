@@ -18,9 +18,12 @@
   display:grid;place-items:center;isolation:isolate;overflow:hidden;border-radius:6px;
   background:radial-gradient(ellipse at 50% 75%,#a1a88229 0%,transparent 48%),linear-gradient(145deg,#fcf9eac9,#dce5cbad);
 }
+.shop-preview-stage {display:block;position:relative}
 .shop-specimen .shop-art {display:block;width:72px;height:64px;image-rendering:pixelated}
 .shop-specimen.large {width:100%;margin:0 0 12px;padding:8px 0}
 .shop-specimen.large .shop-art {width:144px;height:128px}
+.shop-specimen.large.framed-photo .shop-preview-stage {width:min(100%,clamp(144px,32dvh,288px))}
+.shop-specimen.large.framed-photo .shop-art {width:100%;height:auto}
 .garden-dialog .shop-list>button:disabled {opacity:1}
 .shop-list>button:disabled span:not(.shop-specimen),.shop-list>button:disabled b {color:#596652}
 @media(max-width:350px){.shop-list>button {gap:6px}}

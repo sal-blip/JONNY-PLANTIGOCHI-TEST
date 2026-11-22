@@ -1,7 +1,8 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {catalog,lifeOf,localDay} from './gardenEconomy.js';
-import {drawShopPreview} from './roomShopArt.js';
-import {preparePhoto} from './gardenScenes.js';
+import {catalog,framePhotoIdentity,lifeOf,localDay} from './gardenEconomy.js';
+import {drawShopPreview,framePhotoBounds} from './roomShopArt.js';
+import FramePhoto from './FramePhoto.jsx';
+import {readFrameUpload} from './frameUpload.js';
 import {Coins,ChevronRight,ShoppingBag} from 'lucide-react';
 
 // Optical centers and pot baselines on a 72 × 64 shop tile. The trailing
@@ -14,21 +15,24 @@ const previewLayout={
 function ItemArt({sku,photo,large=false}){
   const canvas=useRef(null);
   const zoom=large?2:1;
+  const width=72*zoom,height=64*zoom;
+  const [center,baseline,scale]=previewLayout[sku];
+  const x=center*zoom,y=baseline*zoom,size=scale*zoom;
+  const aperture=photo && framePhotoBounds(sku,x,y,size);
   useEffect(()=>{
     const tile=canvas.current,ctx=tile.getContext('2d');
     if(!ctx)return;
-    let live=true;
-    const [x,y,size]=previewLayout[sku];
-    function draw(){
-      if(!live)return;
-      ctx.clearRect(0,0,tile.width,tile.height);
-      drawShopPreview(ctx,{sku,x:x*zoom,y:y*zoom,size:size*zoom,photo,onPhotoReady:draw});
-    }
-    draw();
-    return ()=>{live=false;};
-  },[sku,photo,zoom]);
-  return <span className={large?'shop-specimen large':'shop-specimen'} aria-hidden="true">
-    <canvas ref={canvas} className="shop-art" width={72*zoom} height={64*zoom}/>
+    ctx.clearRect(0,0,tile.width,tile.height);
+    drawShopPreview(ctx,{sku,x,y,size});
+  },[sku,x,y,size]);
+  return <span className={'shop-specimen'+(large?' large':'')+(aperture?' framed-photo':'')} aria-hidden="true">
+    <span className="shop-preview-stage">
+      <canvas ref={canvas} className="shop-art" width={width} height={height}/>
+      {aperture && <FramePhoto photo={photo} deferOriginal={!large} style={{
+        left:100*aperture.left/width+'%',top:100*aperture.top/height+'%',
+        width:100*aperture.width/width+'%',height:100*aperture.height/height+'%',
+      }}/>}
+    </span>
   </span>;
 }
 export function CoinBalance({plant}){
@@ -38,28 +42,30 @@ export function CoinBalance({plant}){
 }
 export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
   const [error,setError]=useState(''),[loading,setLoading]=useState(false);
-  const input=useRef(null),pickerSource=useRef(null),product=catalog[item.sku];
+  const input=useRef(null),pickerSource=useRef(null),request=useRef(0),product=catalog[item.sku];
+  useEffect(()=>()=>{request.current++;},[item.id]);
   function openPhotoPicker(){
-    pickerSource.current={src:item.photo?.src};
+    pickerSource.current={identity:framePhotoIdentity(item.photo)};
     input.current.click();
   }
-  async function applyPhoto(photo,expectedSrc){
+  async function applyPhoto(photo,expected,frameOriginal){
     setError('');
-    if(!await savePhoto(photo,expectedSrc))
-      setError('Could not save the photo change. Check the current frame photo and available backup space.');
+    if(!await savePhoto(photo,expected,frameOriginal))
+      setError('The frame could not be saved. Check its current photo and the free space on this device.');
   }
   async function choosePhoto(e){
     const file=e.target.files?.[0];
     e.target.value='';
-    const expectedSrc=pickerSource.current?pickerSource.current.src:item.photo?.src;
+    const expected=pickerSource.current?pickerSource.current.identity:framePhotoIdentity(item.photo);
     pickerSource.current=null;
     if(!file)return;
+    const token=++request.current;
     setLoading(true);setError('');
     try {
-      const photo=await preparePhoto(file,[400,320,240]);
-      await applyPhoto(photo,expectedSrc);
-    } catch {setError('Choose a photo this phone can open.');}
-    finally {setLoading(false);}
+      const {photo,frameOriginal}=await readFrameUpload(file);
+      if(request.current===token)await applyPhoto(photo,expected,frameOriginal);
+    } catch {if(request.current===token)setError('This photo could not be opened. Try a JPEG, PNG, or WebP image.');}
+    finally {if(request.current===token)setLoading(false);}
   }
   return <div className="garden-page">
     <ItemArt large sku={item.sku} photo={item.photo}/>
@@ -69,8 +75,8 @@ export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
     {children}
     {(product.kind==='frame' || item.slot!==null) && <div className="menu-items">
       {product.kind==='frame' && <><button disabled={busy||loading} onClick={openPhotoPicker}>{loading?'Preparing photo…':item.photo?'Change photo':'Choose a photo'}</button>
-        <input hidden type="file" accept="image/*" ref={input} onChange={choosePhoto}/>
-        {item.photo && <button disabled={busy||loading} onClick={()=>applyPhoto(null,item.photo.src)}>Remove photo</button>}</>}
+        <input hidden type="file" accept="image/*" aria-label="Frame photo" ref={input} onChange={choosePhoto}/>
+        {item.photo && <button disabled={busy||loading} onClick={()=>applyPhoto(null,framePhotoIdentity(item.photo))}>Remove photo</button>}</>}
       {item.slot!==null && <button disabled={busy||loading} onClick={store}>Put in inventory</button>}
     </div>}{error && <p role="status">{error}</p>}
   </div>;

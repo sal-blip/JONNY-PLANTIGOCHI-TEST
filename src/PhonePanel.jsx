@@ -3,16 +3,19 @@ import { Bell, Check, Download, HardDrive, Upload } from 'lucide-react';
 import { STAGE_NAMES } from './game.js';
 import NotificationTest from './NotificationTest.jsx';
 import InstallHelp from './InstallHelp.jsx';
-import {downloadFile,readGardenBackup} from './gardenBackup.js';
+import {readGardenBackup} from './gardenBackup.js';
+import {downloadCurrentGarden,downloadOriginalSave} from './useGardenSave.js';
 
 export default function PhonePanel({ page, phone, alerts, plant, saveOK, saveIssue, recoveryRaw, onRestore }) {
   const fileInput = useRef(null);
   const [candidate, setCandidate] = useState(null);
   const [notice, setNotice] = useState('');
-  function exportSave() {
-    const blob = new Blob([JSON.stringify(plant)], { type: 'application/json' });
-    downloadFile(blob,'plantigochi-' + new Date().toISOString().slice(0,10) + '.json');
-    setNotice('Backup prepared. Keep the file to restore this plant later.');
+  const [exporting,setExporting]=useState(false);
+  async function exportSave(){
+    setExporting(true);setNotice('');
+    try{setNotice(await downloadCurrentGarden('plantigochi-'+new Date().toISOString().slice(0,10)));}
+    catch{setNotice('Could not download this garden. Try again.');}
+    finally{setExporting(false);}
   }
   async function chooseFile(e) {
     const file = e.target.files?.[0];
@@ -22,7 +25,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, saveIss
     if (!file) return;
     try {
       const next=await readGardenBackup(file);
-      setCandidate({plant:next,apply:()=>onRestore(next)});
+      setCandidate({plant:next.plant,apply:()=>onRestore(next)});
     } catch(error){setNotice(error.message);}
   }
   const offlineText = {
@@ -51,16 +54,18 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, saveIss
     {page === 'saves' && <section className="phone-section">
       <p>{saveOK ? 'Your garden saves on this device.' : saveIssue || 'Your last change could not be saved on this device.'} Use a backup to move your plant to another phone.</p>
       <div className="save-buttons">
-        {recoveryRaw!=null && <button onClick={()=>downloadFile(new Blob([recoveryRaw]),"plantigochi-original.json")}>Download original save</button>}
-        <button onClick={exportSave}><Download size={16}/> Back up</button>
+        {recoveryRaw!=null && <button onClick={()=>setNotice(downloadOriginalSave(recoveryRaw))}>Download original save</button>}
+        <button onClick={exportSave} disabled={exporting}><Download size={16}/> Back up</button>
         <button onClick={() => fileInput.current.click()}><Upload size={16}/> Restore</button>
       </div>
-      <input ref={fileInput} type="file" accept=".json,application/json" aria-label="Plantigochi backup file" hidden onChange={chooseFile}/>
+      <input ref={fileInput} type="file" accept=".plantigochi,.json,application/json" aria-label="Plantigochi backup file" hidden onChange={chooseFile}/>
       {candidate && <div className="restore-confirm"><p>Restore this garden, its Leaf Book, and {candidate.plant.graduates.length} collected plants? The backup holds a <b>{candidate.plant.deadAt === null ? STAGE_NAMES[candidate.plant.stage].toLowerCase() : 'pressed leaf'}</b>.</p>
         <div className="save-buttons"><button onClick={async () => {
-          const saved = await candidate.apply();
+          try{
+            if(!await candidate.apply())throw Error();
+            setNotice('Your plant has been restored and saved.');
+          }catch{setNotice('Restore failed. Keep your backup file and select it again.');}
           setCandidate(null);
-          setNotice(saved ? 'Your plant has been restored and saved.' : 'Restore failed. Keep your backup file and try again.');
         }}>Replace plant</button><button onClick={() => setCandidate(null)}>Cancel</button></div>
       </div>}
       <p className="backup-notice" role="status">{notice}</p>

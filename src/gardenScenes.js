@@ -37,7 +37,7 @@ export function photoStyle(photo) {
 }
 
 export async function preparePhoto(file, edges = [1600, 1280, 1024, 800]) {
-  // Only the canvas JPEG is retained, so the original and its metadata stay out of saves.
+  // A compact JPEG is used for wallpapers and as an offline frame preview.
   const url = URL.createObjectURL(file);
   const image = new Image();
   try {

@@ -2,9 +2,60 @@ import {beginAlertVisit,answerAlertInvite} from './alertInvitation.js';
 import {milestone} from './gardenEconomy.js';
 import {stageGardenReminder} from './gardenReminder.js';
 import {KEY,newPlant,readPlant} from './game.js';
+import {canonicalFrameBlob,frameOriginalIds,originalIdsFromRaw,packGardenBackup,prepareRestoredGarden} from './gardenBackup.js';
+import {validOriginalId} from './frameUpload.js';
 
 const databaseName='plantigochi.pocket.garden';
 const storeName='garden', currentKey='current', setupKey='setup';
+const originalPrefix='frame-original/';
+const previousOriginalsKey='before-restore-originals';
+const assetKey=id=>originalPrefix+id;
+
+function loadOriginals(records,ids,complete){
+  const originals=new Map();
+  let remaining=ids.size;
+  if(!remaining)complete(originals);
+  for(const id of ids){
+    const request=records.get(assetKey(id));
+    request.onsuccess=()=>{
+      if(request.result instanceof Blob)originals.set(id,request.result);
+      if(!--remaining)complete(originals);
+    };
+  }
+}
+
+function loadSavedOriginals(records,raw,complete){
+  if(raw!=null && !readPlant(raw,Date.now(),false)){
+    // A damaged record can lose its item list while original files survive.
+    // Include the recoverable binaries alongside the exact original record.
+    const keys=records.getAllKeys();
+    keys.onsuccess=()=>{
+      const ids=keys.result.filter(key=>typeof key==='string' && key.startsWith(originalPrefix))
+        .map(key=>key.slice(originalPrefix.length)).filter(validOriginalId);
+      loadOriginals(records,new Set(ids),complete);
+    };
+  }else loadOriginals(records,originalIdsFromRaw(raw),complete);
+}
+
+function pruneOriginals(records,used){
+  const keys=records.getAllKeys();
+  keys.onsuccess=()=>{
+    for(const key of keys.result){
+      if(typeof key==='string' && key.startsWith(originalPrefix) && !used.has(key.slice(originalPrefix.length)))records.delete(key);
+    }
+  };
+}
+
+function updateOriginals(records,before,after,staged){
+  if(!staged && before.gardenLife?.items===after.gardenLife?.items)return;
+  const previous=frameOriginalIds(before),current=frameOriginalIds(after);
+  if(staged && (previous.has(staged.id) || !current.has(staged.id)))throw new SaveIssue('This photo frame changed. Open it and choose the photo again.');
+  for(const id of current){
+    if(!previous.has(id) && id!==staged?.id)throw new SaveIssue('The original photo is required to update this frame.');
+  }
+  if(staged)records.add(staged.blob,assetKey(staged.id));
+  for(const id of previous)if(!current.has(id))records.delete(assetKey(id));
+}
 
 export class SaveIssue extends Error {
   constructor(message,raw=null){super(message);this.raw=raw;}
@@ -31,13 +82,16 @@ function resultOf(plant,setup){
   return {plant,phase:setup.phase || (plant?'game':'welcome'),epoch:setup.epoch,revision:revisionOf(setup),draft:setup.draft || '',invite:setup.invite || null};
 }
 export function gardenStore(legacyStorage,visible){
-  let database;
-  async function transaction(mode,apply){
+  let database,checkedOriginals=false;
+  function connection(){
     database ??= openDB().then(db=>{
       db.onversionchange=()=>{db.close();database=null;};
       return db;
     }).catch(error=>{database=null;throw error;});
-    const db=await database;
+    return database;
+  }
+  async function transaction(mode,apply){
+    const db=await connection();
     return new Promise((resolve,reject)=>{
       const tx=db.transaction(storeName,mode),records=tx.objectStore(storeName);
       const current=records.get(currentKey),setup=records.get(setupKey);
@@ -107,8 +161,36 @@ export function gardenStore(legacyStorage,visible){
     return resultOf(plant,setup);
   }
   return {
-    read:()=>transaction('readwrite',snapshot),
+    async read(){
+      const next=await transaction('readwrite',(records,raw,setup)=>{
+        const current=snapshot(records,raw,setup);
+        // An older tab can remove a frame without knowing about the separate
+        // files. Reconcile them once per launch, only after a successful read.
+        if(!checkedOriginals && !current.resetCleanup)pruneOriginals(records,frameOriginalIds(current.plant));
+        return current;
+      });
+      if(!next.resetCleanup)checkedOriginals=true;
+      return next;
+    },
     exportRaw:()=>transaction('readonly',(_,raw,setup)=>rawText(source(raw,setup))),
+    async exportBackup(expectedRaw){
+      const snapshot=await transaction('readonly',(records,row,setup)=>{
+        const raw=rawText(source(row,setup)),captured={raw,originals:null};
+        if(expectedRaw!==undefined && raw!==expectedRaw)throw stale();
+        loadSavedOriginals(records,raw,files=>{captured.originals=files;});
+        return captured;
+      });
+      return packGardenBackup(snapshot.raw,snapshot.originals);
+    },
+    async readFrameOriginal(id){
+      if(!validOriginalId(id))return null;
+      const db=await connection();
+      return new Promise((resolve,reject)=>{
+        const req=db.transaction(storeName,'readonly').objectStore(storeName).get(assetKey(id));
+        req.onsuccess=()=>resolve(req.result instanceof Blob?req.result:null);
+        req.onerror=()=>reject(req.error);
+      });
+    },
     mayChangeAlerts(epoch,plantId){
       return transaction('readonly',(_,raw,setup)=>!setup.resetCleanup && setup.epoch===epoch &&
         (raw===undefined ? !plantId && ['welcome','name'].includes(setup.phase || 'welcome') : JSON.parse(raw).id===plantId));
@@ -140,22 +222,41 @@ export function gardenStore(legacyStorage,visible){
         return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,invite:setup.invite,phase:next,...(next==='name'?{draft}:{})});
       });
     },
-    update(expected,fn){
+    async update(expected,fn,options){
+      let staged;
+      if(options?.frameOriginal){
+        const {id,blob}=options.frameOriginal;
+        if(!validOriginalId(id))throw new SaveIssue('The frame photo has an invalid ID.');
+        staged={id,blob:await canonicalFrameBlob(blob)};
+      }
       return change(expected,(records,raw,setup)=>{
         const current=snapshot(records,raw,setup);
         if(!current.plant || current.plant.id!==expected.plant?.id)throw stale();
         const plant=fn(current.plant);
         const phase=current.phase==='water' && plant.wateredAt!==null?'watered':current.phase;
         if(plant===current.plant && phase===current.phase)return current;
+        updateOriginals(records,current.plant,plant,staged);
         return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,phase,invite:setup.invite});
       });
     },
-    replace(expected,backup){
+    async replace(expected,backup){
+      // Decode before opening the transaction. Confirm the reviewed garden
+      // again inside it, including if another window changed during decoding.
+      const {plant,originals}=await prepareRestoredGarden(backup,Date.now(),visible());
       return change(expected,(records,raw,setup)=>{
         confirm(expected,raw,setup);
-        const plant=loadSnapshot(JSON.stringify(backup),Date.now(),visible());
         const original=source(raw,setup);
-        if(original!==undefined)records.put(original,'before-restore');
+        if(original!==undefined){
+          records.put(original,'before-restore');
+          loadSavedOriginals(records,original,files=>{
+            if(files.size)records.put(files,previousOriginalsKey);
+            else records.delete(previousOriginalsKey);
+          });
+        }
+        // Also clear assets orphaned by an older open window. Reads of the old
+        // blobs precede deletes. Freshly remapped IDs follow this key snapshot.
+        pruneOriginals(records,new Set());
+        for(const [id,blob] of originals)records.add(blob,assetKey(id));
         return save(records,plant,{epoch:crypto.randomUUID(),revision:0,phase:'game'});
       });
     },
@@ -184,3 +285,6 @@ export function gardenStore(legacyStorage,visible){
     },
   };
 }
+
+export const deviceGarden=gardenStore(()=>localStorage,()=>!document.hidden);
+export const readFrameOriginal=deviceGarden.readFrameOriginal;

@@ -141,3 +141,18 @@ test('photo and journal budgets use UTF-8 bytes and permit successive reductions
   assert.equal(fitsBackupChange(above,atLimit),true);
   assert.equal(fitsBackupChange(atLimit,small),true);
 });
+
+test('frames with identical previews still compare the selected original before changing the picture',()=>{
+  const initial=checkIn(seed(),morning);
+  const garden=buy({...initial,gardenLife:{...initial.gardenLife,balance:20}},'oak','frame','0/decor-stand');
+  const first={src:'data:image/jpeg;base64,/9j/AA==',width:40,height:32,x:50,y:50,originalId:crypto.randomUUID()};
+  const second={...first,originalId:crypto.randomUUID()};
+  const saved=framePhoto(garden,'frame',first);
+  const replaced=framePhoto(saved,'frame',second,first.originalId);
+  assert.equal(replaced.gardenLife.items[0].photo,second);
+  assert.equal(framePhoto(replaced,'frame',null,first.originalId),replaced);
+  assert.equal(framePhoto(replaced,'frame',first,second.src),replaced);
+  assert.deepEqual(readPlant(JSON.stringify(replaced),morning),replaced);
+  assert.equal(framePhoto(replaced,'frame',{...second,originalId:'invalid'},second.originalId),replaced);
+  assert.equal(framePhoto(replaced,'frame',null,second.originalId).gardenLife.items[0].photo,undefined);
+});

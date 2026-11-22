@@ -236,56 +236,30 @@ const sprites={
   oak:makeSprite(g=>pictureFrame(g,'oak')),lacquer:makeSprite(g=>pictureFrame(g,'lacquer')),
 };
 
-// Accept only locally embedded photos. Decoding and center-crop rendering are
-// shared by the room, previews, and the postcard, including reduced-motion views.
-const photoCache=new Map();
-function photoResource(photo,onReady){
-  const src=typeof photo==='string'?photo:photo?.src;
-  if(typeof src!=='string'||!/^data:image\/(?:jpeg|png|webp);base64,/.test(src)||typeof Image==='undefined')return null;
-  let entry=photoCache.get(src);
-  if(!entry){
-    if(photoCache.size>=24)photoCache.delete(photoCache.keys().next().value);
-    const image=new Image();
-    entry={image,loaded:false,settled:false,listeners:new Set(),tiles:new Map()};
-    photoCache.set(src,entry);
-    entry.ready=new Promise(resolve=>{
-      const finish=loaded=>{
-        entry.loaded=loaded;entry.settled=true;resolve();
-        for(const listener of entry.listeners)listener();
-        entry.listeners.clear();
-      };
-      image.onload=()=>finish(true);image.onerror=()=>finish(false);image.src=src;
-    });
-  }
-  if(!entry.settled && onReady)entry.listeners.add(onReady);
-  return entry;
-}
-export function prepareRoomPhotos(items=[]){
-  return Promise.all(items.filter(item=>Object.hasOwn(frameData,item.sku)).map(item=>photoResource(item.photo)?.ready));
-}
-function framedPhoto(ctx,photo,sku,x,y,size,night,onReady){
-  const entry=photoResource(photo,onReady);
-  if(!entry?.loaded)return;
-  const aperture=frameData[sku].aperture,{w,h}=aperture;
-  const focal=v=>Number.isFinite(v)?Math.max(0,Math.min(100,v))/100:.5;
-  const u=focal(photo.x),v=focal(photo.y),key=[sku,u,v].join('/');
-  let tile=entry.tiles.get(key);
-  if(!tile){
-    const img=entry.image,sw=Math.min(img.naturalWidth,img.naturalHeight*w/h),sh=sw*h/w;
-    tile=typeof OffscreenCanvas!=='undefined'?new OffscreenCanvas(w,h):ctx.canvas.ownerDocument.createElement('canvas');
-    tile.width=w;tile.height=h;
-    const brush=tile.getContext('2d');brush.imageSmoothingEnabled=true;
-    brush.drawImage(img,(img.naturalWidth-sw)*u,(img.naturalHeight-sh)*v,sw,sh,0,0,w,h);
-    if(entry.tiles.size>=8)entry.tiles.clear();
-    entry.tiles.set(key,tile);
-  }
-  const left=Math.round(x+aperture.x*size),top=Math.round(y+aperture.y*size);
-  const tw=Math.round(x+(aperture.x+w)*size)-left,th=Math.round(y+(aperture.y+h)*size)-top;
-  ctx.imageSmoothingEnabled=false;ctx.drawImage(tile,left,top,tw,th);
-  if(night>0){ctx.fillStyle='rgba(23,35,60,'+Math.min(.48,.48*night)+')';ctx.fillRect(left,top,tw,th);}
+export function framePhotoBounds(sku,x,y,size=1){
+  const a=frameData[sku]?.aperture;
+  if(!a)return null;
+  const left=Math.round(x+a.x*size),top=Math.round(y+a.y*size);
+  return {left,top,width:Math.round(x+(a.x+a.w)*size)-left,height:Math.round(y+(a.y+a.h)*size)-top};
 }
 
-function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,onPhotoReady,stand=false,spinTime=null}){
+function framedPhoto(ctx,image,photo,sku,x,y,size,night){
+  const {left,top,width,height}=framePhotoBounds(sku,x,y,size);
+  const w=image.naturalWidth,h=image.naturalHeight;
+  const sw=Math.min(w,h*width/height),sh=sw*height/width;
+  const u=(photo.x??50)/100,v=(photo.y??50)/100;
+  ctx.fillStyle='#efeeda';
+  ctx.fillRect(left,top,width,height);
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
+  ctx.drawImage(image,(w-sw)*u,(h-sh)*v,sw,sh,left,top,width,height);
+  if(night>0){
+    ctx.fillStyle='rgba(23,35,60,'+Math.min(.48,.48*night)+')';
+    ctx.fillRect(left,top,width,height);
+  }
+}
+
+function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=false,spinTime=null}){
   const art=sku==='record' && spinTime!==null ? recordFrames[Math.floor(spinTime/255)%recordFrames.length] : sprites[sku];
   if(!art)return;
   const ink=palette(night,selected);
@@ -305,20 +279,20 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,onPhotoReady,s
     ctx.fillStyle=ink[i];
     for(let j=0;j<cells.length;j+=3)r(cells[j],cells[j+1],cells[j+2],1);
   });
-  if(photo&&Object.hasOwn(frameData,sku))framedPhoto(ctx,photo,sku,x,y,size,night,onPhotoReady);
+  if(image && photo)framedPhoto(ctx,image,photo,sku,x,y,size,night);
   ctx.restore();
 }
-export function drawRoomDecor(ctx,view,items,{night=0,highlighted,onPhotoReady,playingItemId=null,time=0,reducedMotion=false}={}){
+export function drawRoomDecor(ctx,view,items,{night=0,highlighted,photos,playingItemId=null,time=0,reducedMotion=false}={}){
   for(const spot of decorPlaces(view)){
     const item=items.find(i=>i.slot===spot.slot && Object.hasOwn(sprites,i.sku));
-    if(item)drawDecor(ctx,{...item,x:spot.baseX,y:spot.baseY,size:spot.size,stand:spot.stand,night,onPhotoReady,
+    if(item)drawDecor(ctx,{...item,x:spot.baseX,y:spot.baseY,size:spot.size,stand:spot.stand,night,image:photos?.get(item.id),
       selected:highlighted===spot.slot || highlighted===item.id,
       spinTime:playingItemId!=null && item.id===playingItemId && !reducedMotion ? Math.max(0,time) : null});
   }
 }
 
 /** Native pixel preview centered horizontally; y is the baseline of the item. */
-export function drawShopPreview(ctx,{sku,x,y,size=1,photo,onPhotoReady}){
+export function drawShopPreview(ctx,{sku,x,y,size=1}){
   if(sku==='terra'||sku==='wave'){
     drawPottedPlant(ctx,{x,y,size,potSku:sku,reducedMotion:true});return;
   }
@@ -326,5 +300,5 @@ export function drawShopPreview(ctx,{sku,x,y,size=1,photo,onPhotoReady}){
     const species=sku==='snake'?'snake-plant':sku;
     drawPottedPlant(ctx,{x,y,size,plant:{id:'nursery-'+species,species,potStyle:0},reducedMotion:true});return;
   }
-  if(Object.hasOwn(sprites,sku))drawDecor(ctx,{sku,x,y,size,photo,onPhotoReady});
+  if(Object.hasOwn(sprites,sku))drawDecor(ctx,{sku,x,y,size});
 }

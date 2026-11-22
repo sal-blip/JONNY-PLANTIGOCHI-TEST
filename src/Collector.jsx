@@ -3,7 +3,8 @@ import {ChevronLeft,ChevronRight,Smartphone,X} from 'lucide-react';
 import SwipeCue from './SwipeCue.jsx';
 import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
-import {decorPlaces,prepareRoomPhotos} from './roomShopArt.js';
+import {decorPlaces} from './roomShopArt.js';
+import {prepareRoomPhotos} from './framePhotoMedia.js';
 import {catalog,lifeOf,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackupChange} from './gardenEconomy.js';
 import './gardenMarket.css';
 import GardenKeepsakes from './GardenKeepsakes.jsx';
@@ -200,7 +201,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       else if(kind==='replant'){setPanel(null);returnToToy?.();}
     }finally{pending.current=false;if(mounted.current)setBusy(false);}
   }
-  async function change(operation){
+  async function change(operation,frameOriginal){
     if(pending.current)return false;
     pending.current=true;setBusy(true);
     let changed=false,tooBig=false;
@@ -210,7 +211,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         if(next===p)return p;
         if(!fitsBackupChange(p,next)){tooBig=true;return p;}
         changed=true;return next;
-      });
+      },{frameOriginal});
       if(!ok || !changed)setNotice(tooBig?'Your garden is near its backup limit. Remove a frame photo and try again.':'Could not save this change. Check the current item or spot and try again.');
       return ok && changed;
     }finally{pending.current=false;if(mounted.current)setBusy(false);}
@@ -419,8 +420,8 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const image=document.createElement('canvas');image.width=ROOM_WIDTH*3;image.height=ROOM_HEIGHT*3;
     const plants=placesFor(page).map(spot=>collection.get(slotFor(page,spot)));
     try{
-      await prepareRoomPhotos(items);
-      drawRoom(image,{hour,shopItems:items,plants,jarProgress,leafCount:plant.book.length,roomIndex:page,time:0,reducedMotion:true});
+      const photos=await prepareRoomPhotos(items,page);
+      drawRoom(image,{hour,shopItems:items,photos,plants,jarProgress,leafCount:plant.book.length,roomIndex:page,time:0,reducedMotion:true});
       const blob=await new Promise(resolve=>image.toBlob(resolve,'image/png'));
       if(!blob || !mounted.current)return null;
       const file=new File([blob],'plantigochi-'+viewName(page).toLowerCase().replaceAll(' ','-')+'.png',{type:'image/png'});
@@ -510,7 +511,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
           if(item.id===playingRecordId)onSelectRecord(null);
           closePanel();setNotice(catalog[item.sku].name+' put in inventory.');
         }}}
-        savePhoto={(photo,expectedSrc)=>change(p=>framePhoto(p,item.id,photo,expectedSrc))}>
+        savePhoto={(photo,expected,frameOriginal)=>change(p=>framePhoto(p,item.id,photo,expected),frameOriginal)}>
         {itemPlant && <p className="room-guide">Moving just this pot leaves {itemPlant.name || speciesName(itemPlant)} here.</p>}
         {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={plant.sound} playing={playingRecordId===item.id} onPlayingChange={yes=>onSelectRecord(yes?item.id:null)}/>}
       </ShopItemDetail>}
