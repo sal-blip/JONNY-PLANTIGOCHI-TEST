@@ -23,4 +23,8 @@ The second approved art pass pairs a walnut record player and paper-globe floor 
 
 The approved iSEED Journal uses a gold fern, four cloth ties and a red ribbon on indigo cloth. It occupies the third 48 × 48 launcher cell. When regenerating the atlas, compare each neighboring tile with its previous pixels. [Approved Journal icon](../../.agents/skills/plantigochi-sprite-review/references/iseed-journal/approved/tile.png)
 
+The third art pass uses an open-base hardwood coffee table. The two trestles share a mirrored profile and meet the tabletop at the same height. The rug shows through the space between them. Both tabletop plant positions use the original anchors. [Table reference and lighting checks](../../.agents/skills/plantigochi-sprite-review/references/coffee-table/README.md)
+
+The approved Blue wave pot has a pale glaze, spaced cobalt arches and an exposed clay foot. Its pattern remains visible below a trailing Golden pothos. The approved iSEED Inventory tile depicts an open cedar crate with a recessed handhold, indigo cloth and a seed packet. It occupies the second launcher cell. [Blue wave pot art and checks](../../.agents/skills/plantigochi-sprite-review/references/blue-wave-pot/README.md) · [Approved Inventory icon](../../.agents/skills/plantigochi-sprite-review/references/iseed-inventory/approved/tile.png)
+
 The unfurnished move-in room, gift cutting, furniture-store overhaul and separate installable variant remain deferred. Daily rewards and the iSEED shop already exist in the current game. [Historical roadmap](../plantigochi-roadmap.md)

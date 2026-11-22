@@ -1,3 +1,4 @@
+import * as wavePot from './blueWavePotSprite.js';
 import {drawSelectionContour} from './roomContour.js';
 import * as pothosFoliage from './goldenPothosSprite.js';
 import * as snakeFoliage from './snakePlantSprite.js';
@@ -93,7 +94,7 @@ const ceramics = [
 ];
 const shopPots={
   terra:{lift:3,tones:['#563d38','#75473b','#985239','#b76644','#cc7950','#df9061','#eca579','#f4c394']},
-  wave:{lift:2,tones:['#34475c','#254f7c','#416c93','#7292ac','#96a9af','#c0c7bc','#dedfca','#f4ecd5','#fbf2df']},
+  wave:{lift:2,tones:wavePot.spritePalette},
 };
 const goldLeaf=pothosFoliage.spritePalette,snakeLeaf=snakeFoliage.spritePalette;
 const pothosInk=38,snakeInk=pothosInk+goldLeaf.length,glazeInk=snakeInk+snakeLeaf.length;
@@ -176,42 +177,13 @@ function craftedPot(grid,finish){
     span(-8,-18,4,soilLight);span(2,-19,3,loam);dot(-2,-19,soilLight);
     p(-14,-18,2,7);p(-10,-17,7,7);p(11,-17,3,2);p(13,-18,1,3);
   }else{
-    // A narrow neck opens onto a broad, softly faceted ivory stoneware belly.
-    const walls=[9,10,12,13,14,14,14,14,13,13,12,11,10,8,7];
-    walls.forEach((r,i)=>{
-      const y=i-17;
-      p(-r,y,2*r+1,0);p(-r+1,y,2*r-1,4);p(-r+1,y,2*r-4,5);
-      p(-r+2,y,2*r-6,6);p(-r+3,y,r+2,7);p(-r+4,y,3,8);
-    });
-    // Paint each fan from the back course forward. The approaching wave masks
-    // the course above, just like overlapping scales on a seigaiha textile.
-    function fan(cx,base){
-      const outerRise=[4,4,4,3,2,0];
-      for(let side=-5;side<=5;side++){
-        const hx=cx+side,peak=outerRise[Math.abs(side)];
-        for(let j=0;j<=peak;j++){
-          const yy=base-j,rad=walls[yy+17];
-          if(rad && Math.abs(hx)<rad-1)d(hx,yy,hx>8?5:hx<0?7:6);
-        }
-      }
-      for(const [radius,rise] of [[5,outerRise],[3,[2,2,1,0]],[1,[0,0]]]){
-        for(let dx=-radius;dx<=radius;dx++){
-          const ax=cx+dx,ay=base-rise[Math.abs(dx)],rad=walls[ay+17];
-          if(rad && Math.abs(ax)<rad-1)d(ax,ay,ax>6?0:1);
-          if(Math.abs(dx)===4 && radius===5 && rad && Math.abs(ax)<rad-1)d(ax,ay+1,2);
-        }
+    for(let row=0;row<wavePot.spriteRows.length;row++){
+      const cells=wavePot.spriteRows[row];
+      for(let col=0;col<cells.length;col++){
+        const shade=cells.charCodeAt(col)-65;
+        if(shade>=0)d(wavePot.spriteOffset.x+col,wavePot.spriteOffset.y+row,shade);
       }
     }
-    for(const cx of [-10,0,10])fan(cx,-8);
-    for(const cx of [-5,5])fan(cx,-5);
-    // Reserve bare cream at the neck and lower edge so the blue rhythm reads.
-    p(-8,-3,15,5);p(-6,-3,10,6);p(-7,-2,15,1);p(-6,-2,8,3);
-    p(-7,-1,15,0);p(-6,-1,11,2);p(-6,0,13,0);
-    p(-6,-21,13,2);p(-9,-20,19,1);p(-10,-19,21,2);
-    p(-10,-18,21,4);p(-9,-17,19,2);p(-7,-17,13,3);
-    p(-9,-20,16,6);p(-6,-21,12,7);p(-9,-19,17,7);p(-8,-18,14,7);
-    span(-6,-20,13,soilShadow);span(-8,-19,17,soil);span(-6,-19,4,soilLight);
-    span(2,-19,3,loam);p(-7,-18,6,8);p(-5,-16,6,8);
   }
 }
 

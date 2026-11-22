@@ -1,6 +1,6 @@
-# Recheck artwork approved before the floor lamp
+# Recheck artwork against its original room
 
-The Golden pothos, snake plant, Maneki-neko and record player approval images include the living room as it looked in revision `580851f`. A full-room comparison includes the furniture behind the subject. The shop tiles use a transparent background and can be checked directly.
+The Golden pothos, snake plant, Maneki-neko and record player approval images include the living room as it looked in revision `580851f`. A full-room comparison includes the furniture behind the subject. The shop tiles use a transparent background and can be checked directly. The blue wave pot was approved later, on the room from `adced93`, before the open coffee table. [Blue wave pot checks](blue-wave-pot/README.md)
 
 To check the current subjects against their frozen room images, copy the current source to a temporary directory and give it the original scenery module. The comparison tool will still use the current shop layout, sprites, paint order and item placements.
 
@@ -32,9 +32,11 @@ do
 done
 ```
 
-Each comparison's `before/room.png` renders the installed artwork against the current scenery. To verify the current empty room and the record player inside it, run both checks below. The lamp check compares the complete native room at noon and night. The playback check compares the turntable against its frozen frames, then checks how it paints on each current mount under daytime and nighttime lighting.
+Each comparison’s `before/room.png` renders the current subject against today’s scenery. The lamp’s historical captures include the previous table. Its checker compares the illuminated area with those original pixels. The new table supplies full-room reference images at noon and night with its two plant mounts empty and occupied. The wave pot and record player also use the earlier room imagery to isolate their subjects, then check them through the current renderer. [Lamp](floor-lamp/README.md) · [Open coffee table](coffee-table/README.md) · [Blue wave pot](blue-wave-pot/README.md) · [Record player](record-player/README.md)
 
 ```sh
 node "$review/references/floor-lamp/verify.mjs"
+node "$review/references/coffee-table/verify.mjs"
+node "$review/references/blue-wave-pot/verify-planted.mjs" .
 node "$review/references/record-player/verify-playback.mjs"
 ```

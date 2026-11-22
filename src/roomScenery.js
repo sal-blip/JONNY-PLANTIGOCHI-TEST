@@ -696,15 +696,96 @@ function lamp(ctx,b,raw,day) {
 
 function coffee(b){
   const {r,p,l,o}=b;
-  o(204,277,68,5,'#a38165');
-  for(const [x,y,lean] of [[134,251,-5],[255,251,5],[151,251,-2],[243,251,2]]){
-    p([x,y,x+6,y,x+5+lean,y+27,x+1+lean,y+27],wood.dark);
-    l(x+2,y+3,x+2+lean,y+24,wood.lit);
+  const deep='#594437',dark='#70513e',shade='#8b6247',end='#976e50',
+    face='#ac7b55',edge='#bd8b60',honey='#c89a6c',pale='#dbb183';
+
+  // Both end frames are stamped from the same native cuts. The coordinates
+  // reflect exactly across x194.5. Each shoulder sits against the slab apron.
+  p([136,259,246,259,261,274,260,277,249,279,140,278,130,275],'rgba(75,50,43,.16)');
+  for(const [center,facing] of [[141,1],[248,-1]]){
+    const cast=[-8,276,0,265,9,264,11,266,5,278,3,280,-7,280];
+    p(cast.map((n,i)=>i%2?n:center+facing*n+2),'rgba(66,45,38,.19)');
   }
-  p([137,239,250,239,263,245,267,249,263,253,253,256,135,256,125,252,123,248,126,244],wood.dark);
-  p([137,238,249,238,259,242,264,247,262,250,252,252,136,252,126,249,126,246,129,243],wood.lit);
-  l(137,239,247,239,wood.pale);l(131,244,137,241,wood.gold);l(138,253,252,253,wood.mid);
-  for(let i=0;i<10;i++){const x=136+hash(220+i)%100,y=241+hash(i+75)%9;r(x,y,4+i%7,1,i%2?wood.gold:wood.mid);}
+
+  const trestle=[
+    '..DDDDDDDDDDDDDDDDDD...',
+    '..DMMMMMMMMMMEEDDDDD...',
+    '..DEEEEEEEEEEEEDDDDD...',
+    '..DDDDDDDDDDDDDBBBQD...',
+    '.....DKKKKKKKDBBBBQD...',
+    '.....NFFFFFFIBBBBBQD...',
+    '.....FNFFFFIFBBBBBQD...',
+    '.....FNFFFFIBBBBBBQD...',
+    '......NFFFFIBBBBBBQD...',
+    '......NFFFFIBBBBBQBD...',
+    '......NFFFFIBBBBBQDBKK.',
+    '......FFFFFIBBBBBBDBBK.',
+    '......FFFFFFBBBBBDBBKK.',
+    '......FFFFFFBBBBDDBBK..',
+    '.....DFFFFFBBBBBDBBKK..',
+    '.....DFFFFFBBBBDBBKK...',
+    '....KDNFFFIBBBDBBBKK...',
+    '...KDNFFFFIFBDDBBKK....',
+    '..KBDNFFFFFIDDBBKK.....',
+    '..BDDNFFFFFIDDBBKK.....',
+    '.BBDFMMMMMMMFBFKK......',
+    'KFHDDDDDDDDDDFFKK......',
+    'KFMMMMMMMMMMFFKK.......',
+    '.FFEPPPEEEEEFFK........',
+    '.KKDDDDDDDDDDKK........',
+    '...KKKKKKKKKKK.........',
+  ];
+  const common={
+    K:'#594536',D:'#75553e',S:'#8c6549',E:'#986f50',F:'#ae7e57',
+    M:'#bd8d64',H:'#cea375',P:'#966e4d',Q:'#684e3d',
+  };
+  for(const [center,facing] of [[141,1],[248,-1]]){
+    // The shoulders, posts and returning feet match on both. Only
+    // the two vertical bevels respond to which way they face the window.
+    const ink=facing===1?{...common,B:'#805f46',N:'#b78a61',I:'#9e7957'}:
+      {...common,B:'#88674d',N:'#aa805a',I:'#b1845c'};
+    for(const [v,row] of trestle.entries()){
+      for(let col=0;col<row.length;){
+        const first=col,shade=row[col++];
+        while(col<row.length && row[col]===shade)col++;
+        if(shade==='.')continue;
+        const from=facing===1?first:col-1;
+        r(center+(from-9)*facing,254+v,col-first,1,ink[shade]);
+      }
+    }
+  }
+
+  // Slab and shaped underside. The lip steps down to a half-bevel on the near
+  // face; two small support caps bear onto the posts immediately below it.
+  p([128,249,260,249,259,255,256,257,132,257,129,256],dark);
+  r(144,256,100,1,'#875e43');
+  p([128,249,260,249,260,253,256,256,130,256,123,253,123,249],deep);
+  p([125,249,265,248,265,252,261,255,131,255,125,253],shade);
+  p([129,250,263,250,261,254,131,254,126,252],face);
+  l(133,254,258,254,'#8e6449');l(136,253,170,253,'#b38057');
+  l(220,253,247,253,'#b38057');
+
+  // A planed keyaki slab. The two far corners and the longer near arris
+  // project into the same tabletop plane as both existing plant anchors.
+  p([133,238,137,237,251,237,255,238,264,245,267,248,267,250,263,253,
+    128,253,123,251,122,248,124,246],dark);
+  p([134,238,252,238,255,239,264,246,265,248,262,251,
+    129,251,124,249,124,247],honey);
+  p([134,239,252,239,258,242,130,242], '#c2976c');
+  p([130,243,258,243,263,246,126,246],'#cda174');
+  p([126,247,263,247,264,248,261,250,129,250,125,249],'#bd9065');
+  // A few long, branching grain ribbons keep the broad center quiet. Their
+  // closed ends follow the grain of the board and the perspective of the top.
+  l(139,239,157,239,'#d1a77d');l(160,239,175,239,'#c69b70');
+  l(144,242,167,242,'#b2855f');l(167,242,173,241,'#b2855f');
+  l(173,241,184,241,'#bb8e63');r(131,243,11,1,'#d4aa7a');
+  l(182,246,194,246,'#b98c63');l(194,246,206,244,'#b98c63');
+  l(206,244,219,244,'#b98c63');l(219,244,224,245,'#b98c63');
+  l(198,246,207,245,'#d8ad7d');r(208,245,7,1,'#d8ad7d');
+  r(225,241,17,1,'#c99e72');r(150,248,23,1,'#c89d70');
+  l(132,251,258,251,pale);r(174,251,21,1,'#c99c6c');
+  l(258,251,264,248,'#d0a271');l(124,248,128,250,'#d4a674');
+
   // The teacup sits on the near corner of the table.
   o(256,248,7,2,'#ad8265');o(256,247,6,1,'#e2c79f');
   r(252,241,8,6,'#b49b7e');r(253,242,6,4,'#e1cdab');r(254,240,5,1,'#eedec0');

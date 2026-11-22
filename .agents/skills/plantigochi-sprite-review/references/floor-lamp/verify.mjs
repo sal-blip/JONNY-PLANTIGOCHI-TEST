@@ -11,7 +11,7 @@ globalThis.OffscreenCanvas=class {
 const regions=[
   ['socket',[335,140,25,25]],
   ['foot',[330,207,43,21]],
-  ['full room',[0,0,400,320]],
+  ['lamp and night halo',[294,76,106,157]],
 ];
 for(const [hour,file] of [[12,'room.png'],[2,'night-room.png']]){
   const canvas=createCanvas(400,320);
@@ -26,5 +26,5 @@ for(const [hour,file] of [[12,'room.png'],[2,'night-room.png']]){
     const expected=reference.getImageData(...rect).data;
     assert.ok(Buffer.from(actual).equals(Buffer.from(expected)),file+' differs in '+label);
   }
-  console.log(file+' matches the approved socket, foot and full room.');
+  console.log(file+' matches the approved socket, foot and surrounding light.');
 }
