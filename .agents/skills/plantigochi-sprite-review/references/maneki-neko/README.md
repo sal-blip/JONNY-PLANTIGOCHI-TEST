@@ -30,13 +30,6 @@ python "$review/scripts/encode-sprite.py" "$out/porcelain.png" src/manekiNekoSpr
 npm ci --prefix "$review/scripts"
 ```
 
-Set `before` to a separate checkout of the prior game code. Revision `5254d05` contains the approved Snake plant and Shop icon alongside the earlier in-game cat. The renderer uses midday, reduced motion and the actual shop and room code.
-
-```sh
-before=../plantigochi-before
-node "$review/scripts/render-comparison.mjs" --before "$before" --after . --sku neko --room 0 --slot 2 --out "$out/table" --verify-after "$ref/approved"
-node "$review/scripts/render-comparison.mjs" --before "$before" --after . --sku neko --room 0 --slot 0 --out "$out/bookcase"
-cmp "$out/bookcase/after/room.png" "$ref/approved/bookcase.png"
-```
+The approval used the original room scenery. The native verification checks the shop tile, the sofa-side table at slot 2 and the bookcase at slot 0 with that scenery, then renders each mount against the current room. [Recheck the historical captures](../historical-backdrop.md)
 
 The shop draws the cat at (32, 57) and 1.65× in a 72 × 64 tile. The sofa-side table draws it at (317, 240) and 1× in the 400 × 320 living room. The top of the bookcase is (77, 46) at 0.83×. Check the resting paws against each surface, then check the existing selection outline and night tint. Store and inventory use the same room-art renderer. [Renderer](../../../../../src/roomShopArt.js) · [Encoded sprite](../../../../../src/manekiNekoSprite.js)

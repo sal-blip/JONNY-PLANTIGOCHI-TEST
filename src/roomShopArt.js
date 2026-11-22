@@ -1,3 +1,4 @@
+import {spriteOffset as deckOrigin, spritePalette as deckColors, spriteRows as deckRows} from './recordPlayerSprite.js';
 import {spriteOffset as catOrigin, spritePalette as catColors, spriteRows as catRows} from './manekiNekoSprite.js';
 import {drawPottedPlant} from './roomPlant.js';
 import {drawSelectionContour} from './roomContour.js';
@@ -13,6 +14,9 @@ export function decorPlaces(view=0){
   }));
 }
 
+const printedLabelHighlight = '#f9e7b3';
+const printedLabelShadow = '#436963';
+
 const colors={
   // Shelf woods, then porcelain, metal, glazing and the inks for the prints.
   d:'#735747',h:'#ac8968',n:'#bd8761',
@@ -22,7 +26,7 @@ const colors={
   Q:'#542f3a',C:'#913e42',A:'#bd6655',R:'#e47d66',P:'#e4a292',
   U:'#344752',V:'#546a75',S:'#789598',L:'#aebfb9',T:'#c7d0bb',Z:'#527e76',
   v:'#698a93',s:'#93aeb0',l:'#cfdbcf',
-  ...Object.fromEntries(catColors.map(color => [color, color])),
+  ...Object.fromEntries([...catColors, ...deckColors, printedLabelHighlight, printedLabelShadow].map(color => [color, color])),
 };
 const glazingAlpha={v:.73,s:.55,l:.68};
 const codes=Object.keys(colors);
@@ -95,48 +99,29 @@ function drawing(){
   return {rect,line,poly,oval,finish};
 }
 
-// Bake the approved porcelain pixels into the same runs used for room lighting and selection.
-function luckyCat({rect}) {
-  catRows.forEach((row, y) => {
+// Decode each approved print at its own anchor into the room's lighting and contour runs.
+function drawPixelSprite({rect}, origin, palette, rows) {
+  rows.forEach((row, y) => {
     for (let x = 0; x < row.length; x++) {
       if (row[x] === ' ') continue;
       const ink = row.charCodeAt(x) - 65;
-      rect(catOrigin.x + x, catOrigin.y + y, 1, 1, catColors[ink]);
+      rect(origin.x + x, origin.y + y, 1, 1, palette[ink]);
     }
   });
 }
 
-const labelOrbit=[[-2,-1],[-1,-1],[1,-1],[2,0],[1,1],[-1,1],[-2,0]];
+// The first two pixels of each frame form the light stroke. The third is the dark dot.
+const labelOrbit = [
+  [[-3,-1],[-2,-1],[2,1]], [[-1,-2],[0,-2],[0,1]],
+  [[2,-1],[3,-1],[-2,1]], [[3,0],[3,1],[-3,0]],
+  [[1,1],[2,1],[-2,-1]], [[-1,2],[-2,1],[1,-1]], [[-3,1],[-3,0],[2,0]],
+];
 
-function turntable({poly,rect,line,oval},phase=0){
-  // Open smoke-blue Perspex cover, polished edge, two brass hinges.
-  poly([[-14,-30],[17,-30],[19,-28],[16,-17],[-16,-17],[-17,-19]],'U');
-  poly([[-14,-29],[16,-29],[17,-28],[15,-19],[-15,-19],[-15,-22]],'v');
-  poly([[-13,-28],[15,-28],[14,-21],[-15,-21]],'s');
-  poly([[-13,-28],[-3,-28],[-10,-22],[-14,-22]],'l');
-  line(-8,-23,-3,-27,'s');line(6,-24,10,-27,'l');
-  line(-13,-29,15,-29,'T');line(17,-27,15,-20,'L');
-  rect(-11,-20,4,3,'U');rect(-10,-20,3,1,'M');rect(9,-20,4,3,'U');rect(10,-20,2,1,'M');
-  // The orthographic deck has a broad top plane, walnut front and short feet.
-  poly([[-15,-19],[17,-19],[20,-17],[18,-6],[17,-3],[15,-2],[-17,-2],[-20,-4],[-20,-9]],'K');
-  poly([[-15,-18],[16,-18],[18,-17],[15,-8],[-18,-8]],'B');
-  poly([[-15,-18],[15,-18],[17,-17],[14,-9],[-18,-9]],'W');
-  line(-16,-16,-18,-10,'J');
-  poly([[-19,-8],[14,-8],[15,-7],[15,-3],[-16,-3],[-19,-4]],'M');
-  rect(-17,-8,31,1,'O');rect(-17,-7,30,1,'N');rect(-11,-5,16,1,'D');rect(0,-6,12,1,'N');
-  rect(-17,-3,31,1,'D');line(16,-8,18,-16,'N');line(16,-7,18,-9,'D');
-  rect(-15,-2,4,2,'K');rect(10,-2,4,2,'K');rect(-15,-6,5,2,'D');rect(-14,-6,3,1,'J');
-  // Metal platter rim, dark vinyl grooves and a contrasting printed center label.
-  oval(-4,-12,11,5,'U');oval(-4,-13,11,5,'T');oval(-4,-14,11,5,'K');
-  oval(-4,-14,9,4,'V');oval(-4,-14,8,4,'U');oval(-4,-14,6,3,'K');
-  line(-13,-15,-10,-17,'S');rect(-9,-17,3,1,'V');
-  line(2,-11,5,-13,'V');rect(0,-11,3,1,'S');
-  oval(-4,-14,3,2,'A');rect(-6,-15,4,1,'R');rect(-5,-14,3,2,'P');
-  const [dx,dy]=labelOrbit[phase];rect(-4+dx,-14+dy,1,1,'J');rect(-4,-14,1,1,'U');
-  // Counterweight and a long aluminium arm; the dark cartridge lands on the LP.
-  oval(12,-17,3,2,'U');rect(11,-19,3,1,'T');rect(12,-17,2,2,'D');
-  line(12,-15,10,-11,'K');line(10,-11,4,-10,'K');line(12,-16,10,-12,'T');line(10,-12,4,-11,'F');
-  rect(3,-12,3,2,'U');rect(3,-12,2,1,'S');rect(14,-11,2,2,'U');rect(14,-11,1,1,'F');
+function turntable(g, phase) {
+  drawPixelSprite(g, deckOrigin, deckColors, deckRows);
+  labelOrbit[phase].forEach(([dx, dy], index) => {
+    g.rect(-4 + dx, -16 + dy, 1, 1, index < 2 ? printedLabelHighlight : printedLabelShadow);
+  });
 }
 
 const frameData={
@@ -203,7 +188,7 @@ function makeSprite(paint){
 }
 const recordFrames=labelOrbit.map((_,phase)=>makeSprite(g=>turntable(g,phase)));
 const sprites={
-  neko:makeSprite(luckyCat),record:recordFrames[0],
+  neko:makeSprite(g=>drawPixelSprite(g,catOrigin,catColors,catRows)),record:recordFrames[0],
   oak:makeSprite(g=>pictureFrame(g,'oak')),lacquer:makeSprite(g=>pictureFrame(g,'lacquer')),
 };
 

@@ -19,4 +19,8 @@ The Maneki-neko is a seated porcelain lucky cat with level eyes, balanced cheeks
 
 The first three-asset garden and iSEED art pass is approved. Its items are the Snake plant, Maneki-neko and iSEED Shop launcher icon. Each has its own approved reference. Publication is tracked in the [release record](releases.md).
 
+The second approved art pass pairs a walnut record player and paper-globe floor lamp in the living room. The globe rests in a flared brass socket that narrows into a five-pixel post. The cap, socket, post and foot share a centerline so the pedestal reads at room scale. Check the joint at noon and at night. The turntable keeps seven playback phases, with movement confined to the celadon label. Its shop scale leaves four clear pixels on each side. [Floor lamp and lighting checks](../../.agents/skills/plantigochi-sprite-review/references/floor-lamp/README.md) · [Turntable and playback checks](../../.agents/skills/plantigochi-sprite-review/references/record-player/README.md)
+
+The approved iSEED Journal uses a gold fern, four cloth ties and a red ribbon on indigo cloth. It occupies the third 48 × 48 launcher cell. When regenerating the atlas, compare each neighboring tile with its previous pixels. [Approved Journal icon](../../.agents/skills/plantigochi-sprite-review/references/iseed-journal/approved/tile.png)
+
 The unfurnished move-in room, gift cutting, furniture-store overhaul and separate installable variant remain deferred. Daily rewards and the iSEED shop already exist in the current game. [Historical roadmap](../plantigochi-roadmap.md)

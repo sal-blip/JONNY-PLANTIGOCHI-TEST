@@ -573,17 +573,127 @@ function sofa(b){
   r(140,216,2,2,'#d2aa77');r(280,216,2,2,'#d2aa77');
 }
 
-function lamp(ctx,b,raw,day,clock) {
-  const {r,l,p,o}=b,x=347;
-  if(day<.69)for(let j=0;j<6;j++)raw.o(x,133,45-j*5,48-j*6,'rgba(255,200,123,'+(.69-day)*.056+')');
-  o(x+3,222,15,3,'#9a805f');o(x,219,11,3,'#60594a');o(x,218,9,2,'#ac9566');
-  r(x-2,135,4,81,'#695f49');r(x-1,135,1,81,'#c3a46a');r(x+1,138,1,74,'#8a7854');
-  o(x,138,4,2,'#9c885d');r(x+10,138,1,13,'#a68a5f');r(x+9,150,3,4,'#c3a574');
-  p([x-11,111,x+10,111,x+19,134,x+17,138,x-18,138,x-20,135],'#887257');
-  raw.p([x-10,112,x+9,112,x+17,134,x-18,134],day<.48?'rgb(250,211,143)':'rgb(235,208,159)');
-  for(let i=-12;i<17;i+=5)l(x+i*.54,113,x+i,133,'#c2a473');
-  r(x-17,135,34,1,'#f5dfb0');r(x-3,109,6,2,'#b19563');
+// The shade's bamboo winding follows a hand-cut, asymmetric native pixel contour.
+const lampWidths = [
+  5,7,8,10,11,12,13,14,15,15,16,16,17,17,17,18,18,18,18,18,
+  18,18,17,17,17,16,16,15,15,14,13,12,11,10,8,7,5,
+];
+const lampPigments = [
+  ['#91785b','#a27049'], // outside edge
+  ['#bea88a','#d39360'], // paper turning away
+  ['#d8c7a9','#ecb979'],
+  ['#e9dbbc','#f8d18d'],
+  ['#f3e8cc','#ffdfa4'],
+  ['#f9efd6','#ffe9b5'], // soft light through the paper
+  ['#ae9679','#c58d5f'], // thin bamboo winding
+  ['#c3ad8d','#daa46c'],
+  ['#d4c2a2','#eabd80'],
+  ['#e1d2b4','#f4d299'],
+].map(pair=>pair.map(rgb));
+
+function paintLampShade(raw,x,top,bulb){
+  const paper=lampPigments.map(([unlit,lit])=>css(blend(unlit,lit,bulb)));
+  // Vary each band with the shrinking cross-section. The front-left remains a
+  // broad, calm expanse of washi; the right seam turns into the room's shade.
+  for(let row=0;row<lampWidths.length;row++){
+    const radius=lampWidths[row],left=x-radius,width=2*radius+1,yy=top+row;
+    const shoulder=Math.max(0,5-row, row-30)/8;
+    const stations=[0,.035,.11+shoulder*.07,.22+shoulder*.12,.37+shoulder*.12,
+      .57-shoulder*.17,.71-shoulder*.10,.84-shoulder*.05,.95,1];
+    const colors=[0,2,3,4,5,4,3,2,1];
+    for(let k=0;k<colors.length;k++){
+      const start=Math.round(width*stations[k]),end=Math.round(width*stations[k+1]);
+      if(end>start)raw.r(left+start,yy,end-start,1,paper[colors[k]]);
+    }
+  }
+  // The descending spiral bows across the front. The stitches share the paper's
+  // varying value so the thin ribs remain visible both in sun and when backlit.
+  for(const row of [3,8,14,20,26,31,34]){
+    const radius=lampWidths[row],yy=top+row;
+    const a=Math.round(radius*.72),inner=Math.round(radius*.43);
+    raw.l(x-radius+1,yy,x-a,yy+1,paper[7]);
+    raw.l(x-a+1,yy+1,x-inner,yy+2,paper[8]);
+    raw.r(x-inner+1,yy+2,2*inner,1,paper[9]);
+    raw.l(x+inner+1,yy+2,x+a,yy+1,paper[8]);
+    raw.l(x+a+1,yy+1,x+radius-1,yy,paper[6]);
+  }
+  for(const [dx,dy,w] of [[-6,10,3],[-9,18,2],[0,24,3],[4,12,2],[-4,30,2]])
+    raw.r(x+dx,top+dy,w,1,paper[5]);
 }
+
+const lampShadeLayers=new WeakMap();
+function drawLampShade(ctx,raw,x,top,bulb){
+  if(!ctx.canvas){paintLampShade(raw,x,top,bulb);return;}
+  const level=Math.round(bulb*255);
+  let cached=lampShadeLayers.get(ctx.canvas);
+  if(!cached || cached.level!==level){
+    const tile=cached?.tile || makeBuffer(ctx,37,lampWidths.length);
+    if(!tile){paintLampShade(raw,x,top,bulb);return;}
+    const ink=tile.getContext('2d');
+    ink.clearRect(0,0,tile.width,tile.height);
+    paintLampShade(tools(ink,c=>c),18,0,level/255);
+    cached={level,tile};lampShadeLayers.set(ctx.canvas,cached);
+  }
+  ctx.drawImage(cached.tile,x-18,top);
+}
+
+function lamp(ctx,b,raw,day) {
+  const {r,l,o}=b,x=347,top=112;
+  const span=(y,radius,h,color)=>r(x-radius,y,2*radius+1,h,color);
+  // Dim the incandescent fill continuously against the changing ambient daylight.
+  const dusk=clamp((.86-day)/.76),bulb=dusk*dusk*(3-2*dusk);
+  if(bulb>0){
+    for(let j=0;j<6;j++)raw.o(x+1,top+20,40-j*4,44-j*5,'rgba(255,185,106,'+(.028*bulb)+')');
+    raw.o(x+3,219,18,4,'rgba(245,173,96,'+(.035*bulb)+')');
+  }
+
+  // Turned walnut foot. The face and pierced center use the same axis as the spindle.
+  o(x+4,221,15,3,'rgba(67,46,42,.16)');
+  o(x+2,221,11,2,'rgba(56,39,34,.22)');
+  o(x,219,12,3,'#51433b');
+  span(217,12,2,'#675044');
+  o(x,217,12,3,'#906849');
+  o(x,216,10,2,'#ac8157');
+  l(x-10,217,x-5,218,'#be9160');r(x-4,219,9,1,'#8b6548');
+  r(x+5,217,4,1,'#9a724e');
+
+  // All weight-bearing spans have an odd width and share the x347 center pixel.
+  // The turned shaft rises out of a stepped boss on the top surface of the foot.
+  span(154,2,49,'#695344');
+  span(154,1,49,'#a07953');r(x,154,1,43,'#b58a60');
+  span(203,3,7,'#6b5544');span(203,2,7,'#a07953');r(x-1,203,2,5,'#b18a60');
+  span(209,3,2,'#80694b');span(209,2,1,'#c29a67');
+  span(211,3,2,'#806248');span(211,1,2,'#a78058');
+  span(213,4,2,'#705540');span(213,2,2,'#ad855b');
+  span(215,5,2,'#72563f');span(215,4,1,'#b38a5b');
+  r(x,211,1,4,'#b99165');
+  if(bulb>0){
+    raw.r(x,155,1,9,'rgba(246,186,114,'+(.28*bulb)+')');
+    raw.r(x,164,1,9,'rgba(246,186,114,'+(.13*bulb)+')');
+  }
+
+  drawLampShade(ctx,raw,x,top,bulb);
+  // Flush bamboo top cap and a shallow brass socket that cups the bottom paper hoop.
+  span(top-1,4,2,'#755e47');span(top-1,3,1,'#977957');
+  const socket=top+34;
+  // The rim's shoulders rise around the paper. Its front lip crosses the shade
+  // before the socket tapers into the upright, keeping contact visible at room scale.
+  r(x-8,socket,2,2,'#846346');r(x+7,socket,2,2,'#846346');
+  span(socket+1,8,2,'#75573f');
+  span(socket+1,6,1,'#b78b58');span(socket+1,3,1,'#d7b780');
+  span(socket+3,7,1,'#816245');span(socket+3,5,1,'#ae8354');
+  span(socket+4,6,1,'#76593f');span(socket+4,4,1,'#aa8053');
+  span(socket+5,5,1,'#71553f');span(socket+5,3,1,'#a07b52');
+  span(socket+6,4,1,'#705640');span(socket+6,2,1,'#9c7953');
+  span(socket+7,3,2,'#735d45');span(socket+7,2,1,'#b69462');
+  span(socket+9,2,1,'#786047');span(socket+9,1,1,'#a48158');
+  if(bulb>0){
+    raw.r(x-6,socket+1,13,1,'rgba(248,184,103,'+(.50*bulb)+')');
+    raw.r(x-3,socket+3,7,1,'rgba(238,164,90,'+(.31*bulb)+')');
+    raw.r(x-1,socket+7,3,1,'rgba(236,169,95,'+(.30*bulb)+')');
+  }
+}
+
 function coffee(b){
   const {r,p,l,o}=b;
   o(204,277,68,5,'#a38165');
@@ -863,7 +973,7 @@ export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,draw
       if(spot.layer===layer)placeOccupant(ctx,drawOccupant,panel,i);
     });
     paintLayer('window');
-    if(!panel)lamp(ctx,b,raw,day,clock);
+    if(!panel)lamp(ctx,b,raw,day);
     furniture(ctx,b,day,warmth,panel,false);
     if(!panel)placeOccupant(ctx,drawKeepsake,panel,'jar');
     paintLayer('shelf');

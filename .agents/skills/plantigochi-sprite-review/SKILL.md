@@ -24,10 +24,10 @@ npm ci --prefix "$review/scripts"
 # Point --before to a separate checkout of the previous artwork.
 node "$review/scripts/render-comparison.mjs" \
   --before ../plantigochi-before --after . --sku golden-pothos --room 0 --slot 0 \
-  --out /tmp/pothos-review --verify-after "$review/references/golden-pothos/approved"
+  --out /tmp/pothos-review
 ```
 
-Give each pass a fresh output directory. Open its `comparison.png` for review. For a new design pass, omit `--verify-after` until its reference images have been approved. Point it at the saved native `room.png` and `shop.png` directory when checking the implementation. See `--help` for other item types and placements.
+Give each pass a fresh output directory. Open its `comparison.png` for review. For a frozen reference that shares the same room scenery, pass `--verify-after` and the directory containing its native `room.png` and `shop.png`. The original pothos, snake plant, Maneki-neko and record player approvals predate the floor lamp. [Historical room and shop checks](references/historical-backdrop.md) · [Current lamp scenery check](references/floor-lamp/verify.mjs) · [Record player playback and placement check](references/record-player/verify-playback.mjs) See `--help` for other item types and placements.
 
 **Exact art setup.** The approved master uses a transparent 65 × 67 grid with the pot's bottom center at (32, 60). The fixed room specimen is `nursery-golden-pothos` with pot style 0. The living-room upper shelf draws it at (55, 96) at 0.78× in a 400 × 320 room at noon. The 72 × 64 shop tile draws it at (32, 54) at 1.15×. The neutral pose uses reduced motion. These measurements belong to this specimen. Use each new item's real display geometry.
 
@@ -52,7 +52,7 @@ python "$review/references/snake-plant/draw-snake.py" /tmp/snake-foliage.png
 python "$review/scripts/encode-sprite.py" /tmp/snake-foliage.png src/snakePlantSprite.js --anchor 32 60 --check
 node "$review/scripts/render-comparison.mjs" \
   --before ../plantigochi-before --after . --sku snake-plant --room 0 --slot 3 \
-  --out /tmp/snake-review --verify-after "$review/references/snake-plant/approved"
+  --out /tmp/snake-review
 ```
 
 ## Sculpted objects and launcher icons

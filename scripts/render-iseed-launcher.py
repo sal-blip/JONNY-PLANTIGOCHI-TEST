@@ -176,54 +176,71 @@ def inventory(d):
 
 
 def journal(d):
-    """A linen-bound gardening journal with a brass plant plate and a pencil."""
-    outline='#443b48'
-    leather='#965453'
-    shade='#663e48'
-    terrace='#c87c63'
-    brass='#bd8649'
-    cream='#f6d888'
-    # A turned-up lower corner exposes the bound block, sewn edge and ribbon.
-    d.polygon([(8,10),(10,7),(29,4),(33,6),(36,34),(35,37),(14,42),(10,40)],fill=outline)
-    d.polygon([(10,10),(29,6),(32,7),(34,34),(14,39),(12,39)],fill='#7d494d')
-    d.polygon([(12,35),(33,31),(35,35),(14,40),(12,39)],fill='#c39468')
-    d.polygon([(13,35),(33,31),(34,34),(14,39),(12,38)],fill='#edd7a7')
-    d.line([(14,37),(23,35),(30,33)],fill='#bca080')
-    d.line([(16,38),(25,36)],fill='#fff0c1')
-    d.polygon([(23,35),(27,34),(27,42),(25,40),(22,43)],fill=outline)
-    d.polygon([(24,35),(26,35),(25,40),(24,39),(23,41)],fill='#518f87')
-    # The stepped diagonal of the cover is softest on its upper left.
-    d.polygon([(7,10),(9,7),(28,4),(32,5),(34,30),(32,33),(12,38),(9,37)],fill=outline)
-    d.polygon([(8,10),(10,8),(28,5),(31,6),(33,29),(31,32),(12,36),(10,35)],fill=leather)
-    d.polygon([(10,9),(28,6),(30,7),(30,10),(12,14)],fill=terrace)
-    d.line([(12,9),(23,7),(28,7)],fill='#edab7c')
-    d.polygon([(30,10),(31,9),(33,29),(31,32),(13,36),(11,35),(28,31),(31,29)],fill=shade)
-    # Dark oxblood bookcloth spine with a burnished raised rib at either end.
-    d.polygon([(8,10),(11,8),(14,35),(11,36),(10,35)],fill='#77444e')
-    d.line([(11,11),(12,20),(13,30)],fill='#b0695a')
-    d.line([(9,12),(11,11)],fill=brass);d.line([(11,31),(13,30)],fill=brass)
-    # Die-stamped gold frame around a single ginkgo fan.
-    d.polygon([(14,13),(27,10),(29,25),(16,28)],fill=shade)
-    d.polygon([(15,14),(26,12),(28,24),(17,26)],fill=brass)
-    d.polygon([(16,15),(25,13),(27,23),(18,25)],fill='#895954')
-    d.line([(22,22),(23,24)],fill=cream)
-    d.polygon([(21,21),(17,18),(17,16),(19,15),(21,17),(22,14),(24,14),(26,16),(25,19),(23,21)],fill='#e7bd6d')
-    d.line([(17,17),(19,16),(20,17)],fill='#ffdfa0')
-    d.line([(23,15),(24,15)],fill='#fff0b3')
-    d.line([(19,18),(21,20)],fill='#cf9654')
-    d.point((23,18),fill=brass)
-    d.line([(17,31),(22,30)],fill=brass);d.line([(25,29),(27,28)],fill='#be7960')
-    # Separate honey-yellow pencil. Its eraser, ferrule and graphite are distinct
-    # color groups so even the small landscape icon reads as a writing tool.
-    d.polygon([(38,11),(40,9),(43,10),(44,12),(36,31),(32,35),(32,30)],fill=outline)
-    d.polygon([(39,11),(40,10),(42,11),(43,12),(41,15),(37,14)],fill='#cd7f75')
-    d.line([(40,10),(42,11)],fill='#f3afa0')
-    d.line([(38,13),(41,14)],fill='#d4d7c4');d.line([(38,14),(40,15)],fill='#859b98')
-    d.polygon([(37,15),(40,16),(35,29),(33,30)],fill='#d5a04c')
-    d.line([(38,15),(33,28)],fill='#fde496')
-    d.line([(40,16),(35,29)],fill='#b07a4e')
-    d.polygon([(33,28),(35,30),(33,32),(32,33)],fill='#e6c19c')
-    d.point((32,33),fill='#37444e')
+    """An indigo field notebook with a four-hole sewn spine and a fern on its cover."""
+    contour = '#343542'
+    indigo = '#415770'
+    cloth_light = '#546d82'
+    cloth_shadow = '#35495e'
+    paper = '#f1dda7'
+    # The back cover, page block, and front cover share the same four corners,
+    # stepped down in depth. The thicker cut edge distinguishes a closed book.
+    d.polygon([(6,12),(32,6),(35,7),(40,34),(39,36),
+               (15,42),(12,42),(11,40)], fill=contour)
+    d.polygon([(12,37),(37,31),(39,34),(38,35),(15,41),(13,40)], fill=cloth_shadow)
+    d.line([(15,40),(32,36),(37,35)], fill='#748392')
+    d.polygon([(11,34),(35,28),(36,11),(38,22),(39,32),
+               (37,34),(15,39),(13,39)], fill='#b89576')
+    d.polygon([(12,34),(37,28),(38,31),(37,33),(15,38),(13,38)], fill=paper)
+    d.line([(14,37),(26,34),(37,31)], fill='#cfb48e')
+    d.line([(15,36),(23,34),(25,34)], fill='#fff1cc')
+    d.line([(34,12),(36,23),(38,30)], fill='#f3e4bd')
+
+    # Cut cloth ribbon emerging between the signatures.
+    d.polygon([(26,35),(30,34),(31,42),(28,40),(25,43)], fill='#694249')
+    d.polygon([(27,35),(29,35),(30,40),(28,39),(26,41)], fill='#cc7165')
+    d.line([(27,36),(27,39)], fill='#f4ab89')
+
+    d.polygon([(6,10),(7,8),(31,3),(34,4),(39,29),(38,31),
+               (13,37),(11,37),(10,35)], fill=contour)
+    d.polygon([(7,10),(8,9),(31,4),(33,5),(38,29),
+               (37,30),(13,36),(11,35)], fill=indigo)
+    d.line([(8,9),(29,5),(32,5)], fill='#83969e')
+    d.line([(33,6),(36,21),(37,26)], fill=cloth_light)
+    d.line([(13,35),(27,32),(36,30)], fill=cloth_shadow)
+    # Faint crossgrain catches the light along the folded upper cloth edge.
+    d.line([(14,10),(23,8)], fill=cloth_light)
+    d.line([(25,7),(29,6)], fill=cloth_light)
+    d.line([(31,28),(34,27)], fill='#4c6176')
+
+    # Four anchoring holes. Pale flax wraps the spine and runs down the seam.
+    d.polygon([(7,10),(11,9),(16,34),(12,35),(11,33)], fill='#38475e')
+    seam=[(12,11),(13,18),(15,25),(16,32)]
+    d.line(seam, fill='#ad967e')
+    for x,y in seam:
+        d.line([(x-3,y+1),(x,y)], fill='#e9cba0')
+        d.point((x+1,y),fill='#273746')
+    d.line([(10,9),(12,11)], fill='#e9cba0')
+    d.line([(16,32),(16,34)], fill='#d6b991')
+
+    # The rachis bends gradually to the right. Slender paired pinnae sweep up
+    # on one side and out on the other, shortening toward the unfurling tip.
+    brass = '#d9aa71'
+    gold = '#e8c386'
+    glint = '#f4d99d'
+    d.line([(20,30),(20,27),(21,24),(22,21),(24,17),
+            (26,14),(29,11),(32,9)], fill=brass)
+    d.polygon([(20,26),(18,26),(16,23),(16,21),(17,22),(19,25)], fill=gold)
+    d.polygon([(21,25),(25,24),(29,22),(28,24),(25,25),(22,26)], fill=gold)
+    d.line([(25,24),(28,23)], fill=glint)
+    d.polygon([(22,23),(20,22),(17,19),(16,17),(18,18),(19,20)], fill=gold)
+    d.polygon([(22,22),(24,21),(27,21),(30,19),(29,21),(27,22)], fill=brass)
+    d.polygon([(23,20),(21,19),(19,16),(19,14),(20,15)], fill=gold)
+    d.polygon([(24,19),(26,18),(29,18),(32,16),(31,18),(28,19)], fill=gold)
+    d.polygon([(25,16),(23,15),(22,12),(22,11),(24,13)], fill=gold)
+    d.polygon([(25,16),(28,15),(30,15),(32,13),(32,15),(29,16)], fill=brass)
+    d.line([(27,14),(26,12),(26,10)], fill=gold)
+    d.line([(28,13),(30,12),(32,12),(33,11)], fill=gold)
+    d.line([(29,12),(29,10),(30,8)], fill=glint)
 
 
 def library(d):
