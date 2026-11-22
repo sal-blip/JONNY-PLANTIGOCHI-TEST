@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v52 · Garden furnishings · November 22, 2026
+
+The garden now displays the approved cane basket, rug, botanical prints, pendulum clock, studio stool and brush cup. All 122 tests passed. The Sites and GitHub builds matched across 48 output files. Seven public resources matched the release build after deployment. Physical phones were not tested.
+
+- [Game source bf8b764](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/bf8b76479c517d85464414813b7d9fc657e72980)
+- Sites source `f51d73a298a9153de20a3f9d289ea66bf17eed36`, saved version 52, deployment `appgdep_6b031ad425c0819188fa68088510e622`
+- [Public game](https://plantigochi-pocket-garden-mobile.salbasilone.chatgpt.site/)
+
 ## v51 · Garden furniture, pots and iSEED icons · November 22, 2026
 
 | Record | Value |
