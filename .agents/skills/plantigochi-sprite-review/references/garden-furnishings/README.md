@@ -1,0 +1,1 @@
+The approved [living room](living-room.png) and [studio](studio.png) were rendered at noon, time zero, reduced motion, with empty placements. The basket, rug and prints are drawn by bookcase(), rug() and hangingPrints() in src/roomScenery.js.

@@ -467,34 +467,60 @@ function bookcase(b) {
   book(b,68,211,5,13,['#9a7f5f','#c9b285']);book(b,74,211,4,16,['#6b797e','#c4b599'],1);
   r(19,193,33,18,'#9f7352');r(21,195,29,13,wood.mid);
   r(29,199,12,5,wood.shade);r(31,200,8,2,'#c3a371');
-  // Small woven sewing basket on top, with its handle and crossing reed ends.
-  p([25,38,48,38,46,46,28,46],'#8d7051');p([26,39,47,39,45,45,29,45],'#c39f70');
-  l(30,37,32,32,'#897553');l(32,32,39,31,'#897553');l(39,31,43,37,'#897553');
-  l(32,33,39,32,'#cdb187');
-  for(let xx=28;xx<46;xx+=3){l(xx,39,xx+1,44,'#a38760');}
-  r(27,41,19,1,'#d3b283');r(28,44,17,1,'#ac865e');
+  // The rim, base, and arch share x37. Lash both handle ends over the rim.
+  const willow='#79543c', honey='#c79d6b', straw='#e3c292';
+  const band=(half,y,color)=>r(37-half,y,2*half+1,1,color);
+  for(const [i,half] of [8,11,12,12,12,11,11,10,10,9,8].entries()){
+    band(half,36+i,willow);
+    if(i>=4 && i<=8){
+      band(half-1,36+i,'#b5885c');
+      for(let x=37-half+2+(i%2)*2;x<37+half-1;x+=5)
+        r(x,36+i,Math.min(3,37+half-1-x),1,i%2?honey:'#d9b583');
+    }
+  }
+  band(9,37,'#6d503c');band(10,38,'#906b4b');
+  band(11,39,straw);band(9,45,'#ac8054');
+  // Each row has paired edges, so the bend and the vertical ends mirror exactly.
+  const arch=[3,5,7,8,9,10,10,10,10,10,10,10];
+  arch.forEach((half,i)=>{
+    const y=29+i;
+    if(!i){band(half,y,willow);return;}
+    const width=Math.max(2,half-arch[i-1]+2);
+    for(const x of [37-half,38+half-width])r(x,y,width,1,willow);
+    if(i===1)band(3,y,honey);
+    if(i>=2 && i<=8){r(38-half,y,1,1,honey);r(36+half,y,1,1,'#bc9062');}
+  });
+  for(const x of [27,45]){
+    r(x,38,3,5,'#896244');r(x,38,3,1,straw);r(x,40,3,1,honey);
+    r(x+1,42,1,1,'#d5b082');
+  }
   p([55,42,70,40,73,42,73,44,57,46],'#d5c29a');l(56,42,70,41,'#e9d8ad');
   r(66,41,2,3,'#ad7665');
 }
 
 function rug(b) {
   const {p,l,r}=b;
-  const trapezoid=(x,y,x2,y2,c)=>p([x+24,y,x2-20,y,x2,y2,x,y2],c);
-  trapezoid(72,228,320,304,'#92745b');trapezoid(69,226,318,301,'#995f54');
-  trapezoid(73,228,313,298,'#dab283');trapezoid(77,230,309,295,'#aa705d');
-  trapezoid(82,233,304,292,'#e0b88a');trapezoid(84,235,301,290,'#b17d66');
-  for(let i=0;i<30;i++){const x=72+i*8;l(x,301,x-1,304+i%2,'#e5c899');}
-  // Repeated woven diamonds get wider toward the near edge.
-  for(let j=0;j<4;j++)for(let i=0;i<7;i++){
-    const x=100+i*28+(j%2)*12-j*2,y=240+j*14;
-    if(x>291||x<84)continue;
-    p([x-8,y,x-4,y-2,x-2,y-4,x+1,y-4,x+4,y-2,x+8,y,x+3,y+2,x,y+4,x-3,y+2],j%2?'#c8987a':'#ca9b7a');
-    r(x-2,y-1,4,2,'#aa765f');
+  // The indigo field and undyed sashiko stitches follow the floor perspective.
+  const left=y=>Math.round(94-(y-226)*0.33),right=y=>Math.round(297+(y-226)*0.28);
+  for(let y=226;y<=301;y++){
+    const lx=left(y),rx=right(y),edge=Math.min(y-226,301-y);
+    r(lx,y,rx-lx+1,1,'#525e63');
+    if(edge>0)r(lx+1,y,rx-lx-1,1,'#aba991');
+    if(edge>2)r(lx+4,y,rx-lx-7,1,'#667d80');
+    if(edge>5)r(lx+8,y,rx-lx-15,1,'#536e76');
   }
-  for(let i=0;i<22;i++){
-    const x=81+i*10;
-    if(x<306){l(x,296,x+2,294,'#f1cf9e');l(x+2,294,x+4,296,'#f1cf9e');}
+  for(let row=0;row<4;row++){
+    const y=239+row*15, lx=left(y)+13,rx=right(y)-13;
+    for(let col=0;col<8;col++){
+      const x=Math.round(lx+(col+.5)*(rx-lx)/8), ink=(row+col)%2?'#94a39a':'#b1b4a0';
+      for(const sign of [-1,1]){
+        l(x+sign*8,y,x+sign*6,y-1,ink);l(x+sign*4,y-2,x+sign,y-4,ink);
+        l(x+sign*8,y+1,x+sign*6,y+2,ink);l(x+sign*4,y+3,x+sign,y+5,ink);
+      }
+    }
   }
+  for(let x=left(301)+2;x<right(301);x+=5)l(x,302,x-1,304,'#d2c09e');
+
 }
 
 function sofa(b) {
@@ -954,18 +980,34 @@ function studioDesk(b) {
   p([503,185,510,178,678,178,685,185,682,187,505,187],wood.gold);
   r(505,187,179,2,wood.mid);r(512,179,163,1,wood.pale);
   // The Leaf Book occupies the clear desk surface beside the brushes.
-  o(670,183,6,1,'#a78e6c');
-  l(667,179,663,163,'#7d6250');l(670,180,674,164,'#a67d50');
-  l(669,179,669,158,'#8e7756');r(668,157,3,4,'#645348');
-  p([664,173,675,173,674,183,666,183],'#72918c');r(666,175,2,6,'#adc6ac');r(664,172,11,2,'#bcc6af');
-  // Turned three-legged oak stool and its elliptical seat.
+  // Three different brush tips rise from inside a thrown celadon beaker.
+  o(670,183,8,2,'#a18164');
+  o(670,173,7,2,'#58726a');o(670,173,5,1,'#474f42');
+  l(667,173,662,161,'#936744');l(662,161,660,157,'#d6b888');
+  p([660,158,657,154,657,151,660,153,662,157],'#514738');
+  l(671,173,671,158,'#926f50');r(670,156,3,4,'#c0a481');
+  p([669,156,669,153,671,149,672,152,672,156],'#6c5445');
+  l(673,173,678,162,'#786449');l(678,162,679,159,'#c6aa78');
+  p([678,160,679,156,682,154,681,158,680,161],'#654d40');
+  p([663,173,677,173,675,182,673,183,667,183,665,182],'#53756e');
+  p([664,174,676,174,674,181,667,181],'#91aba0');
+  r(664,174,12,1,'#c6cfac');l(666,175,667,179,'#b4caba');r(668,182,5,1,'#8d7257');
+  // The rear foot lands higher. Both front legs use the same taper and splay.
   const sx=603,sy=220;
-  o(sx,247,16,3,'#96775a');
-  for(const [ax,dx] of [[sx-10,-5],[sx+8,5],[sx,1]]){
-    p([ax,sy,ax+4,sy,ax+4+dx,sy+26,ax+dx,sy+26],wood.shade);l(ax+1,sy+3,ax+1+dx,sy+24,wood.lit);
+  o(sx,246,18,3,'#9b8063');
+  r(sx-2,sy,5,21,'#795b47');r(sx-1,sy+3,2,16,'#9e7757');
+  l(sx-12,sy+18,sx,sy+12,'#8c684e',2);
+  l(sx,sy+12,sx+12,sy+18,'#8c684e',2);
+  for(const sign of [-1,1]){
+    for(let dy=1;dy<=26;dy++){
+      const x=sx+sign*(9+Math.floor(dy/5)),w=dy<8?5:dy>22?3:4;
+      r(x-2,sy+dy,w,1,'#77563f');r(x-1,sy+dy,w-2,1,'#bd9068');
+    }
   }
-  l(sx-11,236,sx+11,236,wood.mid,2);o(sx,sy+1,18,4,wood.dark);o(sx,sy-1,18,4,wood.lit);
-  o(sx,sy-2,15,2,'#cb9a70');r(sx-12,sy-2,9,1,wood.gold);
+  o(sx,sy+1,18,5,'#73563f');o(sx,sy,18,4,'#a57b57');
+  o(sx,sy-2,18,4,'#d7ad79');o(sx,sy-2,15,3,'#c69b6c');
+  l(sx-11,sy-3,sx+1,sy-3,'#dab583');r(sx+2,sy-2,7,1,'#bd9064');
+
 }
 const camelliaStudy={
   x:3,y:4,
@@ -1087,17 +1129,28 @@ function easel(b) {
 }
 function hangingPrints(b){
   const {r,l,p,o}=b;
-  // Copper pin rail with two different studio studies on deckle-edged paper.
+  // Two botanical field studies clipped to a walnut rail.
   trim(b,706,45,65,4,false);
-  for(const [x,y,w,h] of [[711,54,26,29],[744,55,21,22]]){
-    r(x+2,y+2,w,h,'#c1a989');r(x,y,w,h,'#f1dfba');r(x+1,y,w-2,1,'#f8e9cb');
-    r(x+w/2-1,y-1,3,3,'#a88a61');
+  for(const [x,y,w,h] of [[710,53,28,31],[743,55,23,26]]){
+    r(x+2,y+2,w,h,'#b9a182');r(x,y,w,h,'#efdfbc');
+    r(x+1,y+1,w-2,1,'#fbefcf');r(x+2,y+h-2,w-5,1,'#ddc99f');
+    r(x+Math.floor(w/2)-1,48,1,y-47,'#937757');
+    r(x+Math.floor(w/2)-2,y-1,4,3,'#9b7652');
   }
-  r(714,59,20,18,'#d6b89c');o(727,65,3,3,'#bc8069');
-  p([714,75,720,68,724,71,728,67,734,74,734,77,714,77],'#88a395');
-  p([714,76,722,72,726,74,732,71,734,73,734,77,714,77],'#698877');
-  for(const [i,c] of ['#bb8d76','#c5ab83','#83a397','#747e89'].entries())r(747+(i%2)*7,60+Math.floor(i/2)*6,6,5,c);
-  l(746,73,760,73,'#c9b796');
+  // Ginkgo leaves share a branch point and have fan-shaped, cleft crowns.
+  l(717,77,728,64,'#70694c');l(722,71,718,66,'#827753');
+  p([718,67,713,63,715,60,718,60,719,62,720,60,723,62,723,64],'#c29c4f');
+  p([727,66,724,60,726,57,730,56,730,59,733,57,735,59,734,62],'#b79a50');
+  l(718,66,716,62,'#dfbd74');l(727,65,727,60,'#ddbe78');
+  r(714,79,8,1,'#a89473');
+  // Paired fronds step toward the tip of a single fern stem.
+  l(749,75,759,60,'#647b66');
+  for(let i=0;i<5;i++){
+    const x=750+i*2,y=72-i*3,w=5-Math.floor(i/2);
+    l(x,y,x-w,y-3,'#718c72');l(x+1,y-1,x+w+1,y-2,'#829b7b');
+  }
+  r(746,77,7,1,'#a89473');
+
 }
 function studioMat(b) {
   const {p,l}=b;
@@ -1126,10 +1179,15 @@ function passage(b){
   // A pendulum wall clock and indigo work apron mark the transition between
   // the sitting area and the studio without closing the open floor plan.
   const x=364,y=70;
-  p([x-10,y-6,x-5,y-11,x+6,y-11,x+11,y-6,x+11,y+5,x+7,y+10,x-6,y+10,x-10,y+5],wood.dark);
-  o(x,y,9,9,wood.lit);o(x,y,7,7,'#e5d4a6');
-  for(const [a,z] of [[0,-5],[5,0],[0,5],[-5,0]])r(x+a,y+z,1,1,'#85795b');
-  l(x,y,x-3,y-2,'#655d4c');l(x,y,x+2,y-4,'#655d4c');r(x,y,1,1,wood.lit);
+  // A brass bob hangs on the same axis as the dial and glazed lower case.
+  r(x-6,y+6,13,15,'#73583f');r(x-5,y+8,11,11,'#b99167');
+  r(x-4,y+8,9,10,'#586457');r(x,y+8,1,6,'#d2b274');
+  o(x,y+15,3,2,'#ae8550');r(x-1,y+14,3,1,'#e3c58a');
+  r(x-6,y+20,13,1,'#967452');
+  o(x,y,11,11,'#6f533f');o(x,y-1,10,10,'#b18b62');
+  o(x,y-1,8,8,'#8c7758');o(x,y-1,7,7,'#f0deae');
+  for(const [dx,dy] of [[0,-6],[4,-4],[6,0],[4,4],[0,6],[-4,4],[-6,0],[-4,-4]])r(x+dx,y-1+dy,1,1,'#97835f');
+  l(x,y-1,x-4,y-3,'#63543e');l(x,y-1,x+3,y-5,'#63543e');r(x,y-1,1,1,'#bb9051');
   r(380,122,22,3,wood.shade);r(380,122,22,1,wood.lit);
   for(const xx of [384,394]){r(xx,124,2,4,wood.mid);r(xx,126,3,2,wood.gold);}
   l(389,138,394,128,'#766e5b');l(394,128,397,138,'#766e5b');

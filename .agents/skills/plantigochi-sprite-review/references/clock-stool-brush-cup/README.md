@@ -1,0 +1,1 @@
+The approved oak clock has a brass bob below the dial. The studio stool has paired front legs and a shorter rear leg in projection. Three brushes enter the celadon cup behind its front lip. The room captures use reduced motion, empty placements and time zero at noon and 02:00.

@@ -1,0 +1,1 @@
+The approved cane basket uses a mirrored arch centered on x37 and paired bindings over the rim. The native crop in approved.png shows the basket on the living-room bookcase at noon. The basket is drawn inside bookcase() in src/roomScenery.js.
