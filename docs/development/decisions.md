@@ -15,4 +15,8 @@ The approved snake plant has five folded Laurentii blades with broken silver-gre
 
 The iSEED Shop tile uses a brass-rimmed oval sprout sign above the awning. The tile background shows at the sides of the sign. A small two-leaf plant sits in the window. The Shop illustration occupies the first 48 × 48 cell of the five-app launcher atlas. [Approved native tile](../../.agents/skills/plantigochi-sprite-review/references/iseed-shop/approved/tile.png) · [Atlas drawing source](../../scripts/render-iseed-launcher.py)
 
+The Maneki-neko is a seated porcelain lucky cat with level eyes, balanced cheeks and feet, and a nose, bell and gold coin on one centerline. A curled paw rises beside the cheek. The opposite paw rests on the coin. Light from the upper left and an indigo ear tip give the symmetrical figure depth. It keeps its existing `neko` SKU and shares one sprite between the shop, inventory and room. [Approved comparison](../../.agents/skills/plantigochi-sprite-review/references/maneki-neko/comparison.png) · [Build notes and native references](../../.agents/skills/plantigochi-sprite-review/references/maneki-neko/README.md)
+
+The first three-asset garden and iSEED art pass is approved. Its items are the Snake plant, Maneki-neko and iSEED Shop launcher icon. Each has its own approved reference. Publication is tracked in the [release record](releases.md).
+
 The unfurnished move-in room, gift cutting, furniture-store overhaul and separate installable variant remain deferred. Daily rewards and the iSEED shop already exist in the current game. [Historical roadmap](../plantigochi-roadmap.md)

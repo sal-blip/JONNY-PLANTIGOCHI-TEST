@@ -11,7 +11,7 @@ Start with one named item. Pick the trait a player should recognize from across 
 2. **Draw at the final pixel grid.** Keep the movable item separate from the room. For foliage, mark the bottom-center pot anchor and crown first. Draw stems behind the leaves, block in distinct silhouettes, then add broad areas of light, shadow and variegation. The approved pothos pass added one small side-facing leaf at the bend so the vine could be followed to its tip. Preserve open spaces at shelf size. For another item, draw the meaningful details of its own materials.
 3. **Compare in context.** Render both versions through the game's own room and shop functions. Put the current and proposed views next to each other in the same order, with a magnified detail and a shelf view at normal phone scale. Use nearest-neighbor enlargement. Inspect cropped edges, the contact point, the silhouette against furniture, and the pixels that remain visible at the smallest placement.
 4. **Get art direction early.** Show the first pass and ask one concrete question about the visible design. While it is under review, keep it outside the live game. Revise the same item if requested. When the player approves it, freeze the native shop tile and room PNG from that exact pass.
-5. **Integrate and verify.** Mount the approved art at the reviewed anchor. Keep the item's identity, lighting, selection outline and placement behavior. For plants, check both vine directions, pot swaps and idle motion with a fixed crown. Compare the neutral production render against the two frozen images pixel for pixel. Run the game's tests and build. Approval covers the item shown.
+5. **Integrate and verify.** Mount the approved art at the reviewed anchor. Keep the item's identity, lighting, selection outline and placement behavior. For plants, check both vine directions, pot swaps and idle motion with a fixed crown. Compare the neutral production render against the two frozen images pixel for pixel. Run the game's tests and build. Approval covers the item shown. If another draft exists when approval arrives, rebuild against the exact native captures used in the preview the player approved.
 
 ## Reuse the Golden pothos setup
 
@@ -54,3 +54,9 @@ node "$review/scripts/render-comparison.mjs" \
   --before ../plantigochi-before --after . --sku snake-plant --room 0 --slot 3 \
   --out /tmp/snake-review --verify-after "$review/references/snake-plant/approved"
 ```
+
+## Sculpted objects and launcher icons
+
+For a seated figurine, place its weight-bearing feet first. Mark the face and chest centerline, then block the head, rib cage and haunches. Check the two sides on the native grid before painting an asymmetric gesture. Give the paw a visible connection to the shoulder and a bend at the wrist. Paint the lit and shaded sides separately to preserve the volume of glazed ceramic. Review the silhouette on a real table and on a smaller shelf. [Maneki-neko recipe, anchors and verification](references/maneki-neko/README.md)
+
+For an iSEED launcher icon, inspect the native atlas cell and the icon inside the phone launcher. The Shop sign and the wooden plank behind it were separate parts of the design. When revising a layered icon, identify the part to edit and compare neighboring cells too. [Approved Shop cell](references/iseed-shop/approved/tile.png) · [Launcher drawing source](../../../scripts/render-iseed-launcher.py)

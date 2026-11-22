@@ -1,3 +1,4 @@
+import {spriteOffset as catOrigin, spritePalette as catColors, spriteRows as catRows} from './manekiNekoSprite.js';
 import {drawPottedPlant} from './roomPlant.js';
 import {drawSelectionContour} from './roomContour.js';
 
@@ -21,6 +22,7 @@ const colors={
   Q:'#542f3a',C:'#913e42',A:'#bd6655',R:'#e47d66',P:'#e4a292',
   U:'#344752',V:'#546a75',S:'#789598',L:'#aebfb9',T:'#c7d0bb',Z:'#527e76',
   v:'#698a93',s:'#93aeb0',l:'#cfdbcf',
+  ...Object.fromEntries(catColors.map(color => [color, color])),
 };
 const glazingAlpha={v:.73,s:.55,l:.68};
 const codes=Object.keys(colors);
@@ -93,46 +95,15 @@ function drawing(){
   return {rect,line,poly,oval,finish};
 }
 
-// The porcelain glaze uses a warm reflected shadow and a cooler ivory core.
-function luckyCat({poly,oval,rect,line}){
-  // Tucked tail and broad haunch, with the far arm lifted clear of the head.
-  poly([[-4,-15],[1,-17],[7,-16],[10,-13],[11,-10],[14,-7],[15,-4],[14,-2],[10,-1],[-7,-1],[-11,-2],[-13,-5],[-13,-8],[-10,-12]],'K');
-  poly([[-5,-15],[1,-16],[6,-15],[9,-13],[10,-9],[13,-6],[14,-4],[12,-2],[-6,-2],[-11,-4],[-12,-7],[-10,-10]],'G');
-  poly([[-6,-15],[0,-15],[6,-14],[9,-11],[9,-7],[8,-4],[4,-2],[-4,-2],[-8,-5],[-8,-11]],'I');
-  oval(10,-6,3,3,'G');rect(10,-8,2,1,'I');rect(12,-5,2,1,'W');
-  poly([[5,-14],[9,-18],[11,-21],[11,-23],[10,-24],[10,-27],[12,-29],[15,-29],[17,-27],[17,-23],[15,-21],[14,-17],[11,-14],[8,-12]],'K');
-  poly([[7,-14],[10,-18],[12,-21],[12,-24],[11,-25],[11,-27],[13,-28],[15,-28],[16,-26],[16,-23],[14,-21],[13,-18],[10,-15],[8,-13]],'G');
-  poly([[8,-15],[11,-19],[13,-21],[13,-24],[11,-25],[12,-27],[14,-28],[15,-27],[15,-24],[13,-20],[12,-17]],'I');
-  rect(12,-27,2,1,'F');rect(12,-24,4,1,'W');rect(13,-26,1,2,'H');rect(15,-26,1,2,'H');
-  // Two ears flank a big rounded face. The ears and forehead have calico patches.
-  poly([[-12,-30],[-11,-32],[-9,-32],[-5,-29],[-2,-29],[2,-28],[5,-31],[7,-31],[8,-29],[7,-24],[8,-21],[7,-18],[5,-16],[2,-14],[-5,-14],[-9,-16],[-12,-19],[-13,-22],[-12,-25]],'K');
-  poly([[-11,-30],[-10,-31],[-8,-30],[-5,-28],[0,-28],[3,-27],[6,-30],[7,-29],[6,-24],[7,-21],[6,-18],[3,-16],[0,-15],[-5,-15],[-8,-16],[-11,-19],[-12,-22],[-11,-25]],'G');
-  poly([[-10,-30],[-6,-27],[-1,-28],[3,-26],[4,-24],[6,-22],[5,-19],[3,-17],[-1,-16],[-6,-16],[-10,-18],[-11,-21]],'I');
-  poly([[-11,-30],[-8,-28],[-6,-26],[-10,-25]],'A');rect(-10,-29,1,2,'P');
-  poly([[2,-26],[6,-30],[7,-29],[6,-25],[4,-23],[2,-23]],'E');
-  line(4,-26,6,-28,'A');rect(1,-27,2,2,'K');rect(0,-27,1,1,'E');
-  poly([[-10,-26],[-8,-27],[-6,-26],[-6,-25],[-8,-24],[-10,-24]],'E');
-  rect(-5,-26,2,1,'F');rect(-4,-25,1,1,'F');
-  // Closed smiling eyes, a tiny vermilion nose and a white, double-lobed muzzle.
-  rect(-8,-22,2,1,'K');rect(-7,-23,2,1,'K');rect(-5,-22,1,1,'K');
-  rect(0,-22,1,1,'K');rect(1,-23,2,1,'K');rect(3,-22,1,1,'K');
-  rect(-10,-20,2,1,'P');rect(4,-20,2,1,'P');
-  rect(-6,-20,7,2,'F');rect(-5,-18,5,1,'F');
-  rect(-4,-21,3,1,'A');rect(-3,-20,1,1,'K');rect(-5,-19,2,1,'K');rect(-2,-19,2,1,'K');
-  rect(-12,-21,3,1,'H');rect(5,-21,3,1,'H');
-  // Vermilion collar and small brass bell then paw guarding an embossed koban.
-  poly([[-9,-16],[-5,-15],[2,-15],[6,-17],[6,-15],[3,-13],[-2,-12],[-7,-13]],'C');
-  line(-7,-15,-3,-14,'R');line(-2,-14,2,-14,'R');
-  oval(1,-13,2,2,'B');rect(0,-14,2,1,'J');rect(1,-12,1,1,'K');
-  poly([[-9,-12],[-6,-13],[-3,-12],[-2,-10],[-3,-7],[-6,-4],[-9,-3],[-11,-4],[-12,-7],[-11,-10]],'B');
-  poly([[-9,-11],[-6,-12],[-4,-11],[-3,-10],[-4,-8],[-7,-5],[-9,-4],[-11,-6],[-10,-9]],'O');
-  line(-10,-8,-8,-11,'J');line(-7,-8,-5,-9,'B');line(-8,-6,-6,-9,'B');
-  oval(-8,-13,3,2,'W');rect(-9,-14,3,1,'F');rect(-9,-12,1,1,'H');
-  line(4,-10,4,-5,'W');line(5,-9,5,-5,'F');
-  poly([[-9,-4],[-6,-4],[-4,-3],[-3,-2],[-3,-1],[-9,-1],[-11,-2]],'G');
-  rect(-9,-3,4,1,'I');rect(-8,-2,1,1,'W');
-  poly([[1,-4],[5,-4],[7,-2],[7,-1],[0,-1],[-1,-2]],'W');
-  rect(1,-3,4,1,'I');rect(3,-2,1,1,'G');rect(1,-2,1,1,'F');
+// Bake the approved porcelain pixels into the same runs used for room lighting and selection.
+function luckyCat({rect}) {
+  catRows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === ' ') continue;
+      const ink = row.charCodeAt(x) - 65;
+      rect(catOrigin.x + x, catOrigin.y + y, 1, 1, catColors[ink]);
+    }
+  });
 }
 
 const labelOrbit=[[-2,-1],[-1,-1],[1,-1],[2,0],[1,1],[-1,1],[-2,0]];
