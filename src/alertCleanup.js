@@ -25,7 +25,13 @@ export async function finishAlertCleanup(){
       let clean=true;
       if(!localStorage.getItem(alertKey)){
         try {
-          if('caches' in window)await caches.delete('plantigochi-notices');
+          if('caches' in window){
+            const cache=await caches.open('plantigochi-notices');
+            await cache.put('/notice-schedule',Response.json({disabled:true}));
+            for(const entry of await cache.keys()){
+              if(new URL(entry.url).pathname!=='/notice-schedule')await cache.delete(entry);
+            }
+          }
           const reg=await navigator.serviceWorker?.getRegistration();
           for(const n of await reg?.getNotifications?.() || [])n.close();
           const sub=await reg?.pushManager?.getSubscription();

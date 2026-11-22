@@ -1,10 +1,11 @@
 import React, {useEffect,useRef,useState} from 'react';
 import GardenShop,{ShopItemDetail} from './GardenShop.jsx';
 import GardenJournal from './GardenJournal.jsx';
+import {leaveEditor,newJournalSession} from './journalDrafts.js';
 import {RecordControls} from './GardenRecord.jsx';
 import GameLink from './GameLink.jsx';
 import {downloadFile} from './Recovery.jsx';
-import {catalog,canSetItem,fitsBackup,framePhoto,lifeOf,storeItem} from './gardenEconomy.js';
+import {catalog,canSetItem,fitsBackupChange,framePhoto,lifeOf,storeItem} from './gardenEconomy.js';
 import {gardenViews,placesFor,slotFor,speciesName} from './gardenLayout.js';
 import {decorPlaces} from './roomShopArt.js';
 import './gardenMarket.css';
@@ -76,7 +77,7 @@ function Postcard({roomRef,raised}){
 /** App owns the raised/lowered surface and current route. Keep its contents
  * mounted while lowered so journal forms, library articles and scrolling survive. */
 export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRef,raised=true,playingRecordId,onSelectRecord}){
-  const [itemId,setItemId]=useState(null),[journalTab,setJournalTab]=useState('toy');
+  const [itemId,setItemId]=useState(null),[journal,setJournal]=useState(newJournalSession);
   const [busy,setBusy]=useState(false),[notice,setNotice]=useState(null);
   const pending=useRef(false),alive=useRef(false),route=useRef(null),handedOff=useRef(false);
   route.current={page,itemId};
@@ -88,10 +89,13 @@ export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRe
   function navigate(next){setNotice(null);open(next);}
   function openApp(next){
     if(pending.current)return;
-    if(next==='journal')setJournalTab('toy');
     navigate(next);
   }
-  function back(){if(!pending.current)navigate(page==='item'?'inventory':'phone');}
+  function back(){
+    if(pending.current)return;
+    if(page==='journal' && journal.editing){setJournal(leaveEditor);return;}
+    navigate(page==='item'?'inventory':'phone');
+  }
   async function change(operation,report=true){
     if(pending.current)return false;
     const origin=route.current,sourceId=plant.id;
@@ -102,7 +106,7 @@ export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRe
         if(current.id!==sourceId)return current;
         const next=operation(current);
         if(next===current)return current;
-        if(!fitsBackup(next)){tooBig=true;return current;}
+        if(!fitsBackupChange(current,next)){tooBig=true;return current;}
         changed=true;return next;
       });
       if(saved && changed)return true;
@@ -134,22 +138,20 @@ export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRe
     if(item.id===playingRecordId)onSelectRecord(null);
     if(inSameApp(origin))navigate('inventory');
   }
-  function savePhoto(photo){
-    return change(p=>{
-      const current=lifeOf(p).items.find(i=>i.id===item.id);
-      if(!current || current.photo?.src!==item.photo?.src)return p;
-      return framePhoto(p,item.id,photo);
-    },!photo);
+  function savePhoto(photo,expectedSrc){
+    return change(p=>framePhoto(p,item.id,photo,expectedSrc),false);
   }
   function journalPage(tab){
-    if(tab!=='library')setJournalTab(tab);
+    if(tab==='library' || tab!==journal.tab){
+      setJournal(current=>({...leaveEditor(current),tab:tab==='library'?current.tab:tab}));
+    }
     navigate(tab==='library'?'library':'journal');
   }
   let app=null;
   if(plant && (page==='shop' || page==='inventory')){
     app=<GardenShop plant={plant} initialTab={page==='inventory'?'bag':'shop'} onTabChange={tab=>navigate(tab==='bag'?'inventory':'shop')} onPlace={place} inspect={inspect}/>;
   }else if(plant && (page==='journal' || page==='library')){
-    app=<GardenJournal plant={plant} initialTab={page==='library'?'library':journalTab} onTabChange={journalPage} change={operation=>change(operation,false)} busy={busy}/>;
+    app=<GardenJournal plant={plant} tab={page==='library'?'library':journal.tab} session={journal} setSession={setJournal} onTabChange={journalPage} change={operation=>change(operation,false)} busy={busy}/>;
   }else if(page==='item'){
     const resident=item && item.slot!=null && catalog[item.sku].kind==='pot'?plant.graduates.find(p=>p.slot===item.slot):null;
     app=item?<ShopItemDetail key={item.id} item={item} busy={busy} move={()=>place({id:item.id,sku:item.sku,from:item.slot,buy:false})}

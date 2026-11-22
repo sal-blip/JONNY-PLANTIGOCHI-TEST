@@ -22,3 +22,8 @@ export const alertDevices=sqliteTable('alert_devices',{
 export const applePushTokens=sqliteTable('apple_push_tokens',{
   scope:text('scope').primaryKey(), token:text('token').notNull(), refreshAt:integer('refresh_at').notNull()
 });
+
+// Retain only the hash of an endpoint its push provider declared permanently gone.
+export const expiredPushEndpoints=sqliteTable('expired_push_endpoints',{
+  id:text('id').primaryKey()
+});

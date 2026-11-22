@@ -38,15 +38,26 @@ export function CoinBalance({plant}){
 }
 export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
   const [error,setError]=useState(''),[loading,setLoading]=useState(false);
-  const input=useRef(null),product=catalog[item.sku];
+  const input=useRef(null),pickerSource=useRef(null),product=catalog[item.sku];
+  function openPhotoPicker(){
+    pickerSource.current={src:item.photo?.src};
+    input.current.click();
+  }
+  async function applyPhoto(photo,expectedSrc){
+    setError('');
+    if(!await savePhoto(photo,expectedSrc))
+      setError('Could not save the photo change. Check the current frame photo and available backup space.');
+  }
   async function choosePhoto(e){
     const file=e.target.files?.[0];
     e.target.value='';
+    const expectedSrc=pickerSource.current?pickerSource.current.src:item.photo?.src;
+    pickerSource.current=null;
     if(!file)return;
     setLoading(true);setError('');
     try {
       const photo=await preparePhoto(file,[400,320,240]);
-      if(!await savePhoto(photo))setError('Photo could not be saved. Try a smaller photo or free some space.');
+      await applyPhoto(photo,expectedSrc);
     } catch {setError('Choose a photo this phone can open.');}
     finally {setLoading(false);}
   }
@@ -57,9 +68,9 @@ export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
     </div>
     {children}
     {(product.kind==='frame' || item.slot!==null) && <div className="menu-items">
-      {product.kind==='frame' && <><button disabled={busy||loading} onClick={()=>input.current.click()}>{loading?'Preparing photo…':item.photo?'Change photo':'Choose a photo'}</button>
+      {product.kind==='frame' && <><button disabled={busy||loading} onClick={openPhotoPicker}>{loading?'Preparing photo…':item.photo?'Change photo':'Choose a photo'}</button>
         <input hidden type="file" accept="image/*" ref={input} onChange={choosePhoto}/>
-        {item.photo && <button disabled={busy||loading} onClick={()=>savePhoto(null)}>Remove photo</button>}</>}
+        {item.photo && <button disabled={busy||loading} onClick={()=>applyPhoto(null,item.photo.src)}>Remove photo</button>}</>}
       {item.slot!==null && <button disabled={busy||loading} onClick={store}>Put in inventory</button>}
     </div>}{error && <p role="status">{error}</p>}
   </div>;

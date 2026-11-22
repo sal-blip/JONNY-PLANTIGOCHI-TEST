@@ -26,7 +26,7 @@ async function encrypt(device,payload){
   const ciphertext=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,record));
   return concat(salt,Uint8Array.of(0,0,16,0,pub.length),pub,ciphertext);
 }
-export async function testAPI(request,env,owner,send,ctx,authorization,json){
+export async function testAPI(request,env,owner,send,ctx,authorization,json,expiredEndpoint,expireEndpoint){
   const select=()=>env.DB.prepare('SELECT * FROM alert_devices WHERE owner=?').bind(owner).first();
   const device=await select();
   if(!device)return json({error:'Enable plant alerts on this device first.'},409);
@@ -37,6 +37,7 @@ export async function testAPI(request,env,owner,send,ctx,authorization,json){
     const status=steps.every(s=>s==='sent')?'sent':steps.includes('failed')?'failed':steps.some(s=>s==='sent'||s==='sending')?'sending':'queued';
     return json({testId:device.test_id,startedAt:device.test_at,status,steps,reasons});
   }
+  if(await expiredEndpoint(env,device.endpoint))return json({code:'subscription_expired',error:'Reconnect this subscription.'},410);
   if(request.method!=='POST')return json({},405);
   const {testId}=await request.json().catch(()=>({})) || {};
   if(typeof testId!=='string'||!/^[0-9a-f-]{36}$/i.test(testId))return json({error:'Invalid test.'},400);
@@ -52,12 +53,14 @@ export async function testAPI(request,env,owner,send,ctx,authorization,json){
     let stage='encryption';
     let outcome;
     try{
+      if(await expiredEndpoint(env,device.endpoint)){await update('failed:http-410');return;}
       const body=await encrypt(device,{type:'test',testId,step});
       stage='signing';
       const auth=await authorization(device.endpoint,env,new URL(request.url).origin,Date.now());
       stage='connection';
       const result=await send(device.endpoint,{method:'POST',redirect:'manual',headers:{Authorization:auth,TTL:'90',Urgency:'high',
         Topic:'plantigochi-test-'+step,'Content-Encoding':'aes128gcm','Content-Type':'application/octet-stream'},body});
+      if(result.status===404 || result.status===410)await expireEndpoint(env,device.endpoint);
       outcome=result.ok?'sent':'failed:http-'+result.status;
     }catch{
       outcome='failed:'+stage;

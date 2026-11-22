@@ -17,7 +17,8 @@ import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.
 import {SetupWelcome,NameEditor} from './PlantSetup.jsx';
 import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
-import {checkIn,itemsFromClosingRooms,lifeOf,localDay,milestone} from './gardenEconomy.js';
+import {checkIn,fitsBackupChange,itemsFromClosingRooms,lifeOf,localDay,milestone} from './gardenEconomy.js';
+import {watchDailyVisit} from './dailyVisit.js';
 import Collector from './Collector.jsx';
 import SwipeCue from './SwipeCue.jsx';
 import {useHandsetPassage} from './useHandsetPassage.js';
@@ -60,18 +61,21 @@ function InstalledGame({phone}){
     return ()=>window.launchQueue.setConsumer(()=>{});
   },[]);
   const [careMessage,setCareMessage]=useState(null);
+  const consumeCareMessage=useCallback(message=>setCareMessage(current=>current===message?null:current),[]);
   useEffect(()=>{
     function rescue(e){
-      if(e.data?.type==='plant-care' && ['water','drain','fungus','test'].includes(e.data.action))setCareMessage({action:e.data.action,plantId:e.data.plantId,episode:e.data.episode,lastDrink:e.data.lastDrink});
+      if(e.data?.type==='plant-care' && ['water','drain','fungus','test'].includes(e.data.action))
+        setCareMessage({action:e.data.action,plantId:e.data.plantId,episode:e.data.episode,lastDrink:e.data.lastDrink,epoch:storage.epoch});
     }
     navigator.serviceWorker?.addEventListener('message',rescue);
     return ()=>navigator.serviceWorker?.removeEventListener('message',rescue);
-  },[]);
+  },[storage.epoch]);
   if(!storage.phase && storage.issue)return <Recovery {...storage}/>;
   if(!storage.phase)return <main className="garden-loading" aria-busy="true" aria-label="Opening your garden"/>;
-  return <InstalledSession alertVisitId={alertVisitId} key={storage.epoch || 'original'} storage={storage} phone={phone} careMessage={careMessage}/>;
+  return <InstalledSession alertVisitId={alertVisitId} key={storage.epoch || 'original'} storage={storage} phone={phone}
+    careMessage={careMessage} consumeCareMessage={consumeCareMessage}/>;
 }
-function InstalledSession({phone,storage,careMessage,alertVisitId}){
+function InstalledSession({phone,storage,careMessage,consumeCareMessage,alertVisitId}){
   const alerts=usePlantAlerts(storage.plant,phone.offline,storage.epoch);
   const {invite,alertVisit,phase}=storage;
   const fresh=!invite && phase==='welcome';
@@ -97,13 +101,13 @@ function InstalledSession({phone,storage,careMessage,alertVisitId}){
     screen=<NameEditor initial={storage.draft} onDraft={d=>storage.setup('name',d)}
       onSave={name=>storage.setup('water',name)} onCancel={()=>storage.setup('welcome')} issue={storage.issue}/>;
   }
-  return <GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage} setupScene={scene} setupScreen={screen}/>;
+  return <GardenApp alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}
+    consumeCareMessage={consumeCareMessage} setupScene={scene} setupScreen={screen}/>;
 }
 
-// The room can be explored before naming the first seed. Its empty collection
-// is display data only. The naming step creates the first plant in storage.
+// The room behind setup is display data. Naming creates the first saved plant.
 const emptyRoom={graduates:[],book:[],jar:null,deadAt:null};
-function GardenApp({storage,phone,careMessage,alerts,setupScene,setupScreen}) {
+function GardenApp({storage,phone,careMessage,consumeCareMessage,alerts,setupScene,setupScreen}) {
   const {plant,current,commit,replace,issue}=storage;
   const roomGarden=plant ?? emptyRoom;
   const saveOK=!issue;
@@ -138,14 +142,17 @@ function GardenApp({storage,phone,careMessage,alerts,setupScene,setupScreen}) {
   const [coinsMessage,setCoinsMessage]=useState('');
   const day=localDay(now);
   useEffect(()=>{
-    if(!plant || document.hidden || day<=gardenLife.day)return;
-    let credited=false;
-    void commit(p=>{const next=checkIn(p,Date.now());credited=next!==p;return next;})
-      .then(saved=>{if(saved && credited && !lesson)setCoinsMessage('+10 Garden Coins · Visit iSEED');});
+    if(!plant)return;
+    return watchDailyVisit(gardenLife.day,time=>{
+      let credited=false;
+      void commit(p=>{const next=checkIn(p,time);credited=next!==p;return next;})
+        .then(saved=>{if(saved && credited && !lesson)setCoinsMessage('+10 Garden Coins · Visit iSEED');});
+    });
   },[day,gardenLife.day,plant?.id,lesson,commit]);
   useEffect(()=>{if(coinsMessage){const timer=setTimeout(()=>setCoinsMessage(''),6500);return ()=>clearTimeout(timer);}},[coinsMessage]);
   const { play, unlock, running } = useGardenSound({enabled:soundEnabled, ambience:plant?.ambience !== false, recordPlaying:Boolean(playingRecordId), sleeping:plant?.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
+  const originalPhoto=useRef(null);
   const scenery = useRef(null);
   const scene = selectedScene(roomGarden);
   const photo=page==='photo' && draftPhoto ? draftPhoto : scene==='photo' ? plant.photo : null;
@@ -164,7 +171,6 @@ function GardenApp({storage,phone,careMessage,alerts,setupScene,setupScreen}) {
     return ()=>{clearInterval(timer);document.removeEventListener('visibilitychange',refresh);};
   },[commit,current]);
   useEffect(()=>{
-    if(!current.current)return;
     function rescue(action,plantId,episode,lastDrink) {
       if(action==='test'){roomRef.current?.reset();resetToy();setPage('test');return;}
       const time=Date.now(), p=wake(current.current,time);
@@ -183,8 +189,10 @@ function GardenApp({storage,phone,careMessage,alerts,setupScene,setupScreen}) {
     const episode=careMessage?.episode ?? Number(url.searchParams.get('episode'));
     const lastDrink=careMessage ? careMessage.lastDrink : url.searchParams.has('drink') ? Number(url.searchParams.get('drink')) : null;
     if(url.searchParams.has('care')){for(const k of ['care','plant','episode','drink'])url.searchParams.delete(k);history.replaceState(null,'',url);}
-    if(action)rescue(action,plantId,episode,lastDrink);
-  },[current,Boolean(plant),careMessage,resetToy]);
+    if(careMessage)consumeCareMessage(careMessage);
+    if(action && current.current && (careMessage?.epoch===undefined || careMessage.epoch===storage.epoch))
+      rescue(action,plantId,episode,lastDrink);
+  },[current,storage.epoch,careMessage,consumeCareMessage,resetToy]);
 
   useEffect(() => {
     if (!intro || leafReady) return;
@@ -255,13 +263,28 @@ function GardenApp({storage,phone,careMessage,alerts,setupScene,setupScreen}) {
     if(saved)setPage(currentPage=>currentPage==='scenes'?null:currentPage);
   }
   function editPhoto() {
-    setDraftPhoto(plant.photo ?? null);
+    originalPhoto.current=plant.photo ?? null;
+    setDraftPhoto(originalPhoto.current);
     open('photo');
   }
   async function savePhoto() {
-    const saved = await commit(old => ({...old, scene:'photo', photo:draftPhoto}), true);
-    if (saved) { setDraftPhoto(null); setPage(null); }
-    return saved;
+    let failure='';
+    const original=originalPhoto.current;
+    const saved=await commit(old=>{
+      if(old.photo?.src!==original?.src || old.photo?.x!==original?.x || old.photo?.y!==original?.y){
+        failure='Your background photo changed in another window. Reopen the editor to use the latest photo.';
+        return old;
+      }
+      const next={...old,scene:'photo',photo:draftPhoto};
+      if(fitsBackupChange(old,next))return next;
+      failure='This photo would make your garden backup too large. Try a smaller image or remove a framed photo.';
+      return old;
+    });
+    if(!saved)return 'This device could not save your photo. Check storage and try again.';
+    if(failure)return failure;
+    setDraftPhoto(current=>current===draftPhoto?null:current);
+    setPage(active=>active==='photo'?null:active);
+    return null;
   }
   function restoreBackup(backup) {
     setNow(Date.now());
@@ -381,7 +404,7 @@ function GardenApp({storage,phone,careMessage,alerts,setupScene,setupScreen}) {
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
       {page === 'debug' && <MenuItems items={['test']} open={open}/>}
       {page === 'reset' && <ResetGarden plant={plant} reset={storage.reset} cancel={()=>open('settings')}/>}
-      {(phoneItems.includes(page) || page==='test') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
+      {(phoneItems.includes(page) || page==='test') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} saveIssue={issue} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
     </GardenDialog>}
   </main>;
 }

@@ -4,7 +4,7 @@ import SwipeCue from './SwipeCue.jsx';
 import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces,prepareRoomPhotos} from './roomShopArt.js';
-import {catalog,lifeOf,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackup} from './gardenEconomy.js';
+import {catalog,lifeOf,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackupChange} from './gardenEconomy.js';
 import './gardenMarket.css';
 import GardenKeepsakes from './GardenKeepsakes.jsx';
 import {ROOT_TIME,replant,takeCutting} from './game.js';
@@ -208,7 +208,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       const ok=await commit(p=>{
         const next=operation(p);
         if(next===p)return p;
-        if(!fitsBackup(next)){tooBig=true;return p;}
+        if(!fitsBackupChange(p,next)){tooBig=true;return p;}
         changed=true;return next;
       });
       if(!ok || !changed)setNotice(tooBig?'Your garden is near its backup limit. Remove a frame photo and try again.':'Could not save this change. Check the current item or spot and try again.');
@@ -510,7 +510,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
           if(item.id===playingRecordId)onSelectRecord(null);
           closePanel();setNotice(catalog[item.sku].name+' put in inventory.');
         }}}
-        savePhoto={photo=>change(p=>framePhoto(p,item.id,photo))}>
+        savePhoto={(photo,expectedSrc)=>change(p=>framePhoto(p,item.id,photo,expectedSrc))}>
         {itemPlant && <p className="room-guide">Moving just this pot leaves {itemPlant.name || speciesName(itemPlant)} here.</p>}
         {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={plant.sound} playing={playingRecordId===item.id} onPlayingChange={yes=>onSelectRecord(yes?item.id:null)}/>}
       </ShopItemDetail>}

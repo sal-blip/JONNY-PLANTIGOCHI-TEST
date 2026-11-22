@@ -127,10 +127,10 @@ export function storeItem(plant,id,from) {
   const g=lifeOf(plant),item=g.items.find(i=>i.id===id && i.slot!==null && i.slot===from);
   return item?update(plant,{items:g.items.map(i=>i===item?{...i,slot:null}:i)}):plant;
 }
-export function framePhoto(plant,id,photo) {
+export function framePhoto(plant,id,photo,expectedSrc) {
   if(photo && !validPhoto(photo))return plant;
   const g=lifeOf(plant), item=g.items.find(i=>i.id===id && catalog[i.sku]?.kind==='frame');
-  if(!item)return plant;
+  if(!item || item.photo?.src!==expectedSrc || (!photo && !item.photo))return plant;
   const next={...item};
   if(photo)next.photo=photo;
   else delete next.photo;
@@ -154,6 +154,9 @@ export function removeNote(plant,note) {
   if(!current || JSON.stringify(current)!==JSON.stringify(note))return plant;
   return update(plant,{notes:g.notes.filter(n=>n.id!==note.id)});
 }
-export function fitsBackup(plant) {
-  return new Blob([JSON.stringify(plant)]).size <= backupLimit-65536;
+const backupBytes = plant=>new Blob([JSON.stringify(plant)]).size;
+export function fitsBackupChange(current,next) {
+  const bytes=backupBytes(next);
+  // Reserve room for ordinary growth. A larger imported garden can shed photos or notes in steps.
+  return bytes<=backupLimit-65536 || bytes<backupBytes(current);
 }

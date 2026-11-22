@@ -25,12 +25,12 @@ export function dewRules(level) {
   return { goal:level+2, fallMs, spacingMs:Math.round(fallMs*(1.12-0.04*step)) };
 }
 
-function startDew(g, lane, level = g.level) {
-  return {...g,level,phase:'fall',lane:1,count:0,elapsed:0,nextId:1,feedbackUntil:0,result:null,
+function startDew(g, lane, level, at) {
+  return {...g,level,startedAt:at,finishedAt:null,phase:'fall',lane:1,count:0,elapsed:0,nextId:1,feedbackUntil:0,result:null,
     drops:[{id:0,lane,progress:0}],nextDropAt:dewRules(level).spacingMs};
 }
 
-function fall(g, lane) {
+function fall(g, lane, at) {
   const {goal,fallMs,spacingMs} = dewRules(g.level);
   const elapsed = g.elapsed + tickMs;
   let {count,chances,result,feedbackUntil,nextDropAt,nextId} = g;
@@ -41,10 +41,10 @@ function fall(g, lane) {
     const caught = drop.lane === g.lane;
     if (caught) {
       count++;
-      if (count === goal) return {...g,phase:'won',count,chances,drops:[],result:'win'};
+      if (count === goal) return {...g,phase:'won',finishedAt:at,count,chances,drops:[],result:'win'};
     } else {
       chances--;
-      if (!chances) return {...g,phase:'lost',count,chances,drops:[],result:'miss'};
+      if (!chances) return {...g,phase:'lost',finishedAt:at,count,chances,drops:[],result:'miss'};
     }
     result = caught ? 'catch' : 'miss';
     feedbackUntil = elapsed + 240;
@@ -68,27 +68,27 @@ export function stepGame(g, event) {
         return {...g,level:Math.max(1,Math.min(g.unlocked,g.level+(event.key==='left'?-1:1)))};
       }
       if (g.name === 'dew') {
-        if (g.phase === 'won' && g.level===LEVELS) return {...g,phase:'ready',unlocked:LEVELS};
+        if (g.phase === 'won' && g.level===LEVELS) return {...g,phase:'ready',unlocked:LEVELS,chances:DEW_CHANCES,count:0,result:null};
         const level = g.phase==='won' ? g.level+1 : g.level;
-        return startDew({...g,unlocked:Math.max(g.unlocked,level)},event.dropLane,level);
+        return startDew({...g,unlocked:Math.max(g.unlocked,level)},event.dropLane,level,event.at);
       }
-      return { ...g, phase:'watch', sequence:event.sequence, index:0, lit:true };
+      return { ...g, phase:'watch', startedAt:event.at, finishedAt:null, sequence:event.sequence, index:0, lit:true };
     }
     if (g.name === 'dew' && g.phase === 'fall') {
       const dx = event.key === 'left' ? -1 : event.key === 'right' ? 1 : 0;
       return { ...g, lane:Math.max(0,Math.min(2,g.lane + dx)) };
     }
     if (g.name === 'echo' && g.phase === 'repeat') {
-      if (event.key !== g.sequence[g.index]) return { ...g, phase:'retry', lit:false };
-      if (g.index === 2) return { ...g, phase:'won', lit:false };
+      if (event.key !== g.sequence[g.index]) return { ...g, phase:'retry', finishedAt:event.at, lit:false };
+      if (g.index === 2) return { ...g, phase:'won', finishedAt:event.at, lit:false };
       return { ...g, index:g.index + 1 };
     }
     return g;
   }
   if (event.type !== 'tick') return g;
-  if (g.phase === 'lost') return startDew({...g,chances:DEW_CHANCES,unlocked:1},event.dropLane,1);
-  if (g.phase === 'fall') return fall(g,event.dropLane);
-  if (g.phase === 'retry') return { ...g, phase:'watch', index:0, lit:true };
+  if (g.phase === 'lost') return startDew({...g,chances:DEW_CHANCES,unlocked:1},event.dropLane,1,event.at);
+  if (g.phase === 'fall') return fall(g,event.dropLane,event.at);
+  if (g.phase === 'retry') return { ...g, phase:'watch', startedAt:event.at, finishedAt:null, index:0, lit:true };
   if (g.phase === 'watch') {
     if (g.lit) return { ...g, lit:false };
     if (g.index === 2) return { ...g, phase:'repeat', index:0 };
@@ -117,15 +117,15 @@ export function usePocketPlay(plant,paused,onFinish) {
     if (!active || !['won','lost','retry'].includes(active.phase)) {lastResult.current=null;return;}
     if (lastResult.current===active)return;
     lastResult.current=active;
-    onFinish(active.name,active.phase,active.level,crypto.randomUUID(),Date.now());
+    onFinish(active.name,active.phase,active.level,crypto.randomUUID(),active.startedAt,active.finishedAt);
   },[active,onFinish]);
   useEffect(() => {
     if (!active || paused) return;
     const delay = {fall:tickMs, lost:1800, watch:active.lit ? 850 : 300, retry:1100}[active.phase];
     if (!delay) return;
-    const timer = setInterval(() => { if (!document.hidden) dispatch({type:'tick',dropLane:randomLane()}); },delay);
+    const timer = setInterval(() => { if (!document.hidden) dispatch({type:'tick',at:Date.now(),dropLane:randomLane()}); },delay);
     return () => clearInterval(timer);
   },[active?.name,active?.phase,active?.lit,paused]);
   return { game:active, enter:name => { if (canPlay(name,plant)) dispatch({type:'enter',name,cleared:dewCheckpoint(plant)}); },
-    exit, key:key=>dispatch({type:'key',key,dropLane:randomLane(),sequence:Array.from({length:3},()=>keys[randomLane()])}) };
+    exit, key:key=>dispatch({type:'key',key,at:Date.now(),dropLane:randomLane(),sequence:Array.from({length:3},()=>keys[randomLane()])}) };
 }

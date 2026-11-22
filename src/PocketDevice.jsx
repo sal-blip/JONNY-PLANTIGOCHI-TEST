@@ -79,13 +79,13 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
     else if(last.stage!==plant.stage) react('growth');
     previous.current={id:plant.id,stage:plant.stage,dead:plant.deadAt};
   },[plant.id,plant.stage,plant.deadAt,react]);
-  const recordRound=useCallback((name,phase,level,receipt,time)=>{
+  const recordRound=useCallback((name,phase,level,receipt,startedAt,time)=>{
     const id=plant.id;
     void commit(old=>{
       let p=wake(old,time);
       if(p.id!==id || p.deadAt!==null)return p;
       if(name==='dew')p=saveDewCheckpoint(p,phase==='won'?level:0);
-      if(phase==='won')p=earnWin(p,receipt,time,time);
+      if(phase==='won')p=earnWin(p,receipt,startedAt,time);
       return company(p,time);
     });
     react(phase==='won'?'gameWin':'gameLoss');
@@ -164,6 +164,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
     void commit(p=>{
       if(p.id!==plant.id)return p;
       const before=wake(p,time);
+      if(action==='water' && (before.lastDrink!==live.lastDrink || before.extraPour!==live.extraPour || before.rotAt!==live.rotAt)) return before;
       const next=care(before,action,time,confirmed);
       if(next!==before){
         effect=action==='water' && careStatus(before,action,time).confirm?'overwater':action;

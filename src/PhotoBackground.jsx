@@ -59,7 +59,11 @@ export default function PhotoBackground({ photo, update, layer, cancel, apply })
     <div className="photo-tools">
       <p role="status">{notice || (busy ? 'Preparing photo…' : photo ? 'Drag to position, or use the arrow keys.' : 'Choose a photo from this device.')}</p>
       <div><button type="button" onClick={() => input.current.click()} disabled={busy}><ImagePlus/>{photo ? 'Change photo' : 'Choose photo'}</button>
-        {photo && <button className="photo-apply" disabled={busy} onClick={async () => { if (!await apply()) setNotice('Your device could not save this photo. Free some browser storage and try again.'); }}><Check/>Use photo</button>}</div>
+        {photo && <button className="photo-apply" disabled={busy} onClick={async () => {
+          setBusy(true);
+          try {const issue=await apply();if(issue)setNotice(issue);}
+          finally {setBusy(false);}
+        }}><Check/>Use photo</button>}</div>
       <input hidden ref={input} type="file" accept="image/*" aria-label="Background photo" onChange={selectFile}/>
     </div>
   </dialog>;

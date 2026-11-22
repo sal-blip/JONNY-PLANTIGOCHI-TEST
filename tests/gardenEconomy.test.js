@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {care,graduate,HOUR,newPlant,readPlant,relocateGraduate,replant,wake,WEEK} from '../src/game.js';
-import {addRealPlant,canSetItem,checkIn,destinationKey,earnWin,framePhoto,lifeOf,placeItem,removeNote,saveNote,storeItem,validGardenLife} from '../src/gardenEconomy.js';
+import {addRealPlant,canSetItem,checkIn,destinationKey,earnWin,fitsBackupChange,framePhoto,lifeOf,placeItem,removeNote,saveNote,storeItem,validGardenLife} from '../src/gardenEconomy.js';
+import {backupLimit} from '../src/gardenScenes.js';
 
 const morning=new Date(2026,0,18,8).getTime();
 const later=new Date(2026,0,19,0,1).getTime();
@@ -107,4 +108,36 @@ test('swapping pots from shelf zero moves only the ceramics and preserves both p
   assert.equal(moved.gardenLife.items.find(i=>i.id==='glaze').slot,0);
   assert.equal(moved.gardenLife.items.find(i=>i.id==='clay').slot,6);
   assert.deepEqual(readPlant(JSON.stringify(moved),morning),moved);
+});
+
+test('an older frame photo selection or removal preserves the newer saved image',()=>{
+  const initial=checkIn(seed(),morning);
+  const frame=buy({...initial,gardenLife:{...initial.gardenLife,balance:20}},'oak','frame','0/decor-stand');
+  const first={src:'data:image/jpeg;base64,/9j/AA==',width:40,height:32,x:50,y:50};
+  const newer={...first,src:'data:image/jpeg;base64,/9j/AQ=='};
+  const pending={...first,src:'data:image/jpeg;base64,/9j/Ag=='};
+  const original=framePhoto(frame,'frame',first,undefined);
+  const changed=framePhoto(original,'frame',newer,first.src);
+  assert.equal(changed.gardenLife.items[0].photo,newer);
+  assert.equal(framePhoto(changed,'frame',pending,undefined),changed);
+  assert.equal(framePhoto(changed,'frame',pending,first.src),changed);
+  assert.equal(framePhoto(changed,'frame',null,first.src),changed);
+  const removed=framePhoto(changed,'frame',null,newer.src);
+  assert.equal(removed.gardenLife.items[0].photo,undefined);
+  assert.equal(framePhoto(removed,'frame',pending,newer.src),removed);
+});
+
+test('photo and journal budgets use UTF-8 bytes and permit successive reductions of oversized gardens',()=>{
+  const reserve=65536,limit=backupLimit-reserve;
+  const small={text:''};
+  const atLimit={text:'a'.repeat(limit-new Blob([JSON.stringify(small)]).size)};
+  const above={text:atLimit.text+'x'};
+  const evenLarger={text:atLimit.text+'葉'};
+  assert.equal(fitsBackupChange(small,atLimit),true);
+  assert.equal(fitsBackupChange(atLimit,above),false);
+  assert.equal(fitsBackupChange(above,evenLarger),false);
+  assert.equal(fitsBackupChange(above,{text:atLimit.text+'y'}),false);
+  assert.equal(fitsBackupChange(evenLarger,above),true);
+  assert.equal(fitsBackupChange(above,atLimit),true);
+  assert.equal(fitsBackupChange(atLimit,small),true);
 });

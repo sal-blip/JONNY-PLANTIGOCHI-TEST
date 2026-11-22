@@ -7,6 +7,7 @@ export const DAY = 24 * HOUR;
 export const WEEK = 7 * DAY;
 export const WATER_INTERVAL = 4 * HOUR;
 const WATER_TOP_UP_WINDOW = HOUR / 2;
+const soakedMessage = 'Squelch. My socks are soaked.';
 export const MATURE_CARE_DELAY = 4 * HOUR;
 const CRITICAL_WATER_AGE = 12 * HOUR;
 const ROT_RESCUE_WINDOW = 12 * HOUR;
@@ -67,16 +68,22 @@ export function deathDeadline(p) {
   return soil===null || p.fungusAt==null ? soil : Math.min(soil,p.fungusAt+FUNGUS_WINDOW);
 }
 
+// A delayed transaction or a changed device clock must not rewrite recorded history.
+function latestCareAt(p) {
+  return Math.max(p.plantedAt,p.anchor,p.wateredAt ?? 0,p.lastDrink ?? 0,p.extraPour ?? 0,
+    p.rotAt ?? 0,p.fungusAt ?? 0,p.fedAt ?? 0,p.litAt ?? 0,p.companyAt ?? 0,p.deadAt ?? 0,p.jar?.cutAt ?? 0);
+}
+
 export function discoverFungus(saved, now) {
   const p=wake(saved,now);
-  if(p.deadAt!==null || p.stage==='seed' || p.fungusAt!=null || p.outbreakDue==null || now<p.outbreakDue ||
+  if(now < latestCareAt(p) || p.deadAt!==null || p.stage==='seed' || p.fungusAt!=null || p.outbreakDue==null || now<p.outbreakDue ||
      p.rotAt!==null || condition(p,now)==='critical')return p;
   return {...settle(p,now),fungusAt:now,outbreakDue:null};
 }
 
 export function treatFungus(saved, outbreak, now) {
   const p=wake(saved,now);
-  if(p.deadAt!==null || outbreak==null || p.fungusAt!==outbreak)return p;
+  if(now < latestCareAt(p) || p.deadAt!==null || outbreak==null || p.fungusAt!==outbreak)return p;
   return milestone({...settle(p,now),fungusAt:null,outbreakDue:nextOutbreak(now),message:'Ahh. No more gnats!'},'fungus-'+outbreak,p.name+' recovered from fungus.',now);
 }
 
@@ -136,13 +143,18 @@ function settle(p, now) {
   return {...p, earned:earnedAt(p,now), anchor:Math.max(now,p.anchor)};
 }
 export function wake(p, now = Date.now(), visible = true) {
-  if (p.deadAt !== null) return p;
+  if (p.deadAt !== null || now < latestCareAt(p)) return p;
   if (p.stage === 'seed') return visible && p.wateredAt !== null && now >= p.plantedAt + HOUR ? sprout(p,now) : p;
   const deadline = deathDeadline(p);
-  const elapsed = earnedAt(p,Math.min(now,deadline));
+  const observedAt = Math.min(now,deadline);
+  const elapsed = earnedAt(p,observedAt);
   const target = elapsed >= WEEK ? 'grown' : elapsed >= 5*DAY ? 'split' : elapsed >= 3*DAY ? 'young' : 'sprout';
   if (STAGES.indexOf(target) > STAGES.indexOf(p.stage)) {
-    p = milestone({...p,stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'},target,p.name+' reached '+STAGE_NAMES[target].toLowerCase()+'.',Math.min(now,deadline));
+    const threshold = target==='grown' ? milestones.grown.age : target==='split' ? milestones.finalCare.age : milestones.young.age;
+    // Only this growth segment has a known starting time. Older accrued time has no dated history.
+    const crossing = p.anchor + threshold - p.earned;
+    const reachedAt = p.earned < threshold && crossing >= p.plantedAt ? crossing : observedAt;
+    p = milestone({...settle(p,reachedAt),stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'},target,p.name+' reached '+STAGE_NAMES[target].toLowerCase()+'.',reachedAt);
   }
   if (now < deadline) return p;
   const cause = deadline<soilDeadline(p) ? 'Fungus' : p.rotAt===null ? 'Thirst' : 'Root rot';
@@ -151,7 +163,7 @@ export function wake(p, now = Date.now(), visible = true) {
 }
 export function company(p, now = Date.now()) {
   p = wake(p,now);
-  return p.deadAt !== null || p.stage === 'seed' ? p : {...p,companyAt:now,accompanied:true};
+  return now < latestCareAt(p) || p.deadAt !== null || p.stage === 'seed' ? p : {...p,companyAt:now,accompanied:true};
 }
 const stamp = n => Number.isSafeInteger(n) && n >= 0;
 const optionalStamp = n => n === null || stamp(n);
@@ -178,6 +190,12 @@ export function readPlant(text, now = Date.now(), visible = true) {
       || !stamp(p.plantedAt) || !optionalStamp(p.wateredAt) || ![0,1].includes(p.round)
       || !Array.isArray(p.given) || !p.given.every(a => ACTIONS.includes(a)) || new Set(p.given).size !== p.given.length
       || typeof p.message !== 'string' || typeof p.sound !== 'boolean') return null;
+    // Older builds could confirm a second pour with a timestamp preceding the real drink.
+    if (p.version===3 && p.stage!=='seed' && p.deadAt===null && p.rotAt===null && p.message===soakedMessage &&
+        stamp(p.extraPour) && stamp(p.lastDrink) && p.extraPour<p.lastDrink && p.anchor>=p.lastDrink) {
+      p.extraPour=null;
+      p.message='A little sip. Very sophisticated.';
+    }
     if (p.version === 1) Object.assign(p,{version:2,id:'legacy-'+p.plantedAt,generation:1,...blankHealth,
       lastDrink:p.stage==='seed'?null:now,jar:null,book:[],dewCleared:0});
     if (p.version === 2) {
@@ -219,13 +237,13 @@ export function restore(text, now = Date.now(), visible = true) {
 
 export function takeCutting(saved, stem, now = Date.now()) {
   const p = wake(saved, now);
-  if (p.deadAt !== null || p.stage !== 'grown' || p.fungusAt!=null || p.jar || !['left','right'].includes(stem)) return p;
+  if (now < latestCareAt(p) || p.deadAt !== null || p.stage !== 'grown' || p.fungusAt!=null || p.jar || !['left','right'].includes(stem)) return p;
   return { ...p, jar: { cutAt: now, generation: p.generation + 1, stem } };
 }
 
 export function replant(saved, source, now = Date.now()) {
   const p = wake(saved, now);
-  if (p.deadAt === null || !['cutting','seed'].includes(source)) return p;
+  if (now < latestCareAt(p) || p.deadAt === null || !['cutting','seed'].includes(source)) return p;
   const cutting = source === 'cutting';
   if (cutting && (!p.jar || now < p.jar.cutAt + ROOT_TIME)) return p;
   const fresh = { ...p, ...newPlant(now), sound: p.sound, book: p.book, jar: p.jar, dewCleared: p.dewCleared };
@@ -236,7 +254,7 @@ export function replant(saved, source, now = Date.now()) {
 
 export function graduate(saved, id, slot, now = Date.now()) {
   const p = wake(saved,now);
-  if (p.id!==id || p.stage!=='grown' || p.fungusAt!=null || p.deadAt!==null || !canPlaceAt(p.graduates,slot)) return p;
+  if (now < latestCareAt(p) || p.id!==id || p.stage!=='grown' || p.fungusAt!=null || p.deadAt!==null || !canPlaceAt(p.graduates,slot)) return p;
   const room=viewForSlot(slot);
   const potStyle=placesFor(room).findIndex(spot=>slotFor(room,spot)===slot)%6;
   const graduate = {id:p.id,name:plantName(p.name),species:'monstera',potStyle,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
@@ -262,8 +280,12 @@ const happy = {
 };
 
 export function careStatus(p, action, now = Date.now()) {
-  const soil = condition(p, now);
-  if (soil === 'dead') return { hint: 'Pressed leaf', locked: true };
+  if (p.deadAt !== null) return { hint: 'Pressed leaf', locked: true };
+  const latest = latestCareAt(p);
+  // The displayed clock updates once per second, while a completed action renders immediately.
+  if (latest - now > 1000) return { hint: 'Check device clock', locked: true, opensAt:latest };
+  now = Math.max(now,latest);
+  const soil = condition(p,now);
   if (p.stage === 'seed') {
     if (action !== 'water') return { hint: 'At sprout', locked: true };
     return p.wateredAt === null ? { hint: 'Ready for water' } : { hint: 'Seed watered', locked: true };
@@ -300,6 +322,7 @@ export function needsPourConfirmation(p, now = Date.now()) {
 
 export function care(saved, action, now = Date.now(), confirmed = false) {
   let p = wake(saved, now);
+  if (now < latestCareAt(p)) return p;
   const status = careStatus(p, action, now);
   if (status.locked || (status.confirm && !confirmed)) return p;
   if (p.stage !== 'seed') p=settle(p,now);
@@ -310,7 +333,7 @@ export function care(saved, action, now = Date.now(), confirmed = false) {
   if (p.stage === 'seed') return earnWater(wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now),now);
   if (action === 'water') {
     if (status.confirm) {
-      if (p.extraPour === null) return { ...p, extraPour: now, message: 'Squelch. My socks are soaked.' };
+      if (p.extraPour === null) return { ...p, extraPour: now, message: soakedMessage };
       return { ...p, rotAt: now, message: 'My roots! Drain my pot.' };
     }
     if(condition(p,now)==='critical')p=milestone(p,'rescue-'+p.lastDrink,p.name+' perked up after a rescue watering.',now);

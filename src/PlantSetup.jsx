@@ -2,8 +2,7 @@ import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {ChevronLeft,ChevronRight,CornerUpLeft,Heart,Leaf} from 'lucide-react';
 import DeviceShell from './DeviceShell.jsx';
 import PlantPixel from './PlantPixel.jsx';
-import {readPlant} from './game.js';
-import {backupLimit} from './gardenScenes.js';
+import {readGardenBackup} from './gardenBackup.js';
 import './PlantSetup.css';
 
 function AlertChoices({alerts,offer,answer}){
@@ -25,24 +24,23 @@ export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answe
     const f=e.target.files?.[0];e.target.value='';
     if(!f)return;
     try{
-      const plant=f.size<=backupLimit && readPlant(await f.text());
-      if(!plant)throw Error();
-      setCandidate(plant);setNotice('');
-    }catch{setCandidate(null);setNotice('Choose a valid Plantigochi backup.');}
+      const garden=await readGardenBackup(f);
+      setCandidate({plant:garden,apply:()=>replace(garden)});setNotice('');
+    }catch(error){setCandidate(null);setNotice(error.message);}
   }
   const inviting=Boolean(offer && !candidate);
   const blocked=inviting && alerts.denied;
   const title=candidate?'Bring your garden home':offer===2?'Get plant alerts?':'Welcome to your pocket garden';
   useLayoutEffect(()=>{heading.current?.focus({preventScroll:true});},[title]);
   let copy='A sleepy Monstera is waiting. Give it a name, then use the heart on your keychain to give it its first drink.';
-  if(candidate)copy=candidate.name+' · Generation '+candidate.generation+' · '+candidate.graduates.length+' collected';
+  if(candidate)copy=candidate.plant.name+' · Generation '+candidate.plant.generation+' · '+candidate.plant.graduates.length+' collected';
   else if(inviting)copy=blocked?'Plant alerts are blocked on this device. To receive care reminders, allow notifications for Plantigochi in your device settings.'
     :'Your plant keeps growing while you’re away. Get a heads-up when your seed is ready to sprout or your Monstera gets very thirsty.';
   return <main className="seed-setup"><section className="seed-letter">
     <div className="seed-portrait"><PlantPixel stage={plant?.stage || 'seed'}/></div>
     <h1 ref={heading} tabIndex="-1">{title}</h1>
     <p>{copy}</p>
-    <div className="seed-actions">{candidate?<><button onClick={()=>replace(candidate)}>Restore this garden</button>
+    <div className="seed-actions">{candidate?<><button onClick={async()=>{if(!await candidate.apply()){setCandidate(null);setNotice('');}}}>Restore this garden</button>
       <button onClick={()=>{setCandidate(null);if(offer)void answer(true);else setup('name');}}>Start fresh instead</button></>:
       inviting?<AlertChoices alerts={alerts} offer={offer} answer={answer}/>:
       <button onClick={()=>setup('name')}>Name your seed</button>}

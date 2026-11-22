@@ -383,6 +383,7 @@ async function alertWorker(subscription = null) {
   return {
     cache, displayed, navigations, setPlant:next => { plant = next; },
     push:data => emit('push', {data:data && {json:() => data}}),
+    milestone:data => emit('message',{data}),
     click:notification => emit('notificationclick', {notification:{data:notification.options.data, close() {}}}),
   };
 }
@@ -560,4 +561,45 @@ test('the worker shows current thirst, drops stale water alerts and opens the ma
   await late.cache.put('/notice-schedule',Response.json(schedule));
   await late.push();
   assert.equal(late.displayed.length,0);
+});
+
+for (const status of [404,410]) {
+  test('provider '+status+' retires the endpoint without preventing enrollment of its replacement',async t=>{
+    const app=await fixture(t,undefined,attempt=>new Response(null,{status:attempt===1?status:201}));
+    const now=Date.now();
+    const body={keys:app.keys,due:now-1000,fungusDue:now-1000,
+      eventIds:{due:'test-growth',fungusDue:'test-fungus'},expires:now+hour};
+    assert.equal((await app.put(body)).status,200);
+    assert.equal(await app.tick(),0);
+    assert.equal(app.sends.length,1);
+    const retired=await app.put(body);
+    assert.equal(retired.status,410);
+    assert.equal((await retired.json()).code,'subscription_expired');
+    assert.equal((await app.testPush(crypto.randomUUID())).status,410);
+    assert.equal(await app.tick(),0);
+    assert.equal((await app.put({...body,endpoint:endpoint+'-new',fungusDue:null})).status,200);
+    assert.equal(await app.tick(),1);
+    assert.equal(app.sends.at(-1).url,endpoint+'-new');
+    assert.equal((await app.cancel(owner)).status,200);
+    assert.equal((await app.put(body)).status,410);
+  });
+}
+
+test('a delayed Apple push cannot display an update when the local consent record was cleared',async()=>{
+  const sw=await alertWorker({endpoint});
+  await sw.push();
+  assert.deepEqual(sw.displayed,[]);
+});
+
+test('illness suppresses growth from a cached healthy projection and local milestone',async()=>{
+  const start=Date.now()-hour*2;
+  const p=care(newPlant(start),'water',start);
+  for(const illness of ['rotAt','fungusAt']){
+    const sw=await alertWorker();
+    await sw.cache.put('/notice-schedule',Response.json(reminderSchedule(p,false)));
+    sw.setPlant({...p,[illness]:Date.now()});
+    await sw.push();
+    await sw.milestone({type:'milestone',id:p.id,stage:p.stage,label:'Sprout'});
+    assert.deepEqual(sw.displayed,[]);
+  }
 });
