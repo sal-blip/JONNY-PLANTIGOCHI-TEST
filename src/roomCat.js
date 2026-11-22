@@ -36,28 +36,30 @@ const torso = [
   '............kkkkkkkk',
 ];
 
-// Perspective is slightly side-on: copper left cheek, charcoal right temple,
-// a cream blaze through the nose, and separate pale whisker pads.
+// A front-facing kitten with a continuous cream mask between the calico ear patches.
 const head = [
-  '..kk............kk',
-  '..kgk..........ktdk',
-  '..kgak........ktndk',
-  '..kgpak..kkk.kdpntk',
-  '..kapnakkgggkddpntk',
-  '..kapnagggaggddpptk',
-  '...kragaggragcdddtk',
-  '...kraggrgagchcddtk',
-  '..kaagggagachhhdddtk',
-  '.kaggggggcchhhhdddtk',
-  '.kggaagggcchhhhdddtk',
-  '.kgggggacchhhhhhdddk',
-  'kggccgacchhhhhhhccddk',
-  '.kgccchhhhhchhhhccdk',
-  '.kccchhchhcchhhhsck',
-  '..kscchhccchhccsck',
-  '....kssccssccsskk',
-  '......kbssssskk',
-  '.........kkk',
+  '...........................',
+  '.kkk...................kkk.',
+  '.kghk.................kkdk.',
+  '.kgghk...............kkddk.',
+  '.kgpghkk..kkkkkkk..kkkdpdk.',
+  '.kgppgghkkkhhghhkkkkddppdk.',
+  '.kgpppgghhhgghhhhkkddpppdk.',
+  '.kgppppgggggghhhhhddppppdk.',
+  '.kgpppppgggghhhhhhdpppppdk.',
+  '.kgpggggggghhhhhhhdddddpdk.',
+  '.kgggghhhhhhhhhhhhhhhddddk.',
+  '.kgggghhhhhhhhhhhhhhhhdhhk.',
+  'kkggghhhhhhhhhhhhhhhhhhhhkk',
+  'khghhhhhhhhhhhhhhhhhhhhhhhk',
+  'khhhhhhhhhhhhhhhhhhhhhhhhhk',
+  'khhppphhhhhhhhhhhhhhhppphhk',
+  'kkhhhhhhhhhhhhhhhhhhhhhhhhk',
+  '.kkhhhhhhhhhhhhhhhhhhhhhkk.',
+  '..kkkhcchhhhhhhhhhhccchkk..',
+  '....kkhhccccccccccchhkk....',
+  '.....kkkkkhhhhhhhkkkkk.....',
+  '.........kkkkkkkkk.........',
 ];
 
 const chest = [
@@ -78,12 +80,10 @@ const nearPaw = [
   'kchschscsk', '.kkbbbbbkk',
 ];
 const farPaw = ['...kccsk', '.kkchccck', 'kchhhccsk', 'kcsccscsk', '.kbbbbbkk'];
-const openEyes = [
-  '.kk.....kk.', 'kekk...kekk', '.bk.....bk.',
-];
-const drowsyEyes = ['.kk.....kk.', 'kbeb...kbeb', '..k......k.'];
-const shutEyes = ['k..k...k..k', '.kk.....kk'];
-const muzzle = ['..np..', '...b..', '.b.b.b', '..b.b.'];
+const openEyes = ['.kk.......kk.', 'khkk.....khkk', 'kkkk.....kkkk', '.bb.......bb.'];
+const drowsyEyes = ['.............', '.kk.......kk.', 'k..k.....k..k'];
+const shutEyes = ['.............', 'k..k.....k..k', '.kk.......kk.'];
+const muzzle = ['..pnp..','...b...','.b.b.b.','..b.b..'];
 
 function palette(light) {
   const amount = Math.round(Math.max(0, Math.min(1, light)) * 24) / 24;
@@ -142,16 +142,13 @@ function catPose(awake, blink, breath, tailLift) {
   });
   stamp(3, 23, farPaw);
   stamp(12, 24, nearPaw);
-  const hx = 2, hy = awake ? 1 : 3;
-  stamp(hx, hy, head);
-  stamp(hx + 4, hy + 9, blink ? shutEyes : awake ? openEyes : drowsyEyes);
-  stamp(hx + 7, hy + 12, muzzle);
-  // Offset whiskers taper into one-pixel tips against the room colors.
-  for (const [dx,dy,len] of [[-1,12,3],[2,13,3],[0,15,4],[16,13,3],[19,12,2],[17,15,4]]) {
-    for (let n = 0; n < len; n++) dot(hx + dx + n, hy + dy, 's');
+  const hx=1, hy=awake?0:2;
+  stamp(hx,hy,head);
+  stamp(hx+7,hy+10,blink?shutEyes:awake?openEyes:drowsyEyes);
+  stamp(hx+10,hy+14,muzzle);
+  for(const y of [14,17]){
+    stamp(0,hy+y,['sss']);stamp(hx+25,hy+y,['sss']);
   }
-  dot(hx-2, hy+11, 'j'); dot(hx-1, hy+16, 'j');
-  dot(hx+21, hy+11, 'j'); dot(hx+21, hy+16, 'j');
   const runs = Array.from({ length: letters.length + 1 }, () => []);
   for (let y = 0; y < HEIGHT; y++) {
     for (let x = 0; x < WIDTH;) {

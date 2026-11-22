@@ -28,7 +28,7 @@ function targetBounds(targets){
   return bounds;
 }
 
-export default function RoomView({index,onScreen,running,ambient=false,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
+export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
   garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null),foreground=useRef(null);
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
@@ -52,23 +52,40 @@ export default function RoomView({index,onScreen,running,ambient=false,worldHeig
   const lifted=running && dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
   const paintable=running || (ambient && onScreen);
   scene.current={hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,above,worldHeight,separatePlanes:true,placing:running && placing,jarProgress,leafCount};
+  const outsideOffset=useRef(0);
   useEffect(()=>{
     const media=matchMedia('(prefers-reduced-motion: reduce)');
-    const paint=()=>{if(canvas.current && !document.hidden)drawRoom(canvas.current,{...scene.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:media.matches});};
-    let timer;
+    const paint=()=>{if(canvas.current && !document.hidden)drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:media.matches});};
+    const scroller=stage?.current;
+    let timer,frame;
+    function measure(){
+      const roomWidth=canvas.current?.closest('.room-frame')?.clientWidth;
+      if(!roomWidth || media.matches)return 0;
+      const center=(scroller.scrollLeft+scroller.clientWidth/2)/roomWidth;
+      return Math.round(Math.max(-8,Math.min(8,(center-index-.5)*12)));
+    }
+    function scroll(){
+      if(frame || media.matches)return;
+      frame=requestAnimationFrame(()=>{
+        frame=0;
+        const next=measure();
+        if(next!==outsideOffset.current){outsideOffset.current=next;paint();}
+      });
+    }
     function refresh(){
       clearInterval(timer);
       if(paintable && onScreen && !document.hidden){
         if(depth.current)drawRoomDepth(depth.current,scene.current.roomIndex,roomLight(scene.current.hour),scene.current.above);
-        paint();
+        outsideOffset.current=measure();paint();
         if(!media.matches)timer=setInterval(paint,160);
       }
     }
+    if(paintable && onScreen)scroller?.addEventListener('scroll',scroll,{passive:true});
     refresh();media.addEventListener('change',refresh);document.addEventListener('visibilitychange',refresh);
-    return ()=>{clearInterval(timer);media.removeEventListener('change',refresh);document.removeEventListener('visibilitychange',refresh);};
-  },[onScreen,paintable]);
+    return ()=>{cancelAnimationFrame(frame);scroller?.removeEventListener('scroll',scroll);clearInterval(timer);media.removeEventListener('change',refresh);document.removeEventListener('visibilitychange',refresh);};
+  },[onScreen,paintable,index,stage,worldHeight]);
   useLayoutEffect(()=>{
-    if(paintable && !document.hidden && canvas.current)drawRoom(canvas.current,{...scene.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
+    if(paintable && !document.hidden && canvas.current)drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
   },[paintable,running,plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId]);
   useLayoutEffect(()=>{
     if(paintable && !document.hidden && depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);

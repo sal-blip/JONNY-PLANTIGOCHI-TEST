@@ -202,7 +202,9 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=fa
   if(stand){
     ctx.fillStyle=ink[index.d];r(-16,-1,34,4);r(-14,2,3,13);r(12,2,3,13);
     ctx.fillStyle=ink[index.h];r(-15,-1,31,2);r(-13,3,1,10);r(13,3,1,10);
-    ctx.fillStyle=ink[index.n];r(-12,10,25,2);
+    ctx.fillStyle=ink[index.D];r(-15,1,31,2);r(-14,3,5,2);r(10,3,5,2);
+    ctx.fillStyle=ink[index.n];r(-12,9,25,2);
+    ctx.fillStyle=ink[index.O];r(-12,9,25,1);r(-13,1,2,1);r(12,1,2,1);
   }
   ctx.fillStyle='rgba(59,42,42,.22)';r(-9,0,22,1);r(-6,1,17,1);
   if(selected)drawSelectionContour(ctx,art,{x,y,size,firstInk:1});

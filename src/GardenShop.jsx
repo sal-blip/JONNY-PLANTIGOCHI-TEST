@@ -3,7 +3,7 @@ import {catalog,framePhotoIdentity,lifeOf,localDay} from './gardenEconomy.js';
 import {drawShopPreview,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
 import {readFrameUpload} from './frameUpload.js';
-import {Coins,ChevronRight,ShoppingBag} from 'lucide-react';
+import {ChevronRight,ShoppingBag} from 'lucide-react';
 
 import {previewLayout} from './shopPreviewLayout.js';
 
@@ -32,7 +32,7 @@ function ItemArt({sku,photo,large=false}){
 }
 export function CoinBalance({plant}){
   const life=lifeOf(plant);
-  return <div className="wallet"><Coins size={20} aria-hidden="true"/><strong>{life.balance} Garden Coins</strong>
+  return <div className="wallet"><img src="/art/iseed-coin.png" width="20" height="20" alt="" style={{imageRendering:"pixelated"}}/><strong>{life.balance} Garden Coins</strong>
     <small>Today +{life.day===localDay(Date.now())?10+life.waters*2+life.wins.length*3:0}</small></div>;
 }
 export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
@@ -92,7 +92,7 @@ export default function GardenShop({plant,onPlace,inspect,initialTab='shop',onTa
       aria-label={p.name+' · '+p.price+' coins'} disabled={g.balance<p.price}
       onClick={()=>onPlace({sku,id:crypto.randomUUID(),buy:true})}>
       <ItemArt sku={sku}/><span>{p.name}<small>{({pot:'Individual pot',frame:'Personal photo',plant:'Grown garden plant',decor:'Room decoration'})[p.kind]}</small></span>
-      <b><Coins aria-hidden="true" size={13}/>{p.price}</b></button>)}</div>:
+      <b><img src="/art/iseed-coin.png" width="13" height="13" alt="" style={{imageRendering:"pixelated"}}/>{p.price}</b></button>)}</div>:
       <div className="shop-list">{g.items.map(item=><button key={item.id} onClick={()=>inspect(item)}><ItemArt sku={item.sku} photo={item.photo}/>
         <span>{catalog[item.sku].name}<small>{item.slot===null?'In inventory':'In the room'}</small></span><ChevronRight size={16}/></button>)}
         {!g.items.length && <p><ShoppingBag size={16}/> Your pots and decorations will appear here.</p>}

@@ -105,7 +105,10 @@ function jarSprite(stage){
   if(active)cutting(g,stage);
   stroke(-8,-13,-8,-7,3);rect(-7,-15,2,2,2);rect(-7,-5,1,2,2);
   rect(7,-11,1,5,2);rect(3,-3,3,1,3);rect(-6,-20,3,1,3);rect(3,-19,3,1,2);
-  dot(-3,waterline,3);
+  // A rolled neck and thick heel catch light independently of the water level.
+  rect(-7,-21,2,3,2);rect(6,-21,2,3,1);
+  rect(-7,-17,3,1,2);rect(4,-17,3,1,2);stroke(-8,-4,-5,-2,7);
+  rect(-3,-2,6,1,2);dot(-3,waterline,3);
   return g.runs();
 }
 function bookSprite(hasLeaves){
@@ -122,6 +125,10 @@ function bookSprite(hasLeaves){
   // The gold-foil leaf on the cover reads even before the first leaf is saved.
   polygon([-2,-9,-5,-10,-6,-13,-4,-15,0,-15,2,-17,5,-17,6,-14,4,-12,1,-10],22);
   stroke(-4,-9,4,-15,23);dot(-1,-13,19);dot(3,-14,19);dot(-3,-11,22);
+  // Fine raised corner protectors, paired stitching and a cloth spine.
+  stroke(-16,-18,-13,-18,23);stroke(-15,-17,-14,-14,22);
+  stroke(8,-20,10,-20,22);stroke(10,-20,11,-17,23);
+  stroke(11,-8,13,-8,22);dot(-12,-12,18);dot(-11,-9,18);
   if(hasLeaves){
     polygon([3,-4,6,-5,7,3,5,2,4,4],24);
     rect(11,-6,3,1,22);rect(9,-4,2,1,11);

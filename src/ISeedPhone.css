@@ -12,8 +12,8 @@
 .iseed-handset * {box-sizing:border-box}
 .iseed-bezel {position:relative;display:grid;place-items:center;width:100%;padding:0;border:0;background:transparent;touch-action:none;user-select:none;cursor:grab}
 .iseed-earpiece {pointer-events:none;display:flex;align-items:center;gap:8px;padding-top:2px}
-.iseed-earpiece b {width:44px;height:6px;border:1px solid #14241d;border-radius:5px;background:repeating-linear-gradient(90deg,#172a22 0 2px,#47574a 2px 4px);box-shadow:0 1px 0 #556459}
-.iseed-earpiece i {width:5px;height:5px;border:1px solid #506156;border-radius:50%;background:#182921;box-shadow:inset 0 1px 1px #17221c}
+.iseed-earpiece b {width:44px;height:6px;border:1px solid #14241d;border-radius:5px;background:repeating-linear-gradient(90deg,#53675a 0 1px,#192b22 1px 3px,#374b3e 3px 4px);box-shadow:0 1px 0 #556459}
+.iseed-earpiece i {width:5px;height:5px;border:1px solid #506156;border-radius:50%;background:radial-gradient(circle at 32% 32%,#a8c9bc 0 12%,#46665f 18% 41%,#182921 55%);box-shadow:inset 0 1px 1px #17221c}
 .iseed-earpiece i:last-child {width:3px;height:3px;background:#cdb36c;border:none}
 .iseed-screen {
   position:relative;isolation:isolate;display:flex;flex-direction:column;container-type:size;
@@ -47,8 +47,7 @@
 .iseed-hardware-brand {padding-left:clamp(12px,4vw,28px);color:#bdc7b6;text-shadow:0 1px #18231d;font:650 11px/1 ui-monospace,monospace;letter-spacing:.13em}
 .iseed-home-key {display:grid;place-items:center;min-width:52px;min-height:44px;border:0;padding:0;background:transparent;cursor:pointer;touch-action:manipulation}
 .iseed-home-key span {width:clamp(36px,5.7dvh,47px);aspect-ratio:1;display:grid;place-items:center;border:1px solid #758679;border-radius:50%;background:linear-gradient(155deg,#26342c,#1e2d26 48%,#35453a);box-shadow:0 0 0 1px #14211b,inset 0 2px 2px #4c5a4b,0 1px 1px #627261}
-.iseed-home-key i {display:block;position:relative;width:12px;height:16px;border:1.5px solid #c5d4b7;border-radius:70% 22% 65% 40%;transform:rotate(18deg)}
-.iseed-home-key i::after {content:"";position:absolute;left:4px;top:3px;width:1px;height:9px;background:#c5d4b7;transform:rotate(18deg)}
+.iseed-home-key img {display:block;image-rendering:pixelated}
 .iseed-home-key:active:enabled span {box-shadow:0 0 0 1px #14211b,inset 0 3px 3px #111f17}
 .iseed-home-key:disabled {cursor:default;opacity:.55}
 .iseed-handset :is(button,a):focus-visible {outline:2px solid #325946;outline-offset:-2px}

@@ -107,6 +107,11 @@ function plankRow(b,roomX,y,height,row,across,wood){
     const width=right-left;
     b.r(left,y,width,height,wood.faces[hash(seed+5)%wood.faces.length]);
     b.r(left,y+1,1,height-1,wood.joint);
+    if(seed%4===0 && height>5){
+      const knot=left+Math.floor(width*.64);
+      b.l(knot,y+4,knot+5,y+3,wood.grain[1]);b.r(knot+6,y+3,9,1,wood.grain[1]);
+      b.l(knot+15,y+3,knot+20,y+4,wood.grain[1]);
+    }
     for(let k=0;k<4;k++){
       const grain=hash(seed+k*97+13);
       const x=left+5+grain%(width-40);
@@ -159,6 +164,7 @@ function structure(ctx,b,day,warmth,hour,camera){
   r(camera,32,400,139,'#eadbb7');r(camera,171,400,40,'#b1b49a');
   for(let x=(Math.floor(camera/31)-1)*31;x<end+30;x+=31){
     r(x,172,2,37,'#8d9988');r(x+2,174,1,34,'#cbd0ad');
+    r(x+4,174,24,1,'#c1c5a8');r(x+27,175,1,26,'#a1ab94');
     if((x+10000)%3)r(x+11,180,1,20,'#abb096');
   }
   r(camera,168,400,4,'#867e64');r(camera,168,400,1,'#d4c69e');r(camera,170,400,1,'#ab9e7c');
@@ -233,11 +239,13 @@ function clouds({p,r},w,moment,studio,[,horizon,mountain,white]) {
 }
 
 function landscape({r,p,l},w,h,L,studio,[,horizon,mountain,white]) {
-  const center=studio?w*.28:w*.58,base=h-22;
-  p([-4,base+2,12,base-3,28,base,center-30,base-5,center-17,base-16,center-6,base-27,
-    center-2,base-29,center+3,base-29,center+16,base-15,center+32,base-5,w-12,base-2,w+2,base-6,w+2,h,-4,h],css(mountain));
-  p([center-16,base-16,center-6,base-27,center-2,base-29,center+3,base-29,center+16,base-15,
-    center+10,base-18,center+6,base-20,center+3,base-18,center,base-23,center-4,base-20,center-7,base-22],css(blend(white,mountain,.32)));
+  const center=w*.58,base=h-22;
+  if(!studio){
+    p([-4,base+2,12,base-3,28,base,center-30,base-5,center-17,base-16,center-6,base-27,
+      center-2,base-29,center+3,base-29,center+16,base-15,center+32,base-5,w-12,base-2,w+2,base-6,w+2,h,-4,h],css(mountain));
+    p([center-16,base-16,center-6,base-27,center-2,base-29,center+3,base-29,center+16,base-15,
+      center+10,base-18,center+6,base-20,center+3,base-18,center,base-23,center-4,base-20,center-7,base-22],css(blend(white,mountain,.32)));
+  }
   const mid=css(blend(mountain,[66,105,100],.42)),far=css(blend(mountain,[58,94,81],.55));
   p([0,h-23,16,h-27,29,h-25,42,h-31,57,h-27,72,h-30,91,h-20,113,h-27,130,h-31,149,h-30,w+3,h-27,w+3,h,0,h],mid);
   for(let i=-1;i<w/6+1;i++){
@@ -253,6 +261,8 @@ function landscape({r,p,l},w,h,L,studio,[,horizon,mountain,white]) {
     p([xx-5,yy+1,xx+3,yy-6,xx+ww-6,yy-6,xx+ww+3,yy,xx+ww+1,yy+2,xx-5,yy+2],roof);
     l(xx+3,yy-6,xx+ww-6,yy-6,tile);
     for(let j=1;j<ww-7;j+=5)l(xx+j+4,yy-5,xx+j,yy-1,tile);
+    r(xx+1,yy+2,ww-2,1,tile);
+    for(let j=4;j<ww-2;j+=8)r(xx+j,yy+3,1,7,roof);
     for(let j=3;j<ww-3;j+=7){r(xx+j,yy+5,4,6,roof);r(xx+j+1,yy+5,2,5,L.day<.33?'rgb(224,181,115)':tile);}
   }
   if(studio){
@@ -300,7 +310,7 @@ function makeBuffer(ctx,w,h) {
   if(surface){surface.width=w;surface.height=h;}
   return surface;
 }
-function viewOutside(ctx,raw,x,y,w,h,L,moment,studio){
+function viewOutside(ctx,raw,x,y,w,h,L,moment,studio,drift){
   ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.translate(x,y);
   const tones=skyFor(L.hour), key=Math.floor(L.hour*60)+':'+Math.round(L.day*60);
   let slot;
@@ -309,11 +319,11 @@ function viewOutside(ctx,raw,x,y,w,h,L,moment,studio){
     slot=outdoorCache.get(ctx.canvas)[studio?1:0];
     if(slot.key!==key){slot.key=key;slot.layers=new Map();}
   }
-  function layer(id,paint) {
+  function layer(id,paint,width=w) {
     if(!slot){paint(raw);return;}
     let buffer=slot.layers.get(id);
     if(!buffer){
-      buffer=makeBuffer(ctx,w,h);
+      buffer=makeBuffer(ctx,width,h);
       if(!buffer){paint(raw);return;}
       paint(tools(buffer.getContext('2d'),c=>c));
       slot.layers.set(id,buffer);
@@ -322,7 +332,10 @@ function viewOutside(ctx,raw,x,y,w,h,L,moment,studio){
   }
   layer('sky',brush=>skyField(brush,w,h,L,studio,tones));
   clouds(raw,w,moment,studio,tones);
-  layer('terrain',brush=>landscape(brush,w,h,L,studio,tones));
+  // Overscan the cached terrain so camera drift never exposes a blank edge.
+  ctx.save();ctx.translate(drift-8,0);
+  layer('terrain',brush=>landscape(brush,w+16,h,L,studio,tones),w+16);
+  ctx.restore();
   swallows(raw,w,moment,L,tones);
   const leafFrame=moment?1+(Math.floor(moment/390)%10):0;
   layer('maple'+leafFrame,brush=>maple(brush,w,leafFrame*390,studio,tones));
@@ -368,6 +381,7 @@ function windowFrame(ctx,b,x,y,w,h,clock,studio,outdoors) {
       l(x0+sign,y0+1,x1+sign,y1-2,'#faf0d4');
     }
     const [a,yy]=bend(1,y+54),[e,zz]=bend(width*.52,y+57);
+    for(let i=2;i<width-2;i+=4){const [hx,hy]=bend(i,y+h-6);r(hx,hy,2,1,'#c7ae90');}
     l(a,yy,e,zz,'#967552',2);l(a,yy,e,zz,'#c1a370');l(e,zz,e+sign*2,zz+5,'#a4895b');
   }
   if(!studio){drape(x-1,1,16);drape(x+w+1,-1,20);}
@@ -376,7 +390,8 @@ function windowFrame(ctx,b,x,y,w,h,clock,studio,outdoors) {
     r(x+3,y-3,w-4,12,'#a98b63');
     for(let yy=y-2;yy<y+8;yy+=3){r(x+5,yy,w-8,1,'#dbc69a');r(x+5,yy+1,w-8,1,'#c5ac7f');}
     r(x+5,y+9,w-8,2,'#a48e68');l(x+w-13,y+9,x+w-13,y+33,'#8f7d5e');
-    r(x+w-14,y+32,3,5,'#b59769');
+    for(const offset of [11,Math.floor(w/2),w-14]){r(x+offset,y-2,1,11,'#9e855f');r(x+offset+1,y,1,6,'#d4ba8f');}
+    r(x+w-14,y+32,3,5,'#9e805f');r(x+w-13,y+33,1,3,'#d8b781');
   }
   trim(b,x-4,y-3,w+11,4,false);
   // Plant bases sit on this narrow extruded wooden sill.
@@ -389,7 +404,7 @@ function windowFrame(ctx,b,x,y,w,h,clock,studio,outdoors) {
     const bellX=x+w-35,yy=y+12,motion=clock?Math.round(2*Math.sin(clock*.0012)):0;
     l(bellX,yy-6,bellX,yy+2,'#928b71');
     p([bellX-3,yy+8,bellX-3,yy+4,bellX-1,yy+2,bellX+1,yy+2,bellX+3,yy+5,bellX+3,yy+8],'#d4dfc4');
-    r(bellX-3,yy+8,7,1,'#799990');r(bellX-2,yy+5,1,2,'#f2ebce');
+    r(bellX-4,yy+7,9,1,'#b7d0c3');r(bellX-3,yy+8,7,1,'#688d88');r(bellX-1,yy+9,3,2,'#b79e70');r(bellX-2,yy+5,1,2,'#f2ebce');
     l(bellX,yy+9,bellX+motion,yy+14,'#847b67');
     p([bellX+motion-1,yy+14,bellX+motion+1,yy+13,bellX+2*motion+1,yy+21,bellX+2*motion-1,yy+22],'#668a85');
   }
@@ -398,7 +413,7 @@ function windowFrame(ctx,b,x,y,w,h,clock,studio,outdoors) {
 // Frames and linen are painted into transparent runtime layers. Their discrete
 // pixel poses loop smoothly while the separately composed sky keeps travelling.
 const frameCache=new WeakMap();
-function casement(ctx,b,raw,x,y,w,h,L,clock,studio) {
+function casement(ctx,b,raw,x,y,w,h,L,clock,studio,drift) {
   const pose=clock?1+(Math.floor(clock/230)%20):0;
   let slot;
   if(ctx.canvas){
@@ -419,11 +434,11 @@ function casement(ctx,b,raw,x,y,w,h,L,clock,studio) {
     }
   }
   if(buffer) {
-    viewOutside(ctx,raw,x+8,y+7,w-14,h-13,L,clock,studio);
+    viewOutside(ctx,raw,x+8,y+7,w-14,h-13,L,clock,studio,drift);
     ctx.drawImage(buffer,x-10,y-5);
   }else{
     windowFrame(ctx,b,x,y,w,h,clock,studio,
-      ()=>viewOutside(ctx,raw,x+8,y+7,w-14,h-13,L,clock,studio));
+      ()=>viewOutside(ctx,raw,x+8,y+7,w-14,h-13,L,clock,studio,drift));
   }
 }
 
@@ -433,11 +448,12 @@ function book(b,x,base,width,height,colors,lean=0){
   l(x+lean,base-height,x,base-1,'#5d554c');
   l(x+lean+1,base-height+1,x+width+lean-1,base-height+1,colors[1]);
   l(x+2+lean*.8,base-height+4,x+width-1+lean*.8,base-height+4,colors[1]);
-  if(width>4)r(x+1,base-4,width-2,1,colors[1]);
+  r(x+1+lean,base-height+2,Math.max(1,width-2),1,'#e0cfaa');
+  r(x+1,base-5,width-1,3,colors[1]);r(x+2,base-4,1,1,'#7d6d57');
 }
 function paperStack(b,x,y,w,colors) {
   for(let i=0;i<colors.length;i++){
-    b.r(x+i%2,y-i*3,w-i%3,3,colors[i]);b.r(x+2+i%2,y+1-i*3,w-4,1,'#dfcfa8');
+    b.r(x+i%2,y-i*3,w-i%3,3,colors[i]);b.r(x+1+i%2,y+1-i*3,w-2-i%3,1,'#dfcfa8');b.r(x+w-5,y-i*3,2,2,'#ab8270');
   }
 }
 function bookcase(b) {
@@ -461,12 +477,22 @@ function bookcase(b) {
   }
   trim(b,x-2,y-1,w+4,5);slat(b,x,y+3,bottom-y-4,5);slat(b,x+w-5,y+3,bottom-y-4,5);
   for(const sx of [x+3,x+w-9]){r(sx,bottom-2,6,7,wood.dark);r(sx+1,bottom-2,3,5,wood.mid);}
+  for(const level of [53,100,145,190,217]){
+    for(const post of [11,89]){
+      r(post,level,3,2,'#70523d');r(post+1,level,2,1,'#c69c71');
+    }
+  }
+  for(const xx of [23,44,65,84]){
+    l(xx,56,xx,91,'#987858');l(xx+1,104,xx+1,135,'#967355');
+  }
   book(b,19,95,5,22,['#647c70','#b7b991']);
   book(b,24,95,5,18,['#a07161','#d8af8a'],1);
   paperStack(b,76,138,10,['#a47960','#788974']);
   book(b,68,211,5,13,['#9a7f5f','#c9b285']);book(b,74,211,4,16,['#6b797e','#c4b599'],1);
   r(19,193,33,18,'#9f7352');r(21,195,29,13,wood.mid);
-  r(29,199,12,5,wood.shade);r(31,200,8,2,'#c3a371');
+  l(22,196,48,196,'#c39a70');r(22,207,27,1,'#976e50');
+  r(30,199,11,5,'#6f5743');r(31,199,9,1,'#c5a476');
+  r(32,201,7,2,'#70563e');r(33,202,5,1,'#ad8860');
   // The rim, base, and arch share x37. Lash both handle ends over the rim.
   const willow='#79543c', honey='#c79d6b', straw='#e3c292';
   const band=(half,y,color)=>r(37-half,y,2*half+1,1,color);
@@ -919,9 +945,16 @@ function coffee(b){
   l(258,251,264,248,'#d0a271');l(124,248,128,250,'#d4a674');
 
   // The teacup sits on the near corner of the table.
-  o(256,248,7,2,'#ad8265');o(256,247,6,1,'#e2c79f');
-  r(252,241,8,6,'#b49b7e');r(253,242,6,4,'#e1cdab');r(254,240,5,1,'#eedec0');
-  r(253,241,6,1,'#795e48');r(259,241,3,1,'#b49b7e');r(262,242,1,2,'#b49b7e');r(259,244,3,1,'#a88c70');
+  // All oval rows share the same horizontal center. Paint the open handle behind the bowl.
+  const center=255;
+  function band(y,half,color){r(center-half,y,half*2+1,1,color);}
+  band(245,6,'#a3aa8e');band(246,9,'#e9dfbd');band(247,10,'#f1e4c4');
+  band(248,9,'#aeb49b');band(249,6,'#8e8b75');
+  r(260,240,4,1,'#739088');r(263,241,2,3,'#739088');r(260,244,4,1,'#739088');
+  band(239,4,'#d9dfc5');band(240,6,'#e3e8cb');r(center-4,240,9,1,'#836e51');
+  band(241,6,'#abc8b3');band(242,5,'#98b6a6');band(243,5,'#98b6a6');
+  band(244,4,'#88a899');band(245,3,'#78968a');band(246,2,'#6d877e');
+
 }
 
 function cabinet(b,x,y,w,h){
@@ -932,11 +965,14 @@ function cabinet(b,x,y,w,h){
   for(let j=0;j<2;j++){
     const dx=x+4+j*(w-8)/2,dw=(w-11)/2;
     r(dx,y+5,dw,h-10,wood.shade);r(dx+2,y+6,dw-4,h-13,'#bc9068');
-    for(let i=0;i<dw-5;i+=4){
-      r(dx+3+i,y+8,1,h-17,'#9f795a');r(dx+4+i,y+8,1,h-17,'#cca47b');
+    const door=Math.round(dx),span=Math.floor(dw);
+    r(door+3,y+8,span-6,h-19,'#84674e');
+    for(let i=4;i<span-5;i+=6){
+      r(door+i,y+8,3,h-19,'#bb9366');r(door+i,y+8,1,h-19,'#d0aa79');
     }
-    l(dx+2,y+h-5,dx+dw-3,y+h-5,wood.mid);
-    r(dx+(j?4:dw-7),y+h*.5,3,5,'#6a5946');r(dx+(j?5:dw-6),y+h*.5,1,4,'#d0aa72');
+    r(door+2,y+h-12,span-4,4,'#b58b63');l(door+3,y+h-8,door+span-3,y+h-8,'#977150');
+    const pull=door+(j?3:span-8);
+    r(pull,y+15,5,7,'#654e3e');r(pull+1,y+16,3,5,'#c7a575');r(pull+2,y+17,1,3,'#806347');
   }
   p([x-2,y,x+3,y-6,x+w+4,y-6,x+w+3,y,x,y+2],wood.gold);
   l(x+4,y-6,x+w+2,y-6,wood.mid);
@@ -949,7 +985,8 @@ function studioShelves(b) {
     r(x+4,y+6,w-1,3,'#c2ab89');
     for(const [bx,dir] of [[x+4,1],[x+w-7,-1]]){
       r(bx,y+3,3,14,'#7c6953');l(bx+1,y+15,bx+1+dir*8,y+5,'#9a8060',2);
-      r(bx+1,y+9,1,1,'#d5b185');
+      l(bx+1,y+14,bx+1+dir*8,y+5,'#c6a073');
+      r(bx+1,y+6,1,1,'#e0c393');r(bx+1,y+14,1,1,'#6b5645');
     }
     p([x-1,y,x+3,y-5,x+w,y-5,x+w+2,y],wood.gold);
     l(x+3,y-5,x+w-1,y-5,wood.lit);trim(b,x-1,y,w+4,5);
@@ -960,25 +997,30 @@ function studioShelves(b) {
   cabinet(b,410,182,82,38);
   p([477,178,487,178,488,183,486,197,476,197,477,184],'#73958b');
   for(const xx of [478,482,485])l(xx,184,xx-1,194,'#adc1a1');
-  r(476,195,10,1,'#c5c9a6');for(let i=0;i<5;i++)r(476+i*2,197,1,2,'#b9be9d');
+  for(let y=186;y<195;y+=3){l(477,y,486,y-1,'#90b0a1');}
+  r(476,195,10,1,'#e0d3ac');for(let i=0;i<5;i++)r(476+i*2,197,1,2,'#b9be9d');
 }
 function studioDesk(b) {
   const {r,p,l,o}=b;
   o(600,233,85,6,'#a08365');
   // The underside, solid trestle joinery and box drawers show the workstation's depth.
-  for(const [x,lean] of [[513,-7],[532,6],[667,4],[679,6]]){
-    p([x,187,x+6,187,x+6+lean,230,x+2+lean,230],wood.dark);
-    l(x+2,190,x+2+lean,227,wood.lit);
+  // Two trestles each have a rear foot above the front contact line.
+  for(const x of [513,664]){
+    p([x+13,185,x+18,185,x+20,223,x+16,223],wood.shade);
+    p([x,187,x+7,187,x+4,231,x-1,231],wood.dark);
+    l(x+2,191,x,229,wood.lit);r(x,226,4,1,wood.mid);
+    l(x+3,215,x+16,207,wood.mid,3);
   }
-  trim(b,512,213,26,4,false);trim(b,523,196,146,4);
-  r(643,187,34,36,wood.shade);r(646,188,29,32,wood.mid);
+  r(518,190,151,6,'#996f4e');r(519,191,148,1,'#bd966b');
+  r(638,192,38,32,'#76583f');
   for(let j=0;j<3;j++){
-    r(646,190+j*10,28,8,wood.lit);r(647,191+j*10,26,1,wood.gold);
-    r(656,193+j*10,9,2,wood.shade);r(658,193+j*10,5,1,'#d4b381');
+    const y=194+j*9;r(640,y,34,8,'#b99065');r(641,y,32,1,'#d5ab79');
+    r(652,y+2,10,3,'#745b47');r(653,y+2,8,1,'#d8b784');
   }
   p([503,185,510,178,678,178,685,185,684,190,503,190],wood.dark);
   p([503,185,510,178,678,178,685,185,682,187,505,187],wood.gold);
   r(505,187,179,2,wood.mid);r(512,179,163,1,wood.pale);
+  l(520,183,539,183,'#bf966b');l(540,183,547,182,'#bf966b');l(548,182,565,182,'#bf966b');
   // The Leaf Book occupies the clear desk surface beside the brushes.
   // Three different brush tips rise from inside a thrown celadon beaker.
   o(670,183,8,2,'#a18164');
@@ -1158,11 +1200,13 @@ function studioMat(b) {
   p([504,229,671,229,695,271,485,271],'#728980');
   p([508,232,667,232,689,267,491,267],'#b3af8c');
   p([511,234,664,234,684,264,497,264],'#819788');
-  for(let j=0;j<5;j++){
-    const y=237+j*6;
-    for(let x=510;x<674;x+=14)l(x,y,x+6,y,'#a0aa91');
+  for(let row=0;row<14;row++){
+    const y=235+row*2, left=512-Math.floor(row*.86),right=663+Math.floor(row*1.35);
+    l(left,y,right,y,row%2?'#96a08a':'#a4ab93');
+    for(let x=left+8+row%3;x<right-2;x+=17)l(x,y,x+2,y,'#849680');
   }
-  for(let x=490;x<691;x+=7)l(x,271,x+1,274,'#d0bd91');
+  for(let x=490;x<691;x+=5)l(x,271,x+1,274,'#d0bd91');
+
 }
 function details(b,day,clock,view) {
   const {r}=b,phase=clock*.00013;
@@ -1193,7 +1237,9 @@ function passage(b){
   l(389,138,394,128,'#766e5b');l(394,128,397,138,'#766e5b');
   p([389,136,397,136,397,146,401,152,399,167,393,166,389,168,384,166,385,152,389,145],'#5b7776');
   p([390,138,395,137,396,147,399,152,397,164,392,163,388,165,386,164,388,151,390,147],'#78918a');
-  l(389,150,397,150,'#a0ab92');r(390,154,6,4,'#6a827b');r(390,154,6,1,'#a0ae98');
+  l(390,139,392,146,'#adbaa2');l(397,148,397,162,'#5d7877');
+  l(388,150,398,150,'#b8b9a0');r(389,153,8,6,'#546e70');r(390,154,6,4,'#839995');
+  r(389,153,8,1,'#c4b89b');l(388,164,391,165,'#afaf97');
 }
 
 const backdrops=new WeakMap();
@@ -1202,7 +1248,9 @@ function floorMat(b,x,y,edge,weave){
   // A flat woven mat gives a floor plant a visible contact patch even when
   // carried away. Its rightward cast shadow follows the apartment light.
   o(x+2,y+2,17,4,'rgba(73,52,46,.18)');o(x,y,17,4,edge);o(x-1,y-1,15,2,weave);
-  for(let j=-1;j<=1;j++)for(let i=-11;i<12;i+=4)r(x+i+(j%2),y+j,2,1,edge);
+  o(x,y,13,2,edge);o(x,y,11,1,weave);
+  for(let dx=-13;dx<=13;dx+=4){r(x+dx,y+2,2,1,weave);r(x+dx+1,y-2,2,1,edge);}
+  r(x-3,y,6,1,edge);
 }
 function staticWorld(ctx,day,warmth,hour) {
   const b=tools(ctx,palette(day,warmth));
@@ -1289,7 +1337,7 @@ function placeOccupant(ctx,draw,panel,slot) {
  * drawOccupant(slot,panel) callback paints in panel-local coordinates, in depth
  * order. A numeric slot identifies a plant and 'cat' identifies the sofa seat.
  */
-export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,separatePlanes=false}={}){
+export function drawScenery(ctx,{view=0,outsideOffset=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,separatePlanes=false}={}){
   if(!ctx)return;
   const day=clamp(Number.isFinite(light.day)?light.day:1),warmth=clamp(Number.isFinite(light.warmth)?light.warmth:0);
   const hour=Number.isFinite(light.hour)?((light.hour%24)+24)%24:12;
@@ -1305,8 +1353,9 @@ export function drawScenery(ctx,{view=0,light={},time=0,reducedMotion=false,draw
   }else staticWorld(ctx,day,warmth,hour);
   for(let panel=0;panel<2;panel++){
     if(camera>=BASE_WIDTH*(panel+1)||camera+BASE_WIDTH<=BASE_WIDTH*panel)continue;
-    if(panel)casement(ctx,b,raw,508,45,181,96,L,clock,true);
-    else casement(ctx,b,raw,113,41,202,96,L,clock,false);
+    const drift=reducedMotion?0:Math.round(Math.max(-8,Math.min(8,outsideOffset)));
+    if(panel)casement(ctx,b,raw,508,45,181,96,L,clock,true,drift);
+    else casement(ctx,b,raw,113,41,202,96,L,clock,false,drift);
     const paintLayer=layer=>placesFor(panel).forEach((spot,i)=>{
       if(spot.layer===layer)placeOccupant(ctx,drawOccupant,panel,i);
     });

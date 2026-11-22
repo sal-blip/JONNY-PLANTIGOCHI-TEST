@@ -211,6 +211,10 @@ function ceramic(grid,style,finish) {
   span(-rim+3,-15,2*rim-6,soil);
   span(-rim+5,-15,2*rim-10,soilShadow);
   span(-rim+2,-14,2*rim-4,soil);
+  const foot=wall[wall.length-1];
+  span(-foot+1,-1,2*foot-1,clay+1);
+  span(-foot+2,-1,Math.max(2,foot-1),clay+3);
+  span(-rim+2,-13,Math.max(2,rim-4),clay+4);
   span(-rim+4,-14,3,soilLight);dot(-1,-15,soilLight);dot(3,-14,loam);
 }
 
@@ -248,6 +252,8 @@ function canopy(grid,hash,pose) {
   line(unfurl,-37-taller,unfurl+2*mirror,-43-taller,newLeaf);
   line(unfurl+mirror,-38-taller,unfurl+3*mirror,-43-taller,stemLight);
   dot(unfurl+3*mirror,-44-taller,newLeaf);
+  line(unfurl+2*mirror,-41-taller,unfurl+4*mirror,-43-taller,newLeaf);
+  dot(unfurl+3*mirror,-42-taller,stemLight);
   placed.forEach(({kind,x,y,direction,ramp},i) => {
     const [nx,ny]=notches[kind], ink=leavesInInk[kind];
     if(i===3 && (hash&8)) ramp=2;

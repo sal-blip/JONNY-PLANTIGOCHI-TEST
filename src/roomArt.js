@@ -16,7 +16,7 @@ export function roomLight(hour) {
 }
 
 export function drawRoom(canvas,{
-  hour,plants=[],roomIndex=0,time=0,reducedMotion=false,awake=false,
+  hour,plants=[],outsideOffset=0,roomIndex=0,time=0,reducedMotion=false,awake=false,
   highlighted=-1,lifted=-1,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false,
   jarProgress=null,leafCount=0,shopItems=[],playingItemId=null,photos,foregroundCanvas=null
 }={}) {
@@ -55,7 +55,7 @@ export function drawRoom(canvas,{
       jarProgress,leafCount,night:1-light.day,selected:highlighted===id&&!placing,time,reducedMotion,
     });
   }
-  drawScenery(ctx,{view,light,time,reducedMotion,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,separatePlanes});
+  drawScenery(ctx,{view,light,time,reducedMotion,outsideOffset,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,separatePlanes});
   if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   // In the live room they also sit in front of the native-resolution photo apertures.

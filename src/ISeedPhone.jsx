@@ -80,6 +80,10 @@ function paintLandscape(canvas,night){
   }
   ridge([[0,122],[18,113],[36,117],[65,103],[84,109],[103,100],[125,105],[142,98]],far);
   ridge([[0,137],[20,134],[45,124],[66,129],[95,118],[118,126],[142,118]],middle);
+  // A quiet strip of lake reflects the sky between the wooded ridges.
+  fill(night?'#78959a':'#aec9bf',0,140,142,18);
+  for(const [x,y,w] of [[5,143,14],[27,146,11],[52,142,17],[77,148,8],[104,144,19],[128,147,7]])
+    fill(night?'#92aaa7':'#d3deca',x,y,w,1);
   ridge([[0,153],[19,148],[40,153],[68,142],[98,145],[123,135],[142,136]],near);
   for(const [x,y,h] of [[-1,122,28],[7,130,19],[17,136,13],[111,137,9],[120,130,16],[132,124,21],[141,117,27]])pine(x,y,h,near);
   ridge([[0,169],[24,164],[46,169],[69,160],[91,158],[112,164],[142,152]],grass);
@@ -150,7 +154,7 @@ export default function ISeedPhone({page,title,back,home,lower,locked=false,corn
       <span className="iseed-hardware-brand" aria-hidden="true">iSEED</span>
       <button type="button" className="iseed-home-key" aria-label="iSEED Home" title="iSEED Home"
         data-handset-no-pull="" data-handset-focus="" onClick={home} disabled={locked}>
-        <span aria-hidden="true"><i/></span>
+        <span aria-hidden="true"><img src="/art/iseed-seed-key.png" width="18" height="18" alt=""/></span>
       </button>
     </footer>
   </section>;
