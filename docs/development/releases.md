@@ -2,6 +2,18 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v51 · Garden furniture, pots and iSEED icons · November 22, 2026
+
+| Record | Value |
+| --- | --- |
+| Player-facing change | The living room has the approved oak-framed sofa and open-base coffee table. The studio has a camellia easel. The shop has revised Terracotta and Blue wave pots and the Oak photo frame. The iSEED launcher has revised Inventory, Postcard and Care Library icons. |
+| GitHub game source | [5a50b8e](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/5a50b8efefc2a1b79420758623f3f23301006d1b) |
+| Sites source and deployment | `326e2003300dc5521ac195c52eaf04f218f21c0a` · saved version 51 · deployment `appgdep_6b0313d719f48191b91253fab0117cfb` succeeded |
+| Public game | [Plantigochi](https://plantigochi-pocket-garden-mobile.salbasilone.chatgpt.site/) |
+| Build and public checks | Both source checkouts passed 122 tests and produced 48 byte-identical build files. The public HTML, game JavaScript, CSS, launcher atlas, manifest and both service-worker scripts matched the release. Vite reports the main JavaScript at 502 kB minified and 177 kB gzipped. |
+| Art checks | The complete living-room renders matched the approved sofa at noon and night with the cat awake and asleep. The Terracotta pot matched its shop and planted room references, and the packaged launcher matched all five approved tiles. [Sofa](../../.agents/skills/plantigochi-sprite-review/references/sofa/README.md) · [Terracotta](../../.agents/skills/plantigochi-sprite-review/references/terracotta-pot/README.md) · [Care Library](../../.agents/skills/plantigochi-sprite-review/references/iseed-library/README.md) |
+| Installed-app update check | In a simulated browser cache and IndexedDB, an interrupted download kept v50 available offline. A successful retry preserved the plant ID, name, coins and journal, served all 41 new precached resources offline and accepted further saved changes. Physical iPhone and Android updates remain unverified. |
+
 ## v50 · Garden and iSEED artwork · November 22, 2026
 
 | Record | Value |
