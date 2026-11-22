@@ -105,4 +105,18 @@
 .dew-chances svg {display:block;width:1.63cqw;height:2cqw}
 
 .lcd [data-branch="aid"],.lcd[data-branch="aid"]{--branch-ink:#9a303c;--branch-paper:#ffdfcc}
-.fungus-alarm{color:#862b35;display:flex;align-items:center;justify-content:center;gap:0.45em;font-weight:700;line-height:1}.fungus-alarm svg{height:1em;width:1em;fill:currentColor}
+.fungus-alarm {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.5em;
+  min-width:0;
+  border-top:1px solid #a45e6355;
+  background:#ffdfcc;
+  color:#862b35;
+  font-size:2.05cqw;
+  font-weight:400;
+  line-height:1;
+  white-space:nowrap;
+}
+.fungus-alarm svg {height:.9em;width:.9em;fill:currentColor}

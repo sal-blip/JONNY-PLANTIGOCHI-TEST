@@ -68,8 +68,8 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   const screen=path.at(-1), paused=screen?.id==='pause';
   const previous=useRef({id:plant.id,stage:plant.stage,dead:plant.deadAt});
   const serial=useRef(0);
-  const react=useCallback((effect,waterFrom)=>{
-    setFeedback({effect,waterFrom,id:++serial.current});
+  const react=useCallback((effect,waterFrom,outbreak)=>{
+    setFeedback({effect,waterFrom,outbreak,id:++serial.current});
     clearTimeout(speech.current);speech.current=setTimeout(()=>setFeedback(null),2500);
   },[]);
   useEffect(()=>{
@@ -197,7 +197,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
         const next=treatFungus(p,plant.fungusAt,Date.now());
         cured=next.fungusAt===null && next.deadAt===null && p.fungusAt===plant.fungusAt;
         return next;
-      }).then(ok=>{if(ok && cured){setPath([]);react('gnatCure');}});
+      }).then(ok=>{if(ok && cured){setPath([]);react('gnatCure',undefined,severity);}});
       return 'care';
     }
     else if (cmd==='graduate') openMove();
@@ -317,7 +317,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
         {showMeters && <span className="lcd-menu-key" aria-hidden="true">{sick?'♥ First Aid':'♥ Menu'}</span>}
         {browsing && <BranchIcons active={branch}/>}
         <span className={game?'lcd-art':'lcd-art lcd-plant'}>
-          {game?<GameArt game={game}/>:<PlantPixel key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={displayMood} waterFrom={feedback?.waterFrom} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
+          {game?<GameArt game={game}/>:<PlantPixel key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={displayMood} waterFrom={feedback?.waterFrom} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={feedback?.outbreak ?? severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
         </span>
         {browsing ? <MenuItem item={choice}/> : showMeters ? <div className="lcd-readout">
           <ReadoutMeter name="Growth" label={ageText} detail={ageText+' old · '+(growth.next?growth.next+' · ':'')+growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>

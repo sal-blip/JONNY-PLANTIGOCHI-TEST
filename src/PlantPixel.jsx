@@ -469,6 +469,9 @@ export default function PlantPixel({ stage = "seed", reaction = null, condition 
   const severity = soil === "dead" ? 0 : outbreakLevel(outbreak);
   const curing = effect === "gnatCure";
   const active = curing ? 0 : severity;
+  const treating = curing || (showBottle && active > 0);
+  // Keep the soil centered vertically and leave the left side clear for First Aid.
+  const patientTransform = treating ? "translate(14 5) scale(.82)" : undefined;
   const recoverFrom = effect === "water" && soil === "healthy" && growth !== "seed" && thirsty(waterFrom) ? waterFrom : null;
   const expression = soil !== "healthy" ? soil : active >= 2 ? "bothered" : growth === "seed" ? "asleep" : recoverFrom ? "happy" : hungry ? "hungry" : lowLight ? "lowLight" : feeling;
   const subject = growth === "seed" && soil !== "healthy" ? "Monstera seed" : stageName[growth];
@@ -476,16 +479,18 @@ export default function PlantPixel({ stage = "seed", reaction = null, condition 
   return <svg className="plant-pixel" viewBox="0 0 72 40" xmlns="http://www.w3.org/2000/svg"
     role="img" aria-label={label} shapeRendering="crispEdges" data-stage={growth} data-condition={soil} data-mood={feeling} data-outbreak={active || undefined} data-effect={effect ?? undefined} data-water-from={recoverFrom || undefined}>
     <g fill="currentColor">
+      <g transform={patientTransform}>
       <g className="plant-body"><g className="plant-outbreak-posture">
         {recoverFrom && <g className="plant-water-before"><PlantBody stage={growth} condition={recoverFrom}/></g>}
         {recoverFrom === "critical" && <g className="plant-water-opening"><PlantBody stage={growth} condition="dry"/></g>}
         <g className={recoverFrom ? "plant-water-after" : undefined}><PlantBody stage={growth} condition={soil} lowLight={lowLight} severity={active}/></g>
       </g></g>
       <Pot condition={soil} expression={expression} waterFrom={recoverFrom} />
-      <Feeling stage={growth} mood={feeling} hungry={hungry} lowLight={lowLight} condition={soil} reaction={effect || active} />
+      {!treating && <Feeling stage={growth} mood={feeling} hungry={hungry} lowLight={lowLight} condition={soil} reaction={effect || active} />}
       {active > 0 && <OutbreakArt severity={active}/>}
+      </g>
       {showBottle && !curing && soil !== "dead" && <BottlePreview/>}
-      {curing ? <GnatDose severity={severity}/> : effect && <EventArt kind={effect} />}
+      {curing ? <GnatDose severity={severity} patientTransform={patientTransform}/> : effect && <EventArt kind={effect} />}
     </g>
   </svg>;
 }

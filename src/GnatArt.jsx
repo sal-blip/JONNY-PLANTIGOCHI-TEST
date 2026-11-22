@@ -152,17 +152,17 @@ export function BottlePreview(){
   return <g transform="translate(1 5) scale(.55)"><BottleDrawing/></g>;
 }
 
-export function GnatDose({severity}){
+export function GnatDose({severity,patientTransform}){
   return <g className="gnat-treatment" data-effect="gnatCure" aria-hidden="true">
-    <g className="gnat-dosing-fungus"><Fungus severity={Math.max(1,severity)}/></g>
+    <g className="gnat-dosing-fungus" transform={patientTransform}><Fungus severity={Math.max(1,severity)}/></g>
     <Stamp art={openBottle} x={5} y={25}/>
-    <g className="gnat-pipette"><Stamp art={pipette} x={15} y={0}/></g>
-    <g className="gnat-dose-drop"><Stamp art={drop} x={28} y={15}/></g>
-    <g className="gnat-clean-soil">
+    <g className="gnat-pipette"><Stamp art={pipette} x={18} y={1}/></g>
+    <g className="gnat-dose-drop"><Stamp art={drop} x={31} y={16}/></g>
+    <g className="gnat-clean-soil" transform={patientTransform}>
       <path fill="#efcc6a" d="M25 19h1v2h2v1h-2v2h-1v-2h-2v-1h2z M44 19h1v1h1v1h-1v1h-1v-1h-1v-1h1z"/>
       <path fill="#a4c79a" d="M29 25h2v-1h3v1h-1v1h-4z M39 25h3v1h-3z"/>
     </g>
     <g className="gnat-escape-marks" fill="#6b8990"><path d="M9 10h2v1H9z M6 8h2v1H6z M63 9h2V8h2v1h-2v1h-2z"/></g>
-    <Swarm severity={Math.max(2,severity)} scattering/>
+    <g transform={patientTransform}><Swarm severity={Math.max(1,severity)} scattering/></g>
   </g>;
 }
