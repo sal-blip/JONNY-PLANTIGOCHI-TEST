@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v65 · Garden homecoming and successor naming · November 23, 2026
+
+Plantigochi 0.1.5 saves each fully grown plant to iSEED Inventory and invites the player to choose a garden spot. Each growth stage has a flare on the keychain. Confirming the current plant’s placement starts the next free seed. Its naming screen opens on the next keychain visit and remembers that a name is due across reloads. [Growth and care](gameplay-and-saves.md#growth-and-care)
+
+All 160 automated tests passed. Mobile Chromium checked growth flares, cancellation and recovery through Inventory, garden placement, naming after reload, keeping the default name and Growth Lab isolation. Six signed-out public resources matched the build and the public welcome screen loaded. Physical phone verification remains open. [Homecoming walkthrough](../../tests/browser/garden_homecoming.py) · [Growth Lab walkthrough](../../tests/browser/growth_lab.py)
+
+Sites source `806db198493dbd6a0f9dbea7b481e840eed43ced` · saved version 65 · deployment `appgdep_6b04a1b282dc81919d0c0575d9f2333d` · [GitHub release commit c0ba854](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/c0ba854993fc15d9d868f84c94aa0c90b9796490)
+
 ## v64 · Growth Lab and debug purse · November 23, 2026
 
 Plantigochi 0.1.4 adds a disposable garden copy with an accelerated plant clock, event jumps and a manual skip for care reminders. The debug purse action sets the selected garden’s balance to 1,000 coins. Settings recognizes the two-corner gesture even when its controls overlap the corner areas on shorter phones. [Testing growth on a phone](gameplay-and-saves.md#testing-growth-on-a-phone)
