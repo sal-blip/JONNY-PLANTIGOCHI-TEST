@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v69 · Sharper garden items · November 23, 2026
+
+Plantigochi 0.1.9 renders visible garden plants, pots and décor at up to three backing pixels per room unit. Their existing artwork, physical placement and saved slots carry forward. Placement previews, held plants, selection contours and postcard exports use the same finer grid. [Measured garden sprites](research/garden-item-resolution.md)
+
+All 162 unit tests passed. Mobile Chromium checked both display densities, placed the lucky cat across rooms and confirmed its saved address after reload. The three sample sprites matched the measured improvement. Six public resources matched the build and the signed-out welcome loaded. Physical phone performance remains unverified. [Cross-room test](../../tests/browser/garden_resolution.py)
+
+Sites source `b50a613088b3a22a1d5b3e7b482143b49f4079cf` · saved version 69 · deployment `appgdep_6b04ab2c67f081919a0f6403621cfb88` · [GitHub release commit c6404d7](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/c6404d74e0647ec05c2cb5cec11a94524ec6ca6d)
+
 ## v68 · Simultaneous care badges · November 23, 2026
 
 Plantigochi 0.1.8 shows the four approved SpriteCook care icons as small, independently fading badges above the meters. The row aligns to the right and fits concurrent needs. The garden renderer study is recorded separately. [Resolution study and comparison](research/garden-item-resolution.md)
