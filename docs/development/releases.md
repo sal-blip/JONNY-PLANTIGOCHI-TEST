@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v62 · Independent audio levels · November 23, 2026
+
+Plantigochi 0.1.2 replaces the two audio switches in Settings with Music, Sound effects and Garden ambience sliders. Music includes the record player. Both themes retain their 50% gain ceiling. Garden ambience includes the sleeping seed and a soft breeze in the room. Existing mute choices carry forward, and backups preserve all three percentages.
+
+All 153 automated tests passed. Mobile Chromium verified touch dragging at 320 × 568, live gain changes, legacy saves, persistence after reload, the tutorial fades and the selected record at zero volume. Both release builds produced 54 identical files. Eight public resources matched the build, including byte-range requests to both MP3s. Physical phone listening remains unverified. [Mixer checks](../../tests/browser/audio_mixer.py) · [Soundtrack walkthrough](../../tests/browser/scene_music.py)
+
+Sites source `78922e9f9f99ab1394f96bcbb66158bfad283762` · deployment `appgdep_6b03a02582e88191bc0643d30ea92d5f` · [GitHub revision 14a2735](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/14a273596bb32c4ed5b5184e61a3ed76bfe74452)
+
 ## v61 · Shared gameplay controls and App & data · November 23, 2026
 
 Plantigochi 0.1.1 shares its title, Share button, menu, clock and purse across the toy and garden. The iSEED shortcut stays in the bottom-right corner. Under App & data, About shows the installed build’s version and links to Waz Lab. Report a bug opens a draft to info@wazlab.com with the version in its subject.
