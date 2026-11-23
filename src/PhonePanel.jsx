@@ -2,9 +2,21 @@ import React, { useRef, useState } from 'react';
 import { Bell, Check, Download, HardDrive, Upload } from 'lucide-react';
 import { stageLabel } from './game.js';
 import NotificationTest from './NotificationTest.jsx';
+import {phonePlatform} from './installPrompt.js';
 import InstallHelp from './InstallHelp.jsx';
 import {readGardenBackup} from './gardenBackup.js';
 import {downloadCurrentGarden,downloadOriginalSave} from './useGardenSave.js';
+
+function RemovalSteps(){
+  switch(phonePlatform(navigator)){
+    case 'ios': return <p>On your Home Screen, touch and hold the Plantigochi icon. Choose <b>Delete Bookmark</b> or <b>Remove App → Delete App</b>, then confirm.</p>;
+    case 'android': return <p>Touch and hold the Plantigochi icon. Tap <b>Uninstall</b> or drag the icon to <b>Uninstall</b>, then confirm. If you see only <b>App info</b>, open it and look for <b>Uninstall</b>.</p>;
+    default:
+      if(/Macintosh/.test(navigator.userAgent) && !/Chrome|Chromium|Edg|Firefox/.test(navigator.userAgent))
+        return <p>Quit Plantigochi. In Finder, choose <b>Go → Home</b>, open <b>Applications</b>, then move Plantigochi to the Trash.</p>;
+      return <p>Open the installed app’s menu and look for <b>Uninstall Plantigochi</b>, or remove Plantigochi from the apps list on your computer.</p>;
+  }
+}
 
 export default function PhonePanel({ page, phone, alerts, plant, saveOK, saveIssue, recoveryRaw, onRestore }) {
   const fileInput = useRef(null);
@@ -34,6 +46,13 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, saveIss
     unavailable: 'Open the app online to prepare offline play',
   }[phone.offline];
   return <>
+    {page === 'uninstall' && <section className="phone-section">
+      <p>Removing the app can leave its garden data on this device. Clearing site data can erase your garden. Save a backup before uninstalling.</p>
+      <div className="save-buttons"><button onClick={exportSave} disabled={exporting}><Download size={16}/> Back up garden</button></div>
+      <p className="backup-notice" role="status">{notice}</p>
+      <RemovalSteps/>
+      <p>After reinstalling, choose <b>Restore a garden</b> during setup to load your file.</p>
+    </section>}
     {page === 'install' && <section className="phone-section">
       <InstallHelp phone={phone}/>
       <div className="offline-state" role="status">{phone.offline === 'ready' ? <Check size={15}/> : <HardDrive size={15}/>} {offlineText}</div>

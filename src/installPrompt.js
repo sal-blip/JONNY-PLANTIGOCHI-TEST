@@ -1,3 +1,8 @@
+export function phonePlatform(device){
+  if(/iPad|iPhone|iPod/.test(device.userAgent) || (device.platform==='MacIntel' && device.maxTouchPoints>1))return 'ios';
+  return /Android/i.test(device.userAgent)?'android':'desktop';
+}
+
 // Keep the one-use browser invitation even if it arrives before React mounts.
 export function createInstallPrompt(browser) {
   const display = browser.matchMedia?.('(display-mode: standalone)');

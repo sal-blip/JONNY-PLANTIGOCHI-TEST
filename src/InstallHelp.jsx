@@ -1,11 +1,11 @@
 import React from 'react';
 import {Download, MoreVertical, Plus, PlusSquare, Share} from 'lucide-react';
+import {phonePlatform} from './installPrompt.js';
 import GameLink,{gameLink} from './GameLink.jsx';
 
 export default function InstallHelp({phone, tour=false}) {
   const ua=navigator.userAgent;
-  const ios=/iPad|iPhone|iPod/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
-  const android=/Android/i.test(ua);
+  const platform=phonePlatform(navigator),ios=platform==='ios',android=platform==='android';
   const embedded=window.self!==window.top || /ChatGPT|FBAN|FBAV|Instagram|; wv\)/i.test(ua) ||
     (ios && !/Safari|CriOS|FxiOS|EdgiOS/.test(ua));
   const installUrl=new URL(gameLink());

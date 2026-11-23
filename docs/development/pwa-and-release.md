@@ -16,6 +16,8 @@ Vite and Workbox produce `dist/index.html`, the hashed assets, `dist/manifest.we
 
 The Workbox manifest includes both MP3s in `public/music/` and the turntable recording in `public/records/`. Keep each file under the 3 MiB precache limit. The installed app and the Site Worker both return byte ranges for media playback and seeking. To check a release, let the service worker take control, switch the browser offline and reload. A request with `Range: bytes=0-1` to either MP3 should return HTTP 206, two bytes and an `audio/mpeg` content type. [Service worker](../../src/sw.js) · [Range tests](../../tests/mediaRange.test.js)
 
+Settings → How to uninstall shows device-specific removal instructions and uses the same garden export as Saved plant. The player confirms removal in the operating system. The walkthrough downloads a backup and restores it into a fresh installation. [Removal and backup walkthrough](../../tests/browser/uninstall_help.py)
+
 Run these suites while changing install, update or reminder behavior.
 
 ```sh

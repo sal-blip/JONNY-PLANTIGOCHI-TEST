@@ -34,7 +34,7 @@ import {useGardenPhoneApps} from './GardenPhoneApps.jsx';
 import './collector.css';
 import './pocketGarden.css';
 
-const titles = {menu:'Plantigochi menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & data',about:'About',bug:'Report a bug',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',lab:'Growth Lab',purse:'1,000 coins in purse',test:'Test notifications',restart:'Start a fresh game'};
+const titles = {menu:'Plantigochi menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',uninstall:'How to uninstall',phone:'App & data',about:'About',bug:'Report a bug',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',lab:'Growth Lab',purse:'1,000 coins in purse',test:'Test notifications',restart:'Start a fresh game'};
 const homeItems = ['scenes','settings','install','phone'];
 const phonePanels = ['install','saves','alerts'];
 const phoneItems = [...phonePanels,'about','bug'];
@@ -401,7 +401,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
     hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
   const introAudible = fxVolume > 0 && !revealMuted && running;
-  const parent = ['test','restart','lab','purse'].includes(page) ? 'debug' : (page === 'reset' || page === 'debug') ? (lab?'menu':'settings') : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
+  const parent = page==='uninstall' ? 'settings' : ['test','restart','lab','purse'].includes(page) ? 'debug' : (page === 'reset' || page === 'debug') ? (lab?'menu':'settings') : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
   let labBadge;
   if(lab){
@@ -534,6 +534,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
           onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
           {phone.updateStatus==='ready'?'Restart to update':'Check for updates'}</button>
         {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
+        <button onClick={()=>open('uninstall')}>How to uninstall<ChevronRight className="row-end"/></button>
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
       {page === 'debug' && <MenuItems items={lab?['lab','purse']:['lab','purse','restart','test']} open={open}/>}
       {page === 'lab' && (lab?<LabControls lab={lab} play={()=>setPage(null)} exit={exitLab}/>:
@@ -550,7 +551,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         <p>Tell us what happened and what you were doing in the game when you noticed it.</p>
         <p><a href={'mailto:info@wazlab.com?subject=' + encodeURIComponent('Plantigochi ' + appVersion + ' bug report')}>info@wazlab.com</a></p>
       </section>}
-      {(phonePanels.includes(page) || page==='test') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} saveIssue={issue} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
+      {(phonePanels.includes(page) || page==='test' || page==='uninstall') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} saveIssue={issue} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
     </GardenDialog>}
   </main></GuideSound.Provider>;
 }
