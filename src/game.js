@@ -385,7 +385,7 @@ export function careStatus(p, action, now = Date.now()) {
   const soil = condition(p,now);
   if (p.stage === 'seed') {
     if (action !== 'water') return { hint: 'At sprout', locked: true };
-    return p.wateredAt === null ? { hint: 'Ready for water' } : { hint: 'Seed watered', locked: true };
+    return p.wateredAt === null ? { hint: 'Ready for water', due:true } : { hint: 'Seed watered', locked: true };
   }
   if (action === 'drain') {
     if (soil === 'rootRot') return { hint: 'Root rot · drain now' };
@@ -394,8 +394,8 @@ export function careStatus(p, action, now = Date.now()) {
   }
   if (action === 'water') {
     if (soil === 'rootRot') return { hint: 'Drain first', locked: true };
-    if (soil === 'dry') return { hint: 'Dry soil' };
-    if (soil === 'critical') return { hint: 'Very thirsty' };
+    if (soil === 'dry') return { hint: 'Dry soil', due:true };
+    if (soil === 'critical') return { hint: 'Very thirsty', due:true };
     if (soil === 'healthy') {
       const opensAt = p.lastDrink + WATER_INTERVAL - WATER_TOP_UP_WINDOW;
       if (now >= opensAt) return {hint:'Safe to top up',topUp:true};
@@ -410,7 +410,7 @@ export function careStatus(p, action, now = Date.now()) {
   const opensAt = due - EARLY_WINDOW;
   if (now < opensAt) return {hint:'Ready in ' + timeLeft(opensAt - now, false), locked:true, opensAt};
   if (now < due) return {hint:'Ready now · Due in ' + timeLeft(due - now), locked:false};
-  return {hint:action === 'food' ? 'Feed now' : 'Give light now'};
+  return {hint:action === 'food' ? 'Feed now' : 'Give light now', due:true};
 }
 
 export function needsPourConfirmation(p, now = Date.now()) {

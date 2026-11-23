@@ -11,7 +11,7 @@ import {DewArt,EchoArt} from './ActivityArt.jsx';
 import {toyBranches,toyCards,toyTitles} from './GardenLife.jsx';
 import {DEW_CHANCES,LEVELS,gameNames,playText,savePlayedRound,usePocketPlay} from './pocketPlay.js';
 import {buyGrowth,care,careStatus,condition,moodOf,FOOD_INTERVAL,LIGHT_INTERVAL,HOUR,healthLabels,discoverFungus,treatFungus,FUNGUS_WINDOW,wake} from './game.js';
-import {foodReadout, GROWTH_STEPS, growthReadout, waterReadout} from './plantReadout.js';
+import {careIndicators, foodReadout, GROWTH_STEPS, growthReadout, waterReadout} from './plantReadout.js';
 import './PocketDevice.css';
 import './ToyMenu.css';
 
@@ -170,6 +170,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   const section=screen?.id;
   const browsing=Boolean(section && !playing);
   const soil=condition(plant,now);
+  const careCues=careIndicators(plant,now);
   const displayMood=soil==='dry' || soil==='critical'?'sad':moodOf(plant,now);
   const mood=soil==='healthy'?displayMood:healthLabels[soil];
   const cards=browsing?toyCards(section,plant,now):[];
@@ -519,6 +520,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       <SproutCelebration plant={plant} resting={resting && !game && !revealing} commit={commit}/>
       <div className="inspect-shell"><DeviceShell/></div>
       <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} data-branch={branch} role="group" aria-label={description}>
+        <span className="lcd-care-light" aria-hidden="true" data-needed={!game && careCues.light || undefined}/>
         <span className="lcd-top"><span>{!browsing && <i/>}{title.toUpperCase()}</span>
           {game?.name==='dew' ? <Chances remaining={game.chances}/>
             : browsing ? <span className="lcd-page">{index+1}/{cards.length}</span>
@@ -528,7 +530,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         {showMeters && <span className="lcd-menu-key" aria-hidden="true">{summary?'♥ Finish':sick?'♥ First Aid':'♥ Menu'}</span>}
         {browsing && <BranchIcons active={branch}/>}
         <span className={game?'lcd-art':'lcd-art lcd-plant'}>
-          {game?<GameArt game={game}/>:<PlantPixel species={plant.species} seedSteps={boosting?tutorial.blocks:0} key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={displayMood} waterFrom={feedback?.waterFrom} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={feedback?.outbreak ?? severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
+          {game?<GameArt game={game}/>:<PlantPixel careCues={careCues} species={plant.species} seedSteps={boosting?tutorial.blocks:0} key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={displayMood} waterFrom={feedback?.waterFrom} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={feedback?.outbreak ?? severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
         </span>
         {browsing ? <MenuItem item={choice}/> : showMeters ? <div className="lcd-readout">
           {boosting?<ReadoutMeter name="Sprout" label={tutorial.blocks+' / 4'} detail="Sprouting boosts purchased" value={tutorial.blocks} steps={4}/>:<ReadoutMeter name="Growth" label={ageText} detail={ageText+' old · '+(growth.next?growth.next+' · ':'')+growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>}

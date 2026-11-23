@@ -5,6 +5,7 @@ function validLevel(value) {
 }
 
 export function audioLevels(plant) {
+  if (plant == null) return {musicVolume:.4, fxVolume:.4, ambienceVolume:1};
   const effectsOn = plant?.sound !== false;
   const ambienceOn = effectsOn && plant?.ambience !== false;
   return {

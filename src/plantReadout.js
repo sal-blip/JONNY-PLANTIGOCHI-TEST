@@ -1,8 +1,19 @@
-import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, condition, soilDeadline, nextMilestone, stageLabel, timeLeft} from './game.js';
+import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, moodOf, condition, soilDeadline, nextMilestone, stageLabel, timeLeft} from './game.js';
 
 export {timeLeft};
 export const GROWTH_STEPS = 4;
 const clamp = value => Math.min(1, Math.max(0, value));
+
+// Only request care that is due. Safe early top-ups stay available in the menu.
+export function careIndicators(plant,now){
+  if(plant.deadAt!==null || plant.fungusAt!=null || plant.rotAt!=null)return {light:false,icon:null};
+  const light=Boolean(careStatus(plant,'sun',now).due);
+  let icon=null;
+  if(careStatus(plant,'water',now).due)icon='water';
+  else if(careStatus(plant,'food',now).due)icon='food';
+  else if(moodOf(plant,now)==='lonely' && !careStatus(plant,'talk',now).locked)icon='talk';
+  return {light,icon};
+}
 
 export function growthReadout(plant, now) {
   const next = nextMilestone(plant);

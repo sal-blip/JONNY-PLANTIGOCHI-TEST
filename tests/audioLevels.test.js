@@ -19,8 +19,9 @@ test('old sound and ambience switches migrate per channel, with valid saved leve
     for (const [key, value] of Object.entries(expected)) assert.equal(restored[key], value, key);
     assert.deepEqual(audioLevels({...legacy, ...prefs}), expected);
   }
-  assert.deepEqual(audioLevels(), defaults);
-  assert.deepEqual(audioLevels(newPlant()), defaults);
+  const firstVisit = {musicVolume:.4, fxVolume:.4, ambienceVolume:1};
+  assert.deepEqual(audioLevels(null), firstVisit);
+  assert.deepEqual(audioLevels(newPlant()), firstVisit);
 });
 
 test('individual sliders keep sound and ambience compatible with older clients', () => {

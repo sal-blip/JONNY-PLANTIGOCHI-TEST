@@ -1,3 +1,4 @@
+import CareIndicator,{cueLabels} from './CareIndicator.jsx';
 import React from "react";
 import {BottlePreview, GnatDose, OutbreakArt, outbreakLabels, outbreakLevel} from "./GnatArt.jsx";
 import {vineBladeRows} from "./vineBlade.js";
@@ -656,7 +657,7 @@ function PlantBody({stage, condition, lowLight, severity, species}) {
     : <Stem stage={stage} condition={condition} lowLight={lowLight} severity={severity} pothos={pothos}/>;
 }
 
-export default function PlantPixel({ species, seedSteps=0, stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false, outbreak = 0, showBottle = false, waterFrom = "dry" }) {
+export default function PlantPixel({ careCues, species, seedSteps=0, stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false, outbreak = 0, showBottle = false, waterFrom = "dry" }) {
   const growth = Object.hasOwn(stageName, stage) ? stage : "seed";
   const stageNames = Object.hasOwn(speciesStageNames, species) ? speciesStageNames[species] : stageName;
   const soil = Object.hasOwn(healthName, condition) ? condition : "healthy";
@@ -672,7 +673,8 @@ export default function PlantPixel({ species, seedSteps=0, stage = "seed", react
   const recoverFrom = effect === "water" && soil === "healthy" && growth !== "seed" && thirsty(waterFrom) ? waterFrom : null;
   const expression = soil !== "healthy" ? soil : active >= 2 ? "bothered" : growth === "seed" ? "asleep" : recoverFrom ? "happy" : hungry ? "hungry" : lowLight ? "lowLight" : feeling;
   const subject = growth === "seed" && soil !== "healthy" ? stageNames.seed.replace("Sleeping ", "") : stageNames[growth];
-  const label = [subject, healthName[soil], outbreakLabels[active], showBottle && soil !== "dead" && !curing && "G-NAT ASSASSIN treatment bottle", soil !== "dead" && feeling, soil !== "dead" && hungry && "needs food", soil !== "dead" && lowLight && "needs light", effectName[effect], recoverFrom && (species === "monkey-tail-cactus" ? "stems plumping after a drink" : "leaves lifting after a drink")].filter(Boolean).join(", ");
+  const cueReceipt=careCues && !active && !treating && soil!=="dead" && Object.hasOwn(cueLabels,effect) ? effect : null;
+  const label = [cueLabels[careCues?.icon],subject, healthName[soil], outbreakLabels[active], showBottle && soil !== "dead" && !curing && "G-NAT ASSASSIN treatment bottle", soil !== "dead" && feeling, soil !== "dead" && hungry && "needs food", soil !== "dead" && lowLight && "needs light", effectName[effect], recoverFrom && (species === "monkey-tail-cactus" ? "stems plumping after a drink" : "leaves lifting after a drink")].filter(Boolean).join(", ");
   return <svg className="plant-pixel" viewBox="0 0 72 40" xmlns="http://www.w3.org/2000/svg"
     role="img" aria-label={label} shapeRendering="crispEdges" data-stage={growth} data-condition={soil} data-mood={feeling} data-outbreak={active || undefined} data-effect={effect ?? undefined} data-water-from={recoverFrom || undefined}>
     <g fill="currentColor">
@@ -690,11 +692,12 @@ export default function PlantPixel({ species, seedSteps=0, stage = "seed", react
         </g>)}
       </g></g>
       <Pot condition={soil} expression={expression} waterFrom={recoverFrom} />
-      {!treating && <Feeling stage={growth} mood={feeling} hungry={hungry} lowLight={lowLight} condition={soil} reaction={effect || active} />}
+      {!treating && <Feeling stage={growth} mood={feeling} hungry={hungry && !careCues} lowLight={careCues ? careCues.light : lowLight} condition={soil} reaction={effect || active} />}
       {active > 0 && <OutbreakArt severity={active}/>}
       </g>
       {showBottle && !curing && soil !== "dead" && <BottlePreview/>}
-      {curing ? <GnatDose severity={severity} patientTransform={patientTransform}/> : effect && <EventArt kind={effect} />}
+      {curing ? <GnatDose severity={severity} patientTransform={patientTransform}/> : effect && !cueReceipt && <EventArt kind={effect} />}
     </g>
+    {careCues && !treating && !active && <CareIndicator need={careCues.icon} receipt={cueReceipt}/>}
   </svg>;
 }

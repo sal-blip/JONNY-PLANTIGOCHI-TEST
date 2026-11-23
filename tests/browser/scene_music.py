@@ -104,7 +104,7 @@ def tracks(page):
 MAX_SCORE_GAIN = 0.5
 
 
-def audible(page, role, volume=1):
+def audible(page, role, volume=.4):
     page.wait_for_function(
         """([role,gain]) => score().some(t => t.role === role && !t.ended &&
            t.peak > .005 && Math.abs(t.effective - gain) < .02)""", arg=[role, MAX_SCORE_GAIN * volume],
@@ -228,7 +228,7 @@ def first_visit(browser, source):
         music.press("Home")
         page.wait_for_function("score().every(t=>t.ended || t.effective < .001)")
         music.press("End")
-        audible(page, "mystic")
+        audible(page, "mystic", 1)
         return completed
     finally:
         ctx.close()

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {HOUR as H,DAY,ROOT_TIME,care,careStatus,condition,criticalReminder,deathDeadline,newPlant,readPlant,replant,takeCutting,wake} from '../src/game.js';
-import {foodReadout,waterReadout} from '../src/plantReadout.js';
+import {careIndicators, foodReadout,waterReadout} from '../src/plantReadout.js';
 import {stepGame,canPlay,dewRules,dewCheckpoint,saveDewCheckpoint,LEVELS} from '../src/pocketPlay.js';
 
 const sprout=()=>wake(care(newPlant(0),'water',0),H);
@@ -200,5 +200,26 @@ test('food and light prompts follow the same early-care windows as their actions
       assert.equal(foodReadout(watered,opens).label,'Food ready');
       assert.equal(foodReadout(watered,due).label,'Feed now');
     }
+  }
+});
+
+test('LCD requests a safe first drink and prioritizes due water, food and company with independent sunlight',()=>{
+  const seed=newPlant(10*DAY), time=seed.plantedAt;
+  assert.deepEqual(careIndicators(seed,time),{light:false,icon:'water'});
+  const damp=care(seed,'water',time);
+  assert.equal(careIndicators(damp,time).icon,null);
+  const p=wake(damp,time+H);
+  assert.equal(careIndicators(p,time+4.5*H).icon,null);
+  const now=time+3*DAY;
+  let waiting={...p,lastDrink:now-4*H,companyAt:now-DAY,fedAt:now-2*DAY,litAt:now-DAY};
+  assert.deepEqual(careIndicators(waiting,now),{light:true,icon:'water'});
+  waiting=care(waiting,'water',now);
+  assert.deepEqual(careIndicators(waiting,now),{light:true,icon:'food'});
+  waiting=care(waiting,'food',now);
+  assert.deepEqual(careIndicators(waiting,now),{light:true,icon:'talk'});
+  assert.deepEqual(careIndicators(care(waiting,'talk',now),now),{light:true,icon:null});
+  assert.deepEqual(careIndicators(care(waiting,'sun',now),now),{light:false,icon:'talk'});
+  for(const field of ['deadAt','fungusAt','rotAt']){
+    assert.deepEqual(careIndicators({...waiting,[field]:now},now),{light:false,icon:null});
   }
 });

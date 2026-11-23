@@ -524,7 +524,7 @@ test('mixer settings migrate on disk, merge across tabs and survive backup, rest
   let fresh=await a.setup(clean,'welcome');
   fresh=await a.setup(fresh,'name');
   fresh=await a.setup(fresh,'first-water','Juniper');
-  assert.deepEqual(audioLevels(fresh.plant),{musicVolume:1,fxVolume:1,ambienceVolume:1});
+  assert.deepEqual(audioLevels(fresh.plant),{musicVolume:.4,fxVolume:.4,ambienceVolume:1});
   const imported=await a.replace(fresh,backup);
   assert.deepEqual(audioLevels(imported.plant),mixed);
   assert.deepEqual(audioLevels((await store().read()).plant),mixed);
