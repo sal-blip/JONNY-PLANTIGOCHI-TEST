@@ -2,6 +2,8 @@ import {drawSelectionContour} from './roomContour.js';
 import {approvedArt,featuredRoomScale} from './shopSprites/approved.js';
 import * as monsteraAlbo from './shopSprites/monstera-albo.js';
 import * as pinkMicans from './shopSprites/pink-micans.js';
+import * as birdOfParadise from './shopSprites/bird-of-paradise.js';
+import * as mothOrchid from './shopSprites/moth-orchid.js';
 import * as bogFrog from './shopSprites/bog-frog-pot.js';
 import * as lavaPop from './shopSprites/lava-pop-pot.js';
 
@@ -104,6 +106,8 @@ const shopPots={
 const featuredPlants={
   'monstera-albo':{foliage:monsteraAlbo,potStyle:3},
   'pink-micans':{foliage:pinkMicans,potStyle:2},
+  'bird-of-paradise':{foliage:birdOfParadise,potStyle:1},
+  'moth-orchid':{foliage:mothOrchid,potStyle:3},
   'golden-pothos':nurserySpecimen('golden-pothos',[-5,-15],true),
   'snake-plant':nurserySpecimen('snake-plant',[-1,-14],false),
   'hoya-serpens-splash':nurserySpecimen('hoya-serpens-splash',[-1,-16],true),

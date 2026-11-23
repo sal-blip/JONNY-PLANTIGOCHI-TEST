@@ -19,11 +19,23 @@ export const KEY = 'jonny.plantigochi.v1';
 export const ACTIONS = ['water', 'sun', 'talk', 'food'];
 export const STAGES = ['seed', 'sprout', 'young', 'split', 'grown'];
 export const STAGE_NAMES = { seed: 'Seed', sprout: 'Sprout', young: 'Young plant', split: 'First split', grown: 'Grown plant' };
-const growthOrder = ['monstera', 'golden-pothos'];
-export const toyVarietyName = species => species==='golden-pothos'?'Golden Pothos':'Monstera';
-export const stageLabel = (plant, stage=plant.stage) =>
-  stage==='split' && plant.species==='golden-pothos'?'Vining plant':STAGE_NAMES[stage];
-const validToySpecies = species => species===undefined || growthOrder.includes(species);
+const growthOrder = ['monstera', 'golden-pothos', 'snake-plant', 'hoya-serpens-splash', 'monkey-tail-cactus', 'queen-anthurium', 'pink-micans', 'bird-of-paradise', 'moth-orchid'];
+const toyVarieties = {
+  monstera: {name:'Monstera', seedName:'Monstera', dayFive:'First split'},
+  'golden-pothos': {name:'Golden Pothos', seedName:'Pothos', dayFive:'Vining plant'},
+  'bird-of-paradise': {name:'Bird of Paradise', seedName:'Paradise', dayFive:'Flower bract'},
+  'moth-orchid': {name:'Moth Orchid', seedName:'Moth Orchid', dayFive:'Budding spike'},
+  'pink-micans': {name:'Pink Micans', seedName:'Pink Micans', dayFive:'Blush vine'},
+  'queen-anthurium': {name:'Queen Anthurium', seedName:'Queen', dayFive:'Velvet blade'},
+  'monkey-tail-cactus': {name:'Monkey Tail Cactus', seedName:'Monkey Tail', dayFive:'First trail'},
+  'hoya-serpens-splash': {name:'Hoya Splash', seedName:'Hoya Splash', dayFive:'First runner'},
+  'snake-plant': {name:'Snake Plant', seedName:'Snake Plant', dayFive:'Rosette'},
+};
+export const isToySpecies = species => growthOrder.includes(species);
+const varietyOf = species => isToySpecies(species) ? toyVarieties[species] : toyVarieties.monstera;
+export const toyVarietyName = species => varietyOf(species).name;
+export const stageLabel = (plant, stage=plant.stage) => stage==='split'?varietyOf(plant.species).dayFive:STAGE_NAMES[stage];
+const validToySpecies = species => species===undefined || isToySpecies(species);
 
 const milestones = {
   sprout: { start: 0, age: HOUR, label: 'Sprout' },
@@ -50,7 +62,7 @@ export const plantName = name => typeof name === 'string' && /^[A-Za-z -]{1,12}$
 // An absent scene follows the app default. Keeping it off a fresh seed also
 // preserves the player's explicit background when graduate or replant merges it.
 export function newPlant(now = Date.now(), name, species = growthOrder[0]) {
-  const defaultName=species==='golden-pothos'?'Pothos':'Monstera';
+  const defaultName=varietyOf(species).seedName;
   return { version: 3, species, name:plantName(name ?? defaultName), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     seedBonus:0,boostCount:0,stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
     ...audioLevels(), ...blankHealth, outbreakDue:null, fungusAt:null, jar: null, book: [], dewCleared: 0 };
@@ -145,7 +157,7 @@ export function milestoneDue(p) {
 }
 function sprout(p, now) {
   return milestone({...p, stage:'sprout', sproutBurstPending:p.id, outbreakDue:nextOutbreak(now), fungusAt:null, earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
-    companyAt:now, accompanied:false, given:[], message:'Ohayō! Look who finally leafed out.'},'sprout',p.name+' sprouted.',now);
+    companyAt:now, accompanied:false, given:[], message:p.species==='monkey-tail-cactus'?'Ohayō! See my little spines?':'Ohayō! Look who finally leafed out.'},'sprout',p.name+' sprouted.',now);
 }
 export const SPURT_COST=50;
 export function growthSpurtOffer(p,now){
@@ -187,7 +199,7 @@ export function wake(p, now = Date.now(), visible = true) {
     // Only this growth segment has a known starting time. Older accrued time has no dated history.
     const crossing = p.anchor + threshold - p.earned;
     const reachedAt = p.earned < threshold && crossing >= p.plantedAt ? crossing : observedAt;
-    p = milestone({...settle(p,reachedAt),stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'},target,p.name+' reached '+stageLabel(p,target).toLowerCase()+'.',reachedAt);
+    p = milestone({...settle(p,reachedAt),stage:target,round:target==='split'?1:0,given:[],message:p.species==='monkey-tail-cactus'?'My fuzzy stems grew!':'A new leaf unfolded!'},target,p.name+' reached '+stageLabel(p,target).toLowerCase()+'.',reachedAt);
   }
   if (now < deadline) return p;
   const cause = deadline<soilDeadline(p) ? 'Fungus' : p.rotAt===null ? 'Thirst' : 'Root rot';

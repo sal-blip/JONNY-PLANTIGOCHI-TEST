@@ -54,10 +54,13 @@ test('placement is atomic, physical pots travel with plants and swapped pots sta
 });
 
 test('launch shop plants and pots survive a room move, a reload and a backup restore',async()=>{
-  const plants=['monstera-albo','pink-micans','hoya-serpens-splash','queen-anthurium','monkey-tail-cactus'];
+  const plants=['monstera-albo','pink-micans','hoya-serpens-splash','queen-anthurium','monkey-tail-cactus','bird-of-paradise','moth-orchid'];
   const pots=['bog-frog-pot','lava-pop-pot'];
   const start=checkIn(seed(),morning);
-  const startingBalance=2200;
+  const startingBalance=4000;
+  const byPrice=Object.keys(catalog).sort((a,b)=>catalog[b].price-catalog[a].price);
+  assert.deepEqual(byPrice.slice(0,2),['moth-orchid','bird-of-paradise']);
+  assert.deepEqual(byPrice.slice(0,2).map(sku=>catalog[sku].price),[700,600]);
   let p={...start,gardenLife:{...start.gardenLife,balance:startingBalance}};
   for(const [slot,sku] of plants.entries())p=buy(p,sku,sku,slot);
   for(const [slot,sku] of pots.entries())p=buy(p,sku,sku,slot);
@@ -65,9 +68,9 @@ test('launch shop plants and pots survive a room move, a reload and a backup res
   assert.equal(lifeOf(p).balance,balance);
   assert.deepEqual(p.graduates.map(plant=>plant.species),plants);
   assert.deepEqual(p.graduates.map(plant=>plant.name),plants.map(sku=>catalog[sku].name));
-  p=relocateGraduate(p,plants[0],0,6);
-  assert.equal(p.graduates.find(plant=>plant.id===plants[0]).slot,6);
-  assert.deepEqual(lifeOf(p).items.map(({sku,slot})=>[sku,slot]),[[pots[0],6],[pots[1],1]]);
+  p=relocateGraduate(p,plants[0],0,7);
+  assert.equal(p.graduates.find(plant=>plant.id===plants[0]).slot,7);
+  assert.deepEqual(lifeOf(p).items.map(({sku,slot})=>[sku,slot]),[[pots[0],7],[pots[1],1]]);
   assert.equal(buy(p,pots[0],pots[0],2),p);
   assert.equal(lifeOf(p).balance,balance);
   const raw=JSON.stringify(p);

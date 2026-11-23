@@ -19,6 +19,8 @@ export const catalog = {
   'hoya-serpens-splash':{name:'Hoya serpens “Splash”',kind:'plant',price:325},
   'queen-anthurium':{name:'Queen Anthurium',kind:'plant',price:500},
   'monkey-tail-cactus':{name:'Monkey Tail Cactus',kind:'plant',price:225},
+  'bird-of-paradise':{name:'Bird of Paradise',kind:'plant',price:600},
+  'moth-orchid':{name:'Moth Orchid',kind:'plant',price:700},
 };
 const empty = {balance:0,day:'',waters:0,wins:[],items:[],events:[],plants:[],notes:[]};
 export const lifeOf = plant => plant.gardenLife ?? empty;

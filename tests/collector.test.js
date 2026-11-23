@@ -31,13 +31,14 @@ test('overdue care pauses earned time offline and resumes from the rescue',()=>{
 test('successive seven-day generations fill a room, graduate once and keep the whole collection in a backup',()=>{
   let p=newPlant(0);let first;
   delete p.species; // An older Monstera save enters the same succession.
-  for(let generation=1;generation<=7;generation++){
+  const cycle=['monstera','golden-pothos','snake-plant','hoya-serpens-splash','monkey-tail-cactus','queen-anthurium','pink-micans','bird-of-paradise','moth-orchid'];
+  for(let generation=1;generation<=cycle.length;generation++){
     const start=p.plantedAt;
     p=care(p,'water',start);p=wake(p,start+H);
     for(let h=5;h<168;h+=4)for(const action of ['water','sun','food'])p=care(p,action,start+h*H);
     p=wake(p,start+WEEK);assert.equal(p.stage,'grown');
     const slot=generation-1,old=p.id,balance=p.gardenLife.balance;
-    const [grownSpecies,nextSpecies]=generation%2?['monstera','golden-pothos']:['golden-pothos','monstera'];
+    const grownSpecies=cycle[(generation-1)%cycle.length],nextSpecies=cycle[generation%cycle.length];
     assert.equal(graduate(p,old,slot+12,start+WEEK),p);
     p=graduate(p,old,slot,start+WEEK);
     assert.equal(p.stage,'seed');assert.equal(p.generation,generation+1);assert.equal(p.graduates.length,generation);
@@ -49,7 +50,7 @@ test('successive seven-day generations fill a room, graduate once and keep the w
     assert.deepEqual(loadSnapshot(JSON.stringify(p),start+WEEK),p);
     assert.deepEqual(reminderSchedule(p,true).criticalDue,null);
   }
-  assert.deepEqual(p.graduates[0],first);assert.equal(p.graduates.at(-1).slot,6);
+  assert.deepEqual(p.graduates[0],first);assert.equal(p.graduates.at(-1).slot,cycle.length-1);
   const again=wake(p,p.plantedAt+300*DAY);assert.equal(again.stage,'seed');
   assert.equal(readPlant(JSON.stringify({...p,graduates:[first,first]})),null);
 });
