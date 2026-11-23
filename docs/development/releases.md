@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v72 · Start playing or install now · November 23, 2026
+
+Plantigochi 0.1.12 offers browser play and immediate installation side by side. Browser players receive the install chat after claiming the final tutorial reward. The install panel offers a portable garden backup for separate browser and standalone storage.
+
+All 162 unit tests passed. The browser walkthrough covered first watering, reload, pot placement, four boosts, the skipped and played Dew Catch paths, the final claim and both reminder choices. A browser garden resumed in shared installation storage and its downloaded backup restored into fresh storage with its coins and placed pot. The two buttons fit side by side at 320 CSS pixels. Chromium exercised the separate Android, iPhone and Facebook installation flows. Six public resources matched the build and the signed-out welcome loaded. Physical phone handoff remains to be verified. [Browser tutorial walkthrough](../../tests/browser/browser_tutorial.py)
+
+Sites source `2d50f89c6846ea256aa8aaf39caaa65e11cbcab7` · saved version 72 · deployment `appgdep_6b04cd6b6760819197b47cfb7b7122b9` · [GitHub release commit a62fb65](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/a62fb65)
+
 ## v71 · Uninstall help in Settings · November 23, 2026
 
 Plantigochi 0.1.11 adds **How to uninstall** above the reset option. Players can download a garden backup before following the device’s removal instructions. All 162 unit tests passed. Chromium exercised Android, iPhone, desktop-mode iPad and Mac Safari instructions, a downloaded backup and restoration in fresh standalone storage. Physical removal and Safari downloads still need an on-device check. Six public resources matched the release and the signed-out welcome loaded. [Backup walkthrough](../../tests/browser/uninstall_help.py)
