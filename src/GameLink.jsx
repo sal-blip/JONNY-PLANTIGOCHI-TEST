@@ -2,10 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 
 export const gameLink = () => document.querySelector('link[rel="canonical"]')?.href || new URL('/', window.location.href).href;
 
-export default function GameLink({ showAddress = false }) {
+export default function GameLink({ showAddress = false, url = gameLink() }) {
   const [status, setStatus] = useState('idle');
   const field = useRef(null);
-  const url = gameLink();
 
   useEffect(() => {
     if (status === 'manual') {

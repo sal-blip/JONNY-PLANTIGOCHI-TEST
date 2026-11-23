@@ -170,7 +170,7 @@ def web_tour(browser, source):
         page.goto(url)
         taps(page, "Take a peek")
         first = audible(page, "cotton")
-        taps(page, "Next", "Get Plantigochi", "Back")
+        taps(page, "Next", "Continue", "Play Plantigochi", "Back")
         assert audible(page, "cotton")["id"] == first["id"]
         assert len(tracks(page)) == 1
     finally:
