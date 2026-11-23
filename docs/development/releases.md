@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v61 · Shared gameplay controls and App & data · November 23, 2026
+
+Plantigochi 0.1.1 shares its title, Share button, menu, clock and purse across the toy and garden. The iSEED shortcut stays in the bottom-right corner. Under App & data, About shows the installed build’s version and links to Waz Lab. Report a bug opens a draft to info@wazlab.com with the version in its subject.
+
+All 146 automated tests passed. Chromium checks covered four phone sizes, sharing and focus, both menu paths, pot placement and the first-visit tutorial. These checks verified the email link. Opening a particular mail app depends on the phone’s configuration. Both builds matched across 54 files, and eight public resources matched the release after deployment. [Browser checks](../../tests/browser/garden_hud.py)
+
+Sites source `a987d300d64b0ddab79a69b66656582380b23a0b` · deployment `appgdep_6b03999e4b888191ad154fc8ad0643bf` · [Game commit 4f74e25](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/4f74e25919303b01661aaeeb502a76ed203ea4db)
+
 ## v60 · Social share image · November 23, 2026
 
 The public game link now shows the jade keychain with a grown Monstera beside the current sunny garden. The 1200 × 630 card uses the game renderer, welcome-tour sprites and game typography. Open Graph and X crawler requests to the live homepage returned matching metadata and alt text. The new public image matched the release PNG byte for byte. All 146 Node tests passed, and the two source checkouts produced 54 identical build files.
