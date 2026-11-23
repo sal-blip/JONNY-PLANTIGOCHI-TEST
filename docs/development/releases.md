@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v67 · Sunlight shading and care icon transitions · November 23, 2026
+
+Plantigochi 0.1.7 shades the LCD as soon as sunlight opens and deepens the shade when due. The next care icon fades in after the previous delivery finishes. Reduced motion uses a still acknowledgment. The plant animations keep their existing timing.
+
+All 161 unit tests passed. Mobile Chromium measured the LCD edge before and after sunlight in the early and due windows, and exercised watering, feeding and company in succession with full and reduced motion. Six public resources matched the build and the signed-out welcome loaded. Physical phone testing is pending. [Mobile care walkthrough](../../tests/browser/care_indicators.py)
+
+Sites source `9a97f0c7113e4df3b61ed971750dc8f1cc03db46` · saved version 67 · deployment `appgdep_6b04a7d8eff4819197f2f8ad19ba1592` · [GitHub release commit c1239cd](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/c1239cd0adc15db95bf6f564f8e96ae79c8b3c5e)
+
 ## v66 · LCD care cues and starting volume · November 23, 2026
 
 Plantigochi 0.1.6 adds a hollow water drop, food spoon, company heart and feathered light cue around the keychain plant. The toy shows the next need after care succeeds. New games and the first welcome tour use a 40% music setting. New games also start sound effects at 40%. Existing mixer preferences carry forward.
