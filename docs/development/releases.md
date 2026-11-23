@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v73 · Final welcome button wording · November 23, 2026
+
+Plantigochi 0.1.13 labels the green left button **Install app** and the sand right button **Just start playing**, with **or** between them. Narrow screens use tighter spacing. All 162 unit tests passed. Mobile Chromium checked the horizontal order at 320 CSS pixels, the device-specific install paths and the browser tutorial through its last reward. Six public resources matched the build and the signed-out welcome loaded. [Install choices walkthrough](../../tests/browser/public_install.py)
+
+Sites source `c553e38982845d06fed396dc033c7252782a8a67` · saved version 73 · deployment `appgdep_6b04ce5ef82c8191a4ce4b8343ba30d8` · [GitHub release commit ca8e271](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/ca8e271)
+
 ## v72 · Start playing or install now · November 23, 2026
 
 Plantigochi 0.1.12 offers browser play and immediate installation side by side. Browser players receive the install chat after claiming the final tutorial reward. The install panel offers a portable garden backup for separate browser and standalone storage.
