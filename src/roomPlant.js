@@ -376,7 +376,7 @@ function colors(style,night,selected,finish,featuredSku,pose) {
 
 /** Draw at logical room coordinates. x/y is the bottom center of the ceramic,
  * size 1 gives a roughly 22px rim, and time is elapsed milliseconds. */
-export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,potSku=null,night=0,time=0,reducedMotion=false,selected=false,preview=false}) {
+export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,potSku=null,night=0,time=0,reducedMotion=false,selected=false,preview=false,rasterScale=1}) {
   if(!ctx || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(size) || size<=0)return;
   const hash=plant?identity(plant):null;
   const species=plantSpecies(plant?.species);
@@ -400,9 +400,14 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,potSku=n
   const sweep=(reducedMotion ? -8 : (time%3600)*.035-45)*density;
   size/=density;
   ctx.save();
+  if(rasterScale!==1){
+    // Snap authored runs after converting the anchor and size to backing pixels.
+    ctx.scale(1/rasterScale,1/rasterScale);
+    x*=rasterScale;y*=rasterScale;size*=rasterScale;
+  }
   for(let i=1;i<runs.length;i++){
     if(selected && i===soilShadow)
-      drawSelectionContour(ctx,runs,{x,y,size,firstInk:soilShadow});
+      drawSelectionContour(ctx,runs,{x,y,size,firstInk:soilShadow,rasterScale});
     const cells=runs[i];
     if(!cells)continue;
     ctx.fillStyle=ink[i];

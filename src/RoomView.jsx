@@ -28,9 +28,10 @@ function targetBounds(targets){
   return bounds;
 }
 
-export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
+export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,detailScale=1,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
   garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null),foreground=useRef(null);
+  const rasterScale=running && onScreen?detailScale:1;
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
   const scene=useRef(null);
   const [focused,setFocused]=useState(null);
@@ -44,7 +45,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   for(const spot of decor){
     const item=shopItems.find(i=>i.slot===spot.slot);
     if(!item?.photo)continue;
-    const bounds=framePhotoBounds(item.sku,spot.baseX,spot.baseY,spot.size);
+    const bounds=framePhotoBounds(item.sku,spot.baseX,spot.baseY,spot.size,rasterScale);
     if(bounds)photoFrames.push({item,bounds});
   }
   const highlighted=active==='cat' || active===object?.id || decor.some(d=>d.slot===active) || shopItems.some(item=>item.id===active)
@@ -83,10 +84,10 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     if(paintable && onScreen)scroller?.addEventListener('scroll',scroll,{passive:true});
     refresh();media.addEventListener('change',refresh);document.addEventListener('visibilitychange',refresh);
     return ()=>{cancelAnimationFrame(frame);scroller?.removeEventListener('scroll',scroll);clearInterval(timer);media.removeEventListener('change',refresh);document.removeEventListener('visibilitychange',refresh);};
-  },[onScreen,paintable,index,stage,worldHeight]);
+  },[onScreen,paintable,index,stage,worldHeight,rasterScale]);
   useLayoutEffect(()=>{
     if(paintable && !document.hidden && canvas.current)drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
-  },[paintable,running,plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId]);
+  },[paintable,running,rasterScale,plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId]);
   useLayoutEffect(()=>{
     if(paintable && !document.hidden && depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
   },[paintable,worldHeight,above,hour,index]);
@@ -145,11 +146,11 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   return <div className="room-frame" aria-hidden={!onScreen || undefined} inert={!onScreen?'':undefined}
     style={{left:'calc('+index+' * var(--room-width))'}}>
     <canvas className="room-depth" ref={depth} width={ROOM_WIDTH} height={worldHeight} aria-hidden="true"/>
-    <canvas className="room-actors" ref={canvas} width={ROOM_WIDTH} height={worldHeight} role="img" aria-label={viewName(index)+(index%2===0?' with an open pot shelf, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
+    <canvas className="room-actors" ref={canvas} width={ROOM_WIDTH*rasterScale} height={worldHeight*rasterScale} role="img" aria-label={viewName(index)+(index%2===0?' with an open pot shelf, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
     {photoFrames.map(({item,bounds})=><FramePhoto key={item.id} itemId={item.id} photo={item.photo} deferOriginal={typeof IntersectionObserver==='function'} allowOriginal={onScreen && paintable} night={1-roomLight(hour).day}
       style={{left:100*bounds.left/ROOM_WIDTH+'%',top:100*(above+bounds.top)/worldHeight+'%',
         width:100*bounds.width/ROOM_WIDTH+'%',height:100*bounds.height/worldHeight+'%'}}/>)}
-    {photoFrames.length>0 && <canvas className="room-foreground" ref={foreground} width={ROOM_WIDTH} height={worldHeight} aria-hidden="true"/>}
+    {photoFrames.length>0 && <canvas className="room-foreground" ref={foreground} width={ROOM_WIDTH*rasterScale} height={worldHeight*rasterScale} aria-hidden="true"/>}
     <div className="room-interior" hidden={!running} style={{top:(100*above/worldHeight)+'%',height:(100*ROOM_HEIGHT/worldHeight)+'%'}}>
       {targets.map(({key,focus,label,click,attrs,open,exchange},i)=>{
         const {left,right,top,bottom}=bounds[i];

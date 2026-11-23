@@ -22,3 +22,17 @@ test('postcards crop directly from the source photo at the destination canvas re
   drawRoomDecor(canvas,view,[item],{photos:new Map([[item.id,original]])});
   assert.deepEqual(calls,[{args:[original,135,0,540,480,312,226,9,8],smoothing:true}]);
 });
+
+test('the original photo and its postcard crop share the detailed garden aperture',()=>{
+  const spot=decorPlaces(0)[0],scale=3;
+  const bounds=framePhotoBounds('oak',spot.baseX,spot.baseY,spot.size,scale);
+  const image={naturalWidth:720,naturalHeight:480};
+  const item={id:'framed',sku:'oak',slot:spot.slot,photo:{x:50,y:50}};
+  let destination;
+  const ctx={save(){},restore(){},scale(x,y){assert.equal(x,1/scale);assert.equal(y,x);},fillRect(){},
+    drawImage(...args){destination=args.slice(-4);}
+  };
+  drawRoomDecor(ctx,0,[item],{rasterScale:scale,photos:new Map([[item.id,image]])});
+  assert.deepEqual(destination,[bounds.left,bounds.top,bounds.width,bounds.height].map(v=>Math.round(v*scale)));
+  assert.ok(destination.every(Number.isInteger));
+});

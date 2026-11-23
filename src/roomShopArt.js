@@ -72,11 +72,12 @@ const frameData={
   lacquer:{aperture:{x:-14,y:-33,w:28,h:27}},
 };
 
-export function framePhotoBounds(sku,x,y,size=1){
+export function framePhotoBounds(sku,x,y,size=1,rasterScale=1){
   const a=frameData[sku]?.aperture;
   if(!a)return null;
-  const scale=size/2,left=Math.round(x+a.x*scale),top=Math.round(y+a.y*scale);
-  return {left,top,width:Math.round(x+(a.x+a.w)*scale)-left,height:Math.round(y+(a.y+a.h)*scale)-top};
+  const snap=v=>Math.round(v*rasterScale)/rasterScale;
+  const scale=size/2,left=snap(x+a.x*scale),top=snap(y+a.y*scale);
+  return {left,top,width:snap(x+(a.x+a.w)*scale)-left,height:snap(y+(a.y+a.h)*scale)-top};
 }
 
 function framedPhoto(ctx,image,photo,sku,x,y,size,night){
@@ -95,7 +96,7 @@ function framedPhoto(ctx,image,photo,sku,x,y,size,night){
   }
 }
 
-function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=false,spinTime=null,preview=false}){
+function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=false,spinTime=null,preview=false,rasterScale=1}){
   const art=sku==='record' && spinTime!==null ? recordFrames[Math.floor(spinTime/255)%recordFrames.length] : sprites[sku];
   if(!art)return;
   const ink=palette(night,selected);
@@ -104,6 +105,11 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=fa
     ctx.fillRect(left,top,Math.round(x+(dx+w)*size)-left,Math.round(y+(dy+h)*size)-top);
   }
   ctx.save();
+  if(rasterScale!==1){
+    // Snap authored runs after converting the anchor and size to backing pixels.
+    ctx.scale(1/rasterScale,1/rasterScale);
+    x*=rasterScale;y*=rasterScale;size*=rasterScale;
+  }
   if(stand){
     ctx.fillStyle=ink[index.d];r(-16,-1,34,4);r(-14,2,3,13);r(12,2,3,13);
     ctx.fillStyle=ink[index.h];r(-15,-1,31,2);r(-13,3,1,10);r(13,3,1,10);
@@ -112,7 +118,7 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=fa
     ctx.fillStyle=ink[index.O];r(-12,9,25,1);r(-13,1,2,1);r(12,1,2,1);
   }
   if(!preview){ctx.fillStyle='rgba(59,42,42,.22)';r(-9,0,22,1);r(-6,1,17,1);}
-  if(selected)drawSelectionContour(ctx,art,{x,y,size:size/2,firstInk:1});
+  if(selected)drawSelectionContour(ctx,art,{x,y,size:size/2,firstInk:1,rasterScale});
   art.forEach((cells,i)=>{
     ctx.fillStyle=ink[i];
     for(let j=0;j<cells.length;j+=3)r(cells[j]/2,cells[j+1]/2,cells[j+2]/2,.5);
@@ -120,10 +126,10 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=fa
   if(image && photo)framedPhoto(ctx,image,photo,sku,x,y,size,night);
   ctx.restore();
 }
-export function drawRoomDecor(ctx,view,items,{night=0,highlighted,photos,playingItemId=null,time=0,reducedMotion=false}={}){
+export function drawRoomDecor(ctx,view,items,{night=0,highlighted,photos,playingItemId=null,time=0,reducedMotion=false,rasterScale=1}={}){
   for(const spot of decorPlaces(view)){
     const item=items.find(i=>i.slot===spot.slot && Object.hasOwn(sprites,i.sku));
-    if(item)drawDecor(ctx,{...item,x:spot.baseX,y:spot.baseY,size:spot.size,stand:spot.stand,night,image:photos?.get(item.id),
+    if(item)drawDecor(ctx,{...item,x:spot.baseX,y:spot.baseY,size:spot.size,stand:spot.stand,night,rasterScale,image:photos?.get(item.id),
       selected:highlighted===spot.slot || highlighted===item.id,
       spinTime:playingItemId!=null && item.id===playingItemId && !reducedMotion ? Math.max(0,time) : null});
   }

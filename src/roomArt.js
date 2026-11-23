@@ -46,7 +46,7 @@ export function drawRoom(canvas,{
     ctx.save();
     if(preview)ctx.globalAlpha=selected ? .9 : .45;
     drawPottedPlant(ctx,{x:place.x*BASE_WIDTH,y:place.y*BASE_HEIGHT+place.front*(worldHeight-above-BASE_HEIGHT),size:place.size,
-      plant,potSku:shopPot?.sku,styleIndex:slot+roomIndex*places.length,night:1-light.day,time,reducedMotion,selected});
+      rasterScale:ctx.canvas.width/BASE_WIDTH,plant,potSku:shopPot?.sku,styleIndex:slot+roomIndex*places.length,night:1-light.day,time,reducedMotion,selected});
     ctx.restore();
   }
   const object=keepsakeFor(roomIndex);
@@ -57,7 +57,7 @@ export function drawRoom(canvas,{
   }
   drawScenery(ctx,{view,light,time,reducedMotion,outsideOffset,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,
     occupantOverhang:slot=>hasTrailingFoliage(plants[slot]?.species)?28:0,separatePlanes});
-  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion});
+  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion,rasterScale:canvas.width/BASE_WIDTH});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   // In the live room they also sit in front of the native-resolution photo apertures.
   const front=foregroundCanvas?.getContext('2d');

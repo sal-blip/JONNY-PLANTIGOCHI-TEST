@@ -16,6 +16,7 @@ import {drawPottedPlant} from './roomPlant.js';
 import {gardenViews,slotFor,viewForSlot,canPlaceAt,speciesName,viewName} from './gardenLayout.js';
 import RoomView from './RoomView.jsx';
 
+const focusZoom=1.32;
 const clamp=(v,max)=>Math.min(max,Math.max(0,v));
 function placeName(slot){
   if(typeof slot==='string' && slot.includes('/decor-'))return decorPlaces(Number(slot.split('/')[0])).find(s=>s.slot===slot)?.name || 'Room';
@@ -54,6 +55,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const gesture=useRef(null),ignoreClick=useRef(false),edge=useRef(null),catTimer=useRef(null);
   const stage=useRef(null),roomReturn=useRef(null),ghostCanvas=useRef(null);
   const camera=useRef(null),cameraCenter=useRef(page+.5);
+  const [detailScale,setDetailScale]=useState(1);
   const [worldHeight,setWorldHeight]=useState(ROOM_HEIGHT);
   const lens=useRef(null),zoomTimer=useRef(null),petNumber=useRef(0);
   const [visible,setVisible]=useState([page,page]);
@@ -97,8 +99,9 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const ctx=ghostCanvas.current.getContext('2d');
     ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
     const pot=items.find(i=>i.slot===carry.from && catalog[i.sku]?.kind==='pot');
-    drawPottedPlant(ctx,{x:ctx.canvas.width/2,y:74,size:1.28,plant:inHand,potSku:pot?.sku,night:1-roomLight(hour).day,reducedMotion:true,selected:true});
-  },[Boolean(ghost),inHand,hour,items]);
+    ctx.setTransform(detailScale,0,0,detailScale,0,0);
+    drawPottedPlant(ctx,{x:44,y:74,size:1.28,rasterScale:detailScale,plant:inHand,potSku:pot?.sku,night:1-roomLight(hour).day,reducedMotion:true,selected:true});
+  },[Boolean(ghost),inHand,hour,items,detailScale]);
 
   function readCamera(){
     const el=stage.current,frame=camera.current;
@@ -120,6 +123,10 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       const height=Math.max(ROOM_HEIGHT,Math.ceil(el.clientHeight*ROOM_WIDTH/frame));
       el.style.setProperty('--room-height',height*frame/ROOM_WIDTH+'px');
       setWorldHeight(height);
+      const requested=Math.ceil(frame*(window.devicePixelRatio || 1)*focusZoom/ROOM_WIDTH);
+      // Limit each detailed layer on very tall screens as well as high-DPI phones.
+      const budget=Math.floor(Math.min(4096/height,Math.sqrt(4000000/(ROOM_WIDTH*height))));
+      setDetailScale(Math.max(1,Math.min(3,requested,budget)));
       el.scrollLeft=center*frame-el.clientWidth/2;
       el.scrollTop=Math.max(0,(el.scrollHeight-el.clientHeight)/2);
       cameraCenter.current=(el.scrollLeft+el.clientWidth/2)/frame;
@@ -127,7 +134,8 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     }
     size();
     const observer=new ResizeObserver(size);observer.observe(el);
-    return ()=>observer.disconnect();
+    window.addEventListener('resize',size);
+    return ()=>{observer.disconnect();window.removeEventListener('resize',size);};
   },[count]);
   useEffect(()=>{
     const surface=stage.current;
@@ -163,7 +171,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   function inspect(clientX,clientY){
     const el=lens.current;
     if(!el || matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-    const rect=el.getBoundingClientRect(),scale=1.32;
+    const rect=el.getBoundingClientRect(),scale=focusZoom;
     const x=clamp((clientX-rect.left)/rect.width,1)*el.clientWidth;
     const y=clamp((clientY-rect.top)/rect.height,1)*el.clientHeight;
     clearTimeout(zoomTimer.current);el.classList.add('inspecting');
@@ -507,7 +515,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         else inspect(e.clientX,e.clientY);
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
-        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} plants={potted[k]} hour={hour}
+        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} detailScale={detailScale} plants={potted[k]} hour={hour}
           garden={plant} playingItemId={playingRecordId} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
@@ -541,7 +549,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         {picking && slot!==null && !chosen && <button onClick={()=>putDown(slot,null)} disabled={busy}>Move in</button>}
         {!placing && <button aria-label="Dismiss garden message" onClick={()=>{setSlot(null);setNotice('');}}>×</button>}
       </div>}
-      {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width="88" height="116" aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
+      {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width={88*detailScale} height={116*detailScale} aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
     </div>
     <GardenRecord active={recordActive} musicVolume={musicVolume} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
     {available && panel==='move' && source && <GardenDialog page="garden-move" title={'Move '+(source.name || speciesName(source))+'?'} close={cancelCarry}>

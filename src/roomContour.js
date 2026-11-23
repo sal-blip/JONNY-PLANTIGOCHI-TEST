@@ -4,7 +4,7 @@ const contours = new WeakMap();
 const innerInk = '#ffe19a';
 const outerInk = '#342e34';
 
-function buildContour(runs, firstInk, originX, originY, size, offsetX, offsetY) {
+function buildContour(runs, firstInk, originX, originY, size, offsetX, offsetY, weight) {
   const rectangles = [];
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (let ink = firstInk; ink < runs.length; ink++) {
@@ -22,7 +22,6 @@ function buildContour(runs, firstInk, originX, originY, size, offsetX, offsetY) 
     }
   }
   if (!rectangles.length) return [[],[]];
-  const weight = Math.max(1,Math.round(size));
   const thickness = weight * 2, padding = thickness + 2;
   minX -= padding; minY -= padding;
   const width = maxX - minX + padding, height = maxY - minY + padding;
@@ -91,18 +90,19 @@ function buildContour(runs, firstInk, originX, originY, size, offsetX, offsetY) 
   return result;
 }
 
-export function drawSelectionContour(ctx, runs, {x,y,size,firstInk=1,offsetX=0,offsetY=0}) {
+export function drawSelectionContour(ctx, runs, {x,y,size,firstInk=1,offsetX=0,offsetY=0,rasterScale=1}) {
   let sizes = contours.get(runs);
   if (!sizes) {sizes = new Map();contours.set(runs,sizes);}
   const baseX = Math.floor(x), baseY = Math.floor(y);
   // A very large standalone drawing can magnify the contour cells just as
   // the game magnifies its own pixels when exporting a postcard.
-  const zoom = Math.max(1,Math.floor(size/2));
+  const zoom = Math.max(1,Math.floor(size/(2*rasterScale)));
   const scale = size/zoom, fx = (x-baseX)/zoom, fy = (y-baseY)/zoom;
-  const key = [scale,fx,fy,firstInk,offsetX,offsetY].join('/');
+  const weight = Math.max(Math.ceil(rasterScale/zoom),Math.round(scale));
+  const key = [weight,scale,fx,fy,firstInk,offsetX,offsetY].join('/');
   let bands = sizes.get(key);
   if (!bands) {
-    bands = buildContour(runs,firstInk,fx,fy,scale,offsetX,offsetY);
+    bands = buildContour(runs,firstInk,fx,fy,scale,offsetX,offsetY,weight);
     if (sizes.size >= 16) sizes.delete(sizes.keys().next().value);
     sizes.set(key,bands);
   }
