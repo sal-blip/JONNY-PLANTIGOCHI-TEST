@@ -17,7 +17,7 @@ import {GameMusic, PublicTourMusic, useGameplayMusic} from './GameMusic.jsx';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
-import {wake,graduate,relocateGraduate,condition,toyVarietyName} from './game.js';
+import {wake,graduate,relocateGraduate,condition,toyVarietyName,plantName} from './game.js';
 import {useGardenSave} from './useGardenSave.js';
 import WelcomeTour from './WelcomeTour.jsx';
 import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.jsx';
@@ -211,7 +211,8 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const phoneActive=surface==='phone' && !transitioning;
   const phoneVisible=phoneActive && !page;
   const onToy=surface==='toy' && !transitioning;
-  const toyActive=onToy && !setupScreen && !intro && !page && !sharing;
+  const namingSeed=Boolean(onToy && !page && !setupScreen && plant && plant.seedNamePending===plant.id);
+  const toyActive=!namingSeed && onToy && !setupScreen && !intro && !page && !sharing;
   const tilt=useGardenTilt(!toyActive,passage.rootRef);
   const [leafReady, setLeafReady] = useState(false);
   const menuButton = useRef(null), shareButton = useRef(null), restoreFocus = useRef(null);
@@ -220,7 +221,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     plant.deadAt===null && plant.fungusAt==null && (storage.firstDay?.id===plant.id || plant.sproutDebut===plant.id));
   const onFarewellReveal=useGameplayMusic({plant,musicVolume,phase:storage.phase,sproutInvitation,roomActive,recordPlaying:Boolean(playingRecordId)});
   const recordActive=surface!=='toy';
-  const apps=useGardenPhoneApps({page:app,open:setApp,plant,musicVolume,commit,roomRef,raised:phoneActive,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement});
+  const apps=useGardenPhoneApps({page:app,open:setApp,plant,musicVolume,commit,roomRef,raised:phoneActive,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement,homePlant:enterGraduation});
   const gardenLife=lifeOf(roomGarden);
   const [revealMuted,setRevealMuted]=useState(false);
   useEffect(()=>{
@@ -377,14 +378,25 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     if(!roomRef.current?.beginPlacement(request))return false;
     go('garden');return true;
   }
-  function enterGraduation(){
-    if(roomRef.current?.beginGraduation(plant.id))go('garden');
+  function enterGraduation(id=plant.id){
+    if(!roomRef.current?.beginGraduation(id))return;
+    go('garden');
+    if(id===plant.id && plant.homeIntroSeen!==id)
+      void commit(p=>p.id===id?{...p,homeIntroSeen:id}:p);
+  }
+  function nameNewSeed(name){
+    const id=plant.id;
+    return commit(p=>{
+      if(p.id!==id || p.seedNamePending!==id)return p;
+      const {seedNamePending,...named}=p;
+      return {...named,name:plantName(name)};
+    });
   }
   function enterBook(){
     if(roomRef.current?.showBook())go('garden');
   }
   const freePlay=!lesson && !guide && !tutorial && !sproutInvitation && !plant?.dewLesson;
-  const showCorners=freePlay && (surface!=='garden' || !roomOverlayOpen);
+  const showCorners=freePlay && !namingSeed && (surface!=='garden' || !roomOverlayOpen);
   const showGlobalMenu=Boolean(plant) && showCorners && !setupScreen && !intro && !page && !sharing;
   const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
     hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
@@ -427,9 +439,14 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         onPlacementDone={()=>{if(current.current?.tutorial?.step==='return')setApp('phone');}}
         raisePhone={raiseGardenPhone} returnToToy={returnToSeed} onPlacementCancel={()=>go('phone')}
         move={async(slot,id)=>{
-          const saved=await commit(p=>graduate(p,id,slot,plantClock()));
+          let newSeed=false;
+          const saved=await commit(p=>{
+            const moved=graduate(p,id,slot,plantClock());
+            newSeed=moved.id!==p.id;
+            return moved;
+          });
           const next=current.current;
-          return {ok:Boolean(saved && next?.graduates.some(g=>g.id===id && g.slot===slot)),nextVariety:toyVarietyName(next?.species)};
+          return {ok:Boolean(saved && next?.graduates.some(g=>g.id===id && g.slot===slot)),newSeed,nextVariety:toyVarietyName(next?.species)};
         }}
       relocate={async (id,from,to)=>{
         let moved=false,storedCount=0;
@@ -448,7 +465,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         {(tutorial?.step==='return' || leavingPotReceipt) && <div className="chat-actions"><button disabled={routePending || leavingPotReceipt} onClick={returnToSeed}>{routePending || leavingPotReceipt?'Returning…':'Return to my seed'}</button></div>}</GuideChat>}
     </div>
     <div className="standalone-toy-layer" {...passage.toyGestureProps}
-      inert={!onToy || page?'':undefined} aria-hidden={!onToy || Boolean(page) || undefined}>
+      inert={!onToy || page || namingSeed?'':undefined} aria-hidden={!onToy || Boolean(page) || namingSeed || undefined}>
       <OnboardingTransition scene={setupScene} visible={onToy}>{setupScreen ?? pocket}</OnboardingTransition>
     </div>
     <div className="handset-layer" {...passage.phoneGestureProps}
@@ -495,6 +512,8 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     {page === 'photo' && <PhotoBackground photo={draftPhoto} update={setDraftPhoto} layer={scenery} apply={savePhoto}
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
     {page === 'welcome' && <WelcomeTour phone={phone} onClose={closeOnboarding}/>}
+    {namingSeed && <NameEditor modal variety={toyVarietyName(plant.species)} key={plant.id} original={plant.name}
+      onSave={nameNewSeed} onCancel={()=>nameNewSeed(plant.name)} issue={issue}/>}
     {page === 'rename' && <NameEditor rename original={plant.name} onCancel={closeOnboarding} issue={issue}
       onSave={async name=>{if(await commit(p=>p.name===name?p:milestone({...p,name},'rename-'+now,'Renamed '+p.name+' to '+name+'.',now)))closeOnboarding();}}/>}
     {page && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} onDebug={page==='settings'?openDebug:undefined} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>

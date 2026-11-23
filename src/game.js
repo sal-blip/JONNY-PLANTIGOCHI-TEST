@@ -65,7 +65,7 @@ export function newPlant(now = Date.now(), name, species = growthOrder[0]) {
   const defaultName=varietyOf(species).seedName;
   return { version: 3, species, name:plantName(name ?? defaultName), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     seedBonus:0,boostCount:0,stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
-    ...audioLevels(), ...blankHealth, outbreakDue:null, fungusAt:null, jar: null, book: [], dewCleared: 0 };
+    ...audioLevels(), ...blankHealth, growthFlares:[], outbreakDue:null, fungusAt:null, jar: null, book: [], dewCleared: 0 };
 }
 
 export function condition(p, now = Date.now()) {
@@ -156,7 +156,7 @@ export function milestoneDue(p) {
   return p.fungusAt==null && p.rotAt === null && due <= eligibleUntil(p) ? due : null;
 }
 function sprout(p, now) {
-  return milestone({...p, stage:'sprout', sproutBurstPending:p.id, outbreakDue:nextOutbreak(now), fungusAt:null, earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
+  return milestone({...p, stage:'sprout', growthFlares:['sprout'], outbreakDue:nextOutbreak(now), fungusAt:null, earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
     companyAt:now, accompanied:false, given:[], message:p.species==='monkey-tail-cactus'?'Ohayō! See my little spines?':'Ohayō! Look who finally leafed out.'},'sprout',p.name+' sprouted.',now);
 }
 export const SPURT_COST=50;
@@ -187,6 +187,18 @@ export function buyGrowth(p,expected,now){
 function settle(p, now) {
   return {...p, earned:earnedAt(p,now), anchor:Math.max(now,p.anchor)};
 }
+function awardMaturePlant(p){
+  if(p.waitingPlants?.some(item=>item.id===p.id))return p;
+  const item={id:p.id,name:p.name,species:p.species ?? growthOrder[0],generation:p.generation,plantedAt:p.plantedAt};
+  return {...p,waitingPlants:[...(p.waitingPlants || []),item]};
+}
+
+export function canHomePlant(p,id){
+  const earned=p.waitingPlants?.some(item=>item.id===id);
+  if(id!==p.id)return Boolean(earned);
+  return p.stage==='grown' && (p.deadAt!==null ? Boolean(earned) : p.fungusAt==null);
+}
+
 export function wake(p, now = Date.now(), visible = true) {
   if (p.deadAt !== null || now < latestCareAt(p)) return p;
   if (p.stage === 'seed') return visible && !p.tutorial && p.wateredAt !== null && earnedAt(p,now)>=HOUR ? sprout(p,now) : p;
@@ -199,8 +211,10 @@ export function wake(p, now = Date.now(), visible = true) {
     // Only this growth segment has a known starting time. Older accrued time has no dated history.
     const crossing = p.anchor + threshold - p.earned;
     const reachedAt = p.earned < threshold && crossing >= p.plantedAt ? crossing : observedAt;
-    p = milestone({...settle(p,reachedAt),stage:target,round:target==='split'?1:0,given:[],message:p.species==='monkey-tail-cactus'?'My fuzzy stems grew!':'A new leaf unfolded!'},target,p.name+' reached '+stageLabel(p,target).toLowerCase()+'.',reachedAt);
+    const crossed=STAGES.slice(STAGES.indexOf(p.stage)+1,STAGES.indexOf(target)+1);
+    p = milestone({...settle(p,reachedAt),growthFlares:[...(p.growthFlares || []),...crossed],stage:target,round:target==='split'?1:0,given:[],message:p.species==='monkey-tail-cactus'?'My fuzzy stems grew!':'A new leaf unfolded!'},target,p.name+' reached '+stageLabel(p,target).toLowerCase()+'.',reachedAt);
   }
+  if(p.stage==='grown')p=awardMaturePlant(p);
   if (now < deadline) return p;
   const cause = deadline<soilDeadline(p) ? 'Fungus' : p.rotAt===null ? 'Thirst' : 'Root rot';
   const leaf = {id:p.id,name:plantName(p.name),species:p.species ?? growthOrder[0],stage:p.stage,generation:p.generation,plantedAt:p.plantedAt,diedAt:deadline,cause};
@@ -273,6 +287,20 @@ export function readPlant(text, now = Date.now(), visible = true) {
     if (p.dewRunCleared !== undefined && (!Number.isInteger(p.dewRunCleared) || p.dewRunCleared < 0 || p.dewRunCleared > p.dewCleared)) {
       p.dewRunCleared = 0;
     }
+    if(p.waitingPlants!==undefined){
+      const placed=new Set(p.graduates.map(g=>g.id));
+      if(!Array.isArray(p.waitingPlants) || !p.waitingPlants.every(g=>{
+        if(!g || !validId(g.id) || placed.has(g.id) || !isToySpecies(g.species) ||
+          !generation(g.generation) || !stamp(g.plantedAt) || typeof g.name!=='string' ||
+          (g.id===p.id && (p.stage!=='grown' || g.species!==(p.species ?? growthOrder[0]))))return false;
+        placed.add(g.id);return true;
+      }))return null;
+    }
+    if(p.growthFlares!==undefined && (!Array.isArray(p.growthFlares) || !p.growthFlares.every((stage,i,all)=>
+      STAGES.indexOf(stage)>0 && STAGES.indexOf(stage)<=STAGES.indexOf(p.stage) &&
+      (!i || STAGES.indexOf(all[i-1])<STAGES.indexOf(stage)))))return null;
+    if(p.sproutBurstPending===p.id && p.stage==='sprout' && p.growthFlares===undefined)p.growthFlares=['sprout'];
+    delete p.sproutBurstPending;
     if (!validGarden(p) || !validGardenLife(p)) return null;
     Object.assign(p, audioLevels(p));
     p.name=plantName(p.name);
@@ -314,14 +342,21 @@ export function replant(saved, source, now = Date.now()) {
 
 export function graduate(saved, id, slot, now = Date.now()) {
   const p = wake(saved,now);
-  if (now < latestCareAt(p) || p.id!==id || p.stage!=='grown' || p.fungusAt!=null || p.deadAt!==null || !canPlaceAt(p.graduates,slot)) return p;
+  if(now<latestCareAt(p) || !canHomePlant(p,id) || !canPlaceAt(p.graduates,slot))return p;
   const room=viewForSlot(slot);
   const potStyle=placesFor(room).findIndex(spot=>slotFor(room,spot)===slot)%6;
-  const species=p.species ?? growthOrder[0];
-  const nextSpecies=growthOrder[(growthOrder.indexOf(species)+1)%growthOrder.length];
-  const graduate = {id:p.id,name:plantName(p.name),species,potStyle,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
-  return milestone({...p,...newPlant(now,undefined,nextSpecies),...audioLevels(p),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
-    dewCleared:p.dewCleared,graduates:[...p.graduates,graduate]},'graduated',p.name+' graduated to the garden.',now,p.id);
+  const active=id===p.id;
+  const earned=active?p:p.waitingPlants.find(item=>item.id===id);
+  const species=earned.species ?? growthOrder[0];
+  const resident={id,name:plantName(earned.name),species,potStyle,generation:earned.generation,plantedAt:earned.plantedAt,movedAt:now,slot};
+  const collection={graduates:[...p.graduates,resident],waitingPlants:(p.waitingPlants || []).filter(item=>item.id!==id)};
+  let next={...p,...collection};
+  if(active){
+    const nextSpecies=growthOrder[(growthOrder.indexOf(species)+1)%growthOrder.length];
+    next={...p,...newPlant(now,undefined,nextSpecies),...audioLevels(p),...collection,generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,dewCleared:p.dewCleared};
+  }
+  if(active)next.seedNamePending=next.id;
+  return milestone(next,'graduated',resident.name+' graduated to the garden.',now,id);
 }
 
 // Check both identity and source against the latest transaction so a stale

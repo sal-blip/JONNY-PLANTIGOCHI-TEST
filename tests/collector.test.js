@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newPlant,wake,care,company,graduate,moodOf,earnedAt,readPlant,HOUR as H,DAY,WEEK} from '../src/game.js';
+import {newPlant,wake,care,company,graduate,replant,moodOf,earnedAt,readPlant,HOUR as H,DAY,WEEK} from '../src/game.js';
 import {loadSnapshot,SaveIssue} from '../src/gardenStore.js';
 import {reminderSchedule} from '../src/reminderSchedule.js';
 const sprout=()=>wake(care(newPlant(0),'water',0),H);
@@ -153,4 +153,34 @@ test('moving the last plant out of a sparse suite returns only its stranded furn
   assert.deepEqual(loadSnapshot(JSON.stringify(bareMove),1),bareMove);
   assert.equal(bareMove.gardenLife.items.find(item=>item.id==='target-pot').slot,0);
   assert.equal(bareMove.gardenLife.items.find(item=>item.id==='photo').slot,null);
+});
+
+test('full growth queues the flare and earns a plant before picking a garden spot',()=>{
+  const p={...sprout(),stage:'split',round:1,earned:WEEK-H,anchor:H,growthFlares:[]};
+  const full=wake(p,2*H);
+  assert.deepEqual(full.growthFlares,['grown']);
+  assert.deepEqual(full.waitingPlants.map(g=>g.id),[p.id]);
+  assert.equal(full.graduates.length,0);
+  const reload=readPlant(JSON.stringify(full),2*H);
+  assert.deepEqual(reload,full);
+  const next=graduate(reload,p.id,4,2*H);
+  assert.deepEqual(next.waitingPlants,[]);assert.equal(next.graduates[0].id,p.id);
+  assert.equal(next.seedNamePending,next.id);assert.equal(next.species,'golden-pothos');
+  assert.equal(graduate(next,p.id,5,2*H),next);
+  assert.deepEqual(readPlant(JSON.stringify(next),2*H),next);
+});
+
+test('a grown plant from an earlier build gets a single inventory entry; interrupted homing keeps it',()=>{
+  const legacy={...sprout(),stage:'grown',round:1,earned:WEEK};
+  delete legacy.growthFlares;
+  const current=readPlant(JSON.stringify(legacy),H);
+  assert.equal(current.waitingPlants[0].id,current.id);
+  assert.equal(wake(current,H),current);
+  const dead=wake(current,H+DAY);
+  const next=replant(dead,'seed',H+DAY);
+  const placed=graduate(next,current.id,0,H+DAY);
+  assert.equal(placed.id,next.id);assert.equal(placed.graduates[0].id,current.id);
+  assert.deepEqual(placed.waitingPlants,[]);
+  const invalid={...current,waitingPlants:[...current.waitingPlants,...current.waitingPlants]};
+  assert.equal(readPlant(JSON.stringify(invalid),H),null);
 });

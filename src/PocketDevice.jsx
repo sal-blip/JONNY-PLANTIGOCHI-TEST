@@ -499,6 +499,12 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         {reminder?.notice && <p role="status">{reminder.notice}</p>}
       </>:<p>{firstDrinkHint}</p>}
     </GuideChat>}
+    {resting && !game && !sick && plant.deadAt===null && plant.stage==='grown' && !plant.growthFlares?.length &&
+      plant.waitingPlants?.some(p=>p.id===plant.id) && plant.homeIntroSeen!==plant.id &&
+      <GuideChat className="toy-guide sprout-debut" cue={'home-'+plant.id}>
+        <p>I’m fully grown! You’ll find me in your Inventory. Let’s pick my new home in the garden.</p>
+        <div className="chat-actions"><button onClick={()=>openMove()}>Choose a garden spot</button></div>
+      </GuideChat>}
     {sproutWelcome && !section && !game && <GuideChat className="toy-guide sprout-debut" cue="first-leaf">
       <p><strong>{plant.name} sprouted!</strong> My first leaf!</p>
       <p>{water.label.startsWith('In ')?'My next drink is in '+water.label.slice(3)+'.':water.detail+'.'} Want to play one round of Dew Catch? Catch 3 drops to win 3 coins. Three misses end the round.</p>
@@ -510,7 +516,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     </GuideChat>}
     <div className={'inspect-view'+(near?' close-up':'')}>
     <div className="device">
-      <SproutCelebration plant={plant} resting={resting} commit={commit}/>
+      <SproutCelebration plant={plant} resting={resting && !game && !revealing} commit={commit}/>
       <div className="inspect-shell"><DeviceShell/></div>
       <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} data-branch={branch} role="group" aria-label={description}>
         <span className="lcd-top"><span>{!browsing && <i/>}{title.toUpperCase()}</span>

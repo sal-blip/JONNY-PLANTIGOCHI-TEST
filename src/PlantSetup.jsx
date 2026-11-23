@@ -54,7 +54,7 @@ export function SetupWelcome({setup,replace,issue,phase,plant,offer,alerts,answe
   </section></main>;
 }
 
-export function NameEditor({original='Monstera',initial='',onDraft,onSave,onCancel,rename=false,issue}){
+export function NameEditor({original='Monstera',initial='',onDraft,onSave,onCancel,rename=false,modal=rename,variety,issue}){
   const [draft,setDraft]=useState(initial),[index,setIndex]=useState(0),[lower,setLower]=useState(false),[busy,setBusy]=useState(false);
   const heart=useRef(null),hold=useRef(null),consumed=useRef(false),dialog=useRef(null);
   const letters=lower?'abcdefghijklmnopqrstuvwxyz':'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -111,8 +111,8 @@ export function NameEditor({original='Monstera',initial='',onDraft,onSave,onCanc
         <button aria-label="Next toy item" disabled={busy} onClick={()=>move(1)}><ChevronRight/></button>
       </div>
     </div></div>
-    <p className="name-instructions">{!draft && selected==='Done'?<>Press ♥ to keep <b>{original}</b>. Use the arrows to pick letters.</>:<>Arrows browse. Heart picks a letter or <b>Done</b>.</>}<br/>Back erases. Hold Back to cancel.</p>
+    <p className="name-instructions">{variety && <>Your {variety} seed is here.<br/></>}{!draft && selected==='Done'?<>Press ♥ to keep <b>{original}</b>. Use the arrows to pick letters.</>:<>Arrows browse. Heart picks a letter or <b>Done</b>.</>}<br/>Back erases. Hold Back to cancel.</p>
     {issue && <p role="alert">{issue}</p>}
   </section>;
-  return rename?<dialog className="seed-setup name-modal" ref={dialog} aria-labelledby="plant-name-title" onCancel={e=>e.preventDefault()}>{content}</dialog>:<main className="seed-setup">{content}</main>;
+  return modal?<dialog className="seed-setup name-modal" ref={dialog} aria-labelledby="plant-name-title" onCancel={e=>e.preventDefault()}>{content}</dialog>:<main className="seed-setup">{content}</main>;
 }

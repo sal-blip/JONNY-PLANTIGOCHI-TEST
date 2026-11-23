@@ -76,7 +76,7 @@ function Postcard({roomRef,raised}){
 
 /** App owns the raised/lowered surface and current route. Keep its contents
  * mounted while lowered so journal forms, library articles and scrolling survive. */
-export function useGardenPhoneApps({page,open,plant,musicVolume,commit,beginPlacement,roomRef,raised=true,playingRecordId,onSelectRecord}){
+export function useGardenPhoneApps({page,open,plant,musicVolume,commit,beginPlacement,homePlant,roomRef,raised=true,playingRecordId,onSelectRecord}){
   const [itemId,setItemId]=useState(null),[journal,setJournal]=useState(newJournalSession);
   const [busy,setBusy]=useState(false),[notice,setNotice]=useState(null);
   const pending=useRef(false),alive=useRef(false),route=useRef(null),handedOff=useRef(false);
@@ -149,7 +149,7 @@ export function useGardenPhoneApps({page,open,plant,musicVolume,commit,beginPlac
   }
   let app=null;
   if(plant && (page==='shop' || page==='inventory')){
-    app=<GardenShop plant={plant} initialTab={page==='inventory'?'bag':'shop'} onTabChange={tab=>navigate(tab==='bag'?'inventory':'shop')} onPlace={place} inspect={inspect}/>;
+    app=<GardenShop plant={plant} homePlant={homePlant} initialTab={page==='inventory'?'bag':'shop'} onTabChange={tab=>navigate(tab==='bag'?'inventory':'shop')} onPlace={place} inspect={inspect}/>;
   }else if(plant && (page==='journal' || page==='library')){
     app=<GardenJournal plant={plant} tab={page==='library'?'library':journal.tab} session={journal} setSession={setJournal} onTabChange={journalPage} change={operation=>change(operation,false)} busy={busy}/>;
   }else if(page==='item'){

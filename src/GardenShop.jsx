@@ -1,6 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay} from './gardenEconomy.js';
-import {isToySpecies} from './game.js';
+import {isToySpecies,toyVarietyName,canHomePlant} from './game.js';
 import {drawShopPreview,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
 import {readFrameUpload} from './frameUpload.js';
@@ -77,7 +77,7 @@ export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
     </div>}{error && <p role="status">{error}</p>}
   </div>;
 }
-export default function GardenShop({plant,onPlace,inspect,initialTab='shop',onTabChange}){
+export default function GardenShop({plant,homePlant,onPlace,inspect,initialTab='shop',onTabChange}){
   const startTab=initialTab==='bag'?'bag':'shop';
   const [tab,setTab]=useState(startTab);
   useEffect(()=>{setTab(startTab);},[startTab]);
@@ -94,9 +94,12 @@ export default function GardenShop({plant,onPlace,inspect,initialTab='shop',onTa
       onClick={()=>onPlace({sku,id:crypto.randomUUID(),buy:true})}>
       <ItemArt sku={sku}/><span>{p.name}<small>{isToySpecies(sku)?'Buy grown or grow free on Plantigotchi':({pot:'Individual pot',frame:'Personal photo',plant:'Grown garden plant',decor:'Room decoration'})[p.kind]}</small></span>
       <b><img src="/art/iseed-coin.png" width="13" height="13" alt="" style={{imageRendering:"pixelated"}}/>{itemPrice(plant,sku)}</b></button>)}</div>:
-      <div className="shop-list">{g.items.map(item=><button key={item.id} onClick={()=>inspect(item)}><ItemArt sku={item.sku} photo={item.photo}/>
+      <div className="shop-list">{plant.waitingPlants?.map(item=><button key={item.id} disabled={!canHomePlant(plant,item.id)}
+        onClick={()=>homePlant(item.id)}><ItemArt sku={item.species}/><span>{item.id===plant.id?plant.name:item.name}
+          <small>{toyVarietyName(item.species)} · {canHomePlant(plant,item.id)?'Choose a garden spot':'Treat fungus first'}</small></span><ChevronRight size={16}/></button>)}
+        {g.items.map(item=><button key={item.id} onClick={()=>inspect(item)}><ItemArt sku={item.sku} photo={item.photo}/>
         <span>{catalog[item.sku].name}<small>{item.slot===null?'In inventory':'In the room'}</small></span><ChevronRight size={16}/></button>)}
-        {!g.items.length && <p><ShoppingBag size={16}/> Your pots and decorations will appear here.</p>}
+        {!g.items.length && !plant.waitingPlants?.length && <p><ShoppingBag size={16}/> Your pots and decorations will appear here.</p>}
         {plant.graduates.some(p=>p.source==='shop') && <p>Purchased plants live in their garden spots.</p>}</div>}
     <p className="garden-footnote">Visits earn 10 coins. Healthy watering earns 2 up to three times a day. Game wins earn 3 up to five times a day.</p>
   </div>;

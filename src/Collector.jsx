@@ -9,7 +9,7 @@ import {prepareRoomPhotos} from './framePhotoMedia.js';
 import {catalog,itemPrice,lifeOf,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackupChange} from './gardenEconomy.js';
 import './gardenMarket.css';
 import GardenKeepsakes from './GardenKeepsakes.jsx';
-import {ROOT_TIME,replant,takeCutting} from './game.js';
+import {ROOT_TIME,replant,takeCutting,canHomePlant} from './game.js';
 import GardenDialog from './GardenDialog.jsx';
 import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,roomLight} from './roomArt.js';
 import {drawPottedPlant} from './roomPlant.js';
@@ -59,7 +59,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const [visible,setVisible]=useState([page,page]);
   const mounted=useRef(false),pending=useRef(false),canFocus=useRef(false);
   const collection=useMemo(()=>new Map(graduates.map(p=>[p.slot,p])),[graduates]);
-  const picking=graduating===plant.id && plant.stage==='grown' && plant.fungusAt==null && plant.deadAt===null;
+  const picking=Boolean(graduating && canHomePlant(plant,graduating));
   const source=carry && collection.get(carry.from)?.id===carry.id?collection.get(carry.from):null;
   const inHand=carry?.confirmed && source;
   const placing=Boolean(inHand) || picking || Boolean(shopMove);
@@ -251,7 +251,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     if(request)onPlacementCancel?.(request);else focusSlot(shopMove.from,shopMove.id);
   }
   function beginGraduation(id){
-    if(id!==plant.id || plant.stage!=='grown' || plant.deadAt!==null || plant.fungusAt!=null || pending.current || shopMove || phonePlacement.current || carry)return false;
+    if(!canHomePlant(plant,id) || pending.current || shopMove || phonePlacement.current || carry)return false;
     if(!placesFor(page).some(spot=>!collection.has(slotFor(page,spot))))travel(firstVacantRoom(graduates));
     setGraduating(id);setPanel(null);setPreview(null);setSlot(null);setNotice('');relax();
     focusDestination();
@@ -359,7 +359,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       if(result.ok){
         setCarry(null);if(!origin)setGraduating(null);setSlot(target);focusSlot(target);
         const stored=result.storedCount?' '+result.storedCount+(result.storedCount===1?' item returned':' items returned')+' to inventory.':'';
-        setNotice(origin?'Moved to '+placeName(target).toLowerCase()+'.'+stored:'A '+result.nextVariety+' seed is waiting in your Plantigochi.');
+        setNotice(origin?'Moved to '+placeName(target).toLowerCase()+'.'+stored:!result.newSeed?'Your plant is home.':'A '+result.nextVariety+' seed is waiting in your Plantigochi.');
       }else setNotice('That spot or plant changed. Choose again.');
     }catch{if(mounted.current)setNotice('Could not save this move. Please try again.');}
     finally{pending.current=false;if(mounted.current)setBusy(false);}

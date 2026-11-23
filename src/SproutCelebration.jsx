@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useEffect,useState} from 'react';
 
 // Positions follow the edge of the 600 × 565 case, leaving the LCD clear.
 const stars=[
@@ -7,34 +7,30 @@ const stars=[
 ];
 
 export default function SproutCelebration({plant,resting,commit}){
-  const [playing,setPlaying]=useState(null);
-  const shown=useRef(null);
+  const stage=plant.growthFlares?.[0],id=plant.id;
+  const eligible=Boolean(resting && stage && plant.deadAt===null);
+  const [visible,setVisible]=useState(()=>!document.hidden);
   useEffect(()=>{
-    if(!resting || plant.stage!=='sprout' || plant.deadAt!==null || plant.sproutBurstPending!==plant.id)return;
-    function reveal(){
-      if(document.hidden || shown.current===plant.id)return;
-      shown.current=plant.id;
-      setPlaying(plant.id);
-      void commit(p=>{
-        if(p.id!==plant.id || p.sproutBurstPending!==plant.id)return p;
-        const {sproutBurstPending,...seen}=p;
-        return seen;
-      });
+    const sync=()=>setVisible(!document.hidden);
+    document.addEventListener('visibilitychange',sync);
+    return ()=>document.removeEventListener('visibilitychange',sync);
+  },[]);
+  useEffect(()=>{
+    if(!eligible || !visible)return;
+    let stopped=false,timer;
+    async function acknowledge(){
+      if(stopped || document.hidden)return;
+      const saved=await commit(p=>p.id===id && p.growthFlares?.[0]===stage
+        ?{...p,growthFlares:p.growthFlares.slice(1)}:p);
+      if(!saved && !stopped)timer=setTimeout(acknowledge,1500);
     }
-    reveal();
-    document.addEventListener('visibilitychange',reveal);
-    return ()=>document.removeEventListener('visibilitychange',reveal);
-  },[plant.id,plant.stage,plant.deadAt,plant.sproutBurstPending,resting,commit]);
-  useEffect(()=>{
-    if(!playing)return;
-    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const timer=setTimeout(()=>setPlaying(null),reduced?1200:3200);
-    return ()=>clearTimeout(timer);
-  },[playing]);
-  if(!resting || playing!==plant.id || plant.stage!=='sprout' || plant.deadAt!==null)return null;
+    timer=setTimeout(acknowledge,window.matchMedia('(prefers-reduced-motion: reduce)').matches?1200:3200);
+    return ()=>{stopped=true;clearTimeout(timer);};
+  },[eligible,visible,id,stage,commit]);
+  if(!eligible || !visible)return null;
   return <>
-    <div className="sprout-burst" aria-hidden="true"><div className="sprout-rays"/></div>
-    <div className="sprout-stars" aria-hidden="true">
+    <div key={stage} data-growth-flare={stage} className="sprout-burst" aria-hidden="true"><div className="sprout-rays"/></div>
+    <div key={stage+"-stars"} className="sprout-stars" aria-hidden="true">
       {stars.map(([x,y,size,delay])=><i key={x} className="sprout-star" style={{
       left:x+'%',top:y+'%','--star-size':size+'px','--twinkle-delay':delay+'ms'
     }}/>)}

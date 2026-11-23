@@ -1,7 +1,7 @@
 // Native baselines on the approved 72 × 64 tiles. A scale of 2 maps each
 // double-density art pixel to one tile pixel.
 export const previewLayout={
-  terra:[36,55,2], wave:[36,55,2], oak:[36,55,2], lacquer:[36,55,2],
+  monstera:[36,55,1], terra:[36,55,2], wave:[36,55,2], oak:[36,55,2], lacquer:[36,55,2],
   neko:[36,55,2], record:[36,55,2], 'golden-pothos':[36,32,2], 'snake-plant':[36,55,2],
   'bog-frog-pot':[36,55,2], 'lava-pop-pot':[36,55,2],
   'bird-of-paradise':[36,57,1], 'moth-orchid':[36,57,1],
