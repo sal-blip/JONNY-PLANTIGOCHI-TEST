@@ -17,10 +17,13 @@ with sync_playwright() as pw:
         page.set_viewport_size({'width':320,'height':568})
         page.goto(url)
         taps(page, 'Take a peek', 'Next', 'Continue')
-        start=page.get_by_role('button',name='Start playing')
-        install=page.get_by_role('button',name='Install now')
+        start=page.get_by_role('button',name='Just start playing')
+        install=page.get_by_role('button',name='Install app')
         expect(start).to_be_visible()
-        assert abs(start.bounding_box()['y']-install.bounding_box()['y'])<7
+        left, middle, right = (locator.bounding_box() for locator in (install, page.get_by_text('or', exact=True), start))
+        assert 0 <= left['x'] < left['x']+left['width'] <= middle['x']
+        assert middle['x']+middle['width'] <= right['x'] < right['x']+right['width'] <= 320
+        assert abs(left['y']-right['y'])<7
         assert start.evaluate('b=>getComputedStyle(b).backgroundColor')!=install.evaluate('b=>getComputedStyle(b).backgroundColor')
         if platform == 'android':
             page.evaluate("""() => {
@@ -30,7 +33,7 @@ with sync_playwright() as pw:
                 e.userChoice=Promise.resolve({outcome:'accepted'});
                 dispatchEvent(e);
             }""")
-        taps(page, 'Install now')
+        taps(page, 'Install app')
         expect(page.get_by_role('heading', name='Install Plantigochi')).to_be_visible()
         assert page.url.endswith('#install')
         if platform == 'android':
@@ -44,7 +47,7 @@ with sync_playwright() as pw:
         page.reload()
         expect(page.get_by_role('heading', name='Install Plantigochi')).to_be_visible()
         taps(page, 'Back')
-        expect(page.get_by_role('button', name='Start playing')).to_be_visible()
+        expect(page.get_by_role('button', name='Just start playing')).to_be_visible()
         assert '#install' not in page.url
         ctx.close()
         print(platform, 'tour and install handoff passed')

@@ -11,7 +11,7 @@ with sync_playwright() as pw, TemporaryDirectory() as directory:
     ctx, url, blank = context_for(browser, source, installed=False)
     page = ctx.new_page()
     page.goto(url)
-    taps(page,'Take a peek','Next','Continue','Start playing','Name your seed','Keep Monstera')
+    taps(page,'Take a peek','Next','Continue','Just start playing','Name your seed','Keep Monstera')
     taps(page,'Open toy menu','Next toy item','Back on toy','Open toy menu','Choose Care','Choose Water')
     watered=page.evaluate(READ_PLANT)
     page.reload()

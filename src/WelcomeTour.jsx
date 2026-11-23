@@ -145,8 +145,9 @@ export default function WelcomeTour({phone,onBegin,onPlay,onClose,issue}){
           <div className="tour-actions">
             {step<last ? <button className="tour-primary" onClick={()=>go(step+1)}>{['Take a peek','Next','Continue'][step]}</button> :
               installed ? <button className="tour-primary" onClick={onBegin || onClose}>{onBegin?'Begin setup':'Back to game'}</button> :
-              <><button className="tour-primary" onClick={onPlay || onBegin}>Start playing</button>
-                <button className="tour-install-now" onClick={installNow}>Install now</button></>}
+              <><button className="tour-primary" onClick={installNow}>Install app</button>
+                <span>or</span>
+                <button className="tour-install-now" onClick={onPlay || onBegin}>Just start playing</button></>}
           </div>}
       </div>
     </div>
