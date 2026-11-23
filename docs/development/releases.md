@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v68 · Simultaneous care badges · November 23, 2026
+
+Plantigochi 0.1.8 shows the four approved SpriteCook care icons as small, independently fading badges above the meters. The row aligns to the right and fits concurrent needs. The garden renderer study is recorded separately. [Resolution study and comparison](research/garden-item-resolution.md)
+
+All 161 unit tests passed. Mobile Chromium exercised simultaneous needs and clearing each via the toy buttons at 393 and 320 CSS pixels wide, with full and reduced motion. Six release resources and the four badge PNGs matched the public deployment; the signed-out welcome loaded. Physical phone testing is pending. [Care walkthrough](../../tests/browser/care_indicators.py)
+
+Sites source `f0263f90cd2422c0c4365f21192128607a8ddf8c` · saved version 68 · deployment `appgdep_6b04a9f53b948191ab769431046c7dba` · [GitHub release commit decdddc](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/decdddc2da2d147cc95a765d73bbab238e7e23eb)
+
 ## v67 · Sunlight shading and care icon transitions · November 23, 2026
 
 Plantigochi 0.1.7 shades the LCD as soon as sunlight opens and deepens the shade when due. The next care icon fades in after the previous delivery finishes. Reduced motion uses a still acknowledgment. The plant animations keep their existing timing.
