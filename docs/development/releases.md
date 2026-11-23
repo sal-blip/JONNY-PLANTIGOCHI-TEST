@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v71 · Uninstall help in Settings · November 23, 2026
+
+Plantigochi 0.1.11 adds **How to uninstall** above the reset option. Players can download a garden backup before following the device’s removal instructions. All 162 unit tests passed. Chromium exercised Android, iPhone, desktop-mode iPad and Mac Safari instructions, a downloaded backup and restoration in fresh standalone storage. Physical removal and Safari downloads still need an on-device check. Six public resources matched the release and the signed-out welcome loaded. [Backup walkthrough](../../tests/browser/uninstall_help.py)
+
+Sites source `cec3bc497c12e058643d94a820f3240c14154184` · saved version 71 · deployment `appgdep_6b04cbffe0ac8191aeb637ab02d2e5b5` · [GitHub release commit 9c4bcbf](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/9c4bcbf)
+
 ## v70 · Play button and phone installation · November 23, 2026
 
 Plantigochi 0.1.10 takes new visitors through four welcome cards. The final **Play Plantigochi** tap consumes an available browser install prompt immediately. Manual installation adapts to the phone and embedded browser. The install link carries the visitor to the same step after changing browsers. Seed setup opens in standalone mode.
