@@ -1,4 +1,4 @@
-import {ACTIONS, STAGE_NAMES, FUNGUS_WINDOW, HOUR, SPURT_COST,growthSpurtOffer, careStatus, condition, countdown, healthLabels} from './game.js';
+import {ACTIONS, stageLabel, FUNGUS_WINDOW, HOUR, SPURT_COST,growthSpurtOffer, careStatus, condition, countdown, healthLabels} from './game.js';
 import {canPlay, dewCheckpoint, LEVELS} from './pocketPlay.js';
 import {foodReadout, growthReadout, waterReadout} from './plantReadout.js';
 
@@ -12,7 +12,7 @@ const guide = [
   ['Root rot','Two extra wet pours 1h apart. Drain within 12h.'],
   ['Company','Talk or finish a game. Quiet at 12h, lonely at 24h.'],
   ['Plant food','Food every 48h. Light every 24h.'],
-  ['Growing up','Young on day 3. First split on day 5. Grown on day 7.'],
+  ['Growing up','New growth on days 3 and 5. Fully grown on day 7.'],
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Garden coins','Visits +10 daily. Helpful watering +2, up to 3/day. Game wins +3, up to 5/day.'],
   ['Leaf Echo','Watch three beats. Copy them with the keys.'],
@@ -38,7 +38,7 @@ export function toyCards(section, plant, now) {
       const hints = {
         care: dead?'Pressed leaf':plant.stage==='seed'?'Sleeping seed':healthLabels[condition(plant,now)],
         play: 'Dew Catch · Leaf Echo',
-        growth: STAGE_NAMES[plant.stage],
+        growth: stageLabel(plant),
         aid:sick?'Fungus · '+remaining+' left':'All clear',
         guide: 'Care & controls',
       };
@@ -70,7 +70,7 @@ export function toyCards(section, plant, now) {
     case 'pause': return [card('Resume','Hold Back for your plant','resume'),card('Leave game','Return to your plant','leave')];
     case 'growth': {
       const progress=growthReadout(plant,now);
-      const entries=[card(STAGE_NAMES[plant.stage],ageLabel((plant.deadAt??now)-plant.plantedAt)+' old · Gen '+plant.generation,'next')];
+      const entries=[card(stageLabel(plant),ageLabel((plant.deadAt??now)-plant.plantedAt)+' old · Gen '+plant.generation,'next')];
       if (progress.next) {
         const [remaining, blockers]=progress.detail.split(' · ');
         entries.push(card(progress.next,remaining,'next'));
@@ -79,7 +79,7 @@ export function toyCards(section, plant, now) {
         if(blockers)entries.push(card('Growth needs',blockers.replace('Needs ',''),sick?'aid':'care'));
       }
       if (!dead && plant.stage==='grown') entries.unshift(sick?card('Treat fungus first','Open First Aid','aid'):card('Move to garden','Choose a permanent pot','graduate'));
-      return [...entries,...(dead?[]:[card('Rename plant',plant.name || 'Monstera','rename')]),...[['Sprout','1 hour'],['Young plant','3 days'],['First split','5 days'],['Grown plant','7 days']].map(([name,age])=>card(name,age+' growing time','next'))];
+      return [...entries,...(dead?[]:[card('Rename plant',plant.name || 'Monstera','rename')]),...[['sprout','1 hour'],['young','3 days'],['split','5 days'],['grown','7 days']].map(([stage,age])=>card(stageLabel(plant,stage),age+' growing time','next'))];
     }
     case 'boost': {
       const offer=growthSpurtOffer(plant,now);
@@ -88,7 +88,7 @@ export function toyCards(section, plant, now) {
       return [card('Spend '+SPURT_COST+' coins',offer.percent===100?'Reach '+offer.next:offer.percent+'% toward '+offer.next,'buy-boost'),
         card('Cancel','Keep my coins','back')];
     }
-    case 'spurtReceipt': return [card('Spurt saved',STAGE_NAMES[plant.stage]+' · '+plant.gardenLife.balance+' coins left','back')];
+    case 'spurtReceipt': return [card('Spurt saved',stageLabel(plant)+' · '+plant.gardenLife.balance+' coins left','back')];
     case 'spurtChanged': return [card('No coins spent','Check current growth and care','back')];
     case 'pastAid': return [card('All clear','This outbreak has ended','back')];
     case 'aid': return [sick ? card('G-NAT ASSASSIN','♥ One drop · '+remaining,'treat')

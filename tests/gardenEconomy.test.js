@@ -57,7 +57,7 @@ test('launch shop plants and pots survive a room move, a reload and a backup res
   const plants=['monstera-albo','pink-micans','hoya-serpens-splash','queen-anthurium','monkey-tail-cactus'];
   const pots=['bog-frog-pot','lava-pop-pot'];
   const start=checkIn(seed(),morning);
-  const startingBalance=1000;
+  const startingBalance=2200;
   let p={...start,gardenLife:{...start.gardenLife,balance:startingBalance}};
   for(const [slot,sku] of plants.entries())p=buy(p,sku,sku,slot);
   for(const [slot,sku] of pots.entries())p=buy(p,sku,sku,slot);
@@ -124,10 +124,11 @@ test('placed decorations can trade surfaces in a full room without changing owne
 });
 
 test('swapping pots from shelf zero moves only the ceramics and preserves both plants',()=>{
-  let p=checkIn(seed(),morning);p={...p,gardenLife:{...p.gardenLife,balance:500}};
+  let p=checkIn(seed(),morning);p={...p,gardenLife:{...p.gardenLife,balance:700}};
   p=buy(p,'golden-pothos','pothos',0);p=buy(p,'snake-plant','snake',6);
   p=buy(p,'terra','clay',0);p=buy(p,'wave','glaze',6);
   const moved=placeItem(p,{id:'clay',sku:'terra',buy:false,from:0,slot:6,expected:destinationKey(p,6)},morning);
+  assert.equal(moved.graduates.length,2);
   assert.deepEqual(moved.graduates,p.graduates);
   assert.equal(moved.gardenLife.balance,p.gardenLife.balance);
   assert.equal(moved.gardenLife.items.find(i=>i.id==='glaze').slot,0);

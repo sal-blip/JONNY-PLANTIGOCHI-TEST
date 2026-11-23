@@ -1,7 +1,7 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {reminderSchedule} from './reminderSchedule.js';
 import {refreshGardenReminder,submitGardenReminder,wakeReminderWorker} from './gardenReminder.js';
-import {STAGES,STAGE_NAMES} from './game.js';
+import {STAGES,stageLabel} from './game.js';
 import {mayChangeAlerts} from './useGardenSave.js';
 import {alertKey as KEY,withReminderLock} from './alertCleanup.js';
 
@@ -159,7 +159,7 @@ export function usePlantAlerts(plant,offline,epoch){
   useEffect(()=>{
     const prev=last.current;last.current=plant;
     if(!enrolled || !prev || !plant || prev.id!==plant.id || plant.deadAt!==null || STAGES.indexOf(plant.stage)<=STAGES.indexOf(prev.stage))return;
-    navigator.serviceWorker.ready.then(reg=>reg.active?.postMessage({type:'milestone',id:plant.id,stage:plant.stage,label:STAGE_NAMES[plant.stage]})).catch(()=>{});
+    navigator.serviceWorker.ready.then(reg=>reg.active?.postMessage({type:'milestone',id:plant.id,stage:plant.stage,label:stageLabel(plant)})).catch(()=>{});
   },[plant,enrolled]);
   const toggleCompany=()=>{try{const d=device();if(!d.enabled || d.token!==settings.token)return;const next={...d,company:!d.company};persist(next);setSettings(next);}catch{setNotice('Could not save the company reminder setting.');}};
   return {enabled,enrolled,nextDue,busy,notice:notice || (!enrolled && settings.reconnect?'Subscription expired. Enable plant alerts to reconnect.':''),toggle:()=>changeEnabled(!enrolled),enable:()=>changeEnabled(true),capable,denied,

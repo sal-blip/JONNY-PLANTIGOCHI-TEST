@@ -354,12 +354,12 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     if(!canPlaceAt(graduates,target)){setNotice('Choose an open circle.');return;}
     pending.current=true;setBusy(true);
     try{
-      const result=origin ? await relocate(origin.id,origin.from,target) : {ok:await move(target,graduating)};
+      const result=origin ? await relocate(origin.id,origin.from,target) : await move(target,graduating);
       if(!mounted.current)return;
       if(result.ok){
         setCarry(null);if(!origin)setGraduating(null);setSlot(target);focusSlot(target);
         const stored=result.storedCount?' '+result.storedCount+(result.storedCount===1?' item returned':' items returned')+' to inventory.':'';
-        setNotice(origin?'Moved to '+placeName(target).toLowerCase()+'.'+stored:'Home at last. A new seed is waiting in the keychain.');
+        setNotice(origin?'Moved to '+placeName(target).toLowerCase()+'.'+stored:'A '+result.nextVariety+' seed is waiting in your Plantigochi.');
       }else setNotice('That spot or plant changed. Choose again.');
     }catch{if(mounted.current)setNotice('Could not save this move. Please try again.');}
     finally{pending.current=false;if(mounted.current)setBusy(false);}

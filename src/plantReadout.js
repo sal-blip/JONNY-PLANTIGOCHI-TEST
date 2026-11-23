@@ -1,4 +1,4 @@
-import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, condition, soilDeadline, nextMilestone, timeLeft} from './game.js';
+import {earnedAt, growthHolds, FOOD_INTERVAL, HOUR, WATER_INTERVAL, careStatus, condition, soilDeadline, nextMilestone, stageLabel, timeLeft} from './game.js';
 
 export {timeLeft};
 export const GROWTH_STEPS = 4;
@@ -17,7 +17,7 @@ export function growthReadout(plant, now) {
   const completed={seed:0,sprout:1,young:2,split:3}[plant.stage];
   const filled=completed + Math.min(.98,clamp((elapsed-next.start)/(next.age-next.start)));
   const detail=(remaining?timeLeft(remaining)+' growing time':'Ready')+(holds.length?' · Needs '+holds.join('/'):'');
-  return {filled,label:holds.length?'Needs care':['Seed','Sprout','Young','First split'][completed],detail,next:next.label};
+  return {filled,label:holds.length?'Needs care':plant.stage==='young'?'Young':stageLabel(plant),detail,next:next.label};
 }
 
 export function waterReadout(plant, now) {

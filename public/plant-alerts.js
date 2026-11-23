@@ -160,6 +160,7 @@ async function notifyGarden(event, show) {
   const now=Date.now();
   if(p!==undefined && (!p || p.id!==schedule.id || p.deadAt!==null))return;
   if(schedule.expires && now>=schedule.expires)return;
+  const variety=p?.species==='golden-pothos'?'Golden Pothos':'Monstera';
   async function notify(kind,title,body,identity,action) {
     const key='/notice-delivered-'+kind;
     if(await cached(cache,key)===identity)return false;
@@ -176,28 +177,28 @@ async function notifyGarden(event, show) {
   if(schedule.criticalDue && now>=schedule.criticalDue) {
     if(p && (p.lastDrink!==schedule.lastDrink || p.rotAt!==schedule.rotAt))return;
     const rot=schedule.reason==='rot';
-    await notify('care',rot?'Your Monstera needs drainage':'Your Monstera is very thirsty',
+    await notify('care','Your '+variety+(rot?' needs drainage':' is very thirsty'),
       rot?'Open Care and drain the pot to save its roots.':'Water it to help it recover.',id+'-'+schedule.criticalDue,rot?'drain':'water');
     return;
   }
   if(!event && schedule.dryDue && now>=schedule.dryDue && schedule.reason==='thirst' &&
      (!p || (p.lastDrink===schedule.lastDrink && p.rotAt===null))){
-    await notify('care','Your Monstera is ready for a drink','Open Care to water your plant.',id+'-dry-'+schedule.dryDue,'water');
+    await notify('care','Your '+variety+' is ready for a drink','Open Care to water your plant.',id+'-dry-'+schedule.dryDue,'water');
   }
   const growing=p?.rotAt==null && p?.fungusAt==null && schedule.rotAt==null && schedule.fungusAt==null;
   if(growing && event?.type==='milestone' && event.id===id){
     if(p && p.stage!==event.stage)return;
-    await notify('growth','Monstera milestone 🌿','Your Monstera reached '+event.label+'.',id+'-'+event.stage);
+    await notify('growth',variety+' milestone 🌿','Your '+variety+' reached '+event.label+'.',id+'-'+event.stage);
     return;
   }
   if(growing && schedule.due && now>=schedule.due){
     if(p && (p.stage!==schedule.stage || p.fedAt!==schedule.fedAt || p.litAt!==schedule.litAt || p.lastDrink!==schedule.lastDrink))return;
-    if(await notify('growth','Monstera milestone 🌿','Visit your garden for '+(schedule.next||'its next stage')+'.',id+'-'+(schedule.nextStage||schedule.due)))return;
+    if(await notify('growth',variety+' milestone 🌿','Visit your garden for '+(schedule.next||'its next stage')+'.',id+'-'+(schedule.nextStage||schedule.due)))return;
   }
   if(schedule.companyDue && now>=schedule.companyDue && (!p || p.companyAt===schedule.companyAt)){
     const last=Number(await cached(cache,'/notice-company-time'));
     if(last && now-last<DAY)return;
-    await notify('company','A little company?','Say something kind or play a round with your Monstera.',id+'-'+schedule.companyAt);
+    await notify('company','A little company?','Say something kind or play a round with your '+variety+'.',id+'-'+schedule.companyAt);
     if(await cached(cache,'/notice-stretch')!==id+'-'+schedule.companyAt){
       await cache.put('/notice-company-time',new Response(String(now)));
       await cache.put('/notice-stretch',new Response(id+'-'+schedule.companyAt));

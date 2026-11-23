@@ -91,7 +91,7 @@ export default function GardenShop({plant,onPlace,inspect,initialTab='shop',onTa
     {tab==='shop'?<div className="shop-list">{Object.entries(catalog).map(([sku,p])=><button key={sku}
       aria-label={p.name+' · '+itemPrice(plant,sku)+' coins'} disabled={g.balance<itemPrice(plant,sku) || Boolean(plant.tutorial && (plant.tutorial.step!=='pot' || sku!=='terra'))}
       onClick={()=>onPlace({sku,id:crypto.randomUUID(),buy:true})}>
-      <ItemArt sku={sku}/><span>{p.name}<small>{({pot:'Individual pot',frame:'Personal photo',plant:'Grown garden plant',decor:'Room decoration'})[p.kind]}</small></span>
+      <ItemArt sku={sku}/><span>{p.name}<small>{sku==='golden-pothos'?'Buy grown or grow free on Plantigotchi':({pot:'Individual pot',frame:'Personal photo',plant:'Grown garden plant',decor:'Room decoration'})[p.kind]}</small></span>
       <b><img src="/art/iseed-coin.png" width="13" height="13" alt="" style={{imageRendering:"pixelated"}}/>{itemPrice(plant,sku)}</b></button>)}</div>:
       <div className="shop-list">{g.items.map(item=><button key={item.id} onClick={()=>inspect(item)}><ItemArt sku={item.sku} photo={item.photo}/>
         <span>{catalog[item.sku].name}<small>{item.slot===null?'In inventory':'In the room'}</small></span><ChevronRight size={16}/></button>)}

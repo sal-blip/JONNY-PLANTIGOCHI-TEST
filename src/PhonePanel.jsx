@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Bell, Check, Download, HardDrive, Upload } from 'lucide-react';
-import { STAGE_NAMES } from './game.js';
+import { stageLabel } from './game.js';
 import NotificationTest from './NotificationTest.jsx';
 import InstallHelp from './InstallHelp.jsx';
 import {readGardenBackup} from './gardenBackup.js';
@@ -59,7 +59,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, saveIss
         <button onClick={() => fileInput.current.click()}><Upload size={16}/> Restore</button>
       </div>
       <input ref={fileInput} type="file" accept=".plantigochi,.json,application/json" aria-label="Plantigochi backup file" hidden onChange={chooseFile}/>
-      {candidate && <div className="restore-confirm"><p>Restore this garden, its Leaf Book, and {candidate.plant.graduates.length} collected plants? The backup holds a <b>{candidate.plant.deadAt === null ? STAGE_NAMES[candidate.plant.stage].toLowerCase() : 'pressed leaf'}</b>.</p>
+      {candidate && <div className="restore-confirm"><p>Restore this garden, its Leaf Book, and {candidate.plant.graduates.length} collected plants? The backup holds a <b>{candidate.plant.deadAt === null ? stageLabel(candidate.plant).toLowerCase() : 'pressed leaf'}</b>.</p>
         <div className="save-buttons"><button onClick={async () => {
           try{
             if(!await candidate.apply())throw Error();

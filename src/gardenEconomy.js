@@ -12,13 +12,13 @@ export const catalog = {
   lacquer:{name:'Lacquer photo frame',kind:'frame',price:28},
   neko:{name:'Maneki-neko',kind:'decor',price:30},
   record:{name:'Record player',kind:'decor',price:65},
-  'golden-pothos':{name:'Golden pothos',kind:'plant',price:90},
-  'snake-plant':{name:'Snake plant',kind:'plant',price:140},
-  'monstera-albo':{name:'Monstera Albo',kind:'plant',price:150},
-  'pink-micans':{name:'Pink Micans',kind:'plant',price:115},
-  'hoya-serpens-splash':{name:'Hoya serpens “Splash”',kind:'plant',price:125},
-  'queen-anthurium':{name:'Queen Anthurium',kind:'plant',price:175},
-  'monkey-tail-cactus':{name:'Monkey Tail Cactus',kind:'plant',price:80},
+  'golden-pothos':{name:'Golden pothos',kind:'plant',price:250},
+  'snake-plant':{name:'Snake plant',kind:'plant',price:350},
+  'monstera-albo':{name:'Monstera Albo',kind:'plant',price:450},
+  'pink-micans':{name:'Pink Micans',kind:'plant',price:300},
+  'hoya-serpens-splash':{name:'Hoya serpens “Splash”',kind:'plant',price:325},
+  'queen-anthurium':{name:'Queen Anthurium',kind:'plant',price:500},
+  'monkey-tail-cactus':{name:'Monkey Tail Cactus',kind:'plant',price:225},
 };
 const empty = {balance:0,day:'',waters:0,wins:[],items:[],events:[],plants:[],notes:[]};
 export const lifeOf = plant => plant.gardenLife ?? empty;

@@ -13,6 +13,8 @@ const ink = {
   leaf: ramp("#245e4b", "#31825e", "#a3d396", "#62b382", "#459b70"),
   emerald: ramp("#24584e", "#29755c", "#88c99c", "#479d79", "#378766"),
   youngLeaf: ramp("#42754d", "#659852", "#d4e6a9", "#99c874", "#79aa63"),
+  pothos: ramp("#2b5539", "#507a43", "#ead978", "#83ab49", "#cad471"),
+  pothosSeed: ramp("#4e4835", "#85724a", "#e7cb82", "#bb9d62", "#a28452"),
   dimLeaf: ramp("#446565", "#557d76", "#a9c5ae", "#7fa78e", "#6b9583"),
   wetLeaf: ramp("#285963", "#347971", "#a1d3b6", "#60ad96", "#439789"),
   dryLeaf: ramp("#43654b", "#577c52", "#bed198", "#82a878", "#6d9467"),
@@ -211,6 +213,18 @@ const shrunkSeed = draw([
   ".#+--:--:++#",
   "..#########",
 ], "oldSeed");
+const pothosSeedRows = [
+  ".....####",
+  "...##::--#",
+  "..#::---:+#",
+  ".#:----:++#",
+  "#:----:++#",
+  "#:---:++#",
+  ".#:::++#",
+  "..####",
+];
+const pothosSeed = draw(pothosSeedRows, "pothosSeed");
+const pothosSeedInhale = draw([...pothosSeedRows.slice(0, 5), pothosSeedRows[4], ...pothosSeedRows.slice(5)], "pothosSeed");
 
 // Each entry specifies the leaf's own petiole, so independent stems stay readable.
 const foliage = {
@@ -228,6 +242,53 @@ const foliage = {
     { kind: firstSplit, x: 17, y: 1, stem: "M34 25v-8h1V5h-1" },
     { kind: firstSplit, x: 55, y: 1, mirror: true, stem: "M37 25v-8h-1V7h2V5" },
     { kind: fenestrated, x: 69, y: 10, mirror: true, stem: "M38 25v-4h3v-3h4v-3h5" },
+  ],
+};
+const pothosHeart = blade([
+  "..####...####",
+  ".#::--#.#:---#",
+  "#:===--#---=:+#",
+  "#:===-:--===:+#",
+  "#--=-:--===:++#",
+  ".#--:---==:++#",
+  "..#::---=:++#",
+  "...#:=--:++#",
+  "....#==:++#",
+  ".....#:+##",
+  "......##",
+]);
+const pothosBud = blade([
+  ".##..###",
+  "#:-##:-+#",
+  "#:=-:-:+#",
+  ".#==:++#",
+  "..#:++#",
+  "...###",
+]);
+// New leaves branch from the crown, then alternate along the hanging vine.
+const pothosFoliage = {
+  sprout: [
+    { kind: pothosBud, x: 25, y: 16, stem: "M35 26v-5h-2v-3h-4" },
+    { kind: pothosBud, x: 45, y: 11, mirror: true, stem: "M37 26v-8h2v-5h2" },
+  ],
+  young: [
+    { kind: pothosHeart, x: 16, y: 13, stem: "M35 26v-6h-5v-6h-7" },
+    { kind: pothosHeart, x: 54, y: 11, mirror: true, stem: "M37 26v-8h5v-6h5" },
+    { kind: pothosBud, x: 32, y: 5, stem: "M36 25v-9h2V7h-2" },
+  ],
+  split: [
+    { kind: pothosHeart, x: 14, y: 12, stem: "M35 26v-6h-8v-7h-6" },
+    { kind: pothosHeart, x: 26, y: 3, stem: "M36 25V11h-3V5" },
+    { kind: pothosHeart, x: 57, y: 8, mirror: true, stem: "M37 26v-10h8V9h5" },
+    { kind: pothosBud, x: 54, y: 24, stem: "M39 25v-6h10v5h9v2" },
+  ],
+  grown: [
+    { kind: pothosHeart, x: 11, y: 10, stem: "M34 26v-7h-9v-8h-7" },
+    { kind: pothosHeart, x: 24, y: 2, stem: "M35 25V14h-4V4" },
+    { kind: pothosHeart, x: 57, y: 4, mirror: true, stem: "M37 26V14h5V6h8" },
+    { kind: pothosBud, x: 17, y: 23, stem: "M34 26v-5h-8v4h-5" },
+    { kind: pothosHeart, x: 67, y: 15, mirror: true, stem: "M39 25v-8h12v2h9v-3" },
+    { kind: pothosBud, x: 58, y: 29, stem: "M51 19h5v6h5v6h1" },
   ],
 };
 
@@ -304,40 +365,41 @@ const sprig = draw([".....###", ".##.#:-#", "#:-##:#", ".##:##", "...##", "...##
 const splitHeart = draw([".##...##", "#::#.#:+#", "#:#..#::#", ".#:#..:#", "..#..:#", ".....#"], "heart");
 
 const stageName = { seed: "Sleeping Monstera seed", sprout: "Monstera sprout", young: "Young Monstera", split: "Monstera with its first split leaf", grown: "Grown Monstera with a broad canopy" };
+const pothosStageName = { seed: "Sleeping Golden Pothos seed", sprout: "Golden Pothos sprout", young: "Young Golden Pothos", split: "Golden Pothos with its first vine", grown: "Grown Golden Pothos with trailing vines" };
 const healthName = { dry: "dry and wilting", critical: "critically thirsty and deeply wilted", soggy: "soggy and dripping", rootRot: "root rot with mottled leaves and damaged roots", dead: "dead and still" };
 const effectName = { water: "being watered", food: "receiving food", sun: "receiving sunlight", talk: "hearing kind words", drain: "draining excess water", overwater: "an extra pour", growth: "growing", death: "a fallen leaf", replant: "newly planted", gameWin: "celebrating a game win", gameLoss: "a game loss", gnatCure: "one drop of G-NAT ASSASSIN reaches the soil and the fungus gnats scatter" };
 
 const leafHealth = { dry: "dryLeaf", critical: "thirstyLeaf", soggy: "wetLeaf", rootRot: "rotted" };
 const thirsty = condition => condition === "dry" || condition === "critical";
 
-function ThirstyCanopy({stage, condition}) {
+function ThirstyCanopy({leaves, condition}) {
   const critical = condition === "critical", material = leafHealth[condition];
   const sink = critical ? 3 : 1, inset = critical ? 2 : 1;
   return <g className="plant-thirsty-canopy">
-    {foliage[stage].map(({stem, mirror}, i) => <path key={i} fill="none" stroke={ink[material]["#"]} strokeWidth="2"
+    {leaves.map(({stem, mirror}, i) => <path key={i} fill="none" stroke={ink[material]["#"]} strokeWidth="2"
       d={stem + "h" + (mirror ? -inset : inset) + "v" + sink} />)}
-    {foliage[stage].map(({kind, x, y, mirror}, i) =>
+    {leaves.map(({kind, x, y, mirror}, i) =>
       <Pixels key={i} image={kind[condition]} x={x + (mirror ? -inset : inset)} y={y + sink} mirror={mirror} />)}
   </g>;
 }
 
-function Canopy({ stage, condition, lowLight, severity }) {
-  if (thirsty(condition)) return <ThirstyCanopy stage={stage} condition={condition} />;
+function Canopy({ leaves, condition, lowLight, severity, pothos }) {
+  if (thirsty(condition)) return <ThirstyCanopy leaves={leaves} condition={condition} />;
   const drooping = condition === "rootRot" || severity === 3;
   return <g className={'plant-canopy' + (lowLight && !drooping ? ' plant-seeking-light' : '')}>
-    {foliage[stage].map(({ stem }, i) => <path key={i} d={stem} fill="none" stroke={ink[leafHealth[condition] || "leaf"]["#"]} strokeWidth="2" />)}
+    {leaves.map(({ stem }, i) => <path key={i} d={stem} fill="none" stroke={ink[leafHealth[condition] || "leaf"]["#"]} strokeWidth="2" />)}
     <g className={drooping ? undefined : "plant-pixel-sway"}>
       {(drooping ? [0] : [0, 1, 2]).map(frame => <g key={frame} className={["plant-pixel-rest", "plant-pixel-active", "plant-pixel-return"][frame]}>
-        {foliage[stage].map(({ kind, x, y, mirror }, i) => {
+        {leaves.map(({ kind, x, y, mirror }, i) => {
           // Drooping tissue hangs from the same petiole as its healthy blade.
-          const inset = kind === little ? -2 : kind === simple ? 3 : kind === firstSplit ? 6 : 8;
+          const inset = pothos ? 0 : kind === little ? -2 : kind === simple ? 3 : kind === firstSplit ? 6 : 8;
           const px = x + (drooping ? (mirror ? -inset : inset) : 0);
           const py = y + (drooping ? 3 : 0);
           const sideFrame = mirror && frame ? 3 - frame : frame;
-          const bladeTone = kind === little ? "youngLeaf" : i % 2 ? "emerald" : "leaf";
+          const bladeTone = pothos ? "pothos" : kind === little ? "youngLeaf" : i % 2 ? "emerald" : "leaf";
           const material = leafHealth[condition] || (severity >= 2 ? "paleLeaf" : lowLight ? "dimLeaf" : bladeTone);
           return <g key={i}>
-            <Pixels image={drooping ? diseasedLeaf : kind.frames[sideFrame]} material={material} x={px} y={py} mirror={mirror} />
+            <Pixels image={drooping ? (pothos ? kind.dry : diseasedLeaf) : kind.frames[sideFrame]} material={material} x={px} y={py} mirror={mirror} />
             {condition === "rootRot" && <Pixels image={spots} x={px + (mirror ? -9 : 4)} y={py + 4} />}
           </g>;
         })}
@@ -346,7 +408,7 @@ function Canopy({ stage, condition, lowLight, severity }) {
   </g>;
 }
 
-function Stem({ stage, condition, lowLight, severity }) {
+function Stem({ stage, condition, lowLight, severity, pothos }) {
   const material = leafHealth[condition] || (severity >= 2 ? "paleLeaf" : lowLight ? "dimLeaf" : "youngLeaf");
   if (thirsty(condition)) {
     const critical = condition === "critical";
@@ -362,8 +424,8 @@ function Stem({ stage, condition, lowLight, severity }) {
   const limp = condition === "rootRot" || severity === 3;
   if (stage === "seed") return <>
     {limp ? <Pixels image={thirstySeed} material={material} x={29} y={17} /> : <g className="plant-pixel-breathe">
-      <g className="plant-pixel-rest"><Pixels image={seed} x={29} y={15} /></g>
-      <g className="plant-pixel-active"><Pixels image={seedInhale} x={29} y={14} /></g>
+      <g className="plant-pixel-rest"><Pixels image={pothos ? pothosSeed : seed} x={pothos ? 31 : 29} y={pothos ? 18 : 15} /></g>
+      <g className="plant-pixel-active"><Pixels image={pothos ? pothosSeedInhale : seedInhale} x={pothos ? 31 : 29} y={pothos ? 17 : 14} /></g>
     </g>}
     {condition === "rootRot" && <Pixels image={spots} x={36} y={18} />}
   </>;
@@ -454,14 +516,16 @@ function EventArt({ kind }) {
   return <g className={`plant-event plant-event-${kind}`} data-effect={kind}>{art}</g>;
 }
 
-function PlantBody({stage, condition, lowLight, severity}) {
+function PlantBody({stage, condition, lowLight, severity, pothos}) {
   if (condition === "dead") return <Remains stage={stage}/>;
-  const Body = foliage[stage] ? Canopy : Stem;
-  return <Body stage={stage} condition={condition} lowLight={lowLight} severity={severity}/>;
+  const leaves=(pothos ? pothosFoliage : foliage)[stage];
+  return leaves ? <Canopy leaves={leaves} condition={condition} lowLight={lowLight} severity={severity} pothos={pothos}/>
+    : <Stem stage={stage} condition={condition} lowLight={lowLight} severity={severity} pothos={pothos}/>;
 }
 
-export default function PlantPixel({ seedSteps=0, stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false, outbreak = 0, showBottle = false, waterFrom = "dry" }) {
+export default function PlantPixel({ species, seedSteps=0, stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false, outbreak = 0, showBottle = false, waterFrom = "dry" }) {
   const growth = Object.hasOwn(stageName, stage) ? stage : "seed";
+  const pothos = species === "golden-pothos";
   const soil = Object.hasOwn(healthName, condition) ? condition : "healthy";
   const socialMood = ["happy", "content", "quiet", "lonely"].includes(mood) ? mood : "content";
   const feeling = thirsty(soil) ? "sad" : socialMood;
@@ -474,16 +538,16 @@ export default function PlantPixel({ seedSteps=0, stage = "seed", reaction = nul
   const patientTransform = treating ? "translate(14 5) scale(.82)" : undefined;
   const recoverFrom = effect === "water" && soil === "healthy" && growth !== "seed" && thirsty(waterFrom) ? waterFrom : null;
   const expression = soil !== "healthy" ? soil : active >= 2 ? "bothered" : growth === "seed" ? "asleep" : recoverFrom ? "happy" : hungry ? "hungry" : lowLight ? "lowLight" : feeling;
-  const subject = growth === "seed" && soil !== "healthy" ? "Monstera seed" : stageName[growth];
+  const subject = growth === "seed" && soil !== "healthy" ? (pothos ? "Golden Pothos seed" : "Monstera seed") : (pothos ? pothosStageName : stageName)[growth];
   const label = [subject, healthName[soil], outbreakLabels[active], showBottle && soil !== "dead" && !curing && "G-NAT ASSASSIN treatment bottle", soil !== "dead" && feeling, soil !== "dead" && hungry && "needs food", soil !== "dead" && lowLight && "needs light", effectName[effect], recoverFrom && "leaves lifting after a drink"].filter(Boolean).join(", ");
   return <svg className="plant-pixel" viewBox="0 0 72 40" xmlns="http://www.w3.org/2000/svg"
     role="img" aria-label={label} shapeRendering="crispEdges" data-stage={growth} data-condition={soil} data-mood={feeling} data-outbreak={active || undefined} data-effect={effect ?? undefined} data-water-from={recoverFrom || undefined}>
     <g fill="currentColor">
       <g transform={patientTransform}>
       <g className="plant-body"><g className="plant-outbreak-posture">
-        {recoverFrom && <g className="plant-water-before"><PlantBody stage={growth} condition={recoverFrom}/></g>}
-        {recoverFrom === "critical" && <g className="plant-water-opening"><PlantBody stage={growth} condition="dry"/></g>}
-        <g className={recoverFrom ? "plant-water-after" : undefined} transform={growth==="seed" && seedSteps===1?"rotate(-9 36 25)":growth==="seed" && seedSteps>=2?"translate(36 25) scale(1.15 1.12) translate(-36 -25)":undefined}><PlantBody stage={growth} condition={soil} lowLight={lowLight} severity={active}/></g>
+        {recoverFrom && <g className="plant-water-before"><PlantBody stage={growth} condition={recoverFrom} pothos={pothos}/></g>}
+        {recoverFrom === "critical" && <g className="plant-water-opening"><PlantBody stage={growth} condition="dry" pothos={pothos}/></g>}
+        <g className={recoverFrom ? "plant-water-after" : undefined} transform={growth==="seed" && seedSteps===1?"rotate(-9 36 25)":growth==="seed" && seedSteps>=2?"translate(36 25) scale(1.15 1.12) translate(-36 -25)":undefined}><PlantBody stage={growth} condition={soil} lowLight={lowLight} severity={active} pothos={pothos}/></g>
         {growth==='seed' && seedSteps===3 && <g aria-hidden="true">
           <path fill="#614e32" d="M36 16h2v2h-1v2h-2v-2h1z"/>
           <path fill="#61844b" d="M36 17v-4h2v-2h2v3h-2v3z"/>

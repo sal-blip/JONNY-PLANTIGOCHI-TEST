@@ -19,6 +19,11 @@ export const KEY = 'jonny.plantigochi.v1';
 export const ACTIONS = ['water', 'sun', 'talk', 'food'];
 export const STAGES = ['seed', 'sprout', 'young', 'split', 'grown'];
 export const STAGE_NAMES = { seed: 'Seed', sprout: 'Sprout', young: 'Young plant', split: 'First split', grown: 'Grown plant' };
+const growthOrder = ['monstera', 'golden-pothos'];
+export const toyVarietyName = species => species==='golden-pothos'?'Golden Pothos':'Monstera';
+export const stageLabel = (plant, stage=plant.stage) =>
+  stage==='split' && plant.species==='golden-pothos'?'Vining plant':STAGE_NAMES[stage];
+const validToySpecies = species => species===undefined || growthOrder.includes(species);
 
 const milestones = {
   sprout: { start: 0, age: HOUR, label: 'Sprout' },
@@ -31,7 +36,7 @@ export function nextMilestone(plant) {
   if (plant.deadAt !== null) return null;
   if (plant.stage === 'seed') return milestones.sprout;
   if (plant.stage === 'sprout') return milestones.young;
-  if (plant.stage === 'young') return milestones.finalCare;
+  if (plant.stage === 'young') return {...milestones.finalCare,label:stageLabel(plant,'split')};
   if (plant.stage === 'split') return milestones.grown;
   return null;
 }
@@ -44,8 +49,9 @@ export const plantName = name => typeof name === 'string' && /^[A-Za-z -]{1,12}$
 
 // An absent scene follows the app default. Keeping it off a fresh seed also
 // preserves the player's explicit background when graduate or replant merges it.
-export function newPlant(now = Date.now(), name = 'Monstera') {
-  return { version: 3, name:plantName(name), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
+export function newPlant(now = Date.now(), name, species = growthOrder[0]) {
+  const defaultName=species==='golden-pothos'?'Pothos':'Monstera';
+  return { version: 3, species, name:plantName(name ?? defaultName), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     seedBonus:0,boostCount:0,stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
     ...audioLevels(), ...blankHealth, outbreakDue:null, fungusAt:null, jar: null, book: [], dewCleared: 0 };
 }
@@ -181,11 +187,11 @@ export function wake(p, now = Date.now(), visible = true) {
     // Only this growth segment has a known starting time. Older accrued time has no dated history.
     const crossing = p.anchor + threshold - p.earned;
     const reachedAt = p.earned < threshold && crossing >= p.plantedAt ? crossing : observedAt;
-    p = milestone({...settle(p,reachedAt),stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'},target,p.name+' reached '+STAGE_NAMES[target].toLowerCase()+'.',reachedAt);
+    p = milestone({...settle(p,reachedAt),stage:target,round:target==='split'?1:0,given:[],message:'A new leaf unfolded!'},target,p.name+' reached '+stageLabel(p,target).toLowerCase()+'.',reachedAt);
   }
   if (now < deadline) return p;
   const cause = deadline<soilDeadline(p) ? 'Fungus' : p.rotAt===null ? 'Thirst' : 'Root rot';
-  const leaf = {id:p.id,name:plantName(p.name),stage:p.stage,generation:p.generation,plantedAt:p.plantedAt,diedAt:deadline,cause};
+  const leaf = {id:p.id,name:plantName(p.name),species:p.species ?? growthOrder[0],stage:p.stage,generation:p.generation,plantedAt:p.plantedAt,diedAt:deadline,cause};
   return milestone({...settle(p,deadline),deadAt:deadline,book:[...p.book,leaf],message:'A leaf for your book.'},'death',p.name+' left a pressed leaf. Cause: '+cause+'.',deadline);
 }
 export function company(p, now = Date.now()) {
@@ -196,15 +202,15 @@ const stamp = n => Number.isSafeInteger(n) && n >= 0;
 const optionalStamp = n => n === null || stamp(n);
 const generation = n => Number.isSafeInteger(n) && n >= 1;
 const validId = id => typeof id === 'string' && id.length > 0 && id.length <= 100;
-const validLeaf = leaf => leaf && validId(leaf.id) && STAGES.slice(1).includes(leaf.stage) && generation(leaf.generation)
+const validLeaf = leaf => leaf && validId(leaf.id) && validToySpecies(leaf.species) && STAGES.slice(1).includes(leaf.stage) && generation(leaf.generation)
   && stamp(leaf.plantedAt) && stamp(leaf.diedAt) && leaf.diedAt >= leaf.plantedAt && ['Thirst','Root rot','Fungus'].includes(leaf.cause);
 
 function validGarden(p) {
-  if (!validId(p.id) || !generation(p.generation) || ![p.lastDrink,p.extraPour,p.rotAt,p.deadAt].every(optionalStamp)) return false;
+  if (!validId(p.id) || !generation(p.generation) || !validToySpecies(p.species) || ![p.lastDrink,p.extraPour,p.rotAt,p.deadAt].every(optionalStamp)) return false;
   if ((p.stage === 'seed') !== (p.lastDrink === null)) return false;
   if (p.extraPour !== null && (p.lastDrink === null || p.extraPour < p.lastDrink || p.extraPour >= p.lastDrink + WATER_INTERVAL)) return false;
   if (p.rotAt !== null && (p.extraPour === null || p.rotAt < p.extraPour + HOUR || p.rotAt >= p.lastDrink + WATER_INTERVAL)) return false;
-  if (p.jar !== null && !(p.jar && stamp(p.jar.cutAt) && generation(p.jar.generation) && ['left','right'].includes(p.jar.stem))) return false;
+  if (p.jar !== null && !(p.jar && validToySpecies(p.jar.species) && stamp(p.jar.cutAt) && generation(p.jar.generation) && ['left','right'].includes(p.jar.stem))) return false;
   if (!Array.isArray(p.book) || !p.book.every(validLeaf) || new Set(p.book.map(leaf => leaf.id)).size !== p.book.length) return false;
   const keepsake = p.book.find(leaf => leaf.id === p.id);
   return p.deadAt === null ? !keepsake : keepsake?.diedAt === p.deadAt;
@@ -280,7 +286,7 @@ export function restore(text, now = Date.now(), visible = true) {
 export function takeCutting(saved, stem, now = Date.now()) {
   const p = wake(saved, now);
   if (now < latestCareAt(p) || p.deadAt !== null || p.stage !== 'grown' || p.fungusAt!=null || p.jar || !['left','right'].includes(stem)) return p;
-  return { ...p, jar: { cutAt: now, generation: p.generation + 1, stem } };
+  return { ...p, jar: { cutAt: now, generation: p.generation + 1, stem, species:p.species ?? growthOrder[0] } };
 }
 
 export function replant(saved, source, now = Date.now()) {
@@ -288,7 +294,7 @@ export function replant(saved, source, now = Date.now()) {
   if (now < latestCareAt(p) || p.deadAt === null || !['cutting','seed'].includes(source)) return p;
   const cutting = source === 'cutting';
   if (cutting && (!p.jar || now < p.jar.cutAt + ROOT_TIME)) return p;
-  const fresh = { ...p, ...newPlant(now), ...audioLevels(p), sound: p.sound, book: p.book, jar: p.jar, dewCleared: p.dewCleared };
+  const fresh = { ...p, ...newPlant(now,undefined,cutting?p.jar.species:p.species), ...audioLevels(p), sound: p.sound, book: p.book, jar: p.jar, dewCleared: p.dewCleared };
   fresh.graduates=p.graduates; fresh.generation=p.generation+1;
   return cutting ? { ...sprout(fresh,now), generation: p.jar.generation, wateredAt: now,
     jar: null, message: 'New roots. Family resemblance?' } : fresh;
@@ -299,8 +305,10 @@ export function graduate(saved, id, slot, now = Date.now()) {
   if (now < latestCareAt(p) || p.id!==id || p.stage!=='grown' || p.fungusAt!=null || p.deadAt!==null || !canPlaceAt(p.graduates,slot)) return p;
   const room=viewForSlot(slot);
   const potStyle=placesFor(room).findIndex(spot=>slotFor(room,spot)===slot)%6;
-  const graduate = {id:p.id,name:plantName(p.name),species:'monstera',potStyle,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
-  return milestone({...p,...newPlant(now),...audioLevels(p),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
+  const species=p.species ?? growthOrder[0];
+  const nextSpecies=growthOrder[(growthOrder.indexOf(species)+1)%growthOrder.length];
+  const graduate = {id:p.id,name:plantName(p.name),species,potStyle,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
+  return milestone({...p,...newPlant(now,undefined,nextSpecies),...audioLevels(p),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
     dewCleared:p.dewCleared,graduates:[...p.graduates,graduate]},'graduated',p.name+' graduated to the garden.',now,p.id);
 }
 

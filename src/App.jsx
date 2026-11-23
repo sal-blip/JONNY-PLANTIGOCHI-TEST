@@ -15,7 +15,7 @@ import {GameMusic, PublicTourMusic, useGameplayMusic} from './GameMusic.jsx';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
-import {wake,graduate,relocateGraduate,condition} from './game.js';
+import {wake,graduate,relocateGraduate,condition,toyVarietyName} from './game.js';
 import {useGardenSave} from './useGardenSave.js';
 import WelcomeTour from './WelcomeTour.jsx';
 import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.jsx';
@@ -409,8 +409,11 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
         onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={roomActive} backdropVisible={surface==='toy' && background==='garden'} plant={roomGarden} commit={commit} now={now}
         onPlacementDone={()=>{if(current.current?.tutorial?.step==='return')setApp('phone');}}
         raisePhone={raiseGardenPhone} returnToToy={returnToSeed} onPlacementCancel={()=>go('phone')}
-        move={async(slot,id)=>{const ok=await commit(p=>graduate(p,id,slot,Date.now()));
-          return ok && current.current.graduates.some(g=>g.id===id && g.slot===slot);}}
+        move={async(slot,id)=>{
+          const saved=await commit(p=>graduate(p,id,slot,Date.now()));
+          const next=current.current;
+          return {ok:Boolean(saved && next?.graduates.some(g=>g.id===id && g.slot===slot)),nextVariety:toyVarietyName(next?.species)};
+        }}
       relocate={async (id,from,to)=>{
         let moved=false,storedCount=0;
         const saved=await commit(p=>{

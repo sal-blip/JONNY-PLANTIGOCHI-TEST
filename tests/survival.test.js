@@ -34,16 +34,21 @@ test('overwatering requires confirmation and separated pours; drain has a strict
   assert.equal(care(rot,'drain',end).book[0].cause,'Root rot');
 });
 test('a jar keeps rooting after death; a pot or fresh seed preserves the book and preferences',()=>{
-  const p={...sprout(),stage:'grown',sound:false,scene:'clouds',ambience:false};
+  const p={...sprout(),species:'golden-pothos',stage:'grown',sound:false,scene:'clouds',ambience:false};
   const cutAt=H+DAY-1,cut=takeCutting(p,'left',cutAt);
   assert.equal(takeCutting(cut,'right',cutAt+1).jar.stem,'left');
   const dead=wake(cut,H+DAY);assert.equal(dead.book.length,1);
+  assert.equal(dead.book[0].species,'golden-pothos');
   assert.equal(replant(dead,'cutting',cutAt+ROOT_TIME-1),dead);
   const child=replant(dead,'cutting',cutAt+ROOT_TIME);
   assert.equal(child.generation,2);assert.equal(child.stage,'sprout');assert.equal(child.jar,null);
+  assert.equal(child.species,'golden-pothos');
   assert.equal(child.lastDrink,cutAt+ROOT_TIME);assert.equal(child.scene,'clouds');assert.equal(child.sound,false);
   assert.deepEqual(readPlant(JSON.stringify(child),child.lastDrink),child);
   const replacement=replant(dead,'seed',cutAt+ROOT_TIME);assert.deepEqual(replacement.jar,cut.jar);assert.equal(replacement.stage,'seed');
+  assert.equal(replacement.species,'golden-pothos');
+  const legacyJar={...dead,jar:{cutAt,generation:2,stem:'left'}};
+  assert.equal(replant(legacyJar,'cutting',cutAt+ROOT_TIME).species,'monstera');
   assert.equal(readPlant(JSON.stringify({...dead,book:[...dead.book,...dead.book]})),null);
 });
 test('Dew Catch and Leaf Echo handle misses, wins, replays and stage locks',()=>{
