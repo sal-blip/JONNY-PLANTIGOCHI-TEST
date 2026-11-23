@@ -1,6 +1,6 @@
 import {BASE_WIDTH,BASE_HEIGHT,placesFor,CAT_SEAT,drawScenery} from './roomScenery.js';
 import {drawRoomCat} from './roomCat.js';
-import {drawPottedPlant,isShopPot} from './roomPlant.js';
+import {drawPottedPlant,hasTrailingFoliage,isShopPot} from './roomPlant.js';
 import {drawKeepsake,keepsakeFor} from './roomKeepsakes.js';
 import {slotFor} from './gardenLayout.js';
 import {drawRoomDecor} from './roomShopArt.js';
@@ -55,7 +55,8 @@ export function drawRoom(canvas,{
       jarProgress,leafCount,night:1-light.day,selected:highlighted===id&&!placing,time,reducedMotion,
     });
   }
-  drawScenery(ctx,{view,light,time,reducedMotion,outsideOffset,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,separatePlanes});
+  drawScenery(ctx,{view,light,time,reducedMotion,outsideOffset,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,
+    occupantOverhang:slot=>hasTrailingFoliage(plants[slot]?.species)?28:0,separatePlanes});
   if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   // In the live room they also sit in front of the native-resolution photo apertures.

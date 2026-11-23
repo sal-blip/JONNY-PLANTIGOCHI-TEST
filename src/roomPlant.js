@@ -1,8 +1,5 @@
-import * as terraPot from './terracottaPotSprite.js';
-import * as wavePot from './blueWavePotSprite.js';
 import {drawSelectionContour} from './roomContour.js';
-import * as pothosFoliage from './goldenPothosSprite.js';
-import * as snakeFoliage from './snakePlantSprite.js';
+import {approvedArt,featuredRoomScale} from './shopSprites/approved.js';
 import * as monsteraAlbo from './shopSprites/monstera-albo.js';
 import * as pinkMicans from './shopSprites/pink-micans.js';
 import * as bogFrog from './shopSprites/bog-frog-pot.js';
@@ -98,23 +95,34 @@ const ceramics = [
     day:['#3c5057','#4b646c','#658186','#809a9d','#a7b6ac','#c9cdb6'], wall:[9,9,10,10,10,10,10,9,9,8,7,6], motif:'glaze' },
 ];
 const shopPots={
-  terra:{art:terraPot,lift:3,density:1},
-  wave:{art:wavePot,lift:2,density:1},
-  'bog-frog-pot':{art:bogFrog,lift:6,density:2},
-  'lava-pop-pot':{art:lavaPop,lift:6,density:2},
+  terra:{art:approvedArt.terra,lift:2},
+  wave:{art:approvedArt.wave,lift:2},
+  'bog-frog-pot':{art:bogFrog,lift:6},
+  'lava-pop-pot':{art:lavaPop,lift:6},
 };
-export const featuredPlants={
-  'monstera-albo':{art:monsteraAlbo,potStyle:3},
-  'pink-micans':{art:pinkMicans,potStyle:2},
+// Positions are in native double-density pixels from the pot's contact point.
+const featuredPlants={
+  'monstera-albo':{foliage:monsteraAlbo,potStyle:3},
+  'pink-micans':{foliage:pinkMicans,potStyle:2},
+  'golden-pothos':nurserySpecimen('golden-pothos',[-5,-15],true),
+  'snake-plant':nurserySpecimen('snake-plant',[-1,-14],false),
+  'hoya-serpens-splash':nurserySpecimen('hoya-serpens-splash',[-1,-16],true),
+  'queen-anthurium':nurserySpecimen('queen-anthurium',[0,-15],true),
+  'monkey-tail-cactus':nurserySpecimen('monkey-tail-cactus',[-1,-18],true),
 };
+function nurserySpecimen(sku,crown,trailing){
+  return {specimen:approvedArt[sku],pot:approvedArt[sku+'-pot'],foliage:approvedArt[sku+'-foliage'],
+    repotted:approvedArt[sku+'-repotted'],crown,trailing,potStyle:0};
+}
+const plantSpecies=sku=>sku==='pothos'?'golden-pothos':sku==='snake'?'snake-plant':sku;
+export const hasTrailingFoliage=sku=>featuredPlants[plantSpecies(sku)]?.trailing===true;
 export const isShopPot=sku=>Object.hasOwn(shopPots,sku);
-export const isShopPlant=sku=>Object.hasOwn(featuredPlants,sku) ||
-  ['golden-pothos','pothos','snake-plant','snake','monstera'].includes(sku);
-const goldLeaf=pothosFoliage.spritePalette,snakeLeaf=snakeFoliage.spritePalette;
-const pothosInk=38,snakeInk=pothosInk+goldLeaf.length,glazeInk=snakeInk+snakeLeaf.length;
+export const isShopPlant=sku=>Object.hasOwn(featuredPlants,plantSpecies(sku)) || sku==='monstera';
+const glazeInk=38;
 
 const originalBounds={leftEdge:-29,topEdge:-54,width:59,height:58};
 const shopBounds={leftEdge:-32,topEdge:-60,width:65,height:67};
+const trailingBounds={...shopBounds,height:101};
 const shadowSoft = 1, shadowFirm = 2, soilShadow = 3, soil = 4, soilLight = 5, loam = 6;
 const stemDark = 7, stem = 8, stemLight = 9, newLeaf = 10;
 const clay = 11, green = 17;
@@ -158,19 +166,7 @@ function makeGrid({leftEdge,topEdge,width,height},density) {
   return { cells,dot,nativeDot,span,line };
 }
 
-// Bought pots have their own silhouettes, firing marks and glazed surfaces.
-function craftedPot(grid,{art,density:sourceDensity},density){
-  const {span,nativeDot}=grid;
-  span(-12,1,30,shadowSoft);span(-9,2,24,shadowSoft);span(-8,0,19,shadowFirm);span(-6,1,17,shadowFirm);
-  const scale=density/sourceDensity;
-  drawFoliageRows((x,y,ink)=>{
-    for(let dy=0;dy<scale;dy++)
-      for(let dx=0;dx<scale;dx++)nativeDot(x*scale+dx,y*scale+dy,ink);
-  },art,glazeInk,1,()=>0);
-}
-
-function ceramic(grid,style,pot,density) {
-  if(pot)return craftedPot(grid,pot,density);
+function ceramic(grid,style) {
   const { wall,motif }=ceramics[style];
   const { span,dot,line }=grid;
   span(-8,0,21,shadowSoft); span(-10,1,27,shadowSoft);
@@ -283,23 +279,32 @@ function canopy(grid,hash,pose) {
   line(rootX+5*side,-18,rootX+5*side,-16,soilLight);
 }
 
-function drawFoliageRows(dot,{spriteRows,spriteOffset},firstInk,direction,swayAt){
+const still=()=>0;
+function drawSpriteRows(dot,{spriteRows,spriteOffset},firstInk,swayAt=still){
   for(let row=0;row<spriteRows.length;row++){
     const y=spriteOffset.y+row,sway=swayAt(y);
     const cells=spriteRows[row];
     for(let col=0;col<cells.length;col++){
       const shade=cells.charCodeAt(col)-65;
-      if(shade>=0)dot((spriteOffset.x+col)*direction+sway,y,firstInk+shade);
+      if(shade>=0)dot(spriteOffset.x+col+sway,y,firstInk+shade);
     }
   }
 }
 
-function sprite(style,hash,pose,species,pot,featured,density) {
-  const sourceBounds=pot || featured || species==='golden-pothos' || species==='snake-plant'?shopBounds:originalBounds;
+function sprite(style,hash,pose,pot,featured,density,preview) {
+  const sourceBounds=featured?.trailing?trailingBounds:pot || featured?shopBounds:originalBounds;
   const bounds=Object.fromEntries(Object.entries(sourceBounds).map(([key,value])=>[key,value*density]));
-  const {leftEdge,topEdge,width,height}=bounds;
   const grid=makeGrid(bounds,density);
-  ceramic(grid,style,pot,density);
+  const {nativeDot,span}=grid;
+  const specimen=featured?.specimen;
+  if(pot || specimen){
+    if(!preview){
+      span(-12,1,30,shadowSoft);span(-9,2,24,shadowSoft);span(-8,0,19,shadowFirm);span(-6,1,17,shadowFirm);
+    }
+    const base=pot?.art ?? (pose?featured.pot:specimen);
+    drawSpriteRows(nativeDot,base,glazeInk);
+    if(specimen && !pot && !pose)return runsFromGrid(grid,bounds);
+  }else ceramic(grid,style);
   if(hash!==null){
     const lift=pot?.lift ?? 0;
     const foliage=lift?{
@@ -308,18 +313,22 @@ function sprite(style,hash,pose,species,pot,featured,density) {
       line:(a,b,c,d,t)=>grid.line(a,b-lift,c,d-lift,t),
     }:grid;
     if(featured){
-      // Reuse the three idle poses while pinning each silhouette at its soil crown.
-      const ink=glazeInk+(pot?.art.spritePalette.length ?? 0);
-      const sway=y=>Math.round(pose*density*Math.min(1,Math.max(0,(Math.abs(y+28)-9)/45)));
-      drawFoliageRows((x,y,t)=>grid.nativeDot(x,y-lift*density,t),featured.art,ink,1,sway);
-    }else if(species==='golden-pothos'){
-      // The crown and vine joints stay fixed while the canopy and pendant blade sway.
-      drawFoliageRows(foliage.dot,pothosFoliage,pothosInk,hash&1?1:-1,y=>y<=-28 || y>=-13?pose:0);
-    }else if(species==='snake-plant'){
-      // The five folded blades flex above the crown. The central shoot stays rooted.
-      drawFoliageRows(foliage.dot,snakeFoliage,snakeInk,hash&1?-1:1,y=>y< -31?pose:0);
+      const repotted=pot && featured.repotted;
+      const [cx,cy]=repotted?[0,0]:(featured.crown ?? [0,-28]);
+      const dx=pot?-cx:0,dy=pot?-28-lift*density-cy:0;
+      // Pin the roots and the part of the silhouette overlying the pot.
+      const sway=y=>{
+        const distance=specimen?(y<cy?cy-y:Math.max(0,y)):Math.abs(y-cy);
+        return Math.round(pose*density*Math.min(1,Math.max(0,(distance-9)/45)));
+      };
+      const base=pot?.art ?? featured.pot;
+      drawSpriteRows((x,y,t)=>nativeDot(x+dx,y+dy,t),repotted || featured.foliage,glazeInk+(base?.spritePalette.length ?? 0),sway);
     }else canopy(foliage,hash,pose);
   }
+  return runsFromGrid(grid,bounds);
+}
+
+function runsFromGrid(grid,{leftEdge,topEdge,width,height}){
   // Merge adjacent cells of a single color into horizontal runs. Keeping the
   // drawing indexed makes room lighting independent of the cached plant pose.
   const runs=[];
@@ -346,13 +355,16 @@ function litColor(hex,night,selected) {
   };
   return 'rgb('+shift(r,r*.58+5,255)+','+shift(g,g*.62+9,230)+','+shift(b,b*.74+16,169)+')';
 }
-function colors(style,night,selected,finish,featuredSku) {
-  const step=Math.max(0,Math.min(48,Math.round(night*48))),key=[style,finish,featuredSku,step,selected].join('/');
+function colors(style,night,selected,finish,featuredSku,pose) {
+  const animated=Boolean(pose),step=Math.max(0,Math.min(48,Math.round(night*48)));
+  const key=[style,finish,featuredSku,animated,step,selected].join('/');
   if(!blended.has(key)){
-    const n=step/48;
+    const n=step/48,plant=featuredPlants[featuredSku];
+    const base=shopPots[finish]?.art ?? (animated?plant?.pot:plant?.specimen);
+    const foliage=plant?.specimen && !finish && !animated?null:(finish && plant?.repotted) || plant?.foliage;
     blended.set(key,[null,'rgba(53,42,49,.14)','rgba(47,37,44,.28)',
-      ...[...common,...ceramics[style].day,...leaves.flat(),...goldLeaf,...snakeLeaf,
-        ...(shopPots[finish]?.art.spritePalette ?? []),...(featuredPlants[featuredSku]?.art.spritePalette ?? [])]
+      ...[...common,...ceramics[style].day,...leaves.flat(),
+        ...(base?.spritePalette ?? []),...(foliage?.spritePalette ?? [])]
         .map(ink=>litColor(ink,n,selected))]);
   }
   return blended.get(key);
@@ -360,24 +372,25 @@ function colors(style,night,selected,finish,featuredSku) {
 
 /** Draw at logical room coordinates. x/y is the bottom center of the ceramic,
  * size 1 gives a roughly 22px rim, and time is elapsed milliseconds. */
-export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,potSku=null,night=0,time=0,reducedMotion=false,selected=false}) {
+export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,potSku=null,night=0,time=0,reducedMotion=false,selected=false,preview=false}) {
   if(!ctx || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(size) || size<=0)return;
   const hash=plant?identity(plant):null;
-  const species=plant?.species==='pothos'?'golden-pothos':plant?.species;
+  const species=plantSpecies(plant?.species);
   const featured=Object.hasOwn(featuredPlants,species)?featuredPlants[species]:null;
   const chosen=Number.isInteger(plant?.potStyle)?plant.potStyle:hash===null?styleIndex:(featured?.potStyle ?? hash>>>12);
   const style=((Math.trunc(chosen)||0)%ceramics.length+ceramics.length)%ceramics.length;
   const finish=isShopPot(potSku)?potSku:null;
-  const pot=shopPots[finish],density=featured?2:(pot?.density ?? 1);
+  const pot=shopPots[finish],density=featured || pot?2:1;
+  if(!preview && !pot && featured?.repotted)size*=featuredRoomScale;
   const pose=hash===null || reducedMotion || !Number.isFinite(time)?0:Math.round(Math.sin(time*.00115+(hash%83)*.12)*.82);
-  const key=[style,hash,pose,species,finish].join(':');
+  const key=[style,hash,pose,species,finish,preview].join(':');
   let runs=poses.get(key);
   if(!runs) {
-    runs=sprite(style,hash,pose,species,pot,featured,density);
+    runs=sprite(style,hash,pose,pot,featured,density,preview);
     if(poses.size>=192)poses.delete(poses.keys().next().value);
     poses.set(key,runs);
   }
-  const ink=colors(style,Number.isFinite(night)?night:0,selected,finish,featured?species:null);
+  const ink=colors(style,Number.isFinite(night)?night:0,selected,finish,featured?species:null,pose);
   // The moving reflection is clipped to the painted leaves and ceramic runs.
   // A stationary reflection on the rim also works with reduced motion.
   const sweep=(reducedMotion ? -8 : (time%3600)*.035-45)*density;

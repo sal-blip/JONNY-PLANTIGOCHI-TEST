@@ -1,0 +1,22 @@
+{
+  "source/plant-retake.png": {
+    "asset_id": "687d12a0-11bc-47a6-a313-e0fa03f22c70",
+    "sha12": "c81f56b6d343"
+  },
+  "source/cactus.png": {
+    "asset_id": "f06a8ada-e866-4786-baca-ac36494e1787",
+    "sha12": "16587c8c6c07"
+  },
+  "source/ceramics.png": {
+    "asset_id": "4c90fc00-6d3f-4959-95ad-21282406786a",
+    "sha12": "be54b6aaf991"
+  },
+  "source/keepsakes.png": {
+    "asset_id": "c5c2e1b3-d3e7-4e41-95ca-7471dcda5a4c",
+    "sha12": "54b716a6a8ef"
+  },
+  "source/established-plants.png": {
+    "asset_id": "0334f452-a4f9-48f4-9c86-d00fb9465c46",
+    "sha12": "297e35f419d8"
+  }
+}

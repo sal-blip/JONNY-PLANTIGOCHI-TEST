@@ -54,13 +54,14 @@ test('placement is atomic, physical pots travel with plants and swapped pots sta
 });
 
 test('launch shop plants and pots survive a room move, a reload and a backup restore',async()=>{
-  const plants=['monstera-albo','pink-micans'];
+  const plants=['monstera-albo','pink-micans','hoya-serpens-splash','queen-anthurium','monkey-tail-cactus'];
   const pots=['bog-frog-pot','lava-pop-pot'];
   const start=checkIn(seed(),morning);
-  let p={...start,gardenLife:{...start.gardenLife,balance:500}};
+  const startingBalance=1000;
+  let p={...start,gardenLife:{...start.gardenLife,balance:startingBalance}};
   for(const [slot,sku] of plants.entries())p=buy(p,sku,sku,slot);
   for(const [slot,sku] of pots.entries())p=buy(p,sku,sku,slot);
-  const balance=500-[...plants,...pots].reduce((total,sku)=>total+catalog[sku].price,0);
+  const balance=startingBalance-[...plants,...pots].reduce((total,sku)=>total+catalog[sku].price,0);
   assert.equal(lifeOf(p).balance,balance);
   assert.deepEqual(p.graduates.map(plant=>plant.species),plants);
   assert.deepEqual(p.graduates.map(plant=>plant.name),plants.map(sku=>catalog[sku].name));

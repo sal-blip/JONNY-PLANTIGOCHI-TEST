@@ -1,7 +1,5 @@
-import {spriteOffset as oakOrigin,spritePalette as oakColors,spriteRows as oakRows} from './oakFrameSprite.js';
-import {spriteOffset as deckOrigin, spritePalette as deckColors, spriteRows as deckRows} from './recordPlayerSprite.js';
-import {spriteOffset as catOrigin, spritePalette as catColors, spriteRows as catRows} from './manekiNekoSprite.js';
-import {drawPottedPlant,featuredPlants,isShopPlant,isShopPot} from './roomPlant.js';
+import {approvedArt} from './shopSprites/approved.js';
+import {drawPottedPlant,isShopPlant,isShopPot} from './roomPlant.js';
 import {drawSelectionContour} from './roomContour.js';
 
 const locations=[
@@ -15,163 +13,70 @@ export function decorPlaces(view=0){
   }));
 }
 
-const printedLabelHighlight = '#f9e7b3';
-const printedLabelShadow = '#436963';
-
+const decorSkus=['oak','lacquer','neko','record'];
+const labelHighlight='#fff0ce',labelShadow='#958778';
 const colors={
-  // Shelf woods, then porcelain, metal, glazing and the inks for the prints.
-  d:'#735747',h:'#ac8968',n:'#bd8761',
-  K:'#352e36',D:'#604638',M:'#a16a4c',N:'#bc8554',E:'#a8734e',
-  B:'#906435',O:'#d9a456',J:'#f8d68c',
-  H:'#ae9c86',G:'#c1b59f',W:'#e0cbaa',I:'#f4e5c5',F:'#fff4db',
-  Q:'#542f3a',C:'#913e42',A:'#bd6655',R:'#e47d66',P:'#e4a292',
-  U:'#344752',V:'#546a75',S:'#789598',L:'#aebfb9',T:'#c7d0bb',Z:'#527e76',
-  v:'#698a93',s:'#93aeb0',l:'#cfdbcf',
-  ...Object.fromEntries([...catColors, ...deckColors, ...oakColors, printedLabelHighlight, printedLabelShadow].map(color => [color, color])),
+  d:'#735747',h:'#ac8968',D:'#604638',n:'#bd8761',O:'#d9a456',
+  ...Object.fromEntries([...decorSkus.flatMap(sku=>approvedArt[sku].spritePalette),labelHighlight,labelShadow]
+    .map(color=>[color,color])),
 };
-const glazingAlpha={v:.73,s:.55,l:.68};
 const codes=Object.keys(colors);
-const index=Object.fromEntries(codes.map((k,i)=>[k,i+1]));
+const index=Object.fromEntries(codes.map((color,i)=>[color,i+1]));
 const colorCache=new Map();
 function palette(night,selected){
   const n=Math.round(Math.max(0,Math.min(1,night))*32),key=n*2+Number(selected);
   if(!colorCache.has(key)){
-    colorCache.set(key,[null,...codes.map(c=>{
-      const rgb=parseInt(colors[c].slice(1),16);
-      const rgbParts=[rgb>>16,(rgb>>8)&255,rgb&255].map((v,i)=>{
-        const dark=v*[.50,.57,.73][i]+[7,9,12][i],lit=v+(dark-v)*n/32;
+    colorCache.set(key,[null,...codes.map(code=>{
+      const rgb=parseInt(colors[code].slice(1),16);
+      const parts=[rgb>>16,(rgb>>8)&255,rgb&255].map((value,i)=>{
+        const dark=value*[.50,.57,.73][i]+[7,9,12][i],lit=value+(dark-value)*n/32;
         return Math.round(selected?lit+([255,230,178][i]-lit)*.16:lit);
       });
-      return c in glazingAlpha ? 'rgba('+[...rgbParts,glazingAlpha[c]].join(',')+')' : 'rgb('+rgbParts.join(',')+')';
+      return 'rgb('+parts.join(',')+')';
     })]);
   }
   return colorCache.get(key);
 }
 
-function drawing(){
-  const cols=47,rows=41,left=-23,top=-36,buf=new Uint8Array(cols*rows);
-  function rect(x,y,w,h,color){
-    for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)
-      if(i>=left&&i<left+cols&&j>=top&&j<top+rows)buf[(j-top)*cols+i-left]=index[color];
-  }
-  function line(x,y,xx,yy,color){
-    const dx=Math.abs(xx-x),dy=-Math.abs(yy-y),sx=x<xx?1:-1,sy=y<yy?1:-1;
-    let err=dx+dy;
-    for(;;){
-      rect(x,y,1,1,color);
-      if(x===xx&&y===yy)break;
-      const twice=2*err;
-      if(twice>=dy){err+=dy;x+=sx;}
-      if(twice<=dx){err+=dx;y+=sy;}
-    }
-  }
-  function poly(points,color){
-    const ys=points.map(p=>p[1]);
-    for(let y=Math.min(...ys);y<=Math.max(...ys);y++){
-      const crossings=[];
-      for(let i=0;i<points.length;i++){
-        const [x1,y1]=points[i],[x2,y2]=points[(i+1)%points.length];
-        if((y1<=y && y<y2) || (y2<=y && y<y1))
-          crossings.push(x1+(y-y1)*(x2-x1)/(y2-y1));
-      }
-      crossings.sort((a,b)=>a-b);
-      for(let j=0;j+1<crossings.length;j+=2){
-        const left=Math.ceil(crossings[j]),right=Math.floor(crossings[j+1]);
-        rect(left,y,right-left+1,1,color);
-      }
-    }
-    points.forEach(([x,y],i)=>line(x,y,...points[(i+1)%points.length],color));
-  }
-  function oval(x,y,rx,ry,color){
-    for(let row=-ry;row<=ry;row++){
-      const side=Math.round(rx*Math.sqrt(Math.max(0,1-(row/(ry+.22))**2)));
-      rect(x-side,y+row,side*2+1,1,color);
-    }
-  }
-  function finish(){
-    const runs=[];
-    for(let y=0;y<rows;y++)for(let x=0;x<cols;){
-      const start=x,col=buf[y*cols+x++];
-      while(x<cols&&buf[y*cols+x]===col)x++;
-      if(col)(runs[col]??=[]).push(start+left,y+top,x-start);
-    }
-    return runs;
-  }
-  return {rect,line,poly,oval,finish};
-}
-
-// Decode each approved print at its own anchor into the room's lighting and contour runs.
-function drawPixelSprite({rect}, origin, palette, rows) {
-  rows.forEach((row, y) => {
-    for (let x = 0; x < row.length; x++) {
-      if (row[x] === ' ') continue;
-      const ink = row.charCodeAt(x) - 65;
-      rect(origin.x + x, origin.y + y, 1, 1, palette[ink]);
-    }
-  });
-}
-
-// The first two pixels of each frame form the light stroke. The third is the dark dot.
-const labelOrbit = [
-  [[-3,-1],[-2,-1],[2,1]], [[-1,-2],[0,-2],[0,1]],
-  [[2,-1],[3,-1],[-2,1]], [[3,0],[3,1],[-3,0]],
-  [[1,1],[2,1],[-2,-1]], [[-1,2],[-2,1],[1,-1]], [[-3,1],[-3,0],[2,0]],
+// The moving print stays within the center label on the approved record.
+const labelOrbit=[
+  [[29,32],[30,32],[33,34]],[[30,31],[31,31],[32,34]],
+  [[32,31],[33,31],[29,34]],[[33,32],[34,33],[29,33]],
+  [[33,34],[32,34],[29,32]],[[31,35],[30,35],[32,32]],[[29,34],[28,33],[33,32]],
 ];
 
-function turntable(g, phase) {
-  drawPixelSprite(g, deckOrigin, deckColors, deckRows);
-  labelOrbit[phase].forEach(([dx, dy], index) => {
-    g.rect(-4 + dx, -16 + dy, 1, 1, index < 2 ? printedLabelHighlight : printedLabelShadow);
+function makeSprite({spriteOffset,spritePalette,spriteRows},orbit=[]){
+  const marks=new Map(orbit.map(([x,y],i)=>[(x-36)+','+(y-55),index[i===2?labelShadow:labelHighlight]]));
+  const runs=[];
+  spriteRows.forEach((row,j)=>{
+    const y=spriteOffset.y+j;
+    const inks=Array.from(row,(char,i)=>{
+      if(char===' ')return 0;
+      const x=spriteOffset.x+i;
+      return marks.get(x+','+y) ?? index[spritePalette[char.charCodeAt(0)-65]];
+    });
+    for(let i=0;i<inks.length;){
+      const first=i,ink=inks[i++];
+      while(i<inks.length && inks[i]===ink)i++;
+      if(ink)(runs[ink]??=[]).push(spriteOffset.x+first,y,i-first);
+    }
   });
+  return runs;
 }
+const sprites=Object.fromEntries(decorSkus.map(sku=>[sku,makeSprite(approvedArt[sku])]));
+const recordFrames=labelOrbit.map(orbit=>makeSprite(approvedArt.record,orbit));
 
+// Rectangular photo crops expressed in the same native coordinates as the art.
 const frameData={
-  oak:{aperture:{x:-8,y:-24,w:17,h:17}},
-  lacquer:{left:-17,top:-25,w:35,h:24,aperture:{x:-11,y:-20,w:23,h:13}},
-};
-
-function lacquerPrint({rect,poly,line}){
-  // A moonlit fishing boat under a rising moon.
-  rect(-11,-20,23,13,'S');rect(-11,-13,23,6,'L');
-  rect(4,-19,3,4,'J');rect(3,-18,5,2,'J');
-  poly([[-11,-15],[-8,-16],[-5,-15],[-2,-13],[1,-14],[4,-12],[8,-14],[11,-14],[11,-11],[-11,-11]],'V');
-  rect(-11,-11,23,4,'U');rect(-8,-11,8,1,'S');rect(2,-10,6,1,'L');rect(4,-8,3,1,'S');
-  line(-8,-12,-5,-16,'F');rect(-6,-15,1,4,'F');rect(-5,-16,1,5,'K');
-  line(-9,-11,-7,-10,'K');rect(-7,-10,5,1,'K');rect(-2,-11,1,1,'K');
-}
-
-function lacquerFrame(g){
-  const {rect,line}=g,{left:x,top:y,w,h,aperture:a}=frameData.lacquer;
-  const far=x+w-1,bottom=y+h-1;
-  rect(x+4,-2,4,2,'K');rect(far-7,-2,4,2,'K');
-  rect(x,y,w,h,'K');rect(x+1,y+1,w-2,h-2,'C');
-  // Built-up urushi lacquer, from nearly black to a narrow vermilion gleam.
-  rect(x+1,y+1,w-2,2,'A');rect(x+1,y+2,2,h-4,'C');
-  rect(x+3,y+1,12,1,'R');rect(x+1,y+5,1,6,'A');
-  rect(far-2,y+3,2,h-5,'Q');rect(x+2,bottom-2,w-3,2,'Q');rect(x+5,bottom-1,12,1,'C');
-  rect(x+3,y+3,w-6,h-6,'B');rect(x+4,y+4,w-8,h-8,'W');
-  rect(a.x-1,a.y-1,a.w+2,1,'H');rect(a.x-1,a.y,1,a.h,'G');
-  rect(a.x+a.w,a.y,1,a.h+1,'F');rect(a.x,a.y+a.h,a.w,1,'F');
-  lacquerPrint(g);
-  // Paired maki-e sprigs stay on the lacquer, outside the paper and photo.
-  line(x+1,y+6,x+6,y+1,'O');rect(x+2,y+2,2,1,'J');rect(x+4,y+3,2,1,'O');rect(x+7,y+1,2,1,'J');
-  line(far-7,bottom-1,far-1,bottom-5,'O');rect(far-4,bottom-1,2,1,'J');rect(far-2,bottom-6,1,2,'J');
-}
-
-function makeSprite(paint){
-  const g=drawing();paint(g);return g.finish();
-}
-const recordFrames=labelOrbit.map((_,phase)=>makeSprite(g=>turntable(g,phase)));
-const sprites={
-  neko:makeSprite(g=>drawPixelSprite(g,catOrigin,catColors,catRows)),record:recordFrames[0],
-  oak:makeSprite(g=>drawPixelSprite(g,oakOrigin,oakColors,oakRows)),lacquer:makeSprite(lacquerFrame),
+  oak:{aperture:{x:-10,y:-29,w:17,h:17}},
+  lacquer:{aperture:{x:-14,y:-33,w:28,h:27}},
 };
 
 export function framePhotoBounds(sku,x,y,size=1){
   const a=frameData[sku]?.aperture;
   if(!a)return null;
-  const left=Math.round(x+a.x*size),top=Math.round(y+a.y*size);
-  return {left,top,width:Math.round(x+(a.x+a.w)*size)-left,height:Math.round(y+(a.y+a.h)*size)-top};
+  const scale=size/2,left=Math.round(x+a.x*scale),top=Math.round(y+a.y*scale);
+  return {left,top,width:Math.round(x+(a.x+a.w)*scale)-left,height:Math.round(y+(a.y+a.h)*scale)-top};
 }
 
 function framedPhoto(ctx,image,photo,sku,x,y,size,night){
@@ -190,7 +95,7 @@ function framedPhoto(ctx,image,photo,sku,x,y,size,night){
   }
 }
 
-function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=false,spinTime=null}){
+function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=false,spinTime=null,preview=false}){
   const art=sku==='record' && spinTime!==null ? recordFrames[Math.floor(spinTime/255)%recordFrames.length] : sprites[sku];
   if(!art)return;
   const ink=palette(night,selected);
@@ -206,11 +111,11 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=fa
     ctx.fillStyle=ink[index.n];r(-12,9,25,2);
     ctx.fillStyle=ink[index.O];r(-12,9,25,1);r(-13,1,2,1);r(12,1,2,1);
   }
-  ctx.fillStyle='rgba(59,42,42,.22)';r(-9,0,22,1);r(-6,1,17,1);
-  if(selected)drawSelectionContour(ctx,art,{x,y,size,firstInk:1});
+  if(!preview){ctx.fillStyle='rgba(59,42,42,.22)';r(-9,0,22,1);r(-6,1,17,1);}
+  if(selected)drawSelectionContour(ctx,art,{x,y,size:size/2,firstInk:1});
   art.forEach((cells,i)=>{
     ctx.fillStyle=ink[i];
-    for(let j=0;j<cells.length;j+=3)r(cells[j],cells[j+1],cells[j+2],1);
+    for(let j=0;j<cells.length;j+=3)r(cells[j]/2,cells[j+1]/2,cells[j+2]/2,.5);
   });
   if(image && photo)framedPhoto(ctx,image,photo,sku,x,y,size,night);
   ctx.restore();
@@ -227,12 +132,11 @@ export function drawRoomDecor(ctx,view,items,{night=0,highlighted,photos,playing
 /** Native pixel preview centered horizontally; y is the baseline of the item. */
 export function drawShopPreview(ctx,{sku,x,y,size=1}){
   if(isShopPot(sku)){
-    drawPottedPlant(ctx,{x,y,size,potSku:sku,reducedMotion:true});return;
+    drawPottedPlant(ctx,{x,y,size,potSku:sku,reducedMotion:true,preview:Object.hasOwn(approvedArt,sku)});return;
   }
   if(isShopPlant(sku)){
-    const species=sku==='snake'?'snake-plant':sku;
-    const plant={id:'nursery-'+species,species,potStyle:featuredPlants[species]?.potStyle ?? 0};
-    drawPottedPlant(ctx,{x,y,size,plant,reducedMotion:true});return;
+    const plant={id:'nursery-'+sku,species:sku};
+    drawPottedPlant(ctx,{x,y,size,plant,reducedMotion:true,preview:true});return;
   }
-  if(Object.hasOwn(sprites,sku))drawDecor(ctx,{sku,x,y,size});
+  if(Object.hasOwn(sprites,sku))drawDecor(ctx,{sku,x,y,size,preview:true});
 }
