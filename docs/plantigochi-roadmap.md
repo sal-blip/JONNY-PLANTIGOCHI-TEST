@@ -2,6 +2,8 @@
 
 This is a historical planning and verification record. For current behavior, active decisions and development entry points, use the [developer guide](development/README.md).
 
+**Deferred publishing plan.** The web-first launch, device-local saves, Android and iPhone distribution, Steam controls and optional Stripe shop are collected in the [publishing notes](deferred-publishing-plan.md).
+
 | Status at start | Feature and acceptance criteria |
 | --- | --- |
 | Built | Installable offline keychain, LCD button controls, hold Back to exit, glass menu, six scenes and own photo, tilt, chain flick, intro, synth, Dew Catch and Leaf Echo. Keep 20 Dew levels, three shared strikes and reset to level one. |

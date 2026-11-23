@@ -10,6 +10,7 @@ Use this index to go from a player-facing change to its implementation, regressi
 | Installation, seed naming, gestures, LCD controls, menus, iSEED or sound | [Interface and art](interface-and-art.md) | `rg -n -e InstalledSession -e useHandsetPassage src` |
 | A room object, shelf, pot, plant sprite, placement target or postcard | [Interface and art](interface-and-art.md) · [Sprite review skill](../../.agents/skills/plantigochi-sprite-review/SKILL.md) | `rg -n -e drawPottedPlant -e drawShopPreview src` |
 | A missed notification, offline install, service worker, database migration or release | [PWA and release](pwa-and-release.md) | `rg -n -e stageGardenReminder -e reminderAPI src server` |
+| Future web launch, Google Play, App Store, Steam, controllers or Stripe purchases | [Deferred publishing plan](../deferred-publishing-plan.md) | `rg -ni -e Steam -e Stripe docs/deferred-publishing-plan.md` |
 | The reason for a design choice or the status of a proposal | [Design and implementation decisions](decisions.md) · [Historical roadmap](../plantigochi-roadmap.md) | `rg -ni -e deferred -e approved docs .agents/skills` |
 
 ## First run
