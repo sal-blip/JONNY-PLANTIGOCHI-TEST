@@ -283,7 +283,8 @@ export function gardenStore(legacyStorage,visible){
           const checkedIn=checkIn(current.plant,plant.wateredAt);
           firstDay={...firstDay,drinkCoins:lifeOf(plant).balance-lifeOf(checkedIn).balance};
         }
-        return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,phase,invite:setup.invite,firstDay});
+        const invite=current.plant.dewLesson && !plant.dewLesson?{done:true}:setup.invite;
+        return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,phase,invite,firstDay});
       },options?.signal);
       const receipt=options?.purchaseReceipt;
       if(!receipt)return writing;

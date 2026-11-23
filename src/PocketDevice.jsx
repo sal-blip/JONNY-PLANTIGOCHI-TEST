@@ -64,7 +64,7 @@ function GameArt({game}) {
   return <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>;
 }
 
-export default function PocketDevice({plant,now,plantClock=Date.now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,onFarewellReveal}) {
+export default function PocketDevice({plant,now,plantClock=Date.now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,tutorialAlerts,onFarewellReveal}) {
   const [revealing,setRevealing]=useState(()=>revealSeed && lesson==='water' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(()=>{
     if(!revealing)return;
@@ -162,12 +162,33 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     if(sproutAnswerPending.current)return;
     sproutAnswerPending.current=true;setAnsweringSprout(true);setLessonError('');
     try{
-      if(await commit(claimDewGift)){setPath([]);heart.current?.focus({preventScroll:true});}
+      const prompt=tutorialAlerts?.capable && !tutorialAlerts.enrolled?(tutorialAlerts.denied?'check-in':'offer'):null;
+      if(await commit(p=>claimDewGift(p,prompt))){setPath([]);heart.current?.focus({preventScroll:true});}
       else setLessonError('Your gift is still here. Please try again.');
     }finally{
       sproutAnswerPending.current=false;setAnsweringSprout(false);
     }
   }
+  async function answerFinalReminder(action){
+    if(sproutAnswerPending.current)return;
+    sproutAnswerPending.current=true;setAnsweringSprout(true);setLessonError('');
+    try{
+      let next=action==='later'?'check-in':null;
+      if(action==='enable'){
+        const result=await tutorialAlerts.enable();
+        if(result==='dismissed' || result==='denied')next='check-in';
+        else if(result!=='enabled')return;
+      }
+      const saved=await commit(p=>{
+        if(p.id!==plant.id || p.tutorialReminder!==plant.tutorialReminder)return p;
+        const {tutorialReminder,...rest}=p;
+        return next?{...rest,tutorialReminder:next}:rest;
+      });
+      if(!saved)setLessonError('Couldn’t save that choice. Please try again.');
+    }finally{sproutAnswerPending.current=false;setAnsweringSprout(false);}
+  }
+  const finalPrompt=plant.tutorialReminder;
+  const offerReminders=finalPrompt==='offer' && tutorialAlerts?.capable && !tutorialAlerts.denied && !tutorialAlerts.enrolled;
   const section=screen?.id;
   const browsing=Boolean(section && !playing);
   const soil=condition(plant,now);
@@ -478,6 +499,16 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       <button onClick={()=>recordRound(...failedRound)}>Retry saving round</button>
     </GuideChat>}
     {resting && game?.lesson && lessonError && <GuideChat className="toy-guide" cue="dew-leave-error"><p>{lessonError}</p></GuideChat>}
+    {resting && tutorialAlerts && finalPrompt && !game && !section && <GuideChat className="toy-guide farewell" cue={offerReminders?'reminder-offer':'reminder-finish'}>
+      <div className="farewell-message"><p>{offerReminders?'Want a little nudge when I’m thirsty? Turn on care reminders and I’ll let you know.':
+        tutorialAlerts.enrolled && finalPrompt==='offer'?'Your care reminders are on. See you soon!':'Come check on me often. My water meter will tell you when I’m thirsty.'}</p>
+        {offerReminders && (tutorialAlerts.notice || !tutorialAlerts.canEnable) && <p role="status">{tutorialAlerts.notice || 'Connect to the internet to set up reminders, or choose Maybe later.'}</p>}
+        {lessonError && <p role="status">{lessonError}</p>}</div>
+      <div className="chat-actions">{offerReminders?<>
+        <button disabled={answeringSprout || tutorialAlerts.busy || !tutorialAlerts.canEnable} onClick={()=>answerFinalReminder('enable')}>Turn on reminders</button>
+        <button disabled={answeringSprout || tutorialAlerts.busy} onClick={()=>answerFinalReminder('later')}>Maybe later</button>
+      </>:<button disabled={answeringSprout} onClick={()=>answerFinalReminder('done')}>Got it</button>}</div>
+    </GuideChat>}
     {resting && summary && <GuideChat className="toy-guide farewell" cue={'dew-finale-'+dewLesson.status} focusRef={finishButton} onReveal={onFarewellReveal}>
       <div className="farewell-message">
         <p><strong>Thanks for growing with me!</strong></p>
@@ -513,8 +544,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       <div className="chat-actions">
       <button className="lesson-done" disabled={answeringSprout || reminder?.busy} onClick={()=>answerSprout(true)}>Play one round</button>
       <button className="lesson-done" disabled={answeringSprout || reminder?.busy} onClick={()=>answerSprout(false)}>Maybe later</button>
-      {reminder && <button disabled={answeringSprout || reminder.busy || !reminder.canEnable} onClick={()=>reminder.enable()}>Turn on plant alerts</button>}</div>
-      {reminder?.notice && <p role="status">{reminder.notice}</p>}
+      </div>
     </GuideChat>}
     <div className={'inspect-view'+(near?' close-up':'')}>
     <div className="device">
