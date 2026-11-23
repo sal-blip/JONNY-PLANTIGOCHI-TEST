@@ -382,7 +382,7 @@ export function needsPourConfirmation(p, now = Date.now()) {
   return Boolean(careStatus(p, 'water', now).confirm);
 }
 
-export function care(saved, action, now = Date.now(), confirmed = false) {
+export function care(saved, action, now = Date.now(), confirmed = false, rewardTime = now) {
   let p = wake(saved, now);
   if (now < latestCareAt(p)) return p;
   const status = careStatus(p, action, now);
@@ -392,14 +392,14 @@ export function care(saved, action, now = Date.now(), confirmed = false) {
     const drained={...p,lastDrink:now,extraPour:null,rotAt:null,message:'Ahh. My roots can breathe.'};
     return p.rotAt===null?drained:milestone(drained,'drain-'+p.rotAt,p.name+' recovered from root rot.',now);
   }
-  if (p.stage === 'seed') return earnWater(wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now),now);
+  if (p.stage === 'seed') return earnWater(wake({ ...p, wateredAt: now, message: 'A sleepy sip. Back to dreaming…' }, now),rewardTime);
   if (action === 'water') {
     if (status.confirm) {
       if (p.extraPour === null) return { ...p, extraPour: now, message: soakedMessage };
       return { ...p, rotAt: now, message: 'My roots! Drain my pot.' };
     }
     if(condition(p,now)==='critical')p=milestone(p,'rescue-'+p.lastDrink,p.name+' perked up after a rescue watering.',now);
-    p = earnWater({ ...p, lastDrink: now, extraPour: null, message: 'A little sip. Very sophisticated.' },now);
+    p = earnWater({ ...p, lastDrink: now, extraPour: null, message: 'A little sip. Very sophisticated.' },rewardTime);
   }
   if (action === 'talk') p=company(p,now);
   if (action === 'food') p={...p,fedAt:now};

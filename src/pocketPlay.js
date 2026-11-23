@@ -22,13 +22,13 @@ export function saveDewCheckpoint(plant, cleared) {
   return {...plant, dewRunCleared:cleared, dewCleared:Math.max(plant.dewCleared, cleared)};
 }
 
-export function savePlayedRound(plant,name,phase,level,receipt,startedAt,time,practiceRound=false){
-  let p=wake(plant,time);
+export function savePlayedRound(plant,name,phase,level,receipt,startedAt,time,practiceRound=false,plantTime=time){
+  let p=wake(plant,plantTime);
   if(practiceRound && p.dewLesson?.status!=='round')return p;
   if(p.deadAt!==null)return practiceRound?settleDewLesson(p,'skipped'):p;
   if(name==='dew' && (!practiceRound || phase==='won'))p=saveDewCheckpoint(p,phase==='won'?level:0);
   if(phase==='won')p=earnWin(p,receipt,startedAt,time);
-  p=company(p,time);
+  p=company(p,plantTime);
   return practiceRound?settleDewLesson(p,phase,lifeOf(p).wins.includes(receipt)?3:0):p;
 }
 

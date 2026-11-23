@@ -63,7 +63,7 @@ function GameArt({game}) {
   return <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>;
 }
 
-export default function PocketDevice({plant,now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,onFarewellReveal}) {
+export default function PocketDevice({plant,now,plantClock=Date.now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,onFarewellReveal}) {
   const [revealing,setRevealing]=useState(()=>revealSeed && lesson==='water' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(()=>{
     if(!revealing)return;
@@ -97,11 +97,11 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   const recordRound=useCallback((name,phase,level,receipt,startedAt,time,practiceRound=false)=>{
     const id=plant.id;
     setFailedRound(null);
-    void commit(p=>p.id===id?savePlayedRound(p,name,phase,level,receipt,startedAt,time,practiceRound):p).then(saved=>{
+    void commit(p=>p.id===id?savePlayedRound(p,name,phase,level,receipt,startedAt,time,practiceRound,plantClock===Date.now?time:plantClock()):p).then(saved=>{
       if(!saved && practiceRound)setFailedRound([name,phase,level,receipt,startedAt,time,true]);
     });
     react(phase==='won'?'gameWin':'gameLoss');
-  },[commit,plant.id,react]);
+  },[commit,plant.id,react,plantClock]);
   const activity=usePocketPlay(plant,!resting || paused,recordRound);
   useEffect(()=>{
     if(!careTarget)return;
@@ -192,8 +192,8 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   const discovery=useRef(false);
   discovery.current=canDiscover;
   useEffect(()=>{
-    if(canDiscover && !document.hidden)void commit(p=>discovery.current && !document.hidden && p.id===plant.id?discoverFungus(p,Date.now()):p);
-  },[canDiscover,plant.id,commit,now]);
+    if(canDiscover && !document.hidden)void commit(p=>discovery.current && !document.hidden && p.id===plant.id?discoverFungus(p,plantClock()):p);
+  },[canDiscover,plant.id,commit,now,plantClock]);
   const showMeters=!browsing && !game && plant.deadAt===null;
   const food=showMeters ? foodReadout(plant,now) : null;
   const growth=showMeters ? growthReadout(plant,now) : null;
@@ -227,7 +227,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
     setPath(old=>[...old.slice(0,-1),frame(section,next)]);
   }
   function give(action,confirmed=false) {
-    const time=Date.now(), live=wake(plant,time);
+    const time=plantClock(), live=wake(plant,time);
     const state=careStatus(live,action,time);
     if (state.locked) return false;
     if (state.confirm && !confirmed) {go('pour');return 'tap';}
@@ -236,7 +236,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
       if(p.id!==plant.id)return p;
       const before=wake(p,time);
       if(action==='water' && (before.lastDrink!==live.lastDrink || before.extraPour!==live.extraPour || before.rotAt!==live.rotAt)) return before;
-      const next=care(before,action,time,confirmed);
+      const next=care(before,action,time,confirmed,Date.now());
       if(next!==before){
         effect=action==='water' && careStatus(before,action,time).confirm?'overwater':action;
         if(effect==='water')waterFrom=condition(before,time);
@@ -270,7 +270,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
       let cured=false;
       void commit(p=>{
         if(p.id!==plant.id)return p;
-        const next=treatFungus(p,plant.fungusAt,Date.now());
+        const next=treatFungus(p,plant.fungusAt,plantClock());
         cured=next.fungusAt===null && next.deadAt===null && p.fungusAt===plant.fungusAt;
         return next;
       }).then(ok=>{if(ok && cured){setPath([]);react('gnatCure',undefined,severity);}});
@@ -311,7 +311,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
     try{
       let charged=false;
       const saved=await commit(p=>{
-        const next=buyGrowth(p,expected,Date.now());
+        const next=buyGrowth(p,expected,plantClock());
         charged=next.boostCount!==p.boostCount;
         return next;
       });

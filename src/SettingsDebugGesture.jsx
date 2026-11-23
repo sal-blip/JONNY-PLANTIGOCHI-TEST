@@ -16,7 +16,6 @@ export default function SettingsDebugGesture({onOpen}){
       blocked=true;
     }
     function inside(touch,corner){
-      if(touch.target!==corner)return false;
       const box=corner.getBoundingClientRect();
       return touch.clientX>=box.left && touch.clientX<=box.right &&
         touch.clientY>=box.top && touch.clientY<=box.bottom;
@@ -32,9 +31,9 @@ export default function SettingsDebugGesture({onOpen}){
       if(blocked)return;
       const onCorners=touches.every(t=>corners.some(c=>inside(t,c)));
       if(!onCorners){cancel();return;}
-      if(event.cancelable)event.preventDefault();
       if(touches.length!==2)return;
-      if(touches[0].target===touches[1].target){cancel();return;}
+      if(!corners.every(c=>touches.some(t=>inside(t,c)))){cancel();return;}
+      if(event.cancelable)event.preventDefault();
       if(timer===null){
         timer=setTimeout(()=>{
           cancel();

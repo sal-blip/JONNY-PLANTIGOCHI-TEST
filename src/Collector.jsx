@@ -34,7 +34,7 @@ function firstVacantRoom(plants){
   return 0;
 }
 
-const Collector=forwardRef(function Collector({active,backdropVisible=false,recordActive=active,musicVolume,plant,commit,now,move,relocate,raisePhone,returnToToy,purr,
+const Collector=forwardRef(function Collector({active,backdropVisible=false,recordActive=active,musicVolume,plant,commit,now,wallNow=now,plantClock=Date.now,move,relocate,raisePhone,returnToToy,purr,
   playingRecordId,onSelectRecord,onOverlayChange,globalMenuOpen,onPlacementCancel,onPlacementDone},ref) {
   const graduates=plant.graduates;
   const count=gardenViews(graduates);
@@ -70,7 +70,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     return [...others,{...items.find(i=>i.id===shopMove.id),id:shopMove.id,sku:shopMove.sku,slot:preview.slot}];
   },[active,items,shopMove,preview]);
   const chosen=slot===null?null:collection.get(slot);
-  const clock=new Date(now),hour=clock.getHours()+clock.getMinutes()/60;
+  const clock=new Date(wallNow),hour=clock.getHours()+clock.getMinutes()/60;
   const potted=useMemo(()=>{
     const result={};
     for(let view=Math.max(0,page-1);view<=Math.min(count-1,page+1);view++)
@@ -195,7 +195,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     try{
       const ok=await commit(p=>{
         if(p.id!==plant.id)return p;
-        const next=kind==='cut'?takeCutting(p,value):replant(p,value);
+        const next=kind==='cut'?takeCutting(p,value,plantClock()):replant(p,value,plantClock());
         changed=kind==='cut'?!p.jar && !!next.jar:next.id!==p.id;
         return next;
       });
