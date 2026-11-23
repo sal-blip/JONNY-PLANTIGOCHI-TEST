@@ -48,14 +48,15 @@ function environment({saved=new Map(),suspended=false,webkit=false}={}){
     }
     createGain(){
       return {gain:{
-        ramps:[],sets:[],cancelScheduledValues(){},
+        ramps:[],sets:[],targets:[],cancelScheduledValues(){},
         setValueAtTime(value,time){this.sets.push([value,time]);},
         linearRampToValueAtTime(value,time){this.ramps.push([value,time]);},
-      },connect(){},disconnect(){}};
+        setTargetAtTime(...target){this.targets.push(target);},
+      },connect(destination){this.destination=destination;},disconnect(){}};
     }
     createBufferSource(){
       const source={
-        connect(gain){this.gain=gain.gain;},disconnect(){this.disconnected=true;},
+        connect(gain){this.gain=gain.gain;this.output=gain;},disconnect(){this.disconnected=true;},
         start(when,offset){this.when=when;this.offset=offset;},
         stop(){this.stopTime=clock/1000;},
       };
@@ -244,5 +245,51 @@ test('a silent routing gap preserves the same document’s playhead before namin
   assert.equal(e.sources[1].buffer,e.sources[0].buffer);
   p.setMix({cottonSession:null});
   assert.equal(e.saved.size,0);
+  p.dispose();
+});
+
+test('live Music changes scale both themes after their fades and restore the playhead after mute',async()=>{
+  const e=environment(),p=e.player;
+  p.setMix({cotton:true,volume:.6});
+  await settle();
+  const intro=e.sources[0], bus=intro.output.destination;
+  assert.equal(bus.gain.value,.6);
+  assert.equal(bus.destination,e.contexts[0].destination);
+  e.advance(2);
+  p.setMix({mystic:true,volume:.4});
+  await settle();
+  const theme=e.sources[1];
+  assert.equal(theme.output.destination,bus);
+  assert.deepEqual(intro.gain.ramps,[[.5,1.2],[0,7]]);
+  assert.deepEqual(theme.gain.ramps,[[.5,2.75]]);
+  e.advance(.25);
+  p.setMix({mystic:true,volume:.2});
+  e.advance(2);
+  p.setMix({mystic:true,volume:1});
+  assert.equal(e.sources.length,2);
+  assert.equal(theme.stopTime,undefined);
+  assert.equal(theme.gain.ramps.length,1);
+  assert.equal(intro.gain.ramps.length,2);
+  p.setMix({mystic:true,volume:0});
+  e.advance(20);
+  p.setMix({mystic:true,volume:.6});
+  const resumed = e.sources[2];
+  assert.equal(resumed.offset,2.25);
+  assert.equal(resumed.output.destination,bus);
+  assert.deepEqual(bus.gain.targets,[[.4,2,.012],[.2,2.25,.012],[1,4.25,.012],[0,4.25,.012],[.6,24.25,.012]]);
+  p.dispose();
+});
+
+test('a previously muted garden opens without downloading or decoding a theme',async()=>{
+  const e=environment(),p=e.player;
+  p.setMix({mystic:true,volume:0});
+  await settle();
+  e.trust();
+  assert.equal(e.contexts.length, 0);
+  assert.equal(e.fetches.length, 0);
+  p.setMix({mystic:true,volume:.4});
+  await settle();
+  assert.equal(e.sources.length,1);
+  assert.equal(e.sources[0].output.destination.gain.value,.4);
   p.dispose();
 });

@@ -1,6 +1,7 @@
 import React, {createContext, useCallback, useContext, useEffect, useLayoutEffect, useState} from 'react';
 import {clearScoreHandoff, useScorePlayback} from './scorePlayback.js';
 import {exportGardenRaw} from './useGardenSave.js';
+import {audioLevels} from './audioLevels.js';
 
 const silent = {enabled:false};
 const MusicRoute = createContext(null);
@@ -11,12 +12,12 @@ export function GameMusic({children}) {
   return <MusicRoute.Provider value={setMix}>{children}</MusicRoute.Provider>;
 }
 
-function useMusicRoute({cotton=false, mystic=false, enabled=false, cottonSession}) {
+function useMusicRoute({cotton=false, mystic=false, enabled=false, cottonSession, volume=1}) {
   const setMix = useContext(MusicRoute);
   useLayoutEffect(() => {
-    setMix({cotton, mystic, enabled, cottonSession});
-    return () => setMix(silent);
-  }, [setMix, cotton, mystic, enabled, cottonSession]);
+    setMix({cotton, mystic, enabled, cottonSession, volume});
+  }, [setMix, cotton, mystic, enabled, cottonSession, volume]);
+  useLayoutEffect(() => () => setMix(silent), [setMix]);
 }
 
 export function PublicTourMusic() {
@@ -31,7 +32,7 @@ export function PublicTourMusic() {
         const saved = raw === null ? null : JSON.parse(raw);
         const cotton = !saved || Boolean(saved.tutorial || saved.dewLesson?.status === 'round' ||
           (saved.sproutDebut && saved.sproutDebut === saved.id));
-        setMix({cotton, enabled:saved?.sound !== false && saved?.ambience !== false,
+        setMix({cotton, enabled:true, volume:audioLevels(saved).musicVolume,
           cottonSession:cotton ? saved?.id ?? 'intro' : null});
       } catch {
         if (request === read) setMix(silent);
@@ -46,7 +47,7 @@ export function PublicTourMusic() {
   return null;
 }
 
-export function useGameplayMusic({plant, phase, sproutInvitation, roomActive, recordPlaying}) {
+export function useGameplayMusic({plant, phase, sproutInvitation, roomActive, recordPlaying, musicVolume=audioLevels(plant).musicVolume}) {
   const firstVisit = phase !== 'game' || Boolean(plant?.tutorial || plant?.dewLesson || sproutInvitation);
   // Only the visit on which onboarding finishes waits for the garden. A completed
   // save opened on a later visit gets its theme as soon as the toy appears.
@@ -72,7 +73,7 @@ export function useGameplayMusic({plant, phase, sproutInvitation, roomActive, re
   useMusicRoute({
     cotton, cottonSession:cotton ? plant?.id ?? 'intro' : null,
     mystic:!firstVisit && (!waitingForGarden || roomActive),
-    enabled:plant?.sound !== false && plant?.ambience !== false && !recordPlaying,
+    enabled:!recordPlaying, volume:musicVolume,
   });
   return useCallback(() => {
     clearScoreHandoff();

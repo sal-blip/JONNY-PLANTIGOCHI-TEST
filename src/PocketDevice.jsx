@@ -67,10 +67,10 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
   const [revealing,setRevealing]=useState(()=>revealSeed && lesson==='water' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(()=>{
     if(!revealing)return;
-    if(plant.sound)sound('leaves');
+    sound('leaves');
     const timer=setTimeout(()=>setRevealing(false),3400);
     return ()=>clearTimeout(timer);
-  },[revealing,sound,plant.sound]);
+  },[revealing,sound]);
   const [path,setPath]=useState(()=>plant.tutorial?.step==='boost' && plant.tutorial.blocks>0?[frame('home',2),frame('growth'),frame('boost')]:[]);
   const [closeUp,setCloseUp]=useState(false), [feedback,setFeedback]=useState(null);
   const retreat=useRef(null), held=useRef(null), pressed=useRef(null), speech=useRef(null), heart=useRef(null);
@@ -348,7 +348,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
       else browse(key==='left'?-1:1);
       setCloseUp(true);release();
     }
-    if (voice && plant.sound) sound(voice);
+    if (voice) sound(voice);
   }
 
   const input=useRef(null);
@@ -356,7 +356,7 @@ export default function PocketDevice({plant,now,resting,commit,sound,openMove,op
     if(toyDisabled)return;
     if(training)press('back');
     else {
-      if(plant.sound && (section || game || closeUp) && !terminal)sound('tap');
+      if((section || game || closeUp) && !terminal)sound('tap');
       leaveGame();
     }
   }};

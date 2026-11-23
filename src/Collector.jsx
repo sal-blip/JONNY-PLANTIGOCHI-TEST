@@ -34,7 +34,7 @@ function firstVacantRoom(plants){
   return 0;
 }
 
-const Collector=forwardRef(function Collector({active,backdropVisible=false,recordActive=active,plant,commit,now,move,relocate,raisePhone,returnToToy,purr,
+const Collector=forwardRef(function Collector({active,backdropVisible=false,recordActive=active,musicVolume,plant,commit,now,move,relocate,raisePhone,returnToToy,purr,
   playingRecordId,onSelectRecord,onOverlayChange,globalMenuOpen,onPlacementCancel,onPlacementDone},ref) {
   const graduates=plant.graduates;
   const count=gardenViews(graduates);
@@ -508,7 +508,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
         {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} plants={potted[k]} hour={hour}
-          garden={plant} playingItemId={plant.sound ? playingRecordId : null} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
+          garden={plant} playingItemId={playingRecordId} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
     <div className="room-controls" hidden={(!available && !guidingPot) || Boolean(panel)}>
@@ -543,7 +543,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       </div>}
       {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width="76" height="82" aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
     </div>
-    <GardenRecord active={recordActive} soundEnabled={plant.sound} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
+    <GardenRecord active={recordActive} musicVolume={musicVolume} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
     {available && panel==='move' && source && <GardenDialog page="garden-move" title={'Move '+(source.name || speciesName(source))+'?'} close={cancelCarry}>
       <p className="room-guide">{placeName(carry.from)} · {viewName(viewForSlot(carry.from))}</p>
       {items.some(i=>i.slot===source.slot) && <p className="room-guide">Its pot moves with the plant.</p>}
@@ -558,7 +558,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         }}}
         savePhoto={(photo,expected,frameOriginal)=>change(p=>framePhoto(p,item.id,photo,expected),frameOriginal)}>
         {itemPlant && <p className="room-guide">Moving just this pot leaves {itemPlant.name || speciesName(itemPlant)} here.</p>}
-        {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={plant.sound} playing={playingRecordId===item.id} onPlayingChange={yes=>onSelectRecord(yes?item.id:null)}/>}
+        {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={musicVolume > 0} playing={playingRecordId===item.id} onPlayingChange={yes=>onSelectRecord(yes?item.id:null)}/>}
       </ShopItemDetail>}
       {panel==='item' && notice && <p role="status">{notice}</p>}
       {['jar','book'].includes(panel) && <><GardenKeepsakes key={panel} kind={panel} plant={plant} now={now} act={useKeepsake} openJar={()=>openKeepsake('jar')} busy={busy}/>{notice && <p role="status">{notice}</p>}</>}

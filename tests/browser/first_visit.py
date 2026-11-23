@@ -288,10 +288,10 @@ def play(browser, url):
     assert not page.locator(".toy-guide").count()
     expect_plain_tap("Open Plantigochi menu")
     tap("Settings")
-    sound_toggle = page.locator('button[data-audio="master"]:visible')
-    assert sound_toggle.get_attribute("aria-pressed") == "true"
-    sound_toggle.tap()
-    page.locator('button[data-audio="master"][aria-pressed="false"]:visible').wait_for()
+    effects = page.get_by_role("slider", name="Sound effects", exact=True)
+    assert effects.input_value() == "100"
+    effects.press("Home")
+    assert effects.input_value() == "0"
     tap("Close menu")
     # Both ordinary navigation and the previously unseen Dew guide honor mute.
     for key in ("Open toy menu", "Next toy item", "Choose Play", "Choose Dew Catch"):

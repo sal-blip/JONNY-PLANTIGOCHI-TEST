@@ -2,6 +2,7 @@ import {validTutorial,validDewLesson,finishSprouting,rememberHint} from './first
 import {canPlaceAt,viewForSlot,placesFor,slotFor} from './gardenLayout.js';
 import {catalog,earnWater,milestone,relocateFurnishings,validGardenLife} from './gardenEconomy.js';
 import { validPhoto } from './gardenScenes.js';
+import { audioLevels } from './audioLevels.js';
 
 export const HOUR = 60 * 60 * 1000;
 export const DAY = 24 * HOUR;
@@ -46,7 +47,7 @@ export const plantName = name => typeof name === 'string' && /^[A-Za-z -]{1,12}$
 export function newPlant(now = Date.now(), name = 'Monstera') {
   return { version: 3, name:plantName(name), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
     seedBonus:0,boostCount:0,stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
-    ...blankHealth, outbreakDue:null, fungusAt:null, jar: null, book: [], dewCleared: 0 };
+    ...audioLevels(), ...blankHealth, outbreakDue:null, fungusAt:null, jar: null, book: [], dewCleared: 0 };
 }
 
 export function condition(p, now = Date.now()) {
@@ -255,6 +256,7 @@ export function readPlant(text, now = Date.now(), visible = true) {
       p.dewRunCleared = 0;
     }
     if (!validGarden(p) || !validGardenLife(p)) return null;
+    Object.assign(p, audioLevels(p));
     p.name=plantName(p.name);
     for (const item of [...p.book,...p.graduates]) item.name=item.source==='shop' && catalog[item.species]?.kind==='plant'?catalog[item.species].name:plantName(item.name);
     if(p.seenHints!==undefined && (!Array.isArray(p.seenHints) || !p.seenHints.every(id=>typeof id==='string')))return null;
@@ -286,7 +288,7 @@ export function replant(saved, source, now = Date.now()) {
   if (now < latestCareAt(p) || p.deadAt === null || !['cutting','seed'].includes(source)) return p;
   const cutting = source === 'cutting';
   if (cutting && (!p.jar || now < p.jar.cutAt + ROOT_TIME)) return p;
-  const fresh = { ...p, ...newPlant(now), sound: p.sound, book: p.book, jar: p.jar, dewCleared: p.dewCleared };
+  const fresh = { ...p, ...newPlant(now), ...audioLevels(p), sound: p.sound, book: p.book, jar: p.jar, dewCleared: p.dewCleared };
   fresh.graduates=p.graduates; fresh.generation=p.generation+1;
   return cutting ? { ...sprout(fresh,now), generation: p.jar.generation, wateredAt: now,
     jar: null, message: 'New roots. Family resemblance?' } : fresh;
@@ -298,7 +300,7 @@ export function graduate(saved, id, slot, now = Date.now()) {
   const room=viewForSlot(slot);
   const potStyle=placesFor(room).findIndex(spot=>slotFor(room,spot)===slot)%6;
   const graduate = {id:p.id,name:plantName(p.name),species:'monstera',potStyle,generation:p.generation,plantedAt:p.plantedAt,movedAt:now,slot};
-  return milestone({...p,...newPlant(now),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
+  return milestone({...p,...newPlant(now),...audioLevels(p),generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,
     dewCleared:p.dewCleared,graduates:[...p.graduates,graduate]},'graduated',p.name+' graduated to the garden.',now,p.id);
 }
 

@@ -36,7 +36,7 @@ export function createScorePlayback(browser=window,page=document){
     ...track,wanted:false,source:null,gain:null,buffer:null,loading:null,offset:0,started:0,
     ramp:null,stopTimer:null,releaseTimer:null,retryTimer:null,retryDelay:2000,
   }]));
-  let ctx=null,enabled=false,session=null,disposed=false,parked=false,headTimer=null;
+  let ctx=null,musicOutput=null,volume=1,enabled=false,session=null,disposed=false,parked=false,headTimer=null;
   const awake=()=>!disposed && !parked && !page.hidden;
   function position(ch){
     if(!ch.source)return ch.offset;
@@ -143,7 +143,7 @@ export function createScorePlayback(browser=window,page=document){
         const source=ctx.createBufferSource(),gain=ctx.createGain();
         gain.gain.setValueAtTime(0,ctx.currentTime);
         source.buffer=ch.buffer;source.loop=true;
-        source.connect(gain);gain.connect(ctx.destination);
+        source.connect(gain);gain.connect(musicOutput);
         ch.offset%=ch.buffer.duration;
         ch.started=ctx.currentTime;
         source.start(ch.started,ch.offset);
@@ -163,6 +163,9 @@ export function createScorePlayback(browser=window,page=document){
     try{
       if(!ctx){
         ctx=new Audio();
+        musicOutput=ctx.createGain();
+        musicOutput.gain.value=volume;
+        musicOutput.connect(ctx.destination);
         ctx.onstatechange=()=>{
           if(disposed)return;
           if(ctx.state==='running'){sync();return;}
@@ -197,20 +200,25 @@ export function createScorePlayback(browser=window,page=document){
       removeHead(browser,introKey);
     }
   }
-  function setMix({cotton=false,mystic=false,enabled:audible=true,cottonSession}={}){
+  function setMix({cotton=false,mystic=false,enabled:audible=true,cottonSession,volume:level=1}={}){
     if(disposed)return;
     if(!cotton && channels.cotton.wanted)saveHead();
     // Omitted by an unmount/loading transition. Only an explicit null finishes a session.
     if(cottonSession!==undefined)setSession(cottonSession);
     channels.cotton.wanted=Boolean(cotton);channels.mystic.wanted=Boolean(mystic);
-    enabled=Boolean(audible);
+    if(volume!==level){
+      volume=level;
+      // Keep user adjustments independent of the farewell / garden envelopes.
+      musicOutput?.gain.setTargetAtTime(volume,ctx.currentTime,.012);
+    }
+    enabled=Boolean(audible) && volume>0;
     if(!enabled || !awake()){silence();return;}
     if(cotton || mystic)unlock();
     else sync();
   }
   function onGesture(event){
     // The preference write is asynchronous, so prime on the enabling tap itself.
-    const unmute=event.target?.closest?.('[data-score-toggle][aria-pressed="false"],[data-audio="master"][aria-pressed="false"]');
+    const unmute=event.target?.closest?.('input[type="range"]');
     if(enabled || unmute)unlock();
   }
   function onHide(){parked=true;silence();}
@@ -247,14 +255,14 @@ export function createScorePlayback(browser=window,page=document){
   return {setMix,unlock,dispose};
 }
 
-export function useScorePlayback({cotton=false,mystic=false,enabled=true,cottonSession}){
+export function useScorePlayback({cotton=false,mystic=false,enabled=true,cottonSession,volume=1}){
   const player=useRef(null);
   useLayoutEffect(()=>{
     const score=createScorePlayback();player.current=score;
     return ()=>{player.current=null;score.dispose();};
   },[]);
   useLayoutEffect(()=>{
-    player.current?.setMix({cotton,mystic,enabled,cottonSession});
-  },[cotton,mystic,enabled,cottonSession]);
+    player.current?.setMix({cotton,mystic,enabled,cottonSession,volume});
+  },[cotton,mystic,enabled,cottonSession,volume]);
   return useCallback(()=>player.current?.unlock(),[]);
 }

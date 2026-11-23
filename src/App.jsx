@@ -1,7 +1,8 @@
 import GuideChat,{FirstHint,GuideSound} from './GuideChat.jsx';
 import {appHints,grantSproutCoins} from './firstVisit.js';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, ChevronRight, Waves, Moon, ImagePlus, Music2, Move, Share, Trash2, Sun, Volume2, VolumeX } from 'lucide-react';
+import { Check, ChevronRight, Waves, Moon, ImagePlus, Move, Share, Trash2, Sun, Volume2, VolumeX } from 'lucide-react';
+import AudioSettings,{useAudioSettings} from './AudioSettings.jsx';
 import PhotoBackground from './PhotoBackground.jsx';
 import { scenes, selectedScene, photoStyle } from './gardenScenes.js';
 import PhonePanel from './PhonePanel.jsx';
@@ -127,6 +128,8 @@ function InstalledSession({phone,storage,careMessage,consumeCareMessage,alertVis
 const emptyRoom={graduates:[],book:[],jar:null,deadAt:null};
 function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,phone,careMessage,consumeCareMessage,alerts,setupScene,setupScreen}) {
   const {plant,current,commit,replace,issue}=storage;
+  const {levels,adjust,save:saveVolume}=useAudioSettings(plant,commit);
+  const {musicVolume,fxVolume,ambienceVolume}=levels;
   const roomGarden=plant ?? emptyRoom;
   const saveOK=!issue;
   const lesson=storage.phase==='water' || storage.phase==='watered' ? storage.phase : null;
@@ -204,14 +207,14 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
   const [playingRecordId,setPlayingRecordId]=useState(null);
   const sproutInvitation=Boolean(plant && storage.phase==='game' && plant.stage==='sprout' &&
     plant.deadAt===null && plant.fungusAt==null && (storage.firstDay?.id===plant.id || plant.sproutDebut===plant.id));
-  const onFarewellReveal=useGameplayMusic({plant,phase:storage.phase,sproutInvitation,roomActive,recordPlaying:Boolean(playingRecordId)});
+  const onFarewellReveal=useGameplayMusic({plant,musicVolume,phase:storage.phase,sproutInvitation,roomActive,recordPlaying:Boolean(playingRecordId)});
   const recordActive=surface!=='toy';
-  const apps=useGardenPhoneApps({page:app,open:setApp,plant,commit,roomRef,raised:phoneActive,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement});
+  const apps=useGardenPhoneApps({page:app,open:setApp,plant,musicVolume,commit,roomRef,raised:phoneActive,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement});
   const gardenLife=lifeOf(roomGarden);
-  const soundEnabled=Boolean(plant?.sound);
+  const [revealMuted,setRevealMuted]=useState(false);
   useEffect(()=>{
-    if(!recordActive || !soundEnabled || !gardenLife.items.some(i=>i.id===playingRecordId && i.sku==='record' && i.slot!==null))setPlayingRecordId(null);
-  },[recordActive,soundEnabled,gardenLife.items,playingRecordId]);
+    if(!recordActive || !gardenLife.items.some(i=>i.id===playingRecordId && i.sku==='record' && i.slot!==null))setPlayingRecordId(null);
+  },[recordActive,gardenLife.items,playingRecordId]);
   const [coinsMessage,setCoinsMessage]=useState('');
   const day=localDay(now);
   useEffect(()=>{
@@ -223,7 +226,7 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
     });
   },[day,gardenLife.day,plant?.id,Boolean(tutorial),lesson,commit]);
   useEffect(()=>{if(coinsMessage){const timer=setTimeout(()=>setCoinsMessage(''),6500);return ()=>clearTimeout(timer);}},[coinsMessage]);
-  const { play, unlock, running } = useGardenSound({enabled:soundEnabled, ambience:plant?.ambience !== false, instrumental:false, recordPlaying:Boolean(playingRecordId), sleeping:plant?.stage === 'seed', intro, leafReady});
+  const { play, unlock, running } = useGardenSound({enabled:Boolean(plant), effectsVolume:intro && revealMuted ? 0 : fxVolume, ambienceVolume, gardenActive:roomActive, instrumental:false, recordPlaying:Boolean(playingRecordId), sleeping:plant?.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
   const originalPhoto=useRef(null);
   const scenery = useRef(null);
@@ -322,15 +325,9 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
     }
     open('share');
   }
-  function toggleSound() {
-    const enabled = !current.current.sound;
-    commit(old => ({...old, sound:enabled}));
-    if (enabled) { unlock(); play('care'); }
-  }
   function introSound() {
-    if (plant.sound && running) { commit(old => ({...old,sound:false})); return; }
-    commit(old => ({...old,sound:true}));
-    unlock();
+    if (introAudible) setRevealMuted(true);
+    else { setRevealMuted(false); unlock(); }
   }
   async function changeScene(id) {
     const saved=await commit(old=>old.scene===id?old:{...old,scene:id});
@@ -379,7 +376,7 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
   const showGlobalMenu=Boolean(plant) && showCorners && !setupScreen && !intro && !page && !sharing;
   const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
     hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
-  const introAudible = soundEnabled && running;
+  const introAudible = fxVolume > 0 && !revealMuted && running;
   const parent = (page === 'test' || page === 'restart') ? 'debug' : (page === 'reset' || page === 'debug') ? 'settings' : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
 
   const pocket=plant && <div className="pocket-floor" data-toy-wallpaper="">
@@ -397,18 +394,18 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
     {(!guide || !tutorial) && lesson!=='water' && !intro && !page && <SwipeCue data-toy-handle="" aria-label="Open garden"
       hint="Swipe up to enter the garden" onClick={e=>lesson==='watered'?visitGarden():go('garden',e)}/>}
   </div>;
-  return <GuideSound.Provider value={soundEnabled?play:null}><main ref={passage.rootRef} data-tutorial={tutorial?.step} data-surface={surface} data-transitioning={transitioning?'':undefined}
+  return <GuideSound.Provider value={play}><main ref={passage.rootRef} data-tutorial={tutorial?.step} data-surface={surface} data-transitioning={transitioning?'':undefined}
     data-toy-background={background} data-toy-photo-preview={page==='photo'?'':undefined}
     className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')}
     aria-label="Plantigochi pocket garden" onClick={event=>{
       const button=event.target.closest?.('button');
-      if(soundEnabled && button && !event.defaultPrevented && !button.disabled &&
+      if(button && !event.defaultPrevented && !button.disabled &&
         button.getAttribute('aria-disabled')!=='true' && !button.dataset.audio) {
         play('tap');
       }
     }}>
     <div className="garden-room-layer" {...passage.roomGestureProps} inert={!roomActive?'':undefined} aria-hidden={!roomActive || undefined}>
-      <Collector ref={roomRef} playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} recordActive={recordActive}
+      <Collector ref={roomRef} playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} recordActive={recordActive} musicVolume={musicVolume}
         onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={roomActive} backdropVisible={surface==='toy' && background==='garden'} plant={roomGarden} commit={commit} now={now}
         onPlacementDone={()=>{if(current.current?.tutorial?.step==='return')setApp('phone');}}
         raisePhone={raiseGardenPhone} returnToToy={returnToSeed} onPlacementCancel={()=>go('phone')}
@@ -425,7 +422,7 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
         const ok=saved && moved && current.current?.graduates.some(g=>g.id===id && g.slot===to);
         return {ok:Boolean(ok),storedCount:ok?storedCount:0};
       }}
-        purr={()=>{if(soundEnabled)play('purr');}}/>
+        purr={()=>play('purr')}/>
       {guide && ((roomActive && !toyLesson) || leavingPotReceipt) && !roomOverlayOpen && !page && <GuideChat cue={leavingPotReceipt?'return':tutorial?.step || "garden"} className="room-guide">
         <p>{tutorial?.step==='return' || leavingPotReceipt?'My pot is in place! When I’m fully grown, I can live here.':'Welcome home! Grown plants live here. Tap the phone at the bottom right to open iSEED.'}</p>
         {(tutorial?.step==='return' || leavingPotReceipt) && <div className="chat-actions"><button disabled={routePending || leavingPotReceipt} onClick={returnToSeed}>{routePending || leavingPotReceipt?'Returning…':'Return to my seed'}</button></div>}</GuideChat>}
@@ -471,7 +468,7 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
       {['left','right'].map(side => <div key={side} className={'foliage ' + side} aria-hidden="true">
         <i className="blade back"/><i className="blade front"/><i className="blade low"/>
       </div>)}
-      <div className="intro-controls"><button data-audio="master" onClick={introSound} aria-pressed={introAudible}>{introAudible ? <Volume2/> : <VolumeX/>}{introAudible ? 'Mute' : 'Play sound'}</button><button onClick={finishIntro}>Skip intro<ChevronRight/></button></div>
+      <div className="intro-controls"><button data-audio="reveal" disabled={fxVolume===0} onClick={introSound} aria-pressed={introAudible}>{introAudible ? <Volume2/> : <VolumeX/>}{introAudible ? 'Mute' : 'Play sound'}</button><button onClick={finishIntro}>Skip intro<ChevronRight/></button></div>
     </div>}
     {page === 'photo' && <PhotoBackground photo={draftPhoto} update={setDraftPhoto} layer={scenery} apply={savePhoto}
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
@@ -488,9 +485,8 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
         </button>)}<button className="scene-choice choose-photo" aria-pressed={scene === 'photo'} onClick={editPhoto}>
           <span className="swatch photo-swatch">{plant.photo ? <img src={plant.photo.src} alt=""/> : <ImagePlus/>}</span><span>Use My Photo</span>{scene === 'photo' && <Check className="chosen"/>}
         </button>{issue && <p role="alert">{issue}</p>}</div>}
-      {page === 'settings' && <div className="menu-items"><button data-audio="master" data-score-toggle="" aria-pressed={plant.sound} onClick={toggleSound}>{plant.sound ? <Volume2/> : <VolumeX/>}Sound<span className="setting-value">{plant.sound ? 'On' : 'Off'}</span></button>
-        <button data-score-toggle="" disabled={!plant.sound} aria-pressed={plant.sound && plant.ambience !== false}
-          onClick={() => commit(old => ({...old,ambience:old.ambience === false}))}><Music2/>Garden ambience<span className="setting-value">{plant.sound && plant.ambience !== false ? 'On' : 'Off'}</span></button>
+      {page === 'settings' && <div className="menu-items">
+        <AudioSettings levels={levels} adjust={adjust} save={saveVolume} previewEffect={()=>play('tap')}/>
         <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
         <button disabled={['checking','downloading'].includes(phone.updateStatus)}

@@ -218,10 +218,46 @@ function sleepyBreathing(ctx) {
   return buffer;
 }
 
-export function startGardenBed(ctx, bus, sleeping = false, volume = 1, instrumental = true) {
+// Steady air with a little higher-frequency leaf movement during the gusts.
+// Crossfade the noise across the seam so the loop has no audible downbeat.
+function roomBreeze(ctx) {
+  const rate = 16000, frames = 19 * rate, overlap = rate / 2;
+  const buffer = ctx.createBuffer(2, frames, rate);
+  for (let channel = 0; channel < 2; channel++) {
+    const samples = buffer.getChannelData(channel), random = noise(6512 + 11 * channel);
+    let air = 0, leaf = 0, low = 0, airLevel = 0, leafLevel = 0;
+    let airStep = 0, leafStep = 0;
+    for (let i = 0; i < frames + overlap; i++) {
+      // Interpolate the slow envelopes between control points, at 125 Hz.
+      if ((i & 127) === 0) {
+        const u = (i + 128) / frames;
+        const gust = .5 + .3 * sine(2 * u + channel * .04) + .2 * sine(5 * u);
+        const flutter = .5 + .5 * sine(33 * u + .2 * sine(7 * u));
+        airStep = (.045 + .15 * gust - airLevel) / 128;
+        leafStep = (.11 * gust * gust * flutter - leafLevel) / 128;
+      }
+      const value = random();
+      low += .009 * (value - low);
+      air += .065 * (value - air);
+      leaf += .25 * (value - leaf);
+      airLevel += airStep;
+      leafLevel += leafStep;
+      const sample = (air - low) * airLevel + (leaf - air) * leafLevel;
+      if (i < frames) samples[i] = sample;
+      else {
+        const j = i - frames, weight = .5 + .5 * sine(.25 + .5 * j / overlap);
+        samples[j] += weight * (sample - samples[j]);
+      }
+    }
+  }
+  return buffer;
+}
+
+export function startGardenBed(ctx, bus, sleeping = false, volume = 1, instrumental = true, gardenActive = false) {
   const score = [];
   if (instrumental) score.push(bufferFor(ctx, 'garden', () => gardenScore(ctx)));
   if (sleeping) score.push(bufferFor(ctx, 'sleep', () => sleepyBreathing(ctx)));
+  if (gardenActive) score.push(bufferFor(ctx, 'room-breeze', () => roomBreeze(ctx)));
   if (!score.length) return;
   const mix = ctx.createGain(), start = ctx.currentTime, fadeIn = 0.85;
   mix.gain.setValueAtTime(0, start);

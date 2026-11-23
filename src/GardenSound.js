@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { playButton, playGuideChime, playReveal, startGardenBed } from './gardenVoices.js';
 
 function fadeEffect(ctx, channel) {
@@ -10,11 +10,22 @@ function fadeEffect(ctx, channel) {
   channel.current = null;
 }
 
-export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady, recordPlaying=false, instrumental=true }) {
+export function useGardenSound({ enabled, ambience=true, sleeping, intro, leafReady, gardenActive=false, recordPlaying=false, instrumental=true, effectsVolume=1, ambienceVolume=1 }) {
   const context = useRef(null), effects = useRef(null), chatEffects = useRef(null), note = useRef(0);
   const buttonEffects = useRef(null);
+  const outputs = useRef(null), levels = useRef({enabled, effectsVolume, ambienceVolume});
   const [readyContext, setReadyContext] = useState(null);
   const [visible, setVisible] = useState(() => !document.hidden);
+  const ambienceAudible = ambience && ambienceVolume > 0;
+  const wantsContext = effectsVolume > 0 || (!intro && ambienceAudible && (sleeping || gardenActive || instrumental));
+
+  useLayoutEffect(() => {
+    const before = levels.current, ctx = context.current;
+    levels.current = {enabled, effectsVolume, ambienceVolume};
+    if (!ctx || !outputs.current) return;
+    if (before.effectsVolume !== effectsVolume) outputs.current.effects.gain.setTargetAtTime(effectsVolume, ctx.currentTime, .012);
+    if (before.ambienceVolume !== ambienceVolume) outputs.current.ambience.gain.setTargetAtTime(ambienceVolume, ctx.currentTime, .012);
+  }, [enabled, effectsVolume, ambienceVolume]);
 
   const hush = useCallback(() => {
     fadeEffect(context.current, effects);
@@ -29,6 +40,12 @@ export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady, 
       if (!context.current) {
         const ctx = new Audio();
         context.current = ctx;
+        const effects = ctx.createGain(), ambience = ctx.createGain();
+        effects.gain.value = levels.current.effectsVolume;
+        ambience.gain.value = levels.current.ambienceVolume;
+        effects.connect(ctx.destination);
+        ambience.connect(ctx.destination);
+        outputs.current = {effects, ambience};
         ctx.onstatechange = () => {
           if (context.current === ctx) setReadyContext(ctx.state === 'running' ? ctx : null);
         };
@@ -42,19 +59,17 @@ export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady, 
 
   useEffect(() => {
     if (!enabled || !visible) return;
-    unlock();
+    if (wantsContext) unlock();
     if (readyContext) return;
-    const activate = event => {
-      // The explicit sound buttons handle their own gesture and mute state.
-      if (!event.target.closest?.('[data-audio="master"]')) unlock();
-    };
+    const activate = event => { if (wantsContext || event.target?.closest?.('input[type="range"]')) unlock(); };
     for (const type of ['pointerdown','pointerup','touchend','click','keydown']) window.addEventListener(type,activate,true);
     return () => {
       for (const type of ['pointerdown','pointerup','touchend','click','keydown']) window.removeEventListener(type,activate,true);
     };
-  }, [enabled,visible,readyContext,unlock]);
+  }, [enabled,visible,readyContext,unlock,wantsContext]);
 
   const play = useCallback(kind => {
+    if (!levels.current.enabled || levels.current.effectsVolume === 0) return;
     const ctx = unlock();
     const isPress = kind === 'tap' || kind === 'care';
     if (!ctx || (ctx.state !== 'running' && !(isPress && ctx.state === 'suspended'))) return;
@@ -64,7 +79,7 @@ export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady, 
     if (!isPress) fadeEffect(ctx, channel);
     if (!channel.current) {
       channel.current = ctx.createGain();
-      channel.current.connect(ctx.destination);
+      channel.current.connect(outputs.current.effects);
     }
     if (kind === 'chat') playGuideChime(ctx, channel.current);
     else if (kind === 'leaves') playReveal(ctx, channel.current);
@@ -83,18 +98,21 @@ export function useGardenSound({ enabled, ambience, sleeping, intro, leafReady, 
       fadeEffect(readyContext, effects);
       const bus = readyContext.createGain();
       effects.current = bus;
-      bus.connect(readyContext.destination);
+      bus.connect(outputs.current.effects);
       playReveal(readyContext,bus);
       return () => fadeEffect(readyContext, effects);
     }
-    if (!intro && ambience) {
-      return startGardenBed(readyContext, readyContext.destination, sleeping, recordPlaying ? 0.18 : 1, instrumental);
+  }, [enabled,visible,intro,leafReady,readyContext,hush]);
+  useEffect(() => {
+    if (enabled && visible && readyContext && !intro && ambienceAudible) {
+      return startGardenBed(readyContext, outputs.current.ambience, sleeping, recordPlaying ? 0.18 : 1, instrumental, gardenActive);
     }
-  }, [enabled,visible,intro,leafReady,ambience,readyContext,sleeping,hush,recordPlaying,instrumental]);
+  }, [enabled,visible,intro,ambienceAudible,readyContext,sleeping,recordPlaying,instrumental,gardenActive]);
   useEffect(() => () => {
     hush();
     const ctx = context.current;
     context.current = null;
+    outputs.current = null;
     if (ctx) { ctx.onstatechange = null; void ctx.close().catch(() => {}); }
   }, [hush]);
   return { play, unlock, running: !!readyContext };

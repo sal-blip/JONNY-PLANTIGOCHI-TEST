@@ -76,7 +76,7 @@ function Postcard({roomRef,raised}){
 
 /** App owns the raised/lowered surface and current route. Keep its contents
  * mounted while lowered so journal forms, library articles and scrolling survive. */
-export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRef,raised=true,playingRecordId,onSelectRecord}){
+export function useGardenPhoneApps({page,open,plant,musicVolume,commit,beginPlacement,roomRef,raised=true,playingRecordId,onSelectRecord}){
   const [itemId,setItemId]=useState(null),[journal,setJournal]=useState(newJournalSession);
   const [busy,setBusy]=useState(false),[notice,setNotice]=useState(null);
   const pending=useRef(false),alive=useRef(false),route=useRef(null),handedOff=useRef(false);
@@ -157,7 +157,7 @@ export function useGardenPhoneApps({page,open,plant,commit,beginPlacement,roomRe
     app=item?<ShopItemDetail key={item.id} item={item} busy={busy} move={()=>place({id:item.id,sku:item.sku,from:item.slot,buy:false})}
       store={putAway} savePhoto={savePhoto}>
       {resident && <p className="room-guide">Moving just this pot leaves {resident.name || speciesName(resident)} here.</p>}
-      {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={plant.sound} playing={playingRecordId===item.id}
+      {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={musicVolume > 0} playing={playingRecordId===item.id}
         onPlayingChange={yes=>onSelectRecord(yes?item.id:null)}/>}
     </ShopItemDetail>:<div className="garden-page"><p role="status">This item is no longer available.</p>
       <div className="menu-items"><button onClick={back}>Back to Inventory</button></div></div>;

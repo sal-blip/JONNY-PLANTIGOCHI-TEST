@@ -178,6 +178,16 @@ h1,h2,p{margin:0}svg{flex-shrink:0}
 .garden-dialog .scene-choice[aria-pressed=true]{box-shadow:none;background:transparent;font-weight:720}
 .scenes{gap:0}.scene-choice{gap:12px}.swatch{width:42px;height:26px;border-radius:3px}
 .page-settings .setting-value,.scene-choice .chosen{margin-left:auto}
+.audio-settings{padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid #4f6b573b}
+.volume-row{display:grid;grid-template-columns:8.8em minmax(0,1fr) 4ch;gap:10px;align-items:center;min-height:44px;font:530 18px/1.25 var(--display)}
+.volume-row input{width:100%;height:44px;min-width:0;margin:0;accent-color:#365e45;cursor:pointer}
+.volume-row input:focus-visible{outline:2px solid #43664c;outline-offset:1px;border-radius:4px}
+.volume-row .setting-value{font-variant-numeric:tabular-nums;text-align:right}
+@media(max-width:539px) and (orientation:portrait){
+  .volume-row{grid-template-columns:1fr auto;column-gap:8px;row-gap:0}
+  .volume-row label,.volume-row .setting-value{grid-row:1}
+  .volume-row input{grid-column:1/-1;grid-row:2}
+}
 .page-settings .menu-items .row-end{display:none}
 .garden-dialog .primary-btn,.garden-dialog .alert-control,.save-buttons button,.photo-tools button,.photo-tools .photo-apply{background:transparent;color:#254b37;font-weight:650;text-decoration:underline;text-underline-offset:.22em}
 .garden-dialog .pager button,.photo-heading .round-button{background:transparent}

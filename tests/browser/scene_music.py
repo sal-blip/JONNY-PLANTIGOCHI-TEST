@@ -11,11 +11,35 @@ from dew_lesson import READ_PLANT
 # Observe the real decoded tracks and their gain automation. The much shorter
 # synthesized ambience and button buffers are unrelated to the score.
 PROBE = """(() => {
-  const next = new WeakMap(), automation = new WeakMap(), tracks = [];
+  const next = new WeakMap(), automation = new WeakMap(), tracks = [], voices = [];
+  const decks = new WeakMap();
   const connect = AudioNode.prototype.connect;
   AudioNode.prototype.connect = function(dest, ...args) {
     next.set(this,dest);
     return connect.call(this,dest,...args);
+  };
+  const disconnect = AudioNode.prototype.disconnect;
+  AudioNode.prototype.disconnect = function(...args) {
+    if (!args.length || args[0] === next.get(this)) next.delete(this);
+    return disconnect.apply(this,args);
+  };
+  function outputGain(source) {
+    let value = 1;
+    for (let node=next.get(source); node; node=next.get(node)) {
+      if (node instanceof GainNode) value *= node.gain.value;
+      if (node === source.context.destination) return value;
+    }
+    return 0;
+  }
+  const makeDeck = AudioContext.prototype.createMediaElementSource;
+  AudioContext.prototype.createMediaElementSource = function(element) {
+    const node = makeDeck.call(this,element);
+    decks.set(element,node);
+    return node;
+  };
+  window.recordMix = () => {
+    const media=document.querySelector('audio'), node=decks.get(media);
+    return media && !media.muted && !media.paused ? media.volume * (node ? outputGain(node) : 1) : 0;
   };
   const clocks = new WeakMap();
   const createGain = BaseAudioContext.prototype.createGain;
@@ -39,15 +63,29 @@ PROBE = """(() => {
       for (let i=0; i<samples.length; i+=4093) peak = Math.max(peak,Math.abs(samples[i]));
       const bus = next.get(this), role = Math.abs(duration - 162.51) < .5 ? 'cotton' :
         Math.abs(duration - 176.88) < .5 ? 'mystic' : 'unknown';
-      const track = {role, source:this, bus, peak, ended:false};
+      const track = {role, source:this, bus, peak, ended:false,
+                     offset:args[1] || 0, started:args[0] || this.context.currentTime};
       this.addEventListener('ended', () => { track.ended = true; });
       tracks.push(track);
     }
+    if (this.buffer && this.buffer.duration <= 150) {
+      if (this.loop) {
+        const entry={source:this,seconds:this.buffer.duration,ended:false};
+        this.addEventListener('ended',()=>{entry.ended=true;});
+        voices.push(entry);
+      } else {
+        voices.push({frames:this.buffer.length,level:outputGain(this),state:this.context.state});
+      }
+    }
     return start.apply(this,args);
   };
+  window.loopMix = () => voices.filter(v=>v.source && !v.ended)
+    .map(v=>({seconds:v.seconds,level:outputGain(v.source)}));
+  window.oneShotMix = () => voices.filter(v=>!v.source);
   window.score = () => tracks.map((track, i) => ({
     id:i, role:track.role, gain:track.bus.gain.value, peak:track.peak,
-    audioTime:track.source.context.currentTime, ended:track.ended,
+    effective:outputGain(track.source), ended:track.ended, offset:track.offset,
+    position:track.offset + track.source.context.currentTime - track.started,
     ramps:automation.get(track.bus.gain) || [],
   }));
   window.farewellShown = null;
@@ -66,10 +104,10 @@ def tracks(page):
 MAX_SCORE_GAIN = 0.5
 
 
-def audible(page, role):
+def audible(page, role, volume=1):
     page.wait_for_function(
         """([role,gain]) => score().some(t => t.role === role && !t.ended &&
-           t.peak > .005 && Math.abs(t.gain - gain) < .02)""", arg=[role, MAX_SCORE_GAIN],
+           t.peak > .005 && Math.abs(t.effective - gain) < .02)""", arg=[role, MAX_SCORE_GAIN * volume],
     )
     track = next(t for t in reversed(tracks(page)) if t["role"] == role and not t["ended"])
     # A louder ramp also passes through half volume; verify its target.
@@ -186,15 +224,10 @@ def first_visit(browser, source):
         audible(page, "mystic")
         assert [t["role"] for t in tracks(page)] == ["mystic"]
         taps(page, "Settings")
-        ambience = page.get_by_role("button", name="Garden ambience On")
-        ambience.tap()
-        page.wait_for_function("score().every(t=>t.ended || t.gain < .001)")
-        expect(page.get_by_role("button", name="Garden ambience Off")).to_be_visible()
-        page.get_by_role("button", name="Garden ambience Off").tap()
-        audible(page, "mystic")
-        page.locator('button[data-audio="master"]:visible').tap()
-        page.wait_for_function("score().every(t=>t.ended || t.gain < .001)")
-        page.locator('button[data-audio="master"]:visible').tap()
+        music = page.get_by_role("slider", name="Music", exact=True)
+        music.press("Home")
+        page.wait_for_function("score().every(t=>t.ended || t.effective < .001)")
+        music.press("End")
         audible(page, "mystic")
         return completed
     finally:
@@ -211,19 +244,38 @@ def saved_record(browser, source, completed):
         completed["gardenLife"]["items"].append(
             {"id": "music-test-record", "sku": "record", "slot": "0/decor-stand"}
         )
+        completed["musicVolume"] = .4
         page.evaluate(SEED_SETUP, completed)
         page.goto(url)
         taps(page, "Open toy menu")
-        audible(page, "mystic")
+        audible(page, "mystic", .4)
         assert [t["role"] for t in tracks(page)] == ["mystic"]
         taps(page, "Back on toy", "Open garden")
         page.locator('[data-item-id="music-test-record"]:visible').tap()
         taps(page, "Play record")
         page.wait_for_function("document.querySelector('audio').currentTime > .2")
-        page.wait_for_function("score().every(t => t.ended || t.gain < .001)")
+        page.wait_for_function("score().every(t => t.ended || t.effective < .001)")
         assert not page.locator("audio").evaluate("a=>a.paused || a.muted")
+        page.wait_for_function("Math.abs(recordMix() - .56 * .4) < .012")
+        taps(page, "Close menu", "Open Plantigochi menu", "Settings")
+        effects = page.get_by_role("slider", name="Sound effects", exact=True)
+        effects.press("Home")
+        page.get_by_role("slider", name="Garden ambience", exact=True).press("Home")
+        page.wait_for_function("Math.abs(recordMix() - .56 * .4) < .012")
+        music = page.get_by_role("slider", name="Music", exact=True)
+        music.press("Home")
+        page.wait_for_function("recordMix() < .002")
+        taps(page, "Close menu")
+        page.locator('[data-item-id="music-test-record"]:visible').tap()
+        expect(button(page,"Pause record")).to_be_enabled()
+        taps(page, "Close menu", "Open Plantigochi menu", "Settings")
+        for _ in range(7):
+            music.press("PageUp")
+        page.wait_for_function("Math.abs(recordMix() - .56 * .7) < .012")
+        taps(page, "Close menu")
+        page.locator('[data-item-id="music-test-record"]:visible').tap()
         taps(page, "Pause record")
-        audible(page, "mystic")
+        audible(page, "mystic", .7)
         assert page.locator("audio").evaluate("a=>a.paused")
     finally:
         ctx.close()
