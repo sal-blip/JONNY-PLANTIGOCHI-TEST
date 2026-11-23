@@ -152,9 +152,9 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     }
   },[active]);
   useLayoutEffect(()=>{
-    onOverlayChange?.(Boolean(active && (panel || busy || (placing && plant.tutorial))));
+    onOverlayChange?.(Boolean(active && (panel || busy || placing)));
     return ()=>onOverlayChange?.(false);
-  },[active,panel,busy,placing,plant.tutorial,onOverlayChange]);
+  },[active,panel,busy,placing,onOverlayChange]);
   function relax(){
     clearTimeout(zoomTimer.current);
     const el=lens.current;

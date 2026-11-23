@@ -72,21 +72,19 @@
 }
 .room-open-phone {right:max(12px,calc(env(safe-area-inset-right) + 6px));touch-action:manipulation}
 .room-hint:not(.room-placement) {
-  bottom:calc(max(12px,env(safe-area-inset-bottom) + 6px) + 52px);
-}
-@media (max-width:350px) and (orientation:portrait) {
-  .room-navigation:not(.room-placement) {top:max(12px,env(safe-area-inset-top));bottom:auto}
+  /* Room names and messages share a row above the clock, purse and swipe handle. */
+  bottom:calc(var(--hud-bottom) + 60px);
+  left:var(--hud-side-left);
+  right:var(--hud-side-right);
+  margin-inline:auto;
+  max-width:calc(100% - var(--hud-side-left) - var(--hud-side-right));
+  transform:none;
 }
 @media (orientation:landscape) and (max-height:540px) {
   /* The interactive garden keeps foreground pots above the controls. When the
      garden is the keychain's backdrop the painted floor fills this space. */
   .garden:not([data-tutorial]) .collector[data-room-hud]:not([data-room-placing]) .room-lens {
     bottom:calc(max(12px,env(safe-area-inset-bottom) + 6px) + 50px);
-  }
-  .room-navigation:not(.room-placement) {
-    bottom:max(12px,calc(env(safe-area-inset-bottom) + 6px));
-    left:max(12px,calc(env(safe-area-inset-left) + 6px));
-    transform:none;
   }
 }
 

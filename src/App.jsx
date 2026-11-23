@@ -5,6 +5,7 @@ import { Check, ChevronRight, Waves, Moon, ImagePlus, Music2, Move, Share, Trash
 import PhotoBackground from './PhotoBackground.jsx';
 import { scenes, selectedScene, photoStyle } from './gardenScenes.js';
 import PhonePanel from './PhonePanel.jsx';
+import { version as appVersion } from '../package.json';
 import GardenDialog from './GardenDialog.jsx';
 import GameLink, { gameLink } from './GameLink.jsx';
 import { useGardenTilt } from './useGardenTilt.js';
@@ -30,9 +31,10 @@ import {useGardenPhoneApps} from './GardenPhoneApps.jsx';
 import './collector.css';
 import './pocketGarden.css';
 
-const titles = {menu:'Plantigochi menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & saves',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',test:'Test notifications',restart:'Start a fresh game'};
+const titles = {menu:'Plantigochi menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',phone:'App & data',about:'About',bug:'Report a bug',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',test:'Test notifications',restart:'Start a fresh game'};
 const homeItems = ['scenes','settings','install','phone'];
-const phoneItems = ['install','saves','alerts'];
+const phonePanels = ['install','saves','alerts'];
+const phoneItems = [...phonePanels,'about','bug'];
 const updateMessages={
   checking:'Checking for an update…',downloading:'Downloading the update…',current:'You have the latest version.',
   offline:'Connect to the internet to check for updates.',failed:'Could not check for updates. Try again when online.',
@@ -288,10 +290,10 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
     return () => { clearTimeout(timer); media?.removeEventListener?.('change', motionChange); };
   }, [intro, leafReady, finishIntro]);
   useEffect(() => {
-    if (!page && !intro && restoreFocus.current) {
+    if (!page && !intro && !sharing && restoreFocus.current) {
       restoreFocus.current.focus({preventScroll:true}); restoreFocus.current = null;
     }
-  }, [page, intro]);
+  }, [page, intro, sharing]);
 
   const installParent = useRef('menu');
   function open(id) {
@@ -304,9 +306,10 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
     else setPage(id);
   }
   const closeOnboarding=()=>transitionOnboarding(()=>setPage(null));
-  async function shareGame(fallback) {
+  async function shareGame() {
     if (sharing) return;
     if (typeof navigator.share === 'function') {
+      restoreFocus.current = shareButton.current;
       setSharing(true);
       try {
         await navigator.share({title: 'Plantigochi', url: gameLink()});
@@ -317,7 +320,7 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
         setSharing(false);
       }
     }
-    if(typeof fallback==='function')fallback();else open('share');
+    open('share');
   }
   function toggleSound() {
     const enabled = !current.current.sound;
@@ -371,7 +374,9 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
   function enterBook(){
     if(roomRef.current?.showBook())go('garden');
   }
-  const showGlobalMenu=Boolean(plant) && !tutorial && !setupScreen && !lesson && !intro && !page && !sharing && !transitioning && (surface!=='garden' || !roomOverlayOpen);
+  const freePlay=!lesson && !guide && !tutorial && !sproutInvitation && !plant?.dewLesson;
+  const showCorners=freePlay && (surface!=='garden' || !roomOverlayOpen);
+  const showGlobalMenu=Boolean(plant) && showCorners && !setupScreen && !intro && !page && !sharing;
   const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
     hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
   const introAudible = soundEnabled && running;
@@ -388,16 +393,6 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
         dismissSprout={dismissWelcome} reminder={(drinkReminder || plant.sproutDebut===plant.id && alerts.capable) && !alerts.enrolled && !alerts.denied?alerts:null} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={enterGraduation} openBook={enterBook} resting={toyActive} commit={commit} sound={play}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
-    <div hidden={page === 'photo' || !!lesson} className="garden-corners" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
-      <span className="garden-wordmark">Plant Garden</span>
-      <div className="garden-actions">
-        <button ref={shareButton} hidden={Boolean(tutorial)} className="garden-share" aria-label="Share Plantigochi" title="Share Plantigochi" onClick={shareGame}><Share aria-hidden="true"/></button>
-        {surface==='toy' && menuTrigger}
-      </div>
-      <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
-      <small className="garden-credit">© 2026 Waz Lab</small>
-    </div>
-    {coinsMessage && toyActive && <div className="coin-toast" role="status">{coinsMessage}</div>}
     {guide && !tutorial && onToy && !page && <GuideChat cue="visit-room" className="room-guide"><p>Swipe up to visit our garden. My iSEED phone is waiting there.</p></GuideChat>}
     {(!guide || !tutorial) && lesson!=='water' && !intro && !page && <SwipeCue data-toy-handle="" aria-label="Open garden"
       hint="Swipe up to enter the garden" onClick={e=>lesson==='watered'?visitGarden():go('garden',e)}/>}
@@ -434,8 +429,6 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
       {guide && ((roomActive && !toyLesson) || leavingPotReceipt) && !roomOverlayOpen && !page && <GuideChat cue={leavingPotReceipt?'return':tutorial?.step || "garden"} className="room-guide">
         <p>{tutorial?.step==='return' || leavingPotReceipt?'My pot is in place! When I’m fully grown, I can live here.':'Welcome home! Grown plants live here. Tap the phone at the bottom right to open iSEED.'}</p>
         {(tutorial?.step==='return' || leavingPotReceipt) && <div className="chat-actions"><button disabled={routePending || leavingPotReceipt} onClick={returnToSeed}>{routePending || leavingPotReceipt?'Returning…':'Return to my seed'}</button></div>}</GuideChat>}
-      {roomActive && !roomOverlayOpen && !page && coinsMessage && <div className="coin-toast" role="status">{coinsMessage}</div>}
-      {surface==='garden' && <div className="garden-corners global-menu-corner" hidden={!showGlobalMenu}><div className="garden-actions">{menuTrigger}</div></div>}
     </div>
     <div className="standalone-toy-layer" {...passage.toyGestureProps}
       inert={!onToy || page?'':undefined} aria-hidden={!onToy || Boolean(page) || undefined}>
@@ -455,10 +448,22 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
           {apps.content}</>}
       </ISeedPhone>}
     </div>
-    {plant && !setupScreen && !page && !intro && !sharing && surface!=='phone' && <output className="garden-purse" aria-label="Purse" aria-live="polite" aria-atomic="true">
-      <img src="/art/iseed-coin.png" alt="" width="18" height="18"/>
-      <span key={gardenLife.balance}>{gardenLife.balance.toLocaleString()}</span><span className="purse-unit"> Garden Coins</span>
-    </output>}
+    {plant && <div className="garden-corners" hidden={Boolean(setupScreen || page || intro || sharing || phoneActive)}
+      inert={transitioning?'':undefined} aria-hidden={transitioning || undefined}>
+      {showCorners && <>
+        <span className="garden-wordmark">Plant Garden</span>
+        <div className="garden-actions">
+          <button type="button" ref={shareButton} className="garden-share" aria-label="Share Plantigochi" title="Share Plantigochi" onClick={shareGame}><Share aria-hidden="true"/></button>
+          {surface!=='phone' && menuTrigger}
+        </div>
+        <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
+      </>}
+      <output className="garden-purse" aria-label="Purse" aria-live="polite" aria-atomic="true">
+        <img src="/art/iseed-coin.png" alt="" width="18" height="18"/>
+        <span key={gardenLife.balance}>{gardenLife.balance.toLocaleString()}</span><span className="purse-unit"> Garden Coins</span>
+      </output>
+      {showCorners && !transitioning && coinsMessage && <div className="coin-toast" role="status">{coinsMessage}</div>}
+    </div>}
     {routeError && guide && <div className="coin-toast" role="status">{routeError}</div>}
     {!saveOK && plant && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>
@@ -495,7 +500,16 @@ function GardenApp({revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
       {page === 'debug' && <MenuItems items={['restart','test']} open={open}/>}
       {(page === 'reset' || page === 'restart') && <ResetGarden plant={plant} reset={storage.reset} cancel={()=>open(parent)}/>}
-      {(phoneItems.includes(page) || page==='test') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} saveIssue={issue} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
+      {page === 'about' && <section className="phone-section" aria-label="About Plantigochi">
+        <p><strong>Plantigochi · Pocket Garden</strong></p>
+        <p>Version {appVersion}</p>
+        <p>Made by Waz Lab. <a href="https://wazlab.com" target="_blank" rel="noopener noreferrer">wazlab.com<span className="sr-only"> (opens in a new tab)</span></a></p>
+      </section>}
+      {page === 'bug' && <section className="phone-section" aria-label="Bug report">
+        <p>Tell us what happened and what you were doing in the game when you noticed it.</p>
+        <p><a href={'mailto:info@wazlab.com?subject=' + encodeURIComponent('Plantigochi ' + appVersion + ' bug report')}>info@wazlab.com</a></p>
+      </section>}
+      {(phonePanels.includes(page) || page==='test') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} saveIssue={issue} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
     </GardenDialog>}
   </main></GuideSound.Provider>;
 }

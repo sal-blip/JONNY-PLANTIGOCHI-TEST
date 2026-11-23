@@ -102,23 +102,21 @@ h1,h2,p{margin:0}svg{flex-shrink:0}
 @media(max-height:480px) and (min-width:540px){.menu-card{width:min(100%,510px)}.scenes{grid-template-columns:1fr 1fr}.page-menu .menu-items{grid-template-columns:repeat(3,1fr)}.menu-items .row-end{display:none}.growth-list{grid-template-columns:1fr 1fr;column-gap:28px}.care-grid{grid-template-columns:repeat(4,1fr)}.care-grid button{gap:5px;padding:6px;font-size:14px}.care-grid .corner{width:11px}}
 @media(prefers-reduced-motion:reduce){.scenery,.device{transform:none}*,*:before,*:after{animation:none!important;transition:none!important}.intro .foliage,.intro .intro-shade{display:none}}
 
-/* Keep the handset's corners separate from the moving photographic layers. */
+/* Keep the shared screen controls above the moving toy and room. */
 .garden-edges,.garden-corners{position:absolute;inset:0;pointer-events:none}
 .garden-edges{background:linear-gradient(180deg,#15231b66,transparent 17%,transparent 83%,#12221c66)}
-.garden-corners{--side:max(20px,3.5vw);--top:max(16px,3.4dvh);color:#fafbf0;text-shadow:0 1px 4px #102019d9}
-.garden-wordmark,.garden-actions,.garden-clock,.garden-credit{position:absolute}
-.garden-wordmark{left:max(var(--side),env(safe-area-inset-left));top:max(calc(var(--top) + 8px),env(safe-area-inset-top));font:520 clamp(18px,2.1vw,27px)/1.1 var(--display);letter-spacing:-.025em;color:#f6f8ebdf}
-.garden-actions{right:max(var(--side),env(safe-area-inset-right));top:max(var(--top),env(safe-area-inset-top));display:flex;gap:4px}
-.garden-actions.pocket-share-actions{padding-right:52px}
+.garden-corners{--top:max(16px,3.4dvh);z-index:3;opacity:var(--phone-offset,100%);color:#fafbf0;text-shadow:0 1px 3px #102019ef,0 0 2px #15291de6}
+.garden-wordmark,.garden-actions,.garden-clock{position:absolute}
+.garden-wordmark{left:var(--hud-side-left);top:max(calc(var(--top) + 8px),env(safe-area-inset-top));font:520 clamp(18px,2.1vw,27px)/1.1 var(--display);letter-spacing:-.025em;color:#f6f8ebdf}
+.garden-actions{right:var(--hud-side-right);top:max(var(--top),env(safe-area-inset-top));display:flex;gap:4px}
 .garden-actions button{pointer-events:auto;height:44px;width:48px;display:grid;place-items:center;background:transparent;color:#fffef0;border:0;filter:drop-shadow(0 1px 3px #15251cca)}
 .garden-actions button[hidden],.iseed-corner button[hidden]{display:none}
 .garden-actions svg{width:27px;height:27px;stroke-width:1.75}.garden-actions .garden-share svg{width:23px;height:23px}
 .garden-actions button:hover{color:white}.garden-actions button:focus-visible{outline-color:white}
 .game-link{width:100%;min-width:0;padding:8px 10px;font:inherit;font-size:16px;color:var(--ink);background:#f6fbeacc;border:1px solid #849b7c;border-radius:8px}
-.garden-clock,.garden-credit{bottom:max(18px,env(safe-area-inset-bottom));font-size:13px;font-weight:520;color:#f4f7e9e8}
-.garden-clock{left:max(var(--side),env(safe-area-inset-left));display:flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums}
-.garden-clock svg{width:16px;height:16px;stroke-width:1.5}.garden-credit{right:max(var(--side),env(safe-area-inset-right))}
-.revealing .garden-corners{visibility:hidden}
+.garden-clock{bottom:var(--hud-bottom);font-size:13px;font-weight:520;color:#f4f7e9e8}
+.garden-clock{left:var(--hud-side-left);display:flex;align-items:center;gap:7px;font-variant-numeric:tabular-nums}
+.garden-clock svg{width:16px;height:16px;stroke-width:1.5}
 .custom-photo,.photo-swatch img{width:100%;height:100%;object-fit:cover;display:block}
 .photo-swatch{display:grid;place-items:center;overflow:hidden;background:#dce5d4}.photo-swatch svg{width:19px;height:19px;color:#527158}
 .garden-dialog{padding:max(26px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(26px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left))}
@@ -140,7 +138,7 @@ h1,h2,p{margin:0}svg{flex-shrink:0}
 @keyframes menu-focus{from{opacity:0;filter:blur(2px);translate:0 5px}to{opacity:1;filter:blur(0);translate:0 0}}
 @media(min-width:900px) and (min-height:510px){.menu-card{left:min(18vw,270px)}}
 @media(max-width:899px) and (min-height:680px){.menu-card{top:min(13dvh,102px)}}
-@media(max-height:420px){.garden-dialog{padding:15px 20px}.garden-wordmark{top:max(14px,env(safe-area-inset-top))}.garden-clock,.garden-credit{bottom:max(9px,env(safe-area-inset-bottom))}}
+@media(max-height:420px){.garden-dialog{padding:15px 20px}.garden-wordmark{top:max(14px,env(safe-area-inset-top))}}
 .photo-dialog{position:fixed;inset:0;width:100%;height:100%;height:100dvh;max-width:none;max-height:none;margin:0;border:0;padding:0;background:transparent;overflow:hidden;color:var(--ink)}
 .photo-dialog::backdrop{background:transparent}
 .photo-pad{position:absolute;inset:0;touch-action:none;outline-offset:-4px}
