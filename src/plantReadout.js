@@ -28,7 +28,8 @@ export function waterReadout(plant, now) {
   if (soil === 'dead') return {fraction:0, label:'Pressed leaf', detail:'Heart opens the garden book'};
   if (plant.stage === 'seed') {
     const watered = plant.wateredAt !== null;
-    const remaining = plant.plantedAt + HOUR - now;
+    const remaining = HOUR-earnedAt(plant,now);
+    if(watered && plant.tutorial)return {fraction,label:'Seed watered',detail:'Ready for your sprouting lesson'};
     return watered
       ? {fraction, label:'Seed watered', detail:remaining > 0 ? 'Sprout in ' + timeLeft(remaining) : 'Ready to sprout'}
       : {fraction, label:'First sip', detail:'Water once to start growth', tone:'due'};

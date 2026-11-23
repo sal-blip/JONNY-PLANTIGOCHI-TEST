@@ -1,3 +1,4 @@
+import {validTutorial,validDewLesson,finishSprouting,rememberHint} from './firstVisit.js';
 import {canPlaceAt,viewForSlot,placesFor,slotFor} from './gardenLayout.js';
 import {catalog,earnWater,milestone,relocateFurnishings,validGardenLife} from './gardenEconomy.js';
 import { validPhoto } from './gardenScenes.js';
@@ -44,7 +45,7 @@ export const plantName = name => typeof name === 'string' && /^[A-Za-z -]{1,12}$
 // preserves the player's explicit background when graduate or replant merges it.
 export function newPlant(now = Date.now(), name = 'Monstera') {
   return { version: 3, name:plantName(name), earned: 0, anchor: now, fedAt: null, litAt: null, companyAt: null, accompanied: false, graduates: [], id: crypto.randomUUID(), generation: 1, plantedAt: now, wateredAt: null, lastFullCare: null,
-    stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
+    seedBonus:0,boostCount:0,stage: 'seed', round: 0, given: [], message: 'Five more minutes… or sixty.', sound: true,
     ...blankHealth, outbreakDue:null, fungusAt:null, jar: null, book: [], dewCleared: 0 };
 }
 
@@ -123,7 +124,7 @@ function eligibleUntil(p) {
   return Math.min(p.lastDrink + CRITICAL_WATER_AGE, p.fedAt + FOOD_INTERVAL, p.litAt + LIGHT_INTERVAL);
 }
 export function earnedAt(p, now) {
-  if (p.stage === 'seed') return Math.min(HOUR, Math.max(0, now - p.plantedAt));
+  if (p.stage === 'seed') return p.tutorial?p.tutorial.blocks*HOUR/4:Math.min(HOUR, Math.max(0, now - p.plantedAt)+(p.seedBonus || 0));
   if (p.stage === 'grown') return WEEK;
   const end = Math.min(now, eligibleUntil(p), p.deadAt ?? Infinity, p.rotAt ?? Infinity, p.fungusAt ?? Infinity);
   return Math.min(WEEK, p.earned + Math.max(0, end - p.anchor));
@@ -131,20 +132,45 @@ export function earnedAt(p, now) {
 export function milestoneDue(p) {
   const next = nextMilestone(p);
   if (!next) return null;
-  if (p.stage === 'seed') return p.wateredAt === null ? null : Math.max(p.wateredAt,p.plantedAt + HOUR);
+  if (p.stage === 'seed') return p.wateredAt === null || p.tutorial ? null : Math.max(p.wateredAt,p.plantedAt + HOUR-(p.seedBonus || 0));
   const due = p.anchor + Math.max(0, next.age - p.earned);
   return p.fungusAt==null && p.rotAt === null && due <= eligibleUntil(p) ? due : null;
 }
 function sprout(p, now) {
-  return milestone({...p, stage:'sprout', outbreakDue:nextOutbreak(now), fungusAt:null, earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
+  return milestone({...p, stage:'sprout', sproutBurstPending:p.id, outbreakDue:nextOutbreak(now), fungusAt:null, earned:HOUR, anchor:now, lastDrink:now, fedAt:now, litAt:now,
     companyAt:now, accompanied:false, given:[], message:'Ohayō! Look who finally leafed out.'},'sprout',p.name+' sprouted.',now);
+}
+export const SPURT_COST=50;
+export function growthSpurtOffer(p,now){
+  const next=nextMilestone(p);
+  if(!next)return null;
+  const balance=p.gardenLife?.balance ?? 0;
+  const needs=p.stage==='seed'?(p.wateredAt===null?['Water']:[]):growthHolds(p,now);
+  const span=next.age-next.start,amount=span/4;
+  const target=Math.min(next.age,earnedAt(p,now)+amount);
+  const reason=needs.length?'Needs '+needs.join('/'):balance<SPURT_COST?'Need '+(SPURT_COST-balance)+' more coins':'';
+  return {amount,target,balance,reason,next:next.label,percent:Math.floor(100*(target-next.start)/span)};
+}
+export function buyGrowth(p,expected,now){
+  p=wake(p,now);
+  const offer=growthSpurtOffer(p,now),t=p.tutorial;
+  if(!offer || offer.reason || now<latestCareAt(p) || p.stage!==expected.stage ||
+    (p.boostCount || 0)!==expected.count || (t && t.step!=='boost'))return p;
+  const advanced={...p,boostCount:expected.count+1,gardenLife:{...p.gardenLife,balance:offer.balance-SPURT_COST}};
+  if(t){
+    const blocks=t.blocks+1;
+    if(blocks===4)return finishSprouting(sprout(advanced,now),now);
+    return {...advanced,tutorial:{...t,blocks}};
+  }
+  if(p.stage==='seed')return wake({...advanced,seedBonus:(p.seedBonus || 0)+offer.amount},now);
+  return wake({...advanced,anchor:now,earned:offer.target},now);
 }
 function settle(p, now) {
   return {...p, earned:earnedAt(p,now), anchor:Math.max(now,p.anchor)};
 }
 export function wake(p, now = Date.now(), visible = true) {
   if (p.deadAt !== null || now < latestCareAt(p)) return p;
-  if (p.stage === 'seed') return visible && p.wateredAt !== null && now >= p.plantedAt + HOUR ? sprout(p,now) : p;
+  if (p.stage === 'seed') return visible && !p.tutorial && p.wateredAt !== null && earnedAt(p,now)>=HOUR ? sprout(p,now) : p;
   const deadline = deathDeadline(p);
   const observedAt = Math.min(now,deadline);
   const elapsed = earnedAt(p,observedAt);
@@ -208,6 +234,10 @@ export function readPlant(text, now = Date.now(), visible = true) {
         anchor:now,fedAt:p.lastDrink===null?null:now,litAt:p.lastDrink===null?null:now,
         companyAt:p.lastDrink===null?null:now,accompanied:false});
     }
+    if(p.seedBonus!==undefined && (!stamp(p.seedBonus) || p.seedBonus>HOUR))return null;
+    if(p.boostCount!==undefined && !stamp(p.boostCount))return null;
+    if(p.tutorial && !validTutorial(p.tutorial,p.stage))return null;
+    if(p.dewLesson!==undefined && !validDewLesson(p.dewLesson))return null;
     if (!Object.hasOwn(p,'fungusAt')) p.fungusAt=null;
     if (!Object.hasOwn(p,'outbreakDue')) p.outbreakDue=p.deadAt===null && p.stage!=='seed' ? nextOutbreak(now) : null;
     if(!optionalStamp(p.fungusAt) || !optionalStamp(p.outbreakDue) ||
@@ -227,7 +257,17 @@ export function readPlant(text, now = Date.now(), visible = true) {
     if (!validGarden(p) || !validGardenLife(p)) return null;
     p.name=plantName(p.name);
     for (const item of [...p.book,...p.graduates]) item.name=item.source==='shop' && catalog[item.species]?.kind==='plant'?catalog[item.species].name:plantName(item.name);
-    return wake(p, now, visible);
+    if(p.seenHints!==undefined && (!Array.isArray(p.seenHints) || !p.seenHints.every(id=>typeof id==='string')))return null;
+    let migrated=p;
+    if(p.tutorial){
+      for(const id of p.tutorial.visited)migrated=rememberHint(migrated,id);
+      if(p.tutorial.step==='apps')migrated={...migrated,tutorial:{...p.tutorial,step:'return'}};
+      if(p.tutorial.step==='tour'){
+        const start=Math.max(now,p.anchor);
+        migrated=finishSprouting({...migrated,outbreakDue:nextOutbreak(start)},start);
+      }
+    }
+    return wake(migrated, now, visible);
   } catch { return null; }
 }
 

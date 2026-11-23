@@ -1,3 +1,4 @@
+import GuideChat from './GuideChat.jsx';
 import React,{forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {ChevronLeft,ChevronRight,X} from 'lucide-react';
 import SwipeCue from './SwipeCue.jsx';
@@ -5,7 +6,7 @@ import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces} from './roomShopArt.js';
 import {prepareRoomPhotos} from './framePhotoMedia.js';
-import {catalog,lifeOf,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackupChange} from './gardenEconomy.js';
+import {catalog,itemPrice,lifeOf,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackupChange} from './gardenEconomy.js';
 import './gardenMarket.css';
 import GardenKeepsakes from './GardenKeepsakes.jsx';
 import {ROOT_TIME,replant,takeCutting} from './game.js';
@@ -44,6 +45,8 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const [panel,setPanel]=useState(null),[ghost,setGhost]=useState(null),[cat,setCat]=useState(false);
   const items=lifeOf(plant).items;
   const [shopMove,setShopMove]=useState(null),[preview,setPreview]=useState(null),[itemId,setItemId]=useState(null);
+  const starterPurchase=useRef(false);
+  const [purchaseState,setPurchaseState]=useState('ready');
   const phonePlacement=useRef(null),roomOpener=useRef(null),placeButton=useRef(null);
   const item=items.find(i=>i.id===itemId);
   const itemPlant=item?.slot!=null && catalog[item.sku].kind==='pot'?graduates.find(p=>p.slot===item.slot):null;
@@ -149,9 +152,9 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     }
   },[active]);
   useLayoutEffect(()=>{
-    onOverlayChange?.(Boolean(active && (panel || busy)));
+    onOverlayChange?.(Boolean(active && (panel || busy || (placing && plant.tutorial))));
     return ()=>onOverlayChange?.(false);
-  },[active,panel,busy,onOverlayChange]);
+  },[active,panel,busy,placing,plant.tutorial,onOverlayChange]);
   function relax(){
     clearTimeout(zoomTimer.current);
     const el=lens.current;
@@ -201,17 +204,22 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       else if(kind==='replant'){setPanel(null);returnToToy?.();}
     }finally{pending.current=false;if(mounted.current)setBusy(false);}
   }
-  async function change(operation,frameOriginal){
+  async function change(operation,frameOriginal,signal,purchaseReceipt){
     if(pending.current)return false;
     pending.current=true;setBusy(true);
     let changed=false,tooBig=false;
     try{
-      const ok=await commit(p=>{
+      const write=commit(p=>{
+        // Another tab may have already placed the starter pot. Accept its current
+        // checkpoint without applying a stale purchase to later gameplay.
+        if(purchaseReceipt && p.tutorial?.step!=='pot'){changed=true;return p;}
         const next=operation(p);
         if(next===p)return p;
         if(!fitsBackupChange(p,next)){tooBig=true;return p;}
         changed=true;return next;
-      },{frameOriginal});
+      },{frameOriginal,signal,purchaseReceipt});
+      const ok=signal?await Promise.race([write,new Promise(resolve=>signal.addEventListener('abort',()=>resolve(false),{once:true}))]):await write;
+      if(signal?.aborted){setNotice('Storage is taking longer than usual. Your spot is still selected.');return false;}
       if(!ok || !changed)setNotice(tooBig?'Your garden is near its backup limit. Remove a frame photo and try again.':'Could not save this change. Check the current item or spot and try again.');
       return ok && changed;
     }finally{pending.current=false;if(mounted.current)setBusy(false);}
@@ -228,6 +236,8 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       return addresses.some(s=>canSetItem(plant,request.sku,s,request.from));
     });
     if(!hasSpace){setNotice('Every suitable spot is occupied. Put an item in inventory to make room.');return false;}
+    setPurchaseState('ready');
+    starterPurchase.current=request.buy && plant.tutorial?.step==='pot';
     phonePlacement.current=fromPhone?request:null;
     setShopMove(request);setPreview(null);setSlot(null);setPanel(null);setNotice('');relax();
     focusDestination();
@@ -236,7 +246,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   function cancelShop(){
     if(!shopMove || pending.current)return;
     const request=phonePlacement.current;
-    phonePlacement.current=null;
+    starterPurchase.current=false;phonePlacement.current=null;
     setShopMove(null);setPreview(null);setSlot(null);setNotice('');
     if(request)onPlacementCancel?.(request);else focusSlot(shopMove.from,shopMove.id);
   }
@@ -254,7 +264,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     cancelCarry();
   }
   function reset(){
-    phonePlacement.current=null;gesture.current=null;clearEdge();clearTimeout(catTimer.current);relax();
+    starterPurchase.current=false;phonePlacement.current=null;gesture.current=null;clearEdge();clearTimeout(catTimer.current);relax();
     setPanel(null);setItemId(null);setShopMove(null);setPreview(null);setGraduating(null);setCarry(null);
     setSlot(null);setNotice('');setCat(false);setDropOver(null);setGhost(null);
   }
@@ -263,16 +273,47 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     showBook:()=>{if(pending.current || placing)return false;openKeepsake('book');return true;},
     preparePostcard,reset,
   }));
+  // Replace the placement UI before painting the committed lesson and regular shop prices.
+  useLayoutEffect(()=>{
+    if(!starterPurchase.current || !shopMove || plant.tutorial?.step==='pot')return;
+    starterPurchase.current=false;
+    const request=phonePlacement.current;
+    phonePlacement.current=null;
+    setShopMove(null);setPreview(null);setSlot(null);setNotice('');
+    if(request)onPlacementDone?.(request);
+  },[plant.tutorial?.step,items,shopMove,onPlacementDone]);
+
   async function finishPlacement(){
-    if(!preview || !shopMove)return;
-    const ok=await change(p=>placeItem(p,{...shopMove,...preview},Date.now()));
-    if(ok){
-      setShopMove(null);setPreview(null);setSlot(null);
-      focusSlot(preview.slot,shopMove.id);
-      setNotice(catalog[shopMove.sku].name+' placed at '+placeName(preview.slot).toLowerCase()+'.');
-      const request=phonePlacement.current;phonePlacement.current=null;
-      if(request)onPlacementDone?.(request);
-    }else setPreview(null);
+    if(!preview || !shopMove || pending.current)return;
+    const request={...shopMove,...preview};
+    const starter=starterPurchase.current;
+    const buy=p=>placeItem(p,request,Date.now());
+    const saveAttempt=async()=>{
+      const controller=new AbortController();
+      const timer=setTimeout(()=>controller.abort(),starter?4500:12000);
+      try{
+        const saved=await change(buy,undefined,controller.signal,starter?request:undefined);
+        return {saved,timedOut:controller.signal.aborted};
+      }finally{clearTimeout(timer);}
+    };
+    if(starter){
+      setPurchaseState('saving');
+      let result=await saveAttempt();
+      if(!mounted.current || !starterPurchase.current)return;
+      if(!result.saved && result.timedOut){
+        setPurchaseState('retrying');
+        result=await saveAttempt();
+      }
+      if(!result.saved && mounted.current && starterPurchase.current)setPurchaseState('failed');
+      return;
+    }
+    const {saved}=await saveAttempt();
+    if(!saved || !mounted.current)return;
+    setShopMove(null);setPreview(null);setSlot(null);
+    focusSlot(preview.slot,shopMove.id);
+    setNotice(catalog[shopMove.sku].name+' placed at '+placeName(preview.slot).toLowerCase()+'.');
+    const source=phonePlacement.current;phonePlacement.current=null;
+    if(source)onPlacementDone?.(source);
   }
   function restoreFocus(){
     requestAnimationFrame(()=>{
@@ -325,7 +366,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   }
   function choose(target){
     if(pending.current)return;
-    setCat(false);setNotice('');
+    setCat(false);setNotice('');setPurchaseState('ready');
     const occupant=collection.get(target);
     if(shopMove){
       if(canSetItem(plant,shopMove.sku,target,shopMove.from)){
@@ -437,8 +478,9 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const swapping=Boolean(displaced && shopMove.from!=null);
   const panelTitle={item:catalog[item?.sku]?.name || 'My items',jar:'Cutting Jar',book:'Leaf Book'};
   const available=active && !globalMenuOpen;
+  const guidingPot=Boolean(starterPurchase.current && shopMove);
   return <section className="collector" aria-label="Collector garden" aria-hidden={!available || undefined} inert={!available?'':undefined}
-    data-room-hud={available?'':undefined} data-room-placing={placing?'':undefined} data-room-blocked={!available || panel || busy?'':undefined}
+    data-guiding-pot={guidingPot?'':undefined} data-room-hud={available?'':undefined} data-room-placing={placing?'':undefined} data-room-blocked={!available || panel || busy?'':undefined}
     onPointerDownCapture={e=>{if(e.isPrimary)ignoreClick.current=false;}}
     onClickCapture={e=>{
       if(ignoreClick.current && e.detail!==0){e.preventDefault();e.stopPropagation();}
@@ -465,17 +507,17 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         else inspect(e.clientX,e.clientY);
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
-        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible} worldHeight={worldHeight} plants={potted[k]} hour={hour}
+        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} plants={potted[k]} hour={hour}
           garden={plant} playingItemId={plant.sound ? playingRecordId : null} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} selectedKeepsake={panel} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
-    <div className="room-controls" hidden={!available || Boolean(panel)}>
+    <div className="room-controls" hidden={(!available && !guidingPot) || Boolean(panel)}>
       {placing
         ? <button type="button" ref={roomReturn} className="room-corner room-return" data-room-focus=""
             aria-label="Cancel move" title="Cancel move" disabled={!available || busy} onClick={cancelPlacement}><X aria-hidden="true"/></button>
-        : <SwipeCue ref={roomReturn} data-room-focus="" data-room-return="" aria-label="Return to Plantigochi"
+        : plant.tutorial?.step!=='pot' && <SwipeCue ref={roomReturn} data-room-focus="" data-room-return="" aria-label="Return to Plantigochi"
             hint="Swipe up or down to return to Plantigochi" disabled={!available || busy} onClick={event=>leaveRoom(event,returnToToy)}/>}
-      {!placing && <button type="button" className="room-corner room-open-phone" data-room-open-phone=""
+      {!placing && (!plant.tutorial || plant.tutorial.step==='pot') && <button type="button" className="room-corner room-open-phone" data-room-open-phone=""
         aria-label="Open iSEED" title="Open iSEED" disabled={!available || busy} onClick={event=>leaveRoom(event,raisePhone)}>
         <img src="/art/iseed-pocket.png" alt="" width="22" height="25" style={{imageRendering:"pixelated"}}/>
       </button>}
@@ -484,15 +526,18 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         <span>{viewName(page)}</span>
         <button aria-label="Next room" disabled={page===count-1} onClick={()=>travel(page+1)}><ChevronRight aria-hidden="true"/></button>
       </nav>}
-      {message && <div className={placing?"room-hint room-placement":"room-hint"}><span role="status">{message}</span>
+      {message && <div className={placing?"room-hint room-placement":"room-hint"}>
+        {guidingPot?<GuideChat className="placement-guide" cue={available?(preview?'confirm-pot-'+preview.slot:'place-pot'):null}>
+          <p>{busy?(purchaseState==='retrying'?'Still waiting for storage. Trying again…':'Saving your pot on this device…'):notice || (preview?placeName(preview.slot)+'. Buy here, or tap another circle.':'Tap a circle to try a spot. Drag to look around.')}</p>
+        </GuideChat>:<span role="status">{message}</span>}
         {placing && <div className="placement-actions">
           <button aria-label="Previous placement room" disabled={busy || page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>
           <span aria-label={'Room '+(page+1)+' of '+count}>{page+1} / {count}</span>
           <button aria-label="Next placement room" disabled={busy || page===count-1} onClick={()=>travel(page+1)}><ChevronRight aria-hidden="true"/></button>
-          <button disabled={busy} onClick={cancelPlacement}>Cancel</button>
+          {!guidingPot && <button disabled={busy} onClick={cancelPlacement}>Cancel</button>}
         </div>}
         {displaced && <small>{catalog[displaced.sku].name} {swapping?'will move to '+placeName(shopMove.from).toLowerCase()+'.':'will return to inventory.'}</small>}
-        {shopMove && preview && <button ref={placeButton} disabled={busy} onClick={finishPlacement}>{shopMove.buy?'Buy for '+catalog[shopMove.sku].price+' coins':swapping?'Swap here':'Place here'}</button>}
+        {shopMove && (preview || guidingPot) && <button ref={placeButton} disabled={busy || !preview} onClick={finishPlacement}>{busy?(guidingPot && purchaseState==='retrying'?'Trying again…':'Saving…'):guidingPot && purchaseState==='failed'?'Retry save':shopMove.buy?'Buy for '+itemPrice(plant,shopMove.sku)+' coins':swapping?'Swap here':'Place here'}</button>}
         {picking && slot!==null && !chosen && <button onClick={()=>putDown(slot,null)} disabled={busy}>Move in</button>}
         {!placing && <button aria-label="Dismiss garden message" onClick={()=>{setSlot(null);setNotice('');}}>×</button>}
       </div>}

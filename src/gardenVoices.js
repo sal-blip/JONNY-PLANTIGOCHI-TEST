@@ -79,6 +79,25 @@ function catPurr(ctx){
   return buf;
 }
 
+// One soft bell strike. Every tutorial popup uses this exact recording.
+function guideChime(ctx) {
+  const rate = 24000, duration = .38;
+  const buffer = ctx.createBuffer(1, Math.round(rate * duration), rate);
+  const samples = buffer.getChannelData(0);
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / rate, phase = 784 * t;
+    const envelope = (1 - Math.exp(-t / .006)) * Math.min(1, (duration - t) / .055);
+    samples[i] = envelope * (.21 * sine(phase) * Math.exp(-t / .105)
+      + .07 * sine(phase * 2.54) * Math.exp(-t / .055));
+  }
+  return buffer;
+}
+
+export function playGuideChime(ctx, bus) {
+  bus.gain.value = .28;
+  oneShot(ctx, bus, bufferFor(ctx, 'guide-chime', () => guideChime(ctx)));
+}
+
 export function playButton(ctx, bus, kind = 'tap', variation = 0) {
   if(kind==='purr'){
     oneShot(ctx,bus,bufferFor(ctx,'cat-purr',()=>catPurr(ctx)));
@@ -86,18 +105,20 @@ export function playButton(ctx, bus, kind = 'tap', variation = 0) {
   }
   const variant = Math.abs(Math.trunc(Number(variation) || 0)) % 5;
   const care = kind === 'care';
-  oneShot(ctx, bus, bufferFor(ctx, 'button-' + care + '-' + variant, () => woodenClick(ctx, care, variant)));
+  const buffer = bufferFor(ctx, 'button-' + care + '-' + variant, () => woodenClick(ctx, care, variant));
+  oneShot(ctx, bus, buffer);
+  return buffer.duration;
 }
 
 function canopyRustle(ctx) {
   const rate = 24000;
-  const buffer = ctx.createBuffer(2, Math.ceil(rate * 6), rate);
+  const buffer = ctx.createBuffer(2, Math.ceil(rate * .8), rate);
   const left = buffer.getChannelData(0), right = buffer.getChannelData(1);
   // Each pass has independent fibers and travels across the listener's head.
   const sweeps = [
-    { start: 0.07, length: 2.30, from: -0.85, to: 0.54, volume: 0.78 },
-    { start: 1.66, length: 2.91, from: 0.81, to: -0.78, volume: 1.00 },
-    { start: 3.58, length: 2.34, from: -0.58, to: 0.55, volume: 0.63 },
+    { start: 0.01, length: .32, from: -0.85, to: 0.54, volume: 0.39 },
+    { start: .22, length: .39, from: 0.81, to: -0.78, volume: .50 },
+    { start: .48, length: .31, from: -0.58, to: 0.55, volume: .315 },
   ];
   sweeps.forEach(({ start, length, from, to, volume }, index) => {
     const random = noise(37063 + index * 409);
@@ -197,9 +218,11 @@ function sleepyBreathing(ctx) {
   return buffer;
 }
 
-export function startGardenBed(ctx, bus, sleeping = false, volume = 1) {
-  const noteBuffer = bufferFor(ctx, 'garden', () => gardenScore(ctx));
-  const score = sleeping ? [noteBuffer, bufferFor(ctx, 'sleep', () => sleepyBreathing(ctx))] : [noteBuffer];
+export function startGardenBed(ctx, bus, sleeping = false, volume = 1, instrumental = true) {
+  const score = [];
+  if (instrumental) score.push(bufferFor(ctx, 'garden', () => gardenScore(ctx)));
+  if (sleeping) score.push(bufferFor(ctx, 'sleep', () => sleepyBreathing(ctx)));
+  if (!score.length) return;
   const mix = ctx.createGain(), start = ctx.currentTime, fadeIn = 0.85;
   mix.gain.setValueAtTime(0, start);
   mix.gain.linearRampToValueAtTime(volume, start + fadeIn);

@@ -1,5 +1,5 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {catalog,framePhotoIdentity,lifeOf,localDay} from './gardenEconomy.js';
+import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay} from './gardenEconomy.js';
 import {drawShopPreview,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
 import {readFrameUpload} from './frameUpload.js';
@@ -86,13 +86,13 @@ export default function GardenShop({plant,onPlace,inspect,initialTab='shop',onTa
     <CoinBalance plant={plant}/>
     <div className="garden-tabs">
       <button aria-pressed={tab==='shop'} onClick={()=>openTab('shop')}>Shop</button>
-      <button aria-pressed={tab==='bag'} onClick={()=>openTab('bag')}>My items</button>
+      <button disabled={plant.tutorial?.step==='pot'} aria-pressed={tab==='bag'} onClick={()=>openTab('bag')}>My items</button>
     </div>
     {tab==='shop'?<div className="shop-list">{Object.entries(catalog).map(([sku,p])=><button key={sku}
-      aria-label={p.name+' · '+p.price+' coins'} disabled={g.balance<p.price}
+      aria-label={p.name+' · '+itemPrice(plant,sku)+' coins'} disabled={g.balance<itemPrice(plant,sku) || Boolean(plant.tutorial && (plant.tutorial.step!=='pot' || sku!=='terra'))}
       onClick={()=>onPlace({sku,id:crypto.randomUUID(),buy:true})}>
       <ItemArt sku={sku}/><span>{p.name}<small>{({pot:'Individual pot',frame:'Personal photo',plant:'Grown garden plant',decor:'Room decoration'})[p.kind]}</small></span>
-      <b><img src="/art/iseed-coin.png" width="13" height="13" alt="" style={{imageRendering:"pixelated"}}/>{p.price}</b></button>)}</div>:
+      <b><img src="/art/iseed-coin.png" width="13" height="13" alt="" style={{imageRendering:"pixelated"}}/>{itemPrice(plant,sku)}</b></button>)}</div>:
       <div className="shop-list">{g.items.map(item=><button key={item.id} onClick={()=>inspect(item)}><ItemArt sku={item.sku} photo={item.photo}/>
         <span>{catalog[item.sku].name}<small>{item.slot===null?'In inventory':'In the room'}</small></span><ChevronRight size={16}/></button>)}
         {!g.items.length && <p><ShoppingBag size={16}/> Your pots and decorations will appear here.</p>}

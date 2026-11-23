@@ -5,7 +5,7 @@ import {leaveEditor,newJournalSession} from './journalDrafts.js';
 import {RecordControls} from './GardenRecord.jsx';
 import GameLink from './GameLink.jsx';
 import {downloadFile} from './Recovery.jsx';
-import {catalog,canSetItem,fitsBackupChange,framePhoto,lifeOf,storeItem} from './gardenEconomy.js';
+import {catalog,itemPrice,canSetItem,fitsBackupChange,framePhoto,lifeOf,storeItem} from './gardenEconomy.js';
 import {gardenViews,placesFor,slotFor,speciesName} from './gardenLayout.js';
 import {decorPlaces} from './roomShopArt.js';
 import './gardenMarket.css';
@@ -14,7 +14,7 @@ const titles={shop:'Garden shop',inventory:'Inventory',journal:'Journal',library
 
 function phonePlacementError(plant,request){
   const product=catalog[request.sku],garden=lifeOf(plant);
-  if(request.buy && garden.balance<product.price)return 'You need '+product.price+' Garden Coins for this item.';
+  if(request.buy && garden.balance<itemPrice(plant,request.sku))return 'You need '+itemPrice(plant,request.sku)+' Garden Coins for this item.';
   if(!request.buy && !garden.items.some(item=>item.id===request.id && item.slot===request.from))
     return 'This item has moved. Reopen it in Inventory.';
   const count=gardenViews(plant.graduates);

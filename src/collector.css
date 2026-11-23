@@ -80,7 +80,7 @@
 @media (orientation:landscape) and (max-height:540px) {
   /* The interactive garden keeps foreground pots above the controls. When the
      garden is the keychain's backdrop the painted floor fills this space. */
-  .collector[data-room-hud]:not([data-room-placing]) .room-lens {
+  .garden:not([data-tutorial]) .collector[data-room-hud]:not([data-room-placing]) .room-lens {
     bottom:calc(max(12px,env(safe-area-inset-bottom) + 6px) + 50px);
   }
   .room-navigation:not(.room-placement) {
@@ -88,4 +88,17 @@
     left:max(12px,calc(env(safe-area-inset-left) + 6px));
     transform:none;
   }
+}
+
+/* Float the shopping controls over the ceiling. A changing label or receipt
+   must never resize the painted room or move the spot under the player's finger. */
+.collector[data-guiding-pot] .room-controls{position:absolute;inset:0 0 auto;background:#f5f1e2f5;padding:max(6px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 6px max(64px,calc(env(safe-area-inset-left) + 64px));z-index:1}
+.collector[data-guiding-pot] .room-placement{position:static;transform:none;display:grid;grid-template-columns:auto 1fr;gap:2px 8px;width:100%;max-width:none;padding:0;border:0;box-shadow:none;backdrop-filter:none;background:none;text-align:left}
+.collector .placement-guide{grid-column:1/-1;background:none;border:0;box-shadow:none;padding:0;pointer-events:none}
+.collector[data-guiding-pot] .room-placement>button{justify-self:end;background:#345940;color:#fffbea;border-radius:12px;min-height:44px;padding:6px 12px;text-decoration:none}
+.collector[data-guiding-pot] .room-placement>button:disabled{opacity:.5}
+@media(orientation:landscape) and (max-height:620px){
+ .collector[data-guiding-pot] .room-placement{grid-template-columns:minmax(0,1fr) auto auto;column-gap:8px}
+ .collector[data-guiding-pot] .placement-guide{grid-column:1;font-size:13px;line-height:1.2}
+ .collector[data-guiding-pot] .room-return{top:max(6px,env(safe-area-inset-top))}
 }

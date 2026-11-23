@@ -95,3 +95,25 @@
   --cap-position: 100%;
   --key-y: 76.460177%;
 }
+
+/* The rays sit behind the moulding; the case and controls keep their normal hit areas. */
+.sprout-burst,.sprout-stars{position:absolute;inset:0;pointer-events:none;animation:sprout-bloom 3.2s ease-in-out both}
+.sprout-stars{z-index:3}
+.sprout-rays{position:absolute;left:50%;top:53%;width:145%;aspect-ratio:1;translate:-50% -50%;border-radius:50%;
+  background:radial-gradient(circle,#fff6b8aa 15%,#f1e89744 44%,transparent 66%),
+    repeating-conic-gradient(from 10deg,transparent 0deg,#ffed9c36 8deg,#fff6cfcf 17deg,#fff0a86b 23deg,transparent 35deg,transparent 40deg);
+  mask-image:radial-gradient(circle,#000 22%,#000e 40%,#0005 56%,transparent 70%);
+  animation:sprout-turn 3.2s cubic-bezier(.15,.65,.3,1) both}
+.sprout-star{position:absolute;width:var(--star-size);height:var(--star-size);translate:-50% -50%;
+  background:#fffde6;clip-path:polygon(50% 0,62% 36%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  animation:sprout-twinkle 1.15s var(--twinkle-delay) ease-in-out 2 both}
+.device:has(>.sprout-burst) .inspect-shell .device-shell{animation:sprout-case-light 3.2s ease-in-out both}
+@keyframes sprout-bloom{0%,100%{opacity:0}17%,68%{opacity:1}}
+@keyframes sprout-turn{from{rotate:-20deg;scale:.84}to{rotate:44deg;scale:1.06}}
+@keyframes sprout-twinkle{0%,100%{opacity:.12;scale:.45}50%{opacity:1;scale:1.24}}
+@keyframes sprout-case-light{0%,100%{filter:drop-shadow(0 4px 2px #14201c70) drop-shadow(9px 16px 10px #0a171954)}
+  30%,52%{filter:brightness(1.22) saturate(1.15) drop-shadow(0 0 8px #fff4af) drop-shadow(0 0 16px #cfe99299)}}
+@media(prefers-reduced-motion:reduce){
+  .sprout-burst,.sprout-stars{opacity:.72}.sprout-rays{background:radial-gradient(circle,#fff3ae 15%,#efe39790 43%,transparent 66%)}
+  .device:has(>.sprout-burst) .inspect-shell .device-shell{filter:brightness(1.12) drop-shadow(0 0 7px #fff4af)}
+}

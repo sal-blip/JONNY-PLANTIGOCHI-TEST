@@ -1,4 +1,4 @@
-import {ACTIONS, STAGE_NAMES, FUNGUS_WINDOW, HOUR, careStatus, condition, countdown, healthLabels} from './game.js';
+import {ACTIONS, STAGE_NAMES, FUNGUS_WINDOW, HOUR, SPURT_COST,growthSpurtOffer, careStatus, condition, countdown, healthLabels} from './game.js';
 import {canPlay, dewCheckpoint, LEVELS} from './pocketPlay.js';
 import {foodReadout, growthReadout, waterReadout} from './plantReadout.js';
 
@@ -14,13 +14,14 @@ const guide = [
   ['Plant food','Food every 48h. Light every 24h.'],
   ['Growing up','Young on day 3. First split on day 5. Grown on day 7.'],
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
+  ['Garden coins','Visits +10 daily. Helpful watering +2, up to 3/day. Game wins +3, up to 5/day.'],
   ['Leaf Echo','Watch three beats. Copy them with the keys.'],
   ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
   ['Fungus','Gnats? First Aid cures fungus. Treat within 12h.'],
   ['Garden keepsakes','Swipe up to visit the garden’s Cutting Jar and Leaf Book.'],
 ];
 export const toyBranches = {care:'Care', play:'Play', growth:'Growth', aid:'First Aid', guide:'Field guide'};
-export const toyTitles = {home:'Plant menu', ...toyBranches, pour:'Still wet?', pause:'Paused',pastAid:'Past alert'};
+export const toyTitles = {home:'Plant menu', ...toyBranches, boost:'Growth Spurt',spurtReceipt:'Growth Spurt',spurtChanged:'Growth Spurt',pour:'Still wet?', pause:'Paused',pastAid:'Past alert'};
 
 function ageLabel(ms) {
   const hours=Math.floor(Math.max(0,ms)/HOUR);
@@ -73,11 +74,22 @@ export function toyCards(section, plant, now) {
       if (progress.next) {
         const [remaining, blockers]=progress.detail.split(' · ');
         entries.push(card(progress.next,remaining,'next'));
+        const balance=plant.gardenLife?.balance ?? 0;
+        entries.unshift(card('Growth Spurt',blockers || ('50 coins · You have '+balance),'boost'));
         if(blockers)entries.push(card('Growth needs',blockers.replace('Needs ',''),sick?'aid':'care'));
       }
       if (!dead && plant.stage==='grown') entries.unshift(sick?card('Treat fungus first','Open First Aid','aid'):card('Move to garden','Choose a permanent pot','graduate'));
       return [...entries,...(dead?[]:[card('Rename plant',plant.name || 'Monstera','rename')]),...[['Sprout','1 hour'],['Young plant','3 days'],['First split','5 days'],['Grown plant','7 days']].map(([name,age])=>card(name,age+' growing time','next'))];
     }
+    case 'boost': {
+      const offer=growthSpurtOffer(plant,now);
+      if(!offer)return [card('Growth complete','Back to my plant','back')];
+      if(offer.reason)return [card('Growth Spurt',offer.reason,'back')];
+      return [card('Spend '+SPURT_COST+' coins',offer.percent===100?'Reach '+offer.next:offer.percent+'% toward '+offer.next,'buy-boost'),
+        card('Cancel','Keep my coins','back')];
+    }
+    case 'spurtReceipt': return [card('Spurt saved',STAGE_NAMES[plant.stage]+' · '+plant.gardenLife.balance+' coins left','back')];
+    case 'spurtChanged': return [card('No coins spent','Check current growth and care','back')];
     case 'pastAid': return [card('All clear','This outbreak has ended','back')];
     case 'aid': return [sick ? card('G-NAT ASSASSIN','♥ One drop · '+remaining,'treat')
       : dead ? card('Start again','Open the garden Leaf Book','garden-book') : card('All clear','Your plant needs no drops',null)];

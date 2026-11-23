@@ -156,3 +156,44 @@ test('frames with identical previews still compare the selected original before 
   assert.equal(framePhoto(replaced,'frame',{...second,originalId:'invalid'},second.originalId),replaced);
   assert.equal(framePhoto(replaced,'frame',null,second.originalId).gardenLife.items[0].photo,undefined);
 });
+
+test('growth boosts respect care, balance, purchase identity and the next milestone',async()=>{
+  const {buyGrowth,DAY,earnedAt}=await import('../src/game.js');
+  let p=wake(care(checkIn(seed(),morning),'water',morning),morning+HOUR);
+  const time=morning+HOUR;
+  p={...p,gardenLife:{...p.gardenLife,balance:650}};
+  const buyStep=(plant,when=time)=>buyGrowth(plant,{stage:plant.stage,count:plant.boostCount || 0},when);
+  const sick={...p,fungusAt:time,outbreakDue:null};
+  assert.equal(buyStep(sick),sick);
+  const poor={...p,gardenLife:{...p.gardenLife,balance:49}};
+  assert.equal(buyStep(poor),poor);
+  const first=buyStep(p);
+  assert.equal(earnedAt(first,time),HOUR+(3*DAY-HOUR)/4);
+  assert.equal(buyGrowth(first,{stage:'sprout',count:0},time),first);
+  for(const stage of ['young','split','grown']){
+    for(let n=0;n<4;n++)p=buyStep(p);
+    assert.equal(p.stage,stage);
+    assert.equal(readPlant(JSON.stringify(p),time).stage,stage);
+  }
+  assert.equal(p.gardenLife.balance,50);
+  assert.equal(p.lastDrink,time);
+  assert.equal(buyStep(p),p);
+});
+
+test('a near-milestone spurt matches its quote after reload and keeps the watering deadline',async()=>{
+  const {buyGrowth,DAY,growthSpurtOffer}=await import('../src/game.js');
+  const {reminderSchedule}=await import('../src/reminderSchedule.js');
+  const now=morning+HOUR;
+  const sprout=wake(care(checkIn(seed(),morning),'water',morning),now);
+  const p={...sprout,earned:3*DAY-1,gardenLife:{...sprout.gardenLife,balance:75}};
+  const offer=growthSpurtOffer(p,now);
+  assert.equal(offer.percent,100);
+  const expected={stage:'sprout',count:0};
+  const saved=readPlant(JSON.stringify(buyGrowth(p,expected,now)),now);
+  assert.equal(saved.earned,offer.target);
+  assert.equal(saved.stage,'young');
+  assert.equal(saved.gardenLife.balance,25);
+  assert.equal(buyGrowth(saved,expected,now),saved);
+  assert.equal(reminderSchedule(saved,false).dryDue,reminderSchedule(p,false).dryDue);
+  assert.equal(growthSpurtOffer(saved,now).reason,'Need 25 more coins');
+});

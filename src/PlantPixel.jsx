@@ -460,7 +460,7 @@ function PlantBody({stage, condition, lowLight, severity}) {
   return <Body stage={stage} condition={condition} lowLight={lowLight} severity={severity}/>;
 }
 
-export default function PlantPixel({ stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false, outbreak = 0, showBottle = false, waterFrom = "dry" }) {
+export default function PlantPixel({ seedSteps=0, stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false, outbreak = 0, showBottle = false, waterFrom = "dry" }) {
   const growth = Object.hasOwn(stageName, stage) ? stage : "seed";
   const soil = Object.hasOwn(healthName, condition) ? condition : "healthy";
   const socialMood = ["happy", "content", "quiet", "lonely"].includes(mood) ? mood : "content";
@@ -483,7 +483,12 @@ export default function PlantPixel({ stage = "seed", reaction = null, condition 
       <g className="plant-body"><g className="plant-outbreak-posture">
         {recoverFrom && <g className="plant-water-before"><PlantBody stage={growth} condition={recoverFrom}/></g>}
         {recoverFrom === "critical" && <g className="plant-water-opening"><PlantBody stage={growth} condition="dry"/></g>}
-        <g className={recoverFrom ? "plant-water-after" : undefined}><PlantBody stage={growth} condition={soil} lowLight={lowLight} severity={active}/></g>
+        <g className={recoverFrom ? "plant-water-after" : undefined} transform={growth==="seed" && seedSteps===1?"rotate(-9 36 25)":growth==="seed" && seedSteps>=2?"translate(36 25) scale(1.15 1.12) translate(-36 -25)":undefined}><PlantBody stage={growth} condition={soil} lowLight={lowLight} severity={active}/></g>
+        {growth==='seed' && seedSteps===3 && <g aria-hidden="true">
+          <path fill="#614e32" d="M36 16h2v2h-1v2h-2v-2h1z"/>
+          <path fill="#61844b" d="M36 17v-4h2v-2h2v3h-2v3z"/>
+          <path fill="#426b47" d="M38 13v-3h2V8h5v3h-2v2z"/><path fill="#abc473" d="M40 10h4v1h-4z"/>
+        </g>}
       </g></g>
       <Pot condition={soil} expression={expression} waterFrom={recoverFrom} />
       {!treating && <Feeling stage={growth} mood={feeling} hungry={hungry} lowLight={lowLight} condition={soil} reaction={effect || active} />}

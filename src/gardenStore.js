@@ -1,3 +1,4 @@
+import {newTutorial,startDewLesson} from './firstVisit.js';
 import {beginAlertVisit,answerAlertInvite} from './alertInvitation.js';
 import {checkIn,lifeOf,milestone} from './gardenEconomy.js';
 import {stageGardenReminder} from './gardenReminder.js';
@@ -69,11 +70,17 @@ export function loadSnapshot(raw,now=Date.now(),visible=true){
 function openDB(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open(databaseName,1);
-    let blocked=false;
-    req.onupgradeneeded=()=>req.result.createObjectStore(storeName);
-    req.onblocked=()=>{blocked=true;reject(new SaveIssue('Close other Plantigochi tabs and reopen the garden.'));};
-    req.onerror=()=>reject(req.error);
-    req.onsuccess=()=>{if(blocked)req.result.close();else resolve(req.result);};
+    let abandoned=false;
+    function abandon(message){
+      abandoned=true;clearTimeout(timer);reject(new SaveIssue(message));
+    }
+    // Some mobile browsers suspend the open request when its owner is backgrounded.
+    // Ignore a late handle after a retry opens a fresh connection.
+    const timer=setTimeout(()=>abandon('Opening garden storage took too long. Try again.'),10000);
+    req.onupgradeneeded=()=>{if(abandoned)req.transaction.abort();else req.result.createObjectStore(storeName);};
+    req.onblocked=()=>abandon('Close other Plantigochi tabs and reopen the garden.');
+    req.onerror=()=>{clearTimeout(timer);reject(req.error);};
+    req.onsuccess=()=>{clearTimeout(timer);if(abandoned)req.result.close();else resolve(req.result);};
   });
 }
 const revisionOf=setup=>Number.isSafeInteger(setup.revision)?setup.revision:0;
@@ -85,23 +92,36 @@ export function gardenStore(legacyStorage,visible){
   let database,checkedOriginals=false;
   function connection(){
     database ??= openDB().then(db=>{
-      db.onversionchange=()=>{db.close();database=null;};
+      db.onclose=()=>{database=null;};
+      db.onversionchange=()=>{db.onclose=null;db.close();database=null;};
       return db;
     }).catch(error=>{database=null;throw error;});
     return database;
   }
-  async function transaction(mode,apply){
+  async function transaction(mode,apply,signal,waitForStart){
     const db=await connection();
+    if(signal?.aborted)throw signal.reason;
     return new Promise((resolve,reject)=>{
       const tx=db.transaction(storeName,mode),records=tx.objectStore(storeName);
       const current=records.get(currentKey),setup=records.get(setupKey);
       let result,fault;
+      function abort(reason){
+        try{tx.abort();}catch{return;} // A committing write must report its actual outcome.
+        cleanup();reject(reason || new Error('Save interrupted.'));
+      }
+      const cancel=()=>abort(signal.reason);
+      // Limit only the queue wait for a refresh. Once started, its migration
+      // and photo reconciliation can take as long as the garden needs.
+      const timer=waitForStart && setTimeout(()=>abort(new SaveIssue('Garden storage is busy. Try again.')),waitForStart);
       setup.onsuccess=()=>{
+        clearTimeout(timer);
         try{result=apply(records,current.result,setup.result || {epoch:null});}
-        catch(error){fault=error;tx.abort();}
+        catch(error){fault=error;abort(error);}
       };
-      tx.oncomplete=()=>resolve(result);
-      tx.onabort=()=>reject(fault || tx.error || new Error('Save interrupted.'));
+      signal?.addEventListener('abort',cancel,{once:true});
+      function cleanup(){clearTimeout(timer);signal?.removeEventListener('abort',cancel);}
+      tx.oncomplete=()=>{cleanup();resolve(result);};
+      tx.onabort=()=>{cleanup();reject(fault || signal?.reason || tx.error || new Error('Save interrupted.'));};
     });
   }
   function source(raw,setup){
@@ -115,7 +135,8 @@ export function gardenStore(legacyStorage,visible){
     try{
       if(raw!==undefined)plant=loadSnapshot(raw,Date.now(),visible());
       result=resultOf(plant,setup);
-      const allowed=plant?['game','water','watered']:['welcome','name','tour'];
+      const allowed=plant?['game','water','watered','garden-guide','phone-guide']:['welcome','name','tour'];
+      if(plant && plant.sproutDebut===plant.id && !plant.tutorial && result.phase==='phone-guide')result.phase='game';
       if(!allowed.includes(result.phase))throw new SaveIssue('The setup record needs recovery.',rawText(raw));
     }catch(error){
       if(error instanceof SaveIssue)error.recovery={epoch:setup.epoch,revision:revisionOf(setup),raw:rawText(raw),phase:setup.phase};
@@ -126,17 +147,17 @@ export function gardenStore(legacyStorage,visible){
       if(text!==stored){
         records.put(text,currentKey);
         result.revision++;
-        records.put({...setup,revision:result.revision},setupKey);
+        records.put({...setup,phase:result.phase,revision:result.revision},setupKey);
         stageGardenReminder(records,plant,setup.epoch,legacyStorage);
       }
     }
     return result;
   }
-  function change(expected,operation){
+  function change(expected,operation,signal){
     return transaction('readwrite',(records,raw,setup)=>{
       if(!expected || setup.resetCleanup || setup.epoch!==expected.epoch)throw stale();
       return operation(records,raw,setup);
-    });
+    },signal);
   }
   function confirm(expected,raw,setup){
     if(expected.revision!==revisionOf(setup))throw stale();
@@ -168,7 +189,7 @@ export function gardenStore(legacyStorage,visible){
         // files. Reconcile them once per launch, only after a successful read.
         if(!checkedOriginals && !current.resetCleanup)pruneOriginals(records,frameOriginalIds(current.plant));
         return current;
-      });
+      },undefined,6000);
       if(!next.resetCleanup)checkedOriginals=true;
       return next;
     },
@@ -199,8 +220,9 @@ export function gardenStore(legacyStorage,visible){
       return change(expected,(records,raw,setup)=>{
         const current=snapshot(records,raw,setup);
         const prior=current.invite;
-        const resumeOffer=action==='open' && !enabled && current.phase==='watered' && prior?.round===1 && !prior.closed && prior.visit!==visit;
-        const invite=resumeOffer ? {...prior,visit} : action==='open' ? beginAlertVisit(prior,visit,current.phase==='watered',enabled)
+        const firstOffer=current.phase==='watered' && !current.plant.tutorial || current.phase==='game' && current.plant?.sproutDebut===current.plant?.id;
+        const resumeOffer=action==='open' && !enabled && firstOffer && prior?.round===1 && !prior.closed && prior.visit!==visit;
+        const invite=resumeOffer ? {...prior,visit} : action==='open' ? beginAlertVisit(prior,visit,firstOffer,enabled)
           : answerAlertInvite(prior,visit,action==='defer');
         if(invite===prior)return current;
         const phase=action!=='open' && current.phase==='welcome'?'name':current.phase;
@@ -209,28 +231,37 @@ export function gardenStore(legacyStorage,visible){
         return resultOf(current.plant,next);
       });
     },
-    setup(expected,next,draft=''){
+    setup(expected,next,draft='',options={}){
       return change(expected,(records,raw,setup)=>{
         const current=snapshot(records,raw,setup);
         if(current.phase!==expected.phase)throw stale();
         let plant=current.plant,firstDay=current.firstDay;
+        if(plant?.tutorial && next==='game')throw stale();
         switch(current.phase+'-'+next){
           case 'tour-welcome': case 'welcome-name': case 'name-welcome': case 'name-name': break;
-          case 'name-water':
+          case 'name-first-water': case 'name-water':
             plant=newPlant(Date.now(),draft);
             plant=checkIn(plant,plant.plantedAt);
+            if(next==='first-water'){plant={...plant,tutorial:newTutorial()};next='water';}
             firstDay={id:plant.id,visitCoins:lifeOf(plant).balance};
             plant=milestone(plant,'name','Named the seed '+plant.name+'.',plant.plantedAt);
             break;
           case 'game-game':
-            if(!firstDay || firstDay.id!==plant.id || plant.stage==='seed')throw stale();
+            if((plant.sproutDebut!==plant.id && firstDay?.id!==plant.id) || plant.stage==='seed')throw stale();
+            if(plant.sproutDebut){plant={...plant};delete plant.sproutDebut;}
+            if(typeof options.startDewLesson==='boolean')plant=startDewLesson(plant,options.startDewLesson);
             firstDay=null;
             break;
-          case 'watered-game':break;
+          case 'watered-game': case 'watered-garden-guide':
+          case 'garden-guide-phone-guide': case 'phone-guide-game':break;
           default:throw new SaveIssue('Open the current setup step and try again.');
         }
-        return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,invite:setup.invite,firstDay,phase:next,...(next==='name'?{draft}:{})});
-      });
+        let invite=current.invite;
+        if(current.phase==='watered' && next==='garden-guide' && options.answerInvite){
+          invite=answerAlertInvite(invite,options.answerInvite.visit,options.answerInvite.defer);
+        }
+        return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,invite,firstDay,phase:next,...(next==='name'?{draft}:{})});
+      },options.signal);
     },
     async update(expected,fn,options){
       let staged;
@@ -239,20 +270,40 @@ export function gardenStore(legacyStorage,visible){
         if(!validOriginalId(id))throw new SaveIssue('The frame photo has an invalid ID.');
         staged={id,blob:await canonicalFrameBlob(blob)};
       }
-      return change(expected,(records,raw,setup)=>{
+      const writing=change(expected,(records,raw,setup)=>{
         const current=snapshot(records,raw,setup);
         if(!current.plant || current.plant.id!==expected.plant?.id)throw stale();
         const plant=fn(current.plant);
-        const phase=current.phase==='water' && plant.wateredAt!==null?'watered':current.phase;
+        const finished=current.plant.tutorial && !plant.tutorial;
+        const phase=finished?'game':current.phase==='water' && plant.wateredAt!==null?'watered':current.phase;
         if(plant===current.plant && phase===current.phase)return current;
         updateOriginals(records,current.plant,plant,staged);
-        let firstDay=current.firstDay?.id===plant.id?current.firstDay:null;
+        let firstDay=!finished && current.firstDay?.id===plant.id?current.firstDay:null;
         if(firstDay && phase==='watered' && current.phase==='water'){
           const checkedIn=checkIn(current.plant,plant.wateredAt);
           firstDay={...firstDay,drinkCoins:lifeOf(plant).balance-lifeOf(checkedIn).balance};
         }
         return save(records,plant,{epoch:setup.epoch,revision:current.revision+1,phase,invite:setup.invite,firstDay});
+      },options?.signal);
+      const receipt=options?.purchaseReceipt;
+      if(!receipt)return writing;
+      let timer;
+      // A suspended web view can lose its write-completion callback. A read on
+      // the same store waits for that write, so only a durable item can finish
+      // the handoff. Return the latest snapshot, including concurrent changes.
+      const confirmation=new Promise((resolve,reject)=>{
+        timer=setTimeout(()=>{
+          transaction('readonly',(_,raw,setup)=>{
+            if(setup.epoch!==expected.epoch || setup.resetCleanup || !raw)throw stale();
+            const plant=loadSnapshot(raw,Date.now(),visible());
+            if(plant.id!==expected.plant.id || !lifeOf(plant).items.some(i=>
+              i.id===receipt.id && i.sku===receipt.sku && i.slot===receipt.slot))throw stale();
+            return resultOf(plant,setup);
+          },options.signal,6000).then(resolve,reject);
+        },1200);
       });
+      try{return await Promise.race([writing,confirmation]);}
+      finally{clearTimeout(timer);}
     },
     async replace(expected,backup){
       // Decode before opening the transaction. Confirm the reviewed garden
@@ -272,7 +323,7 @@ export function gardenStore(legacyStorage,visible){
         // blobs precede deletes. Freshly remapped IDs follow this key snapshot.
         pruneOriginals(records,new Set());
         for(const [id,blob] of originals)records.add(blob,assetKey(id));
-        return save(records,plant,{epoch:crypto.randomUUID(),revision:0,phase:'game'});
+        return save(records,plant,{epoch:crypto.randomUUID(),revision:0,phase:plant.tutorial?(plant.wateredAt===null?'water':plant.tutorial.step==='pot'?'watered':'phone-guide'):'game'});
       });
     },
     reset(expected){

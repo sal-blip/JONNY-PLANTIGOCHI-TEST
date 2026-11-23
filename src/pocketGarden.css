@@ -138,3 +138,13 @@
   background: #b8c8a1 url('/art/welcome-apartment.webp') center / cover no-repeat;
   image-rendering: pixelated;
 }
+
+.garden-purse{position:absolute;z-index:3;left:max(14px,env(safe-area-inset-left));bottom:calc(max(14px,env(safe-area-inset-bottom)) + 25px);
+  display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 6px;border:1px solid #ffffdf52;border-radius:16px;
+  background:#243a31de;color:#fff9dd;font:650 14px/1 var(--display);font-variant-numeric:tabular-nums;pointer-events:none}
+.garden-purse img{image-rendering:pixelated}
+.garden-purse .purse-unit{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(prefers-reduced-motion:no-preference){
+  .garden-purse span:first-of-type{animation:purse-glint .5s ease-out}
+  @keyframes purse-glint{from{color:#ffe388;transform:translateY(-2px)}to{color:inherit;transform:none}}
+}

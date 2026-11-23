@@ -3,6 +3,7 @@ import {deviceGarden as store,SaveIssue} from './gardenStore.js';
 import {KEY} from './game.js';
 import {downloadFile} from './gardenBackup.js';
 import {retireAlerts,finishAlertCleanup,withReminderLock} from './alertCleanup.js';
+import {clearScoreHandoff} from './scorePlayback.js';
 
 export const exportGardenRaw=store.exportRaw;
 export const mayChangeAlerts=store.mayChangeAlerts;
@@ -33,7 +34,11 @@ function issueMessage(error){
 }
 
 async function finishReset(){
-  try{return await store.finishReset(retireAlerts);}
+  try{
+    const garden=await store.finishReset(retireAlerts);
+    clearScoreHandoff();
+    return garden;
+  }
   catch{
     const issue=new SaveIssue('Your garden was erased. Reopen the app to finish clearing this installation.');
     issue.resetPending=true;throw issue;
@@ -91,13 +96,14 @@ export function useGardenSave(){
       window.removeEventListener('focus',visible);window.removeEventListener('online',cleanup);
       document.removeEventListener('visibilitychange',visible);};
   },[accept,fail,enqueue]);
-  const save=useCallback(operation=>enqueue(async()=>{
+  const save=useCallback((operation,signal)=>enqueue(async()=>{
     try{
       accept(await operation());
       if(channel.current)channel.current.postMessage('saved');
       else {try{localStorage.setItem('plantigochi-save-signal',crypto.randomUUID());}catch{}}
       return true;
     }catch(error){
+      if(signal?.aborted)return false;
       try{accept(await readReady());}
       catch(latest){
         fail(latest);
@@ -108,11 +114,11 @@ export function useGardenSave(){
     }
   }),[accept,fail,enqueue]);
   const epoch=view?.epoch,id=view?.plant?.id;
-  const commit=useCallback((fn,options)=>save(()=>store.update({epoch,plant:{id}},fn,options)),[save,epoch,id]);
+  const commit=useCallback((fn,options)=>save(()=>store.update({epoch,plant:{id}},fn,options),options?.signal),[save,epoch,id]);
   const target=view || recovery;
   const replace=backup=>save(()=>store.replace(target,backup));
   const alertVisit=useCallback((visit,action,enabled)=>save(()=>store.alertVisit({epoch},visit,action,enabled)),[save,epoch]);
-  const setup=(next,draft)=>save(()=>store.setup(view,next,draft));
+  const setup=(next,draft,options)=>save(()=>store.setup(view,next,draft,options),options?.signal);
   const reset=async()=>{
     const ok=await save(()=>withReminderLock(async()=>{
       await store.reset(target);

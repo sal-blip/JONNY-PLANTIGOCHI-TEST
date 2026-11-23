@@ -1,5 +1,8 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Leaf} from 'lucide-react';
+import LeafReveal from './LeafReveal.jsx';
+import {drawRoom,roomLight,ROOM_WIDTH,ROOM_HEIGHT} from './roomArt.js';
+import {drawRoomDepth} from './roomScenery.js';
 import InstallHelp from './InstallHelp.jsx';
 import {exportGardenRaw,downloadCurrentGarden} from './useGardenSave.js';
 import {transitionOnboarding} from './OnboardingTransition.jsx';
@@ -12,7 +15,31 @@ const cards=[
   {lead:'Add to your',name:'Home Screen',copy:'Install to play. Already installed? Open the Plantigochi icon.'},
 ];
 const last=cards.length-1;
+const installedCards=[...cards.slice(0,last),{lead:'Your pocket',name:'garden',copy:'Your seed is ready to meet you.'}];
 const titleOf=card=>card.lead+' '+card.name;
+
+function RoomPreview(){
+  const canvas=useRef(null);
+  useLayoutEffect(()=>{
+    const preview=canvas.current, actors=document.createElement('canvas');
+    function paint(){
+      if(!preview.clientWidth)return;
+      const height=Math.max(ROOM_HEIGHT,Math.round(ROOM_WIDTH*preview.clientHeight/preview.clientWidth));
+      const above=Math.round((height-ROOM_HEIGHT)*.39);
+      preview.height=actors.height=height;
+      actors.width=ROOM_WIDTH;
+      drawRoomDepth(preview,0,roomLight(12),above);
+      drawRoom(actors,{hour:12,worldHeight:height,above,separatePlanes:true,reducedMotion:true});
+      preview.getContext('2d')?.drawImage(actors,0,0);
+    }
+    paint();
+    const observer=new ResizeObserver(paint);
+    observer.observe(preview);
+    return ()=>observer.disconnect();
+  },[]);
+  return <canvas ref={canvas} className="tour-room-art" width={ROOM_WIDTH} height={ROOM_HEIGHT}
+    role="img" aria-label="Your garden living room, with open shelves and a cat resting on the sofa"/>;
+}
 
 function TourArt({step}){
   switch(step){
@@ -21,7 +48,7 @@ function TourArt({step}){
       <img className="tour-stages" src="/art/welcome-growth.webp" alt="Sleeping seed, green sprout and mature split-leaf Monstera"/>
       <figure><img src="/art/welcome-dew.webp" alt="Catching blue water droplets in a terracotta pot"/><figcaption>Dew Catch</figcaption></figure>
     </div>;
-    case 2:return <img className="tour-room-art" src="/art/welcome-apartment.webp" alt="Collected Monsteras on shelves and tables by a sunny window, with a calico on the sofa"/>;
+    case 2:return <RoomPreview/>;
     default:return <div className="tour-phone-picture" aria-label="Plantigochi on a phone Home Screen" role="img">
       <img src="/icons/icon-192.png" alt=""/><span>Plantigochi</span><i aria-hidden="true"/>
     </div>;
@@ -35,7 +62,8 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
   const [canExport,setCanExport]=useState(false);
   const [exportNotice,setExportNotice]=useState(''),[exporting,setExporting]=useState(false);
   const installed=phone.standalone;
-  const card=step===last && installed?{lead:'Your pocket',name:'garden',copy:'Your seed is ready to meet you.'}:cards[step];
+  const pages=installed?installedCards:cards;
+  const card=pages[step];
   useLayoutEffect(()=>{
     const el=dialog.current;
     if(el && !el.open)el.showModal();
@@ -58,7 +86,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
   useEffect(()=>{
     if(!splash)return;
     const stop=()=>setSplash(false);
-    const timer=setTimeout(stop,1850);
+    const timer=setTimeout(stop,3400);
     const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
     motion.addEventListener('change',stop);
     return ()=>{clearTimeout(timer);motion.removeEventListener('change',stop);};
@@ -92,9 +120,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
     <div className="tour-story">
       <div className="tour-art" key={'art'+step}>
         <TourArt step={step}/>
-        {splash && step===0 && <div className="tour-splash" aria-hidden="true">
-          <i/><i/><strong>Plantigochi</strong>
-        </div>}
+        {splash && step===0 && <LeafReveal title="Plantigochi"/>}
       </div>
       <div className="tour-words">
         <h1 ref={heading} tabIndex="-1" id="welcome-title">{card.lead} <em>{card.name}</em></h1>
@@ -108,7 +134,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
     </div>
     <footer className="tour-footer">
       <button className="tour-back" disabled={step===0} onClick={()=>go(step-1)}>Back</button>
-      <nav className="tour-dots" aria-label="Welcome screens">{cards.map((c,i)=>
+      <nav className="tour-dots" aria-label="Welcome screens">{pages.map((c,i)=>
         <button key={c.name} aria-label={'Show '+titleOf(c)} aria-current={step===i?'step':undefined}
           onClick={()=>go(i)}><i/></button>)}</nav>
       {step===last && canExport && <button className="tour-skip" disabled={exporting} onClick={exportExisting}>Export existing garden</button>}

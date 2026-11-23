@@ -278,9 +278,225 @@ test('first drink receipt survives restart and sprout welcome is acknowledged on
   assert.deepEqual(resumed.firstDay,drink.firstDay);
   assert.equal(resumed.firstDay.drinkCoins,2);
   assert.equal(resumed.plant.gardenLife.balance,12);
-  const playing=await garden.setup(resumed,'game');
+  await garden.setup(resumed,'garden-guide');
+  const room=await store().read();
+  assert.equal(room.phase,'garden-guide');
+  await garden.setup(room,'phone-guide');
+  const phone=await store().read();
+  assert.equal(phone.phase,'phone-guide');
+  assert.deepEqual(phone.firstDay,drink.firstDay);
+  const playing=await garden.setup(phone,'game');
+  assert.equal(playing.plant.gardenLife.balance,12);
   const sprout=await garden.update(playing,p=>wake(p,p.plantedAt+HOUR));
   assert.equal(sprout.firstDay.id,sprout.plant.id);
   assert.equal((await garden.setup(sprout,'game')).firstDay,null);
   assert.equal((await store().read()).firstDay,null);
+});
+
+test('first visit saves every debit once across days and concurrent windows',async t=>{
+  const {store}=installation(t),db=store();
+  const {buyGrowth,care,DAY,wake}=await import('../src/game.js');
+  const {checkIn,destinationKey,placeItem}=await import('../src/gardenEconomy.js');
+  const {grantSproutCoins}=await import('../src/firstVisit.js');
+  const {reminderSchedule}=await import('../src/reminderSchedule.js');
+  let save=await db.setup(await db.setup(await db.read(),'name'),'first-water','Aki');
+  const later=save.plant.plantedAt+2*DAY;
+  assert.equal(save.plant.gardenLife.balance,10);
+  save=await db.update(save,p=>care(checkIn(p,later),'water',later));
+  assert.equal(save.plant.gardenLife.balance,12);
+  assert.equal(wake(save.plant,later+DAY).stage,'seed');
+  assert.equal(reminderSchedule(save.plant,false),null);
+  save=await db.setup(await db.setup(save,'garden-guide'),'phone-guide');
+  save=await db.update(save,p=>placeItem(p,{buy:true,sku:'terra',slot:0,id:'pot',expected:destinationKey(p,0)},later));
+  assert.equal(save.plant.gardenLife.balance,0);
+  assert.equal(save.plant.tutorial.step,'return');
+  await Promise.all([db.update(save,grantSproutCoins),store().update(save,grantSproutCoins)]);
+  for(let count=0;count<4;count++){
+    save=await store().read();
+    assert.equal(save.plant.gardenLife.balance,200-count*50);
+    const press=p=>buyGrowth(p,{stage:'seed',count},later+1);
+    await Promise.all([db.update(save,press),store().update(save,press)]);
+  }
+  save=await store().read();
+  assert.equal(save.plant.stage,'sprout');
+  assert.equal(save.plant.gardenLife.balance,0);
+  assert.equal(save.plant.sproutDebut,save.plant.id);
+  assert.equal(save.plant.lastDrink,later+1);
+  assert.ok(reminderSchedule(save.plant,false));
+  assert.equal(save.phase,'game');
+  assert.equal(save.plant.tutorial,undefined);
+  assert.equal(save.firstDay,null);
+  assert.equal(save.plant.gardenLife.balance,0);
+  assert.equal((await db.setup(save,'game')).plant.sproutDebut,undefined);
+});
+
+test('old app, boost and toy lessons reopen with the earned pot and correct balance',async t=>{
+  const {store,indexedDB}=installation(t),db=store();
+  const {buyGrowth,care,HOUR}=await import('../src/game.js');
+  const {destinationKey,placeItem}=await import('../src/gardenEconomy.js');
+  const {grantSproutCoins}=await import('../src/firstVisit.js');
+  let save=await db.setup(await db.setup(await db.read(),'name'),'first-water','Fern');
+  const start=save.plant.plantedAt;
+  save=await db.update(save,p=>care(p,'water',start));
+  save=await db.setup(await db.setup(save,'garden-guide'),'phone-guide');
+  save=await db.update(save,p=>placeItem(p,{buy:true,sku:'terra',slot:0,id:'pot',expected:destinationKey(p,0)},start));
+  const oldApps={...save.plant,tutorial:{...save.plant.tutorial,step:'apps',visited:['journal']}};
+  await writeRows(indexedDB,{current:JSON.stringify(oldApps)});
+  save=await db.read();
+  assert.equal(save.plant.tutorial.step,'return');
+  assert.deepEqual(save.plant.seenHints,['journal']);
+  assert.equal(save.plant.gardenLife.items[0].slot,0);
+  save=await db.update(save,grantSproutCoins);
+  for(let count=0;count<4;count++){
+    if(count===2){
+      save=await store().read();
+      assert.equal(save.plant.tutorial.blocks,2);
+      assert.equal(save.plant.gardenLife.balance,100);
+    }
+    save=await db.update(save,p=>buyGrowth(p,{stage:'seed',count},start));
+  }
+  const oldTour={...save.plant,tutorial:{step:'tour',blocks:4,visited:['journal'],menu:3}};
+  delete oldTour.sproutDebut;
+  await writeRows(indexedDB,{current:JSON.stringify(oldTour),setup:{phase:'phone-guide',epoch:save.epoch}});
+  save=await db.read();
+  assert.equal(save.phase,'game');
+  assert.equal(save.plant.tutorial,undefined);
+  assert.equal(save.plant.sproutDebut,save.plant.id);
+  assert.equal(save.plant.gardenLife.balance,0);
+  assert.equal(save.plant.gardenLife.items[0].id,'pot');
+  const lastDrink=save.plant.lastDrink;
+  assert.ok(lastDrink>=start && save.plant.outbreakDue>=lastDrink+36*HOUR);
+  assert.equal((await db.read()).plant.lastDrink,lastDrink);
+  assert.equal((await db.setup(save,'game')).plant.lastDrink,lastDrink);
+});
+
+test('an interrupted windowsill purchase preserves the 12 coins and can be retried once',async t=>{
+  const {store}=installation(t),db=store();
+  const {care}=await import('../src/game.js');
+  const {destinationKey,placeItem}=await import('../src/gardenEconomy.js');
+  let save=await db.setup(await db.setup(await db.read(),'name'),'first-water','Fern');
+  const now=save.plant.plantedAt;
+  save=await db.update(save,p=>care(p,'water',now));
+  save=await db.setup(await db.setup(save,'garden-guide'),'phone-guide');
+  const slot='0/window-left';
+  const purchase={buy:true,id:'first-pot',sku:'terra',slot,expected:destinationKey(save.plant,slot)};
+  const interrupted=new AbortController();
+  await assert.rejects(db.update(save,p=>{
+    queueMicrotask(()=>interrupted.abort());
+    return placeItem(p,purchase,now);
+  },{signal:interrupted.signal}));
+  save=await store().read();
+  assert.equal(save.plant.gardenLife.balance,12);
+  assert.equal(save.plant.gardenLife.items.length,0);
+  assert.equal(save.plant.tutorial.step,'pot');
+  const buy=p=>placeItem(p,purchase,now);
+  await Promise.all([db.update(save,buy),store().update(save,buy)]);
+  save=await db.read();
+  assert.equal(save.plant.tutorial.step,'return');
+  assert.equal(save.plant.gardenLife.balance,0);
+  assert.deepEqual(save.plant.gardenLife.items.map(i=>i.slot),[slot]);
+});
+
+test('a committed starter pot with a missing completion event recovers the latest durable checkpoint', {timeout:4000},async t=>{
+  const {store}=installation(t),db=store(),other=store();
+  const {care}=await import('../src/game.js');
+  const {destinationKey,placeItem}=await import('../src/gardenEconomy.js');
+  let save=await db.setup(await db.setup(await db.read(),'name'),'first-water','Fern');
+  save=await db.update(save,p=>care(p,'water',p.plantedAt));
+  save=await db.setup(await db.setup(save,'garden-guide'),'phone-guide');
+  const slot='0/window-middle';
+  const receipt={buy:true,id:'center-pot',sku:'terra',slot,expected:destinationKey(save.plant,slot)};
+  const buy=p=>placeItem(p,receipt,p.plantedAt);
+  const put=IDBObjectStore.prototype.put;
+  let didCommit;
+  const committed=new Promise(resolve=>{didCommit=resolve;});
+  const intercepted=t.mock.method(IDBObjectStore.prototype,'put',function(value,key){
+    const request=put.call(this,value,key);
+    if(key==='current' && JSON.parse(value).gardenLife?.items.some(i=>i.id===receipt.id)){
+      this.transaction.oncomplete=didCommit;
+      intercepted.mock.restore();
+    }
+    return request;
+  });
+  const recovering=db.update(save,buy,{purchaseReceipt:receipt});
+  await committed;
+  const newer=await other.update(save,p=>({...p,sound:!p.sound}));
+  const confirmed=await recovering;
+  assert.equal(confirmed.revision,newer.revision);
+  assert.equal(confirmed.plant.sound,newer.plant.sound);
+  assert.equal(confirmed.plant.tutorial.step,'return');
+  assert.equal(confirmed.plant.gardenLife.balance,0);
+  assert.deepEqual(confirmed.plant.gardenLife.items.map(i=>[i.id,i.slot]),[[receipt.id,slot]]);
+  const repeated=await db.update(save,buy,{purchaseReceipt:receipt});
+  assert.equal(repeated.revision,confirmed.revision);
+});
+
+test('a delayed first garden visit aborts before moving or deferring alerts and can be retried',async t=>{
+  const {store,indexedDB}=installation(t),garden=store();
+  const {care}=await import('../src/game.js');
+  let save=await garden.setup(await garden.setup(await garden.read(),'name'),'water','Fern');
+  save=await garden.update(save,p=>care(p,'water',p.plantedAt));
+  save=await garden.alertVisit(save,'old-install-visit','open');
+  assert.equal(save.phase,'watered');
+  assert.equal(save.invite.round,1);
+  const connection=await new Promise((resolve,reject)=>{
+    const request=indexedDB.open('plantigochi.pocket.garden');
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error);
+  });
+  t.after(()=>connection.close());
+  const blocker=connection.transaction('garden','readwrite');
+  const records=blocker.objectStore('garden');
+  let hold=true;
+  function keepOpen(){if(hold)records.get('setup').onsuccess=keepOpen;}
+  keepOpen();
+  const controller=new AbortController();
+  const answerInvite={visit:'old-install-visit',defer:true};
+  const waiting=garden.setup(save,'garden-guide',undefined,{signal:controller.signal,answerInvite});
+  await new Promise(resolve=>setTimeout(resolve,10));
+  controller.abort();
+  // The rejected write must free the caller while the competing tab still holds its lock.
+  try{await assert.rejects(waiting);}finally{hold=false;}
+  save=await garden.read();
+  assert.equal(save.phase,'watered');
+  assert.equal(save.invite.closed,undefined);
+  const retry=await garden.setup(save,'garden-guide',undefined,{answerInvite});
+  assert.equal(retry.phase,'garden-guide');
+  assert.equal(retry.invite.closed,true);
+  assert.equal(retry.plant.gardenLife.balance,save.plant.gardenLife.balance);
+});
+
+test('sprout choice, resumed round, and good-luck gift share durable once-only transactions',async t=>{
+  const {store,indexedDB}=installation(t),db=store();
+  const {care,wake,HOUR}=await import('../src/game.js');
+  const {checkIn}=await import('../src/gardenEconomy.js');
+  const {checkpointDewLesson,claimDewGift}=await import('../src/firstVisit.js');
+  const {savePlayedRound}=await import('../src/pocketPlay.js');
+  const now=Date.now(),seed=newPlant(now-HOUR);
+  const sprout=wake(care(checkIn(seed,now-HOUR),'water',now-HOUR),now);
+  const fresh={...sprout,sproutDebut:sprout.id,gardenLife:{...sprout.gardenLife,balance:0}};
+  await db.read();
+  for(const play of [true,false]){
+    await writeRows(indexedDB,{current:JSON.stringify(fresh),setup:{phase:'game',epoch:null}});
+    const invite=await db.read();
+    await db.setup(invite,'game',undefined,{startDewLesson:play});
+    const chosen=await store().read();
+    assert.equal(chosen.plant.gardenLife.balance,0);
+    assert.equal(chosen.plant.sproutDebut,undefined);
+    assert.equal(chosen.plant.dewLesson.status,play?'round':'skipped');
+    await assert.rejects(db.setup(invite,'game',undefined,{startDewLesson:play}));
+    if(play){
+      await db.update(chosen,p=>checkpointDewLesson(p,{count:1,chances:2,startedAt:now}));
+      const resumed=await store().read();
+      assert.deepEqual(resumed.plant.dewLesson,{status:'round',caught:1,chances:2,startedAt:now});
+      await db.update(resumed,p=>savePlayedRound(p,'dew','won',1,'tutorial-win',now,now,true));
+    }
+    const one=await db.read(),two=await store().read();
+    assert.equal(one.plant.gardenLife.balance,play?3:0);
+    await Promise.all([db.update(one,claimDewGift),store().update(two,claimDewGift)]);
+    const final=await store().read();
+    assert.equal(final.plant.gardenLife.balance,play?23:20);
+    assert.equal(final.plant.dewLesson,undefined);
+    await assert.rejects(db.setup(final,'game',undefined,{startDewLesson:false}));
+  }
 });

@@ -5,6 +5,9 @@ export default defineConfig({
   plugins: [
     VitePWA({
       injectRegister: false,
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       manifest: {
         id: '/',
         name: 'Plantigochi · Pocket Garden',
@@ -14,7 +17,7 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: '#000000',
+        background_color: '#f7f5e9',
         theme_color: '#1f3532',
         icons: [
           { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
@@ -23,17 +26,9 @@ export default defineConfig({
           { src: '/icons/notification-badge-96.png', sizes: '96x96', type: 'image/png', purpose: 'monochrome' },
         ],
       },
-      workbox: {
-        cacheId: 'plantigochi',
+      injectManifest: {
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        importScripts: ['/plant-alerts.js'],
-        globPatterns: ['**/*.{html,js,css,woff2,svg,png,webp,webmanifest,m4a,txt}'],
-        inlineWorkboxRuntime: true,
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        skipWaiting: true,
-        navigateFallback: '/index.html',
-        navigateFallbackAllowlist: [/^\/(?:index\.html)?(?:\?.*)?$/],
+        globPatterns: ['**/*.{html,js,css,woff2,svg,png,webp,webmanifest,m4a,mp3,txt}'],
       },
     }),
   ],

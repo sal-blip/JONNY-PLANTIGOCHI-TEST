@@ -42,3 +42,61 @@
 .seed-actions button:disabled{opacity:.5}
 .alert-invite-status{line-height:1.35;font-size:14px}.alert-invite-status:empty{display:none}
 @media(max-height:610px) and (orientation:portrait){.seed-portrait{height:min(24dvh,135px)}.seed-actions{row-gap:3px}}
+
+.guide-chat{box-sizing:border-box;text-align:left;color:#263e32;background:#fffbed;border:1px solid #93a78d;border-radius:17px;padding:11px 16px;box-shadow:0 4px 14px #293e3228;font:500 clamp(14px,3.6vw,17px)/1.35 var(--display);text-wrap:pretty}
+.guide-chat small{display:block;color:#506f50;font-size:.78em;font-weight:750;margin-bottom:3px}
+.guide-chat p{margin:0}.guide-chat p+p{margin-top:.38em}
+.toy-guide,.room-guide{position:absolute;z-index:8;left:50%;transform:translateX(-50%);width:min(88%,360px)}
+.toy-guide{bottom:calc(50% + min(34vw,30dvh,245px));max-height:calc(50dvh - min(34vw,30dvh,245px) - max(7px,env(safe-area-inset-top)));overflow:visible}
+.toy-guide .chat-copy{max-height:inherit;overflow-y:auto}.toy-guide::after{content:"";position:absolute;bottom:-7px;left:49%;width:13px;height:13px;background:#fffbed;border:solid #93a78d;border-width:0 1px 1px 0;transform:rotate(45deg);z-index:8}
+.chat-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:7px}
+.chat-actions button{background:#345940;border:0;color:#fffbed;border-radius:18px;padding:8px 12px;min-height:44px;font:650 .88em var(--display)}
+.chat-actions button+button{padding-inline:2px;color:#33543b;background:transparent;text-decoration:underline}
+.toy-guide.farewell,.farewell .chat-copy{display:flex;flex-direction:column}
+.farewell .chat-copy{min-height:0;max-height:none;overflow:visible}
+.farewell-message{min-height:0;overflow-y:auto}
+.farewell .chat-actions{flex:none}
+.farewell .lesson-done{margin-top:0}
+.room-guide{top:max(60px,calc(env(safe-area-inset-top) + 54px));pointer-events:none}
+.phone-guide{align-self:center;justify-self:center;max-width:430px}
+@media(max-height:680px) and (orientation:portrait){.camera:has(.toy-guide) .inspect-view{translate:0 8dvh}.toy-guide{bottom:calc(42% + 32vw);max-height:calc(58dvh - 32vw - 8px)}}
+@media(orientation:landscape) and (max-height:620px){
+ .toy-guide{
+  left:max(8px,env(safe-area-inset-left));bottom:50%;transform:translateY(50%);
+  width:min(34%,260px);max-height:calc(100dvh - 2 * max(12px,env(safe-area-inset-top),env(safe-area-inset-bottom)));
+  display:flex;flex-direction:column;padding:8px 10px;font-size:clamp(14px,1.9vw,17px)
+ }
+ .toy-guide .chat-copy{min-height:0;max-height:none;overscroll-behavior:contain;touch-action:pan-y}
+ .toy-guide::after{display:none}.phone-guide{font-size:12px;padding:5px 10px}.room-guide{top:8px}
+}
+@media(orientation:landscape) and (max-height:420px) and (min-width:480px){
+ .iseed-contents[data-phone-page="shop"]:has(> .app-guide){
+  display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,2fr);gap:12px;align-items:start;padding:10px
+ }
+ .iseed-contents[data-phone-page="shop"]>.app-guide{margin-block:0;padding:8px 10px;font-size:14px}
+}
+
+.guide-chat{animation:chat-appear .23s ease-out both,chat-bob 2s ease-in-out .23s infinite}
+.guide-chat[inert]{visibility:hidden;animation:none}
+@keyframes chat-appear{from{opacity:0;scale:.97}to{opacity:1;scale:1}}
+@keyframes chat-bob{0%,70%,100%{translate:0 0}85%{translate:0 -2px}}
+@media(orientation:portrait) and (min-height:681px){
+ .toy-guide{margin-bottom:20px}
+ .toy-guide{max-height:calc(50dvh - min(34vw,30dvh,245px) - max(27px,env(safe-area-inset-top)))}
+}
+@media(orientation:portrait) and (max-height:680px){.toy-guide{margin-bottom:10px}.toy-guide{max-height:calc(58dvh - 32vw - 18px)}}
+[data-guide-target] .iseed-icon-tile,[data-tutorial="pot"] .room-open-phone{
+ outline:2px solid #ffe7a4;outline-offset:3px;animation:guide-glow 1.8s ease-in-out infinite}
+@keyframes guide-glow{50%{box-shadow:0 0 0 5px #ffe29977,0 0 14px #fff1ae}}
+.app-guide{margin:5px 0 12px}.app-guide button{margin-top:5px;color:#2c553a;text-decoration:underline}
+@media(prefers-reduced-motion:reduce){.guide-chat,[data-guide-target] .iseed-icon-tile,[data-tutorial] .room-open-phone{animation:none}}
+
+[data-tutorial="return"] :is(.iseed-open-garden,[data-room-return]){outline:2px solid #ffe7a4;outline-offset:3px}
+@media(prefers-reduced-motion:no-preference){
+ [data-tutorial="return"] :is(.iseed-open-garden,[data-room-return]){animation:guide-glow 1.8s ease-in-out infinite}
+ [data-guide-target] .iseed-icon-tile{animation:guide-icon-light 1.8s ease-in-out infinite}
+ @keyframes guide-icon-light{50%{filter:brightness(1.28) drop-shadow(0 0 5px #ffdc76);box-shadow:0 0 0 4px #ffe29977}}
+}
+
+
+.room-guide .chat-actions button{pointer-events:auto}

@@ -14,7 +14,9 @@ function canStart(surface, layer, target, x, y) {
     if (target.closest('[data-room-placing], [data-room-blocked], [data-room-open-phone]')) return false;
     const handle = target.closest('[data-room-return], [data-garden-toy]');
     if (handle) return !handle.disabled;
-    return Boolean(target.closest('.room-picture') && !target.closest(controls + ', [data-scene-object]'));
+    const scene=target.closest('.room-picture');
+    if(scene && layer.closest('[data-tutorial="return"]'))return true;
+    return Boolean(scene && !target.closest(controls + ', [data-scene-object]'));
   }
   const handle = target.closest(surface === 'toy' ? '[data-toy-handle]' : '[data-phone-bezel]');
   if (handle) return !handle.disabled;
@@ -51,20 +53,20 @@ function usable(element) {
     rect.top < window.innerHeight && rect.left < window.innerWidth;
 }
 
-export function useHandsetPassage({blocked = false, onChange} = {}) {
+export function useHandsetPassage({blocked = false, onSwipeRequest, allowRoomReturn=true, initialSurface = 'toy'} = {}) {
   const rootRef = useRef(null);
-  const options = useRef({blocked, onChange});
-  const [surface, setSurface] = useState('toy');
+  const options = useRef({blocked, onSwipeRequest, allowRoomReturn});
+  const [surface, setSurface] = useState(initialSurface);
   const [transitioning, setTransitioning] = useState(false);
-  const settled = useRef('toy');
-  const progress = useRef(position.toy);
+  const settled = useRef(initialSurface);
+  const progress = useRef(position[initialSurface]);
   const finger = useRef(null);
   const animation = useRef(null);
   const previousFocus = useRef({});
   const pendingFocus = useRef(false);
   const suppressUntil = useRef(0);
 
-  useLayoutEffect(() => { options.current = {blocked, onChange}; }, [blocked, onChange]);
+  useLayoutEffect(() => { options.current = {blocked, onSwipeRequest, allowRoomReturn}; }, [blocked, onSwipeRequest, allowRoomReturn]);
 
   const draw = useCallback(value => {
     progress.current = value;
@@ -89,13 +91,11 @@ export function useHandsetPassage({blocked = false, onChange} = {}) {
 
   const finish = useCallback((next, focus = true) => {
     stopAnimation();
-    const from = settled.current;
     settled.current = next;
     draw(position[next]);
     pendingFocus.current = focus;
     setSurface(next);
     setTransitioning(false);
-    if (from !== next) options.current.onChange?.(next, from);
   }, [draw, stopAnimation]);
 
   useLayoutEffect(() => {
@@ -123,7 +123,9 @@ export function useHandsetPassage({blocked = false, onChange} = {}) {
   const go = useCallback((next, origin) => {
     if (!Object.hasOwn(position, next) || animation.current?.next === next) return;
     const to = position[next];
-    if (!finger.current && !animation.current && progress.current === to) return;
+    if (!finger.current && !animation.current && settled.current===next && progress.current===to) {
+      setTransitioning(false);return;
+    }
     if (!animation.current && !finger.current?.claimed) rememberFocus(origin);
     finger.current = null;
     stopAnimation();
@@ -154,7 +156,7 @@ export function useHandsetPassage({blocked = false, onChange} = {}) {
 
   const begin = useCallback((from, type, id, x, y, event) => {
     const layer = event.currentTarget;
-    if (options.current.blocked || settled.current !== from || animation.current || finger.current ||
+    if ((from==='garden' && !options.current.allowRoomReturn) || options.current.blocked || settled.current !== from || animation.current || finger.current ||
         !canStart(from, layer, event.target, x, y)) return;
     finger.current = {
       from, type, id, x, y, height: Math.max(1, layer.getBoundingClientRect().height),
@@ -224,7 +226,12 @@ export function useHandsetPassage({blocked = false, onChange} = {}) {
       if (drag.from === 'garden') event.stopPropagation();
       const distance = (point.clientY - drag.y) * drag.direction;
       const enough = distance >= Math.max(42, Math.min(100, drag.height * .16));
-      go(enough && !options.current.blocked ? destination[drag.from] : drag.from);
+      const next=destination[drag.from];
+      if(enough && !options.current.blocked){
+        finger.current=null;
+        if(options.current.onSwipeRequest?.(next))return;
+        go(next);
+      }else go(drag.from);
     }
     function pointerMove(event) {
       if (finger.current?.type !== 'pointer') return;

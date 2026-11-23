@@ -1,7 +1,8 @@
 import { reminderAPI } from './reminders.js';
+import { audioRange } from '../src/mediaRange.js';
 import { assets } from './generated-assets.js';
 
-const mime = { html:'text/html; charset=utf-8', css:'text/css; charset=utf-8', js:'text/javascript; charset=utf-8', webmanifest:'application/manifest+json', svg:'image/svg+xml', png:'image/png', webp:'image/webp', woff2:'font/woff2', m4a:'audio/mp4', txt:'text/plain; charset=utf-8' };
+const mime = { html:'text/html; charset=utf-8', css:'text/css; charset=utf-8', js:'text/javascript; charset=utf-8', webmanifest:'application/manifest+json', svg:'image/svg+xml', png:'image/png', webp:'image/webp', woff2:'font/woff2', m4a:'audio/mp4', mp3:'audio/mpeg', txt:'text/plain; charset=utf-8' };
 export default {
   async fetch(request, env, ctx) {
     const path = new URL(request.url).pathname;
@@ -13,7 +14,12 @@ export default {
     const extension = key.split('.').pop();
     const headers = { 'Content-Type':mime[extension] || 'application/octet-stream', 'Cache-Control': key.startsWith('/assets/') ? 'public,max-age=31536000,immutable' : 'no-cache', 'X-Content-Type-Options':'nosniff' };
     if (path === '/sw.js') headers['Service-Worker-Allowed'] = '/';
+    const audio=extension==='mp3' || extension==='m4a';
+    if (audio) headers['Accept-Ranges']='bytes';
     const body = request.method === 'HEAD' ? null : Uint8Array.from(atob(value),c => c.charCodeAt(0));
+    if (audio && body && request.headers.has('Range') && !request.headers.has('If-Range')) {
+      return audioRange(new Blob([body]),request.headers.get('Range'),headers);
+    }
     return new Response(body,{headers});
   }
 };

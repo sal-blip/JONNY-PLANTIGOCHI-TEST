@@ -69,12 +69,6 @@
 .install-steps li{flex:1;display:flex;align-items:center;gap:5px;border:1px solid #78978388;border-radius:7px;padding:5px 7px}
 .install-steps svg{width:16px;height:16px;flex:none;stroke-width:1.8}
 .tour-install .install-note{font-size:13px}
-.tour-splash{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center;isolation:isolate;overflow:hidden}
-.tour-splash i{position:absolute;inset:-15% 38% -15% -20%;background:url('/art/intro-leaf.webp') center/cover;animation:tour-leaf-out 1.8s cubic-bezier(.35,0,.42,1) both;--direction:-1}
-.tour-splash i+i{inset:-15% -20% -15% 38%;scale:-1 1}
-.tour-splash strong{position:relative;font-size:clamp(28px,5vw,72px);color:#fff9d9;letter-spacing:-.055em;text-shadow:0 2px 8px #173726;animation:tour-word-out 1.8s ease both}
-@keyframes tour-leaf-out{0%,17%{transform:translateX(0) scale(1.12)}100%{transform:translateX(calc(var(--direction)*115%)) scale(1.02)}}
-@keyframes tour-word-out{0%,19%{opacity:1}64%,100%{opacity:0}}
 @media(max-width:680px) and (orientation:portrait){
  .tour-sheet{padding-inline:max(17px,env(safe-area-inset-left)) max(17px,env(safe-area-inset-right))}
  .tour-story{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:clamp(12px,2.6vh,24px);padding-block:clamp(12px,2.5vh,24px)}
@@ -96,7 +90,7 @@
  .tour-story{grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);gap:clamp(15px,4vw,42px)}
  .tour-install .primary-btn{min-height:29px;padding:6px 10px}.tour-words h1 em{display:inline}
 }
-@media(prefers-reduced-motion:reduce){.tour-splash{display:none}}
+
 
 /* Keep the header and navigation anchored while the illustrated card changes. */
 :root[data-onboarding-motion]{background:#f5f2e4}

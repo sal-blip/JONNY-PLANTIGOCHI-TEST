@@ -1,3 +1,4 @@
+import GuideChat from './GuideChat.jsx';
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {ChevronLeft,Flower2} from 'lucide-react';
 import {CoinBalance} from './GardenShop.jsx';
@@ -103,14 +104,20 @@ function ScreenLandscape({night}){
   return <canvas className="iseed-landscape" width={142} height={194} ref={ref} aria-hidden="true"/>;
 }
 
-export function ISeedHome({plant,open,busy=false}){
+export function ISeedHome({plant,open,guide=false,busy=false,active=false}){
   const now=usePhoneTime();
   const night=now.getHours()<6 || now.getHours()>=19;
   return <div className={'iseed-home'+(night?' is-night':'')} data-phone-wallpaper="" data-handset-pull="">
     <ScreenLandscape night={night}/>
-    <div className="iseed-home-clock"><time dateTime={now.toISOString()}>{clockLabel.format(now)}</time><span>{dateLabel.format(now)}</span></div>
+    {guide?<GuideChat className="phone-guide" cue={active?'launcher-'+(plant.tutorial?.step || 'shop'):null}><p>{
+      plant.tutorial?.step==='return'?'Your pot is in place! Tap Garden, then swipe back to check on your seed.':
+      plant.tutorial?'Let’s find a pot for your room. Tap the glowing Shop. Your starter pot costs 12 coins.':
+      'Tap Shop to see what your coins can buy. A terracotta pot costs 10.'
+    }</p></GuideChat>:<div className="iseed-home-clock"><time dateTime={now.toISOString()}>{clockLabel.format(now)}</time><span>{dateLabel.format(now)}</span></div>}
     <nav className="iseed-launcher" aria-label="iSEED apps" style={{'--app-count':apps.length}}>
-      {apps.map((app,index)=><button type="button" key={app.id} className={'iseed-app app-'+app.id} data-handset-no-pull="" disabled={busy} onClick={()=>open(app.id)}>
+      {apps.map((app,index)=><button type="button" key={app.id} className={'iseed-app app-'+app.id} data-handset-no-pull=""
+        data-guide-target={active && plant.tutorial?.step==='pot' && app.id==='shop'?'':undefined}
+        disabled={busy || (plant.tutorial?.step==='pot' && app.id!=='shop')} onClick={()=>open(app.id)}>
         <span className="iseed-icon-tile" aria-hidden="true" style={{backgroundPositionX:(index*100/(apps.length-1))+'%'}}/><span>{app.label}</span>
       </button>)}
     </nav>

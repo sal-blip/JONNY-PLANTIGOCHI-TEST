@@ -1,0 +1,15 @@
+.leaf-reveal{position:absolute;inset:0;display:grid;place-items:center;overflow:hidden;isolation:isolate;pointer-events:none;z-index:9;container-type:size}
+.leaf-reveal::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,#e6ecd0,#adbf9b);animation:leaf-light 3.4s both}
+.leaf-pair{position:absolute;width:min(100cqw,123cqh);aspect-ratio:1.25;display:grid;place-items:center}
+/* On the toy, frame the canopy against both viewport axes. The leaves enter
+   from beyond the bezel and overlap over the seed before they swing apart. */
+.camera .leaf-pair{width:max(152cqw,175cqh)}
+.opening-leaf{position:absolute;width:62%;--drift:-112%;--turn:-28deg;left:1%;animation:leaf-part 3.4s cubic-bezier(.42,0,.24,1) both}
+.opening-leaf img{width:100%;height:auto;display:block;filter:drop-shadow(0 6px 7px #162a1f52)}
+.opening-leaf.right{left:auto;right:1%;top:8%;--drift:112%;--turn:32deg}
+.opening-leaf.right img{transform:scaleX(-1) rotate(5deg)}
+.leaf-reveal strong{position:relative;color:#fff9dd;font:650 clamp(26px,7cqw,62px)/1 var(--display);letter-spacing:-.04em;text-shadow:0 2px 8px #153427;animation:leaf-title 3.4s both}
+@keyframes leaf-part{0%,16%{transform:none}80%{opacity:.95}100%{transform:translate(var(--drift),-14%) rotate(var(--turn));opacity:0}}
+@keyframes leaf-light{0%,12%{opacity:1}70%,100%{opacity:0}}
+@keyframes leaf-title{0%,18%{opacity:1}50%,100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.leaf-reveal{display:none}}

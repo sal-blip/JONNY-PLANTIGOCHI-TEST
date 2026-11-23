@@ -22,19 +22,19 @@ export function localDay(time) {
 }
 export function checkIn(plant,time) {
   const life=lifeOf(plant), day=localDay(time);
-  if(day<=life.day)return plant;
+  if((plant.tutorial && life.day) || day<=life.day)return plant;
   return update(plant,{day,balance:life.balance+10,waters:0,wins:[]});
 }
 export function earnWater(plant,time) {
   plant=checkIn(plant,time);
   const life=lifeOf(plant);
-  if(life.day!==localDay(time) || life.waters>=3)return plant;
+  if((!plant.tutorial && life.day!==localDay(time)) || life.waters>=3 || (plant.tutorial && life.waters>0))return plant;
   return update(plant,{waters:life.waters+1,balance:life.balance+2});
 }
 export function earnWin(plant,id,started,time) {
   plant=checkIn(plant,time);
   const life=lifeOf(plant);
-  if(!id || localDay(time)!==life.day || life.wins.length>=5 || life.wins.includes(id) || localDay(started)!==life.day || started>time)return plant;
+  if(plant.tutorial || !id || localDay(time)!==life.day || life.wins.length>=5 || life.wins.includes(id) || localDay(started)!==life.day || started>time)return plant;
   return update(plant,{wins:[...life.wins,id],balance:life.balance+3});
 }
 export function milestone(plant,key,text,time,subject=plant.id) {
@@ -92,17 +92,20 @@ export function canSetItem(plant,sku,slot,from=null) {
 export function destinationKey(plant,slot) {
   return JSON.stringify([plant.graduates.find(g=>g.slot===slot)?.id,lifeOf(plant).items.find(i=>i.slot===slot)?.id]);
 }
+export function itemPrice(plant,sku){return plant.tutorial?.step==='pot' && sku==='terra'?12:catalog[sku].price;}
 export function placeItem(plant,{id,sku,from,buy,slot,expected},time) {
   const g=lifeOf(plant), product=catalog[sku], existing=g.items.find(i=>i.id===id);
   if(!product || !validId(id) || !canSetItem(plant,sku,slot,buy?null:from) || destinationKey(plant,slot)!==expected)return plant;
-  if(buy && (g.balance<product.price || existing || plant.graduates.some(p=>p.id===id)))return plant;
+  if(buy && plant.tutorial && (plant.tutorial.step!=='pot' || sku!=='terra'))return plant;
+  if(buy && (g.balance<itemPrice(plant,sku) || existing || plant.graduates.some(p=>p.id===id)))return plant;
   if(!buy && (!existing || existing.sku!==sku || existing.slot!==from || from===slot))return plant;
-  const balance=g.balance-(buy?product.price:0);
+  const balance=g.balance-(buy?itemPrice(plant,sku):0);
   if(product.kind==='plant'){
     const resident={id,source:'shop',species:sku,name:product.name,slot,plantedAt:time,movedAt:time,generation:1};
     plant=update({...plant,graduates:[...plant.graduates,resident]},{balance});
     return milestone(plant,'bought',product.name+' came home from the shop.',time,id);
   }
+  if(buy && plant.tutorial)plant={...plant,tutorial:{...plant.tutorial,step:'return'}};
   const otherSlot=buy?null:existing.slot;
   const items=g.items.filter(i=>i.id!==id).map(i=>i.slot===slot?{...i,slot:otherSlot}:i);
   return update(plant,{balance,items:[...items,{...existing,id,sku,slot}]});
