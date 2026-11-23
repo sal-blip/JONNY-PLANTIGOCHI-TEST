@@ -59,8 +59,8 @@ export function settleDewLesson(plant,status,coins=0){
   return {...plant,dewLesson:{status,coins}};
 }
 
-export function claimDewGift(plant,offerInstall=false){
+export function claimDewGift(plant){
   if(!plant.dewLesson || plant.dewLesson.status==='round')return plant;
   const {dewLesson,...finished}=plant,life=lifeOf(plant);
-  return {...finished,...(offerInstall?{browserInstallReminder:true}:{}),gardenLife:{...life,balance:life.balance+GOOD_LUCK_COINS}};
+  return {...finished,gardenLife:{...life,balance:life.balance+GOOD_LUCK_COINS}};
 }

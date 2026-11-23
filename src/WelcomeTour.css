@@ -118,14 +118,3 @@
 @media(prefers-reduced-motion:reduce){
   :root::view-transition-group(*),:root::view-transition-old(*),:root::view-transition-new(*){animation-duration:0s!important}
 }
-
-.tour-page-3 .tour-actions{flex-wrap:wrap;row-gap:4px}
-
-.tour-sheet .tour-install-now{min-height:45px;padding:9px 19px;border:1px solid #aa8253;border-radius:40px;background:#efdab5;color:#483621;font:650 16px/1.2 var(--display)}
-.tour-install-now:hover{background:#e7c999}
-
-/* Keep the two longer labels on one line on narrow phones. */
-@media(max-width:380px){
- .tour-page-3 .tour-actions{column-gap:6px}
- .tour-page-3 .tour-actions:has(.tour-install-now) button{padding-inline:10px}
-}

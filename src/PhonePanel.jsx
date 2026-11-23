@@ -54,13 +54,7 @@ export default function PhonePanel({ page, phone, alerts, plant, saveOK, saveIss
       <p>After reinstalling, choose <b>Restore a garden</b> during setup to load your file.</p>
     </section>}
     {page === 'install' && <section className="phone-section">
-      {plant && !phone.standalone && <>
-        <p>This browser has saved your garden. Keep a backup in case your installed app opens with a fresh seed.</p>
-        <div className="save-buttons"><button onClick={exportSave} disabled={exporting}><Download size={16}/> Back up garden</button></div>
-        {notice && <p className="backup-notice" role="status">{notice}</p>}
-        <p>If setup offers <b>Restore a garden</b>, choose your backup file.</p>
-      </>}
-      <InstallHelp tour={!phone.standalone} phone={phone}/>
+      <InstallHelp phone={phone}/>
       <div className="offline-state" role="status">{phone.offline === 'ready' ? <Check size={15}/> : <HardDrive size={15}/>} {offlineText}</div>
     </section>}
     {(page === 'alerts' || page==='test') && <section className="phone-section">

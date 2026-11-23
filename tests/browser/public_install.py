@@ -17,14 +17,8 @@ with sync_playwright() as pw:
         page.set_viewport_size({'width':320,'height':568})
         page.goto(url)
         taps(page, 'Take a peek', 'Next', 'Continue')
-        start=page.get_by_role('button',name='Just start playing')
-        install=page.get_by_role('button',name='Install app')
-        expect(start).to_be_visible()
-        left, middle, right = (locator.bounding_box() for locator in (install, page.get_by_text('or', exact=True), start))
-        assert 0 <= left['x'] < left['x']+left['width'] <= middle['x']
-        assert middle['x']+middle['width'] <= right['x'] < right['x']+right['width'] <= 320
-        assert abs(left['y']-right['y'])<7
-        assert start.evaluate('b=>getComputedStyle(b).backgroundColor')!=install.evaluate('b=>getComputedStyle(b).backgroundColor')
+        expect(page.locator('.tour-actions button')).to_have_count(1)
+        expect(page.get_by_role('button',name='Install app',exact=True)).to_be_visible()
         if platform == 'android':
             page.evaluate("""() => {
                 window.installCalls=[];
@@ -47,7 +41,7 @@ with sync_playwright() as pw:
         page.reload()
         expect(page.get_by_role('heading', name='Install Plantigochi')).to_be_visible()
         taps(page, 'Back')
-        expect(page.get_by_role('button', name='Just start playing')).to_be_visible()
+        expect(page.get_by_role('button', name='Install app',exact=True)).to_be_visible()
         assert '#install' not in page.url
         ctx.close()
         print(platform, 'tour and install handoff passed')

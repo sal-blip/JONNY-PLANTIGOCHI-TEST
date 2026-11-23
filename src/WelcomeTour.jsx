@@ -12,7 +12,7 @@ const cards=[
   {lead:'Meet your',name:'Plantigochi',copy:'A tiny Monstera to raise, right on your phone.'},
   {lead:'Watch it',name:'grow',copy:'Water it, play together, and watch new leaves unfold over a week of good care.'},
   {lead:'Give it',name:'a home',copy:'Move grown plants into your garden, arrange them your way, and start again with a new seed.'},
-  {lead:'Your seed is',name:'ready',copy:'Play in this browser, or install Plantigochi on your Home Screen.'},
+  {lead:'Your seed is',name:'ready',copy:'Install Plantigochi to start your garden and save your progress on this phone.'},
 ];
 const last=cards.length-1;
 const installedCards=[...cards.slice(0,last),{lead:'Your pocket',name:'garden',copy:'Your seed is ready to meet you.'}];
@@ -55,7 +55,7 @@ function TourArt({step}){
   }
 }
 
-export default function WelcomeTour({phone,onBegin,onPlay,onClose,issue}){
+export default function WelcomeTour({phone,onBegin,onClose,issue}){
   const installed=phone.standalone;
   const installStep=last+1;
   const [step,setStep]=useState(()=>!installed && location.hash==='#install'?installStep:0);
@@ -145,9 +145,7 @@ export default function WelcomeTour({phone,onBegin,onPlay,onClose,issue}){
           <div className="tour-actions">
             {step<last ? <button className="tour-primary" onClick={()=>go(step+1)}>{['Take a peek','Next','Continue'][step]}</button> :
               installed ? <button className="tour-primary" onClick={onBegin || onClose}>{onBegin?'Begin setup':'Back to game'}</button> :
-              <><button className="tour-primary" onClick={installNow}>Install app</button>
-                <span>or</span>
-                <button className="tour-install-now" onClick={onPlay || onBegin}>Just start playing</button></>}
+              <button className="tour-primary" onClick={installNow}>Install app</button>}
           </div>}
       </div>
     </div>
