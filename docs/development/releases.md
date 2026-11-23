@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v63 · Nine growable plants · November 23, 2026
+
+Plantigochi 0.1.3 gives each mature plant a free successor when the player confirms its move into the garden. The ninth plant, Moth Orchid, leads back to Monstera. The iSEED shop also sells mature specimens, including Bird of Paradise for 600 Garden Coins and Moth Orchid for 700. [Growth and saves](gameplay-and-saves.md)
+
+All 154 automated tests passed. The public HTML, manifest, service worker, alert worker, JavaScript and CSS matched the production build. A Chromium standalone-mode check reopened a legacy sprout, a 173-coin purse and a placed Snake Plant on the public release, then reopened them offline. A test of the two production worker builds exercised an interrupted download, retry and offline launch and verified all 46 precached resources. A browser open during the live rollout still displayed v62 on its first reload. The first update on a physically installed phone remains to be checked.
+
+Sites source `f58f66471b5f93aefa5019e7e7a169f8fbd4716b` · saved version 63 · deployment `appgdep_6b0498a150e08191b89a9fa46c9126d3` · [GitHub release commit 93373db](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/93373dbdfb71eacf4e44b3e4526f2a003c79ea6e)
+
 ## v62 · Independent audio levels · November 23, 2026
 
 Plantigochi 0.1.2 replaces the two audio switches in Settings with Music, Sound effects and Garden ambience sliders. Music includes the record player. Both themes retain their 50% gain ceiling. Garden ambience includes the sleeping seed and a soft breeze in the room. Existing mute choices carry forward, and backups preserve all three percentages.
