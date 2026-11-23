@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {care,graduate,HOUR,newPlant,readPlant,relocateGraduate,replant,wake,WEEK} from '../src/game.js';
-import {addRealPlant,canSetItem,checkIn,destinationKey,earnWin,fitsBackupChange,framePhoto,lifeOf,placeItem,removeNote,saveNote,storeItem,validGardenLife} from '../src/gardenEconomy.js';
+import {addRealPlant,canSetItem,catalog,checkIn,destinationKey,earnWin,fitsBackupChange,framePhoto,lifeOf,placeItem,removeNote,saveNote,storeItem,validGardenLife} from '../src/gardenEconomy.js';
+import {packGardenBackup,prepareRestoredGarden,readGardenBackup} from '../src/gardenBackup.js';
 import {backupLimit} from '../src/gardenScenes.js';
 
 const morning=new Date(2026,0,18,8).getTime();
@@ -50,6 +51,29 @@ test('placement is atomic, physical pots travel with plants and swapped pots sta
   const reload=readPlant(JSON.stringify(p),morning);
   assert.deepEqual(reload,p);assert.equal(reload.graduates[0].name,'Golden pothos');
   assert.equal(framePhoto(reload,'pot1',photo),reload);
+});
+
+test('launch shop plants and pots survive a room move, a reload and a backup restore',async()=>{
+  const plants=['monstera-albo','pink-micans'];
+  const pots=['bog-frog-pot','lava-pop-pot'];
+  const start=checkIn(seed(),morning);
+  let p={...start,gardenLife:{...start.gardenLife,balance:500}};
+  for(const [slot,sku] of plants.entries())p=buy(p,sku,sku,slot);
+  for(const [slot,sku] of pots.entries())p=buy(p,sku,sku,slot);
+  const balance=500-[...plants,...pots].reduce((total,sku)=>total+catalog[sku].price,0);
+  assert.equal(lifeOf(p).balance,balance);
+  assert.deepEqual(p.graduates.map(plant=>plant.species),plants);
+  assert.deepEqual(p.graduates.map(plant=>plant.name),plants.map(sku=>catalog[sku].name));
+  p=relocateGraduate(p,plants[0],0,6);
+  assert.equal(p.graduates.find(plant=>plant.id===plants[0]).slot,6);
+  assert.deepEqual(lifeOf(p).items.map(({sku,slot})=>[sku,slot]),[[pots[0],6],[pots[1],1]]);
+  assert.equal(buy(p,pots[0],pots[0],2),p);
+  assert.equal(lifeOf(p).balance,balance);
+  const raw=JSON.stringify(p);
+  assert.deepEqual(readPlant(raw,morning),p);
+  const {blob}=packGardenBackup(raw,new Map());
+  const restored=await prepareRestoredGarden(await readGardenBackup(blob),morning);
+  assert.deepEqual(restored.plant,p);
 });
 test('journal, coins and real plants survive graduation and replanting, independently of tool cooldowns',()=>{
   let p=care(seed(),'water',morning);

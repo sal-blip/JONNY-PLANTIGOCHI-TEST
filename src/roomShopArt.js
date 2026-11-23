@@ -1,7 +1,7 @@
 import {spriteOffset as oakOrigin,spritePalette as oakColors,spriteRows as oakRows} from './oakFrameSprite.js';
 import {spriteOffset as deckOrigin, spritePalette as deckColors, spriteRows as deckRows} from './recordPlayerSprite.js';
 import {spriteOffset as catOrigin, spritePalette as catColors, spriteRows as catRows} from './manekiNekoSprite.js';
-import {drawPottedPlant} from './roomPlant.js';
+import {drawPottedPlant,featuredPlants,isShopPlant,isShopPot} from './roomPlant.js';
 import {drawSelectionContour} from './roomContour.js';
 
 const locations=[
@@ -226,12 +226,13 @@ export function drawRoomDecor(ctx,view,items,{night=0,highlighted,photos,playing
 
 /** Native pixel preview centered horizontally; y is the baseline of the item. */
 export function drawShopPreview(ctx,{sku,x,y,size=1}){
-  if(sku==='terra'||sku==='wave'){
+  if(isShopPot(sku)){
     drawPottedPlant(ctx,{x,y,size,potSku:sku,reducedMotion:true});return;
   }
-  if(['golden-pothos','pothos','snake-plant','snake','monstera'].includes(sku)){
+  if(isShopPlant(sku)){
     const species=sku==='snake'?'snake-plant':sku;
-    drawPottedPlant(ctx,{x,y,size,plant:{id:'nursery-'+species,species,potStyle:0},reducedMotion:true});return;
+    const plant={id:'nursery-'+species,species,potStyle:featuredPlants[species]?.potStyle ?? 0};
+    drawPottedPlant(ctx,{x,y,size,plant,reducedMotion:true});return;
   }
   if(Object.hasOwn(sprites,sku))drawDecor(ctx,{sku,x,y,size});
 }

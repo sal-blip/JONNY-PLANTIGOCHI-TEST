@@ -45,6 +45,8 @@ Garden plants and shop tiles share `drawPottedPlant` through `roomShopArt.js`. C
 
 When adding a shop plant, give it a stable SKU in the catalog and a tile baseline in `shopPreviewLayout.js`. Route the SKU through `drawShopPreview` and `drawPottedPlant`, then check any allowed-species and display-name lists used for residents and saved gardens. Buy it, put it on a shelf, move it, and reload a backup. A redesign of an existing plant can keep its SKU and use the same placement and save paths. [Shop preview layout](../../src/shopPreviewLayout.js) · [Shop painter](../../src/roomShopArt.js) · [Plant painter](../../src/roomPlant.js)
 
+The first launch shop additions are Monstera Albo, Pink Micans, Bog Frog Pot and Lava Pop Pot. Their approved masters are kept alongside the review tiles. The plant painter composites their double-density indexed sprites with the shared pottery, night palette, selection outline and three idle poses. A foliage crown stays fixed to the soil inside each pot. The existing catalog keeps its original artwork and save IDs. [Approved masters and anchors](../../.agents/skills/plantigochi-sprite-review/references/phase-1-shop-pass-01/README.md)
+
 ## Verification
 
 From the repository root, run the group that covers the change.

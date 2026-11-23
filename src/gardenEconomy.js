@@ -6,12 +6,16 @@ import {decorPlaces} from './roomShopArt.js';
 export const catalog = {
   terra:{name:'Terracotta pot',kind:'pot',price:10},
   wave:{name:'Blue wave pot',kind:'pot',price:18},
+  'bog-frog-pot':{name:'Bog Frog Pot',kind:'pot',price:30},
+  'lava-pop-pot':{name:'Lava Pop Pot',kind:'pot',price:36},
   oak:{name:'Oak photo frame',kind:'frame',price:20},
   lacquer:{name:'Lacquer photo frame',kind:'frame',price:28},
   neko:{name:'Maneki-neko',kind:'decor',price:30},
   record:{name:'Record player',kind:'decor',price:65},
   'golden-pothos':{name:'Golden pothos',kind:'plant',price:90},
-  'snake-plant':{name:'Snake plant',kind:'plant',price:140}
+  'snake-plant':{name:'Snake plant',kind:'plant',price:140},
+  'monstera-albo':{name:'Monstera Albo',kind:'plant',price:150},
+  'pink-micans':{name:'Pink Micans',kind:'plant',price:115},
 };
 const empty = {balance:0,day:'',waters:0,wins:[],items:[],events:[],plants:[],notes:[]};
 export const lifeOf = plant => plant.gardenLife ?? empty;

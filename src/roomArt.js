@@ -1,6 +1,6 @@
 import {BASE_WIDTH,BASE_HEIGHT,placesFor,CAT_SEAT,drawScenery} from './roomScenery.js';
 import {drawRoomCat} from './roomCat.js';
-import {drawPottedPlant} from './roomPlant.js';
+import {drawPottedPlant,isShopPot} from './roomPlant.js';
 import {drawKeepsake,keepsakeFor} from './roomKeepsakes.js';
 import {slotFor} from './gardenLayout.js';
 import {drawRoomDecor} from './roomShopArt.js';
@@ -38,7 +38,7 @@ export function drawRoom(canvas,{
       return;
     }
     const place=places[slot],address=slotFor(roomIndex,place);
-    const shopPot=shopItems.find(item=>item.slot===address && (item.sku==='terra' || item.sku==='wave'));
+    const shopPot=shopItems.find(item=>item.slot===address && isShopPot(item.sku));
     if(slot===lifted)return;
     const plant=plants[slot],selected=slot===highlighted || Boolean(shopPot && highlighted===shopPot.id);
     const preview=!plant && !place.shelf && !shopPot;

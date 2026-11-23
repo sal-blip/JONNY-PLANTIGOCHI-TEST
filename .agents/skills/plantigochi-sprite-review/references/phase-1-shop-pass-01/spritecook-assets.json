@@ -1,0 +1,27 @@
+{
+  "foliage/monstera-albo.png": {
+    "asset_id": "b0c278d4-1d9b-4a75-860c-01bf1255c4c1",
+    "sha12": "83f92be97bc6",
+    "label": "Monstera Albo"
+  },
+  "source/pink-micans.png": {
+    "asset_id": "9457bb92-e597-4076-bf7e-a92e8ef021e2",
+    "sha12": "2c8180829a4d",
+    "label": "Pink Micans original"
+  },
+  "source/monkey-tail-cactus.png": {
+    "asset_id": "09c2268d-8d97-4d50-bda9-21d4ef10a878",
+    "sha12": "d77d00b7338b",
+    "label": "Monkey Tail Cactus second draft"
+  },
+  "pots/bog-frog-pot.png": {
+    "asset_id": "e8b1be1b-a889-433a-b6e6-5f4dbe394f20",
+    "sha12": "6b8fb146f5f5",
+    "label": "Bog Frog Pot"
+  },
+  "pots/lava-pop-pot.png": {
+    "asset_id": "cfb75d6b-3214-41d3-8ba5-abf491cff3f8",
+    "sha12": "ff5e0fc2f355",
+    "label": "Lava Pop Pot"
+  }
+}
