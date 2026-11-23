@@ -40,6 +40,11 @@ Growth, Water and Mood each have a separate LCD row under the centered plant. At
 
 Mobile Chromium checks covered picking up and dragging plants, placing them across rooms, cancelling a move, reloading saved positions, exporting a room postcard, and moving a grown plant into its first home. A 45-plant Monstera collection opened eight views. Additional species artwork is future work.
 
+## Deferred Phase 1 follow-ups
+
+- **iSEED Shop wishlist.** Let players heart individual plants and filter the shop to saved picks. Show the remaining Garden Coins for each plant and use the existing purchase and placement flow.
+- **Labeled garden postcards.** Let players add the displayed plant's cultivar name to a postcard before sharing it.
+
 ## Future idea for move-in day
 
 The unfurnished-room and separate-install proposals are deferred. Daily check-ins and the iSEED shop have since shipped in the furnished game. The bullets below preserve the original proposal.
