@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v60 · Social share image · November 23, 2026
+
+The public game link now shows the jade keychain with a grown Monstera beside the current sunny garden. The 1200 × 630 card uses the game renderer, welcome-tour sprites and game typography. Open Graph and X crawler requests to the live homepage returned matching metadata and alt text. The new public image matched the release PNG byte for byte. All 146 Node tests passed, and the two source checkouts produced 54 identical build files.
+
+Sites source `3ac7822abf004b5867f3e2bf1ae7b7d00946a5ae` · deployment `appgdep_6b03960e6b908191be7e5a84d0bfa3a3` · [Game commit 7c2d033](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/7c2d0331d7a5a18f21cef15fd82300bab06d66b4) · [Published card](https://plantigochi-pocket-garden-mobile.salbasilone.chatgpt.site/social/pocket-garden.png)
+
 ## v59 · Quieter soundtrack · November 23, 2026
 
 Cotton Candy Skies and Mystic Oasis now share a 50% maximum playback gain. Mobile Chromium verified both caps during the welcome tour, gameplay and when music resumed. The five-second tutorial fade and 750 ms gameplay entrance passed. All 145 Node tests passed. Eight live resources matched the build, including the two MP3s with byte-range delivery. Verification used browser audio measurements.
