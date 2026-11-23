@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v70 · Play button and phone installation · November 23, 2026
+
+Plantigochi 0.1.10 takes new visitors through four welcome cards. The final **Play Plantigochi** tap consumes an available browser install prompt immediately. Manual installation adapts to the phone and embedded browser. The install link carries the visitor to the same step after changing browsers. Seed setup opens in standalone mode.
+
+All 162 unit tests passed. Mobile Chromium exercised Android prompt activation with a simulated install event, iPhone instructions, the Facebook handoff screen, reload, Back and fresh standalone setup. Tour music passed. Six production resources matched the build and the signed-out welcome loaded. Physical phone installation and Facebook’s external-browser menu still need a device check. [Install walkthrough](../../tests/browser/public_install.py)
+
+Sites source `e1b1ccc0a14d7057f17945a3a0cce79aaf06f0c2` · saved version 70 · deployment `appgdep_6b04ca78f8e081918b2701f5aa10c8c1` · [GitHub release commit 8de086f](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/8de086f)
+
 ## v69 · Sharper garden items · November 23, 2026
 
 Plantigochi 0.1.9 renders visible garden plants, pots and décor at up to three backing pixels per room unit. Their existing artwork, physical placement and saved slots carry forward. Placement previews, held plants, selection contours and postcard exports use the same finer grid. [Measured garden sprites](research/garden-item-resolution.md)
