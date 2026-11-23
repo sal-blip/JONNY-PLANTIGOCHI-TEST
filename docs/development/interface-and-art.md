@@ -8,6 +8,10 @@ In an installed session, the saved setup phase selects the screen. A new player 
 
 During the first pot purchase, the guide and Buy button share a panel over the ceiling. Keep the panel independent of the room viewport so choosing a destination, wrapping a message or saving the pot cannot resize the camera. Short landscape screens use a single row of controls to keep the upper shelf targets reachable. A slow starter-pot save checks the saved pot and retries once with the same item ID. If storage stays busy, the **Retry save** button keeps the selected spot. Once the pot is saved, the garden guide offers **Return to my seed** alongside the usual return gesture.
 
+## Social link preview
+
+Sharing the public game link uses the static metadata in `index.html`. Its 1200 × 630 PNG pairs the current jade device and grown Monstera from the toy screen with the living room rendered at noon. The small growth sprites come from the welcome tour. Use the game’s Bricolage Grotesque, DM Sans and Silkscreen faces for the title, caption and series label. For a future artwork change, use a fresh public image URL, update both platform tags and describe the new artwork in both alt fields. The iSEED Postcard app makes a separate picture of the player’s own room. [Current card](../../public/social/pocket-garden.png) · [Metadata check](../../tests/socialPreview.test.js)
+
 ## Surfaces and navigation
 
 | Surface | How players use it | Code to change |

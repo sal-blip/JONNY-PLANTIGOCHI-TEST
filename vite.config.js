@@ -28,6 +28,7 @@ export default defineConfig({
       },
       injectManifest: {
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        globIgnores: ['social/**'],
         globPatterns: ['**/*.{html,js,css,woff2,svg,png,webp,webmanifest,m4a,mp3,txt}'],
       },
     }),
