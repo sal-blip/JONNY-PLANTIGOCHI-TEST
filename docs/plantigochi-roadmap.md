@@ -45,6 +45,12 @@ Mobile Chromium checks covered picking up and dragging plants, placing them acro
 - **iSEED Shop wishlist.** Let players heart individual plants and filter the shop to saved picks. Show the remaining Garden Coins for each plant and use the existing purchase and placement flow.
 - **Labeled garden postcards.** Let players add the displayed plant's cultivar name to a postcard before sharing it.
 
+## Deferred garden interior and outdoor scenery overhaul
+
+Revisit the full background of the living room and adjoining studio, from the ceiling, walls and floor to the landscape through both windows. Use the sharper plants and pots in version 0.1.9 as the visual reference. Keep the wide, cozy 16-bit room easy to read at phone size. [Garden sprite resolution study](development/research/garden-item-resolution.md)
+
+When this work resumes, start with one windowsill and its outdoor view. Put an approved plant on the sill and compare the scene in daylight and at night. Check how the landscape shifts when panning into the next room and how the same view reads behind the blurred Plantigochi. Use that sample to decide which scenery layers need new drawing detail. Check saved placements against the shelf edges and measure panning performance on a phone before extending the treatment across both rooms. [Scenery renderer](../src/roomScenery.js)
+
 ## Future idea for move-in day
 
 The unfurnished-room and separate-install proposals are deferred. Daily check-ins and the iSEED shop have since shipped in the furnished game. The bullets below preserve the original proposal.
