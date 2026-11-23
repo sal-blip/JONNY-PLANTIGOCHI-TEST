@@ -2,11 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
-## First visit and gameplay soundtrack · November 23, 2026
+## v58 · First visit and gameplay soundtrack · November 23, 2026
 
 - **First visit.** The welcome tour shows the current room. After naming the seed, the leaf reveal and chat guide the player through the toy buttons, watering, buying and placing a starter pot on iSEED, and spending the 200-coin growth gift to sprout. Playing one practice round of Dew Catch or skipping it leads to the same 20-coin farewell gift. The purse shows the balance during play.
 - **Soundtrack.** The supplied 128 kbps recording of Cotton Candy Skies loops at 75% through onboarding. Its five-second fade starts when the farewell appears. Entering the garden after the tutorial brings Mystic Oasis up to 80% in 750 ms. It loops through the toy, garden and iSEED and on later visits. A purchased record temporarily takes over. Sound and Garden ambience continue to honor the player’s preferences.
 - **Verification.** All 145 Node tests passed. The production build precached 46 resources. Mobile Chromium checks covered the tour, immediate reward claim, soundtrack handoff, returning saves, app backgrounding, the record player and offline playback. The worker update preserved the saved plant. Physical iPhone and Android audio output still need a listening check. [Music walkthrough](../../tests/browser/scene_music.py)
+- **Production.** Sites deployed version 58 from source `6b667c5c4729855c22b79f15a63db7acd722615e` with deployment `appgdep_6b038d6669fc8191bbf507c87e565a13`. Both source checkouts produced 53 identical build files. All eight public files checked matched the build, including both MP3s. Each track also returned the requested byte range with HTTP 206. [GitHub game commit ad20b24](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/ad20b24ecd2962a7f0926cab3c34b7a136e5f61f) · [Public game](https://plantigochi-pocket-garden-mobile.salbasilone.chatgpt.site)
 
 ## v52 · Garden furnishings · November 22, 2026
 
