@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v64 · Growth Lab and debug purse · November 23, 2026
+
+Plantigochi 0.1.4 adds a disposable garden copy with an accelerated plant clock, event jumps and a manual skip for care reminders. The debug purse action sets the selected garden’s balance to 1,000 coins. Settings recognizes the two-corner gesture even when its controls overlap the corner areas on shorter phones. [Testing growth on a phone](gameplay-and-saves.md#testing-growth-on-a-phone)
+
+All 158 automated tests passed. Mobile Chromium exercised the five-second gesture, both purse scopes, background pause, watering, full growth, room placement, the free Golden Pothos seed and discarding the copy on exit or reload. The signed-out public install page loaded and six public resources matched the build. Physical phone testing is pending. [Mobile walkthrough](../../tests/browser/growth_lab.py)
+
+Sites source `eb09d15e1d5f6c23a371c6cadbe56e52fe916133` · saved version 64 · deployment `appgdep_6b049b32be04819180955a260f6ff8f1` · [GitHub release commit f508038](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/f5080383640177d68393599c4e75fae809b0ce92)
+
 ## v63 · Nine growable plants · November 23, 2026
 
 Plantigochi 0.1.3 gives each mature plant a free successor when the player confirms its move into the garden. The ninth plant, Moth Orchid, leads back to Monstera. The iSEED shop also sells mature specimens, including Bird of Paradise for 600 Garden Coins and Moth Orchid for 700. [Growth and saves](gameplay-and-saves.md)
