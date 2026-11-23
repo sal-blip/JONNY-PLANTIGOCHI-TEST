@@ -342,7 +342,7 @@ export function gardenStore(legacyStorage,visible){
         // The erase is already committed. If cleanup is interrupted, the marker
         // survives and repeating these removals is safe before new enrollment.
         const storage=legacyStorage();
-        for(const key of [KEY,'plantigochi.tilt','plantigochi.care-library.v1','plantigochi-save-signal'])storage.removeItem(key);
+        for(const key of [KEY,'plantigochi.browser-play','plantigochi.tilt','plantigochi.care-library.v1','plantigochi-save-signal'])storage.removeItem(key);
         retireAlerts(storage);
         const {resetCleanup,...next}=setup;
         records.put(next,setupKey);

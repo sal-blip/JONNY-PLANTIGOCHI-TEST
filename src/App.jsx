@@ -52,10 +52,22 @@ function MenuItems({ items, open }) {
 
 export default function App() {
   const phone=usePhoneApp();
-  return <GameMusic>{phone.standalone ? <InstalledGame phone={phone}/> :
-    <><PublicTourMusic/><WelcomeTour phone={phone}/></>}</GameMusic>;
+  const [browserPlay,setBrowserPlay]=useState(()=>{
+    if(location.hash==='#install')return false;
+    if(location.hash==='#play')return true;
+    try{return localStorage.getItem('plantigochi.browser-play')==='yes';}catch{return false;}
+  });
+  function playHere(){
+    try{localStorage.setItem('plantigochi.browser-play','yes');}catch{/* The URL also resumes this tab. */}
+    const url=new URL(location.href);
+    url.hash='play';
+    history.replaceState(history.state,'',url);
+    setBrowserPlay(true);
+  }
+  return <GameMusic>{phone.standalone || browserPlay ? <GardenSession phone={phone}/> :
+    <><PublicTourMusic/><WelcomeTour phone={phone} onPlay={playHere}/></>}</GameMusic>;
 }
-function InstalledGame({phone}){
+function GardenSession({phone}){
   const storage=useGardenSave();
   const [alertVisitId,setAlertVisitId]=useState(()=>crypto.randomUUID());
   useEffect(()=>{
@@ -92,13 +104,13 @@ function InstalledSession({phone,storage,careMessage,consumeCareMessage,alertVis
   const debut=Boolean(storage.plant && storage.plant.sproutDebut===storage.plant.id && storage.plant.stage==='sprout' && storage.plant.deadAt===null && storage.plant.fungusAt==null);
   const fresh=!invite && (debut || phase==='watered' && !storage.plant?.tutorial);
   const returning=!storage.plant?.tutorial && invite?.round===1 && invite.visit!==alertVisitId && (phase==='watered' || (phase==='game' && !storage.firstDay && sproutVisit.current!==alertVisitId));
-  const needsVisit=alerts.capable && phase!=='tour' && (
+  const needsVisit=phone.standalone && alerts.capable && phase!=='tour' && (
     fresh || returning || (alerts.enrolled && invite && !invite.done)
   );
   useEffect(()=>{
     if(needsVisit)void alertVisit(alertVisitId,'open',alerts.enrolled);
   },[needsVisit,alertVisit,alerts.enrolled,alertVisitId]);
-  const offer=alerts.capable && !alerts.enrolled && invite?.visit===alertVisitId && !invite.closed ? invite.round : null;
+  const offer=phone.standalone && alerts.capable && !alerts.enrolled && invite?.visit===alertVisitId && !invite.closed ? invite.round : null;
   const answer=defer=>alertVisit(alertVisitId,defer?'defer':'finish');
   const namedHere=useRef(false);
   const [lab,setLab]=useState(null);
@@ -408,6 +420,16 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     const state=lab.snapshot(),event=lab.stop();
     labBadge=state.running?'180×':event && event.at<=now?event.label:state.notice;
   }
+  const showInstallReminder=plant?.browserInstallReminder && !lab && !phone.standalone && !phone.installed &&
+    !setupScreen && !page && !intro && !sharing && !transitioning;
+  function finishInstallReminder(install){
+    if(install)open('install');
+    void commit(p=>{
+      if(!p.browserInstallReminder)return p;
+      const {browserInstallReminder,...rest}=p;
+      return rest;
+    });
+  }
   const pocket=plant && <div className="pocket-floor" data-toy-wallpaper="">
     {background!=='garden' && <div key={background} ref={scenery} className="scenery"
       style={photo?undefined:{backgroundImage:'url(/scenes/'+scene+'.webp)'}} aria-hidden="true">
@@ -415,9 +437,14 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     </div>}
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
       <PocketDevice plantClock={plantClock} revealSeed={revealSeed} lesson={lesson} finishLesson={visitGarden} routePending={routePending} routeError={routeError} firstDay={storage.firstDay}
-        sproutWelcome={toyActive && sproutInvitation} onFarewellReveal={onFarewellReveal}
-        dismissSprout={dismissWelcome} reminder={(drinkReminder || plant.sproutDebut===plant.id && alerts.capable) && !alerts.enrolled && !alerts.denied?alerts:null} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={enterGraduation} openBook={enterBook} resting={toyActive} commit={commit} sound={play}/>
+        offerInstallAfterTutorial={!lab && !phone.standalone && !phone.installed} sproutWelcome={toyActive && sproutInvitation} onFarewellReveal={onFarewellReveal}
+        dismissSprout={dismissWelcome} reminder={phone.standalone && (drinkReminder || plant.sproutDebut===plant.id && alerts.capable) && !alerts.enrolled && !alerts.denied?alerts:null} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={enterGraduation} openBook={enterBook} resting={toyActive} commit={commit} sound={play}/>
     </div>
+    {showInstallReminder && onToy && <GuideChat className="toy-guide" cue="install-after-tutorial">
+      <p>Don’t forget to install Plantigochi to keep your saved garden handy on this phone!</p>
+      <div className="chat-actions"><button onClick={()=>finishInstallReminder(true)}>Install Plantigochi</button>
+        <button onClick={()=>finishInstallReminder(false)}>Maybe later</button></div>
+    </GuideChat>}
     <div className="garden-edges" aria-hidden="true"/>
     {guide && !tutorial && onToy && !page && <GuideChat cue="visit-room" className="room-guide"><p>Swipe up to visit our garden. My iSEED phone is waiting there.</p></GuideChat>}
     {(!guide || !tutorial) && lesson!=='water' && !intro && !page && <SwipeCue data-toy-handle="" aria-label="Open garden"

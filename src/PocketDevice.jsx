@@ -64,7 +64,7 @@ function GameArt({game}) {
   return <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>;
 }
 
-export default function PocketDevice({plant,now,plantClock=Date.now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,onFarewellReveal}) {
+export default function PocketDevice({plant,now,plantClock=Date.now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,onFarewellReveal,offerInstallAfterTutorial=false}) {
   const [revealing,setRevealing]=useState(()=>revealSeed && lesson==='water' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(()=>{
     if(!revealing)return;
@@ -162,7 +162,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     if(sproutAnswerPending.current)return;
     sproutAnswerPending.current=true;setAnsweringSprout(true);setLessonError('');
     try{
-      if(await commit(claimDewGift)){setPath([]);heart.current?.focus({preventScroll:true});}
+      if(await commit(p=>claimDewGift(p,offerInstallAfterTutorial))){setPath([]);heart.current?.focus({preventScroll:true});}
       else setLessonError('Your gift is still here. Please try again.');
     }finally{
       sproutAnswerPending.current=false;setAnsweringSprout(false);
