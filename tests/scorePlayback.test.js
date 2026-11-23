@@ -96,14 +96,14 @@ test('independent native loops and gain ramps span the farewell and arrival with
   assert.deepEqual(e.fetches.map(x=>x.url),[cotton]);
   assert.equal(e.sources.length,1);
   assert.equal(intro.loop,true);
-  assert.deepEqual(intro.gain.ramps,[[.75,1.2]]);
+  assert.deepEqual(intro.gain.ramps,[[.5,1.2]]);
   p.setMix({});
   assert.deepEqual(intro.gain.ramps.at(-1),[0,8]);
   e.advance(2);
   p.setMix({mystic:true});
   await settle();
   const theme=e.sources[1];
-  assert.deepEqual(theme.gain.ramps,[[.8,5.75]]);
+  assert.deepEqual(theme.gain.ramps,[[.5,5.75]]);
   assert.equal(theme.loop,true);
   assert.equal(intro.stopTime,undefined);
   e.advance(3);
@@ -124,7 +124,7 @@ test('a reversed fade uses the current level and reuses the playing channel',asy
   e.advance(.375);
   p.setMix({mystic:true});
   const src=e.sources[0];
-  assert.deepEqual(src.gain.sets.at(-1),[.4,1.375]);
+  assert.deepEqual(src.gain.sets.at(-1),[.25,1.375]);
   e.advance(20);
   assert.equal(e.sources.length,1);
   assert.equal(src.stopTime,undefined);

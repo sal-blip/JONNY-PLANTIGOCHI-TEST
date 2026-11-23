@@ -63,12 +63,18 @@ def tracks(page):
     return page.evaluate("window.score()")
 
 
-def audible(page, role, gain):
+MAX_SCORE_GAIN = 0.5
+
+
+def audible(page, role):
     page.wait_for_function(
         """([role,gain]) => score().some(t => t.role === role && !t.ended &&
-           t.peak > .005 && Math.abs(t.gain - gain) < .02)""", arg=[role, gain],
+           t.peak > .005 && Math.abs(t.gain - gain) < .02)""", arg=[role, MAX_SCORE_GAIN],
     )
-    return next(t for t in reversed(tracks(page)) if t["role"] == role and not t["ended"])
+    track = next(t for t in reversed(tracks(page)) if t["role"] == role and not t["ended"])
+    # A louder ramp also passes through half volume; verify its target.
+    assert max(r["value"] for r in track["ramps"]) == MAX_SCORE_GAIN, (role, track)
+    return track
 
 
 def button(page, name):
@@ -125,9 +131,9 @@ def web_tour(browser, source):
         page = ctx.new_page()
         page.goto(url)
         taps(page, "Take a peek")
-        first = audible(page, "cotton", .75)
+        first = audible(page, "cotton")
         taps(page, "Next", "Get Plantigochi", "Back")
-        assert audible(page, "cotton", .75)["id"] == first["id"]
+        assert audible(page, "cotton")["id"] == first["id"]
         assert len(tracks(page)) == 1
     finally:
         ctx.close()
@@ -142,7 +148,7 @@ def first_visit(browser, source):
         page.evaluate(SEED_SETUP, None)
         page.goto(url)
         taps(page, "Take a peek")
-        cotton = audible(page, "cotton", .75)
+        cotton = audible(page, "cotton")
         taps(page, "Next", "Continue", "Begin setup", "Name your seed", "Keep Monstera",
              "Open toy menu", "Next toy item", "Back on toy", "Open toy menu", "Choose Care",
              "Choose Water", "Visit my garden", "Open iSEED", "Shop", "Terracotta pot · 12 coins",
@@ -152,7 +158,7 @@ def first_visit(browser, source):
             taps(page, "Choose Spend 50 coins")
         taps(page, "Play one round", "Play heart")
         assert [t["role"] for t in tracks(page)] == ["cotton"], tracks(page)
-        assert audible(page, "cotton", .75)["id"] == cotton["id"]
+        assert audible(page, "cotton")["id"] == cotton["id"]
         claim = button(page, "Claim 20 coins")
         claim.wait_for(timeout=20000)
         claim.tap()
@@ -167,17 +173,17 @@ def first_visit(browser, source):
         page.wait_for_function("score()[0].ended", timeout=7000)
         assert [t["role"] for t in tracks(page)] == ["cotton"], tracks(page)
         taps(page, "Open garden")
-        gameplay = audible(page, "mystic", .8)
-        fade_in = next(r for r in gameplay["ramps"] if r["value"] == .8)
+        gameplay = audible(page, "mystic")
+        fade_in = next(r for r in gameplay["ramps"] if r["value"] == MAX_SCORE_GAIN)
         assert abs(fade_in["seconds"] - .75) < .03, fade_in
         taps(page, "Open iSEED", "Journal", "Put down iSEED", "Return to Plantigochi")
         taps(page, "Open toy menu", "Next toy item", "Choose Play", "Choose Dew Catch", "Play heart")
-        assert audible(page, "mystic", .8)["id"] == gameplay["id"]
+        assert audible(page, "mystic")["id"] == gameplay["id"]
         assert len(tracks(page)) == 2, tracks(page)
         # A completed save starts the main theme on the toy on its next launch.
         page.reload()
         taps(page, "Open Plantigochi menu")
-        audible(page, "mystic", .8)
+        audible(page, "mystic")
         assert [t["role"] for t in tracks(page)] == ["mystic"]
         taps(page, "Settings")
         ambience = page.get_by_role("button", name="Garden ambience On")
@@ -185,11 +191,11 @@ def first_visit(browser, source):
         page.wait_for_function("score().every(t=>t.ended || t.gain < .001)")
         expect(page.get_by_role("button", name="Garden ambience Off")).to_be_visible()
         page.get_by_role("button", name="Garden ambience Off").tap()
-        audible(page, "mystic", .8)
+        audible(page, "mystic")
         page.locator('button[data-audio="master"]:visible').tap()
         page.wait_for_function("score().every(t=>t.ended || t.gain < .001)")
         page.locator('button[data-audio="master"]:visible').tap()
-        audible(page, "mystic", .8)
+        audible(page, "mystic")
         return completed
     finally:
         ctx.close()
@@ -208,7 +214,7 @@ def saved_record(browser, source, completed):
         page.evaluate(SEED_SETUP, completed)
         page.goto(url)
         taps(page, "Open toy menu")
-        audible(page, "mystic", .8)
+        audible(page, "mystic")
         assert [t["role"] for t in tracks(page)] == ["mystic"]
         taps(page, "Back on toy", "Open garden")
         page.locator('[data-item-id="music-test-record"]:visible').tap()
@@ -217,7 +223,7 @@ def saved_record(browser, source, completed):
         page.wait_for_function("score().every(t => t.ended || t.gain < .001)")
         assert not page.locator("audio").evaluate("a=>a.paused || a.muted")
         taps(page, "Pause record")
-        audible(page, "mystic", .8)
+        audible(page, "mystic")
         assert page.locator("audio").evaluate("a=>a.paused")
     finally:
         ctx.close()

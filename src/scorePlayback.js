@@ -1,8 +1,9 @@
 import {useCallback,useLayoutEffect,useRef} from 'react';
 
+const maxMusicGain=0.5;
 const tracks={
-  cotton:{url:'/music/cotton-candy-skies.mp3',volume:.75,fadeIn:1.2,fadeOut:5},
-  mystic:{url:'/music/mystic-oasis.mp3',volume:.80,fadeIn:.75,fadeOut:.75},
+  cotton:{url:'/music/cotton-candy-skies.mp3',fadeIn:1.2,fadeOut:5},
+  mystic:{url:'/music/mystic-oasis.mp3',fadeIn:.75,fadeOut:.75},
 };
 const introKey='plantigochi.score.intro.v1';
 const plantKey='plantigochi.score.tutorial.v1';
@@ -152,7 +153,7 @@ export function createScorePlayback(browser=window,page=document){
           headTimer=browser.setInterval(saveHead,10000);
         }
       }
-      rampTo(ch,ch.volume,ch.fadeIn);
+      rampTo(ch,maxMusicGain,ch.fadeIn);
     }
   }
   function unlock(){
