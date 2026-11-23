@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v66 · LCD care cues and starting volume · November 23, 2026
+
+Plantigochi 0.1.6 adds a hollow water drop, food spoon, company heart and feathered light cue around the keychain plant. The toy shows the next need after care succeeds. New games and the first welcome tour use a 40% music setting. New games also start sound effects at 40%. Existing mixer preferences carry forward.
+
+All 161 Node tests passed. Mobile Chromium exercised overlapping needs, the four care buttons, successful feedback, persistence, the new starting mix and the existing audio controls. The tour and gameplay soundtrack checks passed. The managed preview relay timed out. The production-bundle walkthroughs passed, six public resources matched the release, and the signed-out welcome screen loaded. Physical phone testing is pending. [Care cue walkthrough](../../tests/browser/care_indicators.py)
+
+Sites source `d49f7e5e70fb4e7a1af372caedd7bf209b88cf1c` · saved version 66 · deployment `appgdep_6b04a4961a688191863948ecb19a08b7` · [GitHub release commit 33f3ca8](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/33f3ca862a26df058a305a530b286d6e6dd79428)
+
 ## v65 · Garden homecoming and successor naming · November 23, 2026
 
 Plantigochi 0.1.5 saves each fully grown plant to iSEED Inventory and invites the player to choose a garden spot. Each growth stage has a flare on the keychain. Confirming the current plant’s placement starts the next free seed. Its naming screen opens on the next keychain visit and remembers that a name is due across reloads. [Growth and care](gameplay-and-saves.md#growth-and-care)
