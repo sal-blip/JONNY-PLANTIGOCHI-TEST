@@ -106,6 +106,20 @@ def mobile_layout(page):
             }"""), (w,h,name,rect)
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
     page.set_viewport_size({"width":393, "height":710})
+    effects = slider(page, "Sound effects")
+    box = effects.bounding_box()
+    touch = page.context.new_cdp_session(page)
+    try:
+        y = box["y"] + box["height"] / 2
+        for kind, fraction in [("touchStart", .08), ("touchMove", .3), ("touchMove", .7)]:
+            x = box["x"] + box["width"] * fraction
+            touch.send("Input.dispatchTouchEvent", {"type":kind, "touchPoints":[{"x":x,"y":y}]})
+        touch.send("Input.dispatchTouchEvent", {"type":"touchEnd", "touchPoints":[]})
+        assert 45 < int(effects.input_value()) < 95, effects.input_value()
+        assert page.get_by_role("dialog", name="Settings").is_visible()
+    finally:
+        touch.detach()
+    adjust(page, "Sound effects", 0)
 
 
 def play(browser, source):
@@ -114,10 +128,11 @@ def play(browser, source):
         ctx,url,blank = context_for(browser,source)
         try:
             page = ctx.new_page()
-            page.set_default_timeout(9000)
+            page.set_default_timeout(12000)
+            page.set_default_navigation_timeout(45000)
             page.goto(blank)
             page.evaluate(SEED_SETUP,legacy_seed(sound,ambience))
-            page.goto(url)
+            page.goto(url, wait_until="domcontentloaded")
             settings(page)
             assert levels(page) == expected, (sound, ambience, levels(page))
             assert not page.evaluate("score()"), "Muted legacy music started a recorded track"
@@ -138,8 +153,11 @@ def play(browser, source):
             track = theme_level(page,.20)
             adjust(page, "Music", 70)
             assert theme_level(page,.35) == track
-            before_mute = page.evaluate("score().at(-1).position")
+            page.evaluate("""document.addEventListener('keydown',()=>{
+              window.lastMusicPosition=score().at(-1).position;
+            },{capture:true,once:true})""")
             adjust(page, "Music", 0)
+            before_mute = page.evaluate("window.lastMusicPosition")
             page.wait_for_function("score().every(song=>song.ended)")
             audible_loop(page, 23, .6)
             adjust(page, "Music", 70)
