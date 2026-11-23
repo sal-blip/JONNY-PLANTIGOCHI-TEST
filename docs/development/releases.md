@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v74 · Install-only welcome and tutorial care reminders · November 23, 2026
+
+Plantigochi 0.1.14 offers **Install app** on the last welcome card. A former browser player can export their existing garden and restore it during installed setup. After the final tutorial reward, supported devices offer **Turn on reminders** or **Maybe later** in a chat bubble. Deferring opens a final water-meter message. Its **Got it** acknowledgment survives reload.
+
+All 162 unit tests passed. Chromium exercised Android, iPhone and Facebook install paths, recovery of a former browser tutorial save, and the enable and defer choices with simulated permission and push APIs. Physical device notification delivery was outside these checks. Six production resources matched the build and the signed-out welcome loaded. [Reminder walkthrough](../../tests/browser/tutorial_reminders.py) · [Former browser save walkthrough](../../tests/browser/browser_tutorial.py)
+
+Sites source `8f99b5e322cf8e13934d7318ca241d5874d75dc8` · saved version 74 · deployment `appgdep_6b04cfe1108081918c3e19c0d1955731` · [GitHub release commit 7d165f0](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/7d165f0)
+
 ## v73 · Final welcome button wording · November 23, 2026
 
 Plantigochi 0.1.13 labels the green left button **Install app** and the sand right button **Just start playing**, with **or** between them. Narrow screens use tighter spacing. All 162 unit tests passed. Mobile Chromium checked the horizontal order at 320 CSS pixels, the device-specific install paths and the browser tutorial through its last reward. Six public resources matched the build and the signed-out welcome loaded. [Install choices walkthrough](../../tests/browser/public_install.py)
