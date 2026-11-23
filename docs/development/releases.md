@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v59 · Quieter soundtrack · November 23, 2026
+
+Cotton Candy Skies and Mystic Oasis now share a 50% maximum playback gain. Mobile Chromium verified both caps during the welcome tour, gameplay and when music resumed. The five-second tutorial fade and 750 ms gameplay entrance passed. All 145 Node tests passed. Eight live resources matched the build, including the two MP3s with byte-range delivery. Verification used browser audio measurements.
+
+Sites source `8f822d40fa09668ffe4d686a33153df84946247f` · deployment `appgdep_6b038e59474c819184c9bb969628806d` · [GitHub game commit 64f5a14](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/64f5a142c951d444ec5c5ee29bb76ef8f41ff3ca)
+
 ## v58 · First visit and gameplay soundtrack · November 23, 2026
 
 - **First visit.** The welcome tour shows the current room. After naming the seed, the leaf reveal and chat guide the player through the toy buttons, watering, buying and placing a starter pot on iSEED, and spending the 200-coin growth gift to sprout. Playing one practice round of Dew Catch or skipping it leads to the same 20-coin farewell gift. The purse shows the balance during play.
