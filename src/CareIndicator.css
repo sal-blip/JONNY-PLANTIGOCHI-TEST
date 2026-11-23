@@ -10,26 +10,37 @@
 .lcd-care-light[data-needed="ready"] {opacity:.58}
 .lcd-care-light[data-needed="due"] {opacity:1}
 .lcd-care-light ~ .lcd-top,.lcd-care-light ~ .lcd-status {position:relative}
-@media (prefers-reduced-motion:no-preference) {
-  [data-care-cue]:not([data-delivered]) {animation:care-arrive .65s ease-in-out both}
+.lcd-care-row {
+  position:absolute;
+  right:4.2%;
+  bottom:max(26%,calc(2% + max(21%,6.15cqw + 4px) + 2px));
+  display:flex;
+  align-items:end;
+  pointer-events:none;
 }
-@keyframes care-arrive {from{opacity:0} to{opacity:1}}
-[data-care-cue] .care-drop,[data-care-cue] .care-bubble {animation:care-hover 2.8s ease-in-out infinite}
-[data-delivered] .care-drop {animation:care-pour .95s ease-in forwards}
-[data-delivered] .care-bubble {animation:care-thanks 1.05s ease-out forwards}
-[data-delivered] .care-spoon {transform-origin:2px 2px;animation:care-tip 1s ease-in-out forwards}
-.care-pellet {animation:care-feed .8s .18s ease-in both}
-.care-pellet.second {animation-delay:.32s}
-@keyframes care-hover {50%{transform:translateY(-1px)}}
-@keyframes care-pour {25%{transform:translate(0,0)} 90%,100%{transform:translate(13px,5px) scale(.8);opacity:0}}
-@keyframes care-thanks {to{transform:translateY(-6px);opacity:0}}
-@keyframes care-tip {45%,70%{transform:rotate(20deg)} to{opacity:0}}
-@keyframes care-feed {to{transform:translate(11px,9px);opacity:0}}
+.lcd-care-slot {
+  position:relative;
+  width:0;
+  height:2.8cqw;
+  opacity:0;
+  transition:width .38s ease-in-out,opacity .4s ease-out;
+}
+.lcd-care-slot[data-care-cue] {
+  width:3.05cqw;
+  opacity:1;
+  transition:width .38s ease-in-out,opacity .65s ease-in-out;
+}
+@starting-style {
+  .lcd-care-slot[data-care-cue] {opacity:0}
+}
+.lcd-care-slot img {
+  position:absolute;
+  right:0;
+  bottom:0;
+  width:2.8cqw;
+  height:2.8cqw;
+  image-rendering:pixelated;
+}
 @media (prefers-reduced-motion:reduce) {
-  .lcd-care-light {transition:none}
-  [data-care-cue] :is(.care-drop,.care-bubble,.care-spoon,.care-pellet) {animation:none}
-  [data-care-cue][data-delivered] {animation:care-still .7s linear}
-}
-@keyframes care-still {
-  from,to{opacity:1}
+  .lcd-care-light,.lcd-care-slot,.lcd-care-slot[data-care-cue] {transition:none}
 }

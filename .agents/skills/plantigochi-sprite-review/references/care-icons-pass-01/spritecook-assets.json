@@ -1,0 +1,18 @@
+{
+  "water-glyph.png": {
+    "asset_id": "9f3f203f-b312-4607-a0da-3b1c8e180931",
+    "sha12": "b93ad2e27338"
+  },
+  "sun-glyph.png": {
+    "asset_id": "c3b3090f-ffb6-49fe-92c2-9e33d6b78c7b",
+    "sha12": "9f614211069d"
+  },
+  "food-glyph.png": {
+    "asset_id": "6cebe3e0-617a-407f-814c-061bab7afb0a",
+    "sha12": "32a2626e8e84"
+  },
+  "talk-glyph.png": {
+    "asset_id": "fd11bc44-d865-47e5-8d60-7da7f49e7699",
+    "sha12": "785a01c8568c"
+  }
+}

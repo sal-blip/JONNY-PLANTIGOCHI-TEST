@@ -1,4 +1,3 @@
-import CareIndicator,{cueLabels} from './CareIndicator.jsx';
 import React from "react";
 import {BottlePreview, GnatDose, OutbreakArt, outbreakLabels, outbreakLevel} from "./GnatArt.jsx";
 import {vineBladeRows} from "./vineBlade.js";
@@ -673,8 +672,7 @@ export default function PlantPixel({ careCues, reactionId, species, seedSteps=0,
   const recoverFrom = effect === "water" && soil === "healthy" && growth !== "seed" && thirsty(waterFrom) ? waterFrom : null;
   const expression = soil !== "healthy" ? soil : active >= 2 ? "bothered" : growth === "seed" ? "asleep" : recoverFrom ? "happy" : hungry ? "hungry" : lowLight ? "lowLight" : feeling;
   const subject = growth === "seed" && soil !== "healthy" ? stageNames.seed.replace("Sleeping ", "") : stageNames[growth];
-  const cueReceipt=careCues && !active && !treating && soil!=="dead" && Object.hasOwn(cueLabels,effect) ? effect : null;
-  const label = [cueLabels[careCues?.icon],careCues?.light==="ready" && "ready for sunlight",subject, healthName[soil], outbreakLabels[active], showBottle && soil !== "dead" && !curing && "G-NAT ASSASSIN treatment bottle", soil !== "dead" && feeling, soil !== "dead" && hungry && "needs food", soil !== "dead" && lowLight && "needs light", effectName[effect], recoverFrom && (species === "monkey-tail-cactus" ? "stems plumping after a drink" : "leaves lifting after a drink")].filter(Boolean).join(", ");
+  const label = [careCues?.light==="ready" && "ready for sunlight",subject, healthName[soil], outbreakLabels[active], showBottle && soil !== "dead" && !curing && "G-NAT ASSASSIN treatment bottle", soil !== "dead" && feeling, soil !== "dead" && hungry && "needs food", soil !== "dead" && lowLight && "needs light", effectName[effect], recoverFrom && (species === "monkey-tail-cactus" ? "stems plumping after a drink" : "leaves lifting after a drink")].filter(Boolean).join(", ");
   return <svg className="plant-pixel" viewBox="0 0 72 40" xmlns="http://www.w3.org/2000/svg"
     role="img" aria-label={label} shapeRendering="crispEdges" data-stage={growth} data-condition={soil} data-mood={feeling} data-outbreak={active || undefined} data-effect={effect ?? undefined} data-water-from={recoverFrom || undefined}>
     <g key={reactionId ?? "idle"} fill="currentColor">
@@ -692,12 +690,11 @@ export default function PlantPixel({ careCues, reactionId, species, seedSteps=0,
         </g>)}
       </g></g>
       <Pot condition={soil} expression={expression} waterFrom={recoverFrom} />
-      {!treating && <Feeling stage={growth} mood={feeling} hungry={hungry && !careCues} lowLight={careCues ? careCues.light : lowLight} condition={soil} reaction={effect || active} />}
+      {!treating && <Feeling stage={growth} mood={feeling} hungry={hungry && !careCues} lowLight={lowLight && !careCues} condition={soil} reaction={effect || active} />}
       {active > 0 && <OutbreakArt severity={active}/>}
       </g>
       {showBottle && !curing && soil !== "dead" && <BottlePreview/>}
-      {curing ? <GnatDose severity={severity} patientTransform={patientTransform}/> : effect && !cueReceipt && <EventArt kind={effect} />}
+      {curing ? <GnatDose severity={severity} patientTransform={patientTransform}/> : effect && <EventArt kind={effect} />}
     </g>
-    {careCues && !treating && !active && <CareIndicator need={careCues.icon} receipt={cueReceipt} receiptId={reactionId}/>}
   </svg>;
 }

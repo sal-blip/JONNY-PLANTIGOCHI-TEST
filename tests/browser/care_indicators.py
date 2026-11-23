@@ -20,6 +20,7 @@ with sync_playwright() as pw:
     page = ctx.new_page()
     normal='--normal-motion' in sys.argv
     if normal: page.emulate_media(reduced_motion='no-preference')
+    if not normal:page.set_viewport_size({"width":320,"height":568})
     page.goto(blank)
     p = sprout_fixture()['plant']
     for key in ('dewLesson','tutorial','sproutDebut','sproutBurstPending'):
@@ -32,50 +33,39 @@ with sync_playwright() as pw:
     page.evaluate(SEED_SETUP,p)
     page.goto(url)
     lcd = page.locator('.lcd')
-    def cue(kind, delivered=False):
-        selector=f'[data-care-cue="{kind}"]' + ('[data-delivered]' if delivered else ':not([data-delivered])')
-        expect(lcd.locator(selector)).to_be_visible()
-    # Record the order and actual opacity while care animations run.
-    page.evaluate('''window.events=[];window.midFade=[];
-      for(const type of ['animationstart','animationend'])document.addEventListener(type,e=>{
-        const cue=e.target.closest('[data-care-cue]');
-        if(!cue)return;
-        const kind=cue.dataset.careCue;
-        events.push([type,e.animationName,kind]);
-        if(type==='animationstart' && e.animationName==='care-arrive'){
-          const sample=()=>{if(!cue.isConnected)return;
-            const opacity=Number(getComputedStyle(cue).opacity);
-            if(opacity>0 && opacity<1)midFade.push(kind);
-            else if(opacity===0)requestAnimationFrame(sample);};
-          requestAnimationFrame(sample);
-        }
-      },true);''')
-    cue('water')
+    def check_row(expected):
+        badges=lcd.locator('.lcd-care-slot[data-care-cue]')
+        expect(badges).to_have_count(len(expected))
+        assert badges.evaluate_all("(els)=>els.map(el=>el.dataset.careCue)")==expected
+        if not expected:return
+        page.wait_for_function("""()=>[...document.querySelectorAll('.lcd-care-slot[data-care-cue] img')].every(im=>im.complete && im.naturalWidth===32)""")
+        expect(badges.last).to_have_css('opacity','1')
+        rects=badges.locator('img').evaluate_all("(els)=>els.map(el=>el.getBoundingClientRect().toJSON())")
+        bounds=lcd.bounding_box()
+        assert all(r['width']<bounds['width']*.09 and r['width']>0 for r in rects)
+        assert abs(rects[-1]['right']-(bounds['x']+bounds['width']*.958))<2
+        assert all(abs(r['top']-rects[0]['top'])<1 for r in rects)
+        assert all(r['right']<=n['left']+.2 for r,n in zip(rects,rects[1:]))
+    check_row(['water','sun','food','talk'])
+    meter=lcd.locator('.lcd-readout').bounding_box()
+    last=lcd.locator('[data-care-cue="talk"] img').bounding_box()
+    assert last['y']+last['height']<=meter['y']
+    if normal:lcd.screenshot(path='/tmp/plantigochi-four-care-badges.png')
     shade=lcd.locator('.lcd-care-light')
     expect(shade).to_have_css('opacity','0.58' if normal else '1')
     taps(page,'Open toy menu','Choose Care','Choose Water')
-    cue('water',True)
-    cue('food')
+    check_row(['sun','food','talk'])
     taps(page,'Next toy item')
     dark=edge_lightness(lcd)
     taps(page,'Choose Sunlight')
-    expect(lcd.locator('.lcd-care-light')).to_have_css('opacity','0')
+    expect(shade).to_have_css('opacity','0')
     bright=edge_lightness(lcd)
     assert bright-dark > (20 if normal else 35),(dark,bright)
+    check_row(['food','talk'])
     taps(page,'Next toy item','Next toy item','Choose Plant food')
-    cue('food',True)
-    cue('talk')
-    if normal:
-        page.wait_for_function("midFade.includes('talk') && midFade.includes('food')")
-        events=page.evaluate('events')
-        for end,kind,next_kind in [('care-pour','water','food'),('care-feed','food','talk')]:
-            last_end=max(i for i,e in enumerate(events) if e==['animationend',end,kind])
-            assert any(e==['animationstart','care-arrive',next_kind] for e in events[last_end+1:]),events
-    else:
-        assert not page.evaluate("events.some(e=>e[1]==='care-arrive')")
+    check_row(['talk'])
     taps(page,'Previous toy item','Choose Kind words')
-    cue('talk',True)
-    expect(lcd.locator('[data-care-cue]')).to_have_count(0)
+    check_row([])
     page.reload()
     expect(page.get_by_role('button',name='Open toy menu')).to_be_visible()
     expect(lcd.locator('[data-care-cue]')).to_have_count(0)

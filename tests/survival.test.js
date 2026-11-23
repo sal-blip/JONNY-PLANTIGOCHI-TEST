@@ -203,13 +203,13 @@ test('food and light prompts follow the same early-care windows as their actions
   }
 });
 
-test('LCD requests a safe first drink and prioritizes due water, food and company with independent sunlight',()=>{
+test('LCD requests a safe first drink and shows all overlapping care needs in a stable order',()=>{
   const seed=newPlant(10*DAY), time=seed.plantedAt;
-  assert.deepEqual(careIndicators(seed,time),{light:false,icon:'water'});
+  assert.deepEqual(careIndicators(seed,time),{light:false,icons:['water']});
   const damp=care(seed,'water',time);
-  assert.equal(careIndicators(damp,time).icon,null);
+  assert.deepEqual(careIndicators(damp,time).icons,[]);
   const p=wake(damp,time+H);
-  assert.equal(careIndicators(p,time+4.5*H).icon,null);
+  assert.deepEqual(careIndicators(p,time+4.5*H).icons,[]);
   const opens=p.litAt+16*H;
   const tended={...p,lastDrink:opens-2*H};
   assert.equal(careIndicators(tended,opens-1).light,false);
@@ -217,14 +217,14 @@ test('LCD requests a safe first drink and prioritizes due water, food and compan
   assert.equal(careIndicators(tended,p.litAt+DAY).light,'due');
   const now=time+3*DAY;
   let waiting={...p,lastDrink:now-4*H,companyAt:now-DAY,fedAt:now-2*DAY,litAt:now-DAY};
-  assert.deepEqual(careIndicators(waiting,now),{light:'due',icon:'water'});
+  assert.deepEqual(careIndicators(waiting,now),{light:'due',icons:['water','sun','food','talk']});
   waiting=care(waiting,'water',now);
-  assert.deepEqual(careIndicators(waiting,now),{light:'due',icon:'food'});
+  assert.deepEqual(careIndicators(waiting,now),{light:'due',icons:['sun','food','talk']});
   waiting=care(waiting,'food',now);
-  assert.deepEqual(careIndicators(waiting,now),{light:'due',icon:'talk'});
-  assert.deepEqual(careIndicators(care(waiting,'talk',now),now),{light:'due',icon:null});
-  assert.deepEqual(careIndicators(care(waiting,'sun',now),now),{light:false,icon:'talk'});
+  assert.deepEqual(careIndicators(waiting,now),{light:'due',icons:['sun','talk']});
+  assert.deepEqual(careIndicators(care(waiting,'talk',now),now),{light:'due',icons:['sun']});
+  assert.deepEqual(careIndicators(care(waiting,'sun',now),now),{light:false,icons:['talk']});
   for(const field of ['deadAt','fungusAt','rotAt']){
-    assert.deepEqual(careIndicators({...waiting,[field]:now},now),{light:false,icon:null});
+    assert.deepEqual(careIndicators({...waiting,[field]:now},now),{light:false,icons:[]});
   }
 });

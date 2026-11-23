@@ -6,14 +6,15 @@ const clamp = value => Math.min(1, Math.max(0, value));
 
 // The light cue starts when sunlight opens. Optional water top-ups stay in the menu.
 export function careIndicators(plant,now){
-  if(plant.deadAt!==null || plant.fungusAt!=null || plant.rotAt!=null)return {light:false,icon:null};
+  if(plant.deadAt!==null || plant.fungusAt!=null || plant.rotAt!=null)return {light:false,icons:[]};
   const sun=careStatus(plant,'sun',now);
   const light=sun.locked ? false : sun.due ? 'due' : 'ready';
-  let icon=null;
-  if(careStatus(plant,'water',now).due)icon='water';
-  else if(careStatus(plant,'food',now).due)icon='food';
-  else if(moodOf(plant,now)==='lonely' && !careStatus(plant,'talk',now).locked)icon='talk';
-  return {light,icon};
+  const icons=[];
+  if(careStatus(plant,'water',now).due)icons.push('water');
+  if(light)icons.push('sun');
+  if(careStatus(plant,'food',now).due)icons.push('food');
+  if(moodOf(plant,now)==='lonely' && !careStatus(plant,'talk',now).locked)icons.push('talk');
+  return {light,icons};
 }
 
 export function growthReadout(plant, now) {
