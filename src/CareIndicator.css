@@ -1,13 +1,19 @@
 .lcd-care-light {
   position:absolute;
   inset:0;
-  z-index:-1;
+  z-index:0;
   pointer-events:none;
-  background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(57,64,87,.09) 64%,rgba(51,58,83,.32) 100%);
+  background:radial-gradient(ellipse at 50% 51%,rgba(32,45,75,.06) 15%,rgba(32,45,75,.28) 52%,rgba(29,39,69,.65) 100%);
   opacity:0;
   transition:opacity .8s ease;
 }
-.lcd-care-light[data-needed] {opacity:1}
+.lcd-care-light[data-needed="ready"] {opacity:.58}
+.lcd-care-light[data-needed="due"] {opacity:1}
+.lcd-care-light ~ .lcd-top,.lcd-care-light ~ .lcd-status {position:relative}
+@media (prefers-reduced-motion:no-preference) {
+  [data-care-cue]:not([data-delivered]) {animation:care-arrive .65s ease-in-out both}
+}
+@keyframes care-arrive {from{opacity:0} to{opacity:1}}
 [data-care-cue] .care-drop,[data-care-cue] .care-bubble {animation:care-hover 2.8s ease-in-out infinite}
 [data-delivered] .care-drop {animation:care-pour .95s ease-in forwards}
 [data-delivered] .care-bubble {animation:care-thanks 1.05s ease-out forwards}
@@ -21,5 +27,9 @@
 @keyframes care-feed {to{transform:translate(11px,9px);opacity:0}}
 @media (prefers-reduced-motion:reduce) {
   .lcd-care-light {transition:none}
-  [data-care-cue] * {animation:none}
+  [data-care-cue] :is(.care-drop,.care-bubble,.care-spoon,.care-pellet) {animation:none}
+  [data-care-cue][data-delivered] {animation:care-still .7s linear}
+}
+@keyframes care-still {
+  from,to{opacity:1}
 }

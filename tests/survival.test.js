@@ -210,14 +210,19 @@ test('LCD requests a safe first drink and prioritizes due water, food and compan
   assert.equal(careIndicators(damp,time).icon,null);
   const p=wake(damp,time+H);
   assert.equal(careIndicators(p,time+4.5*H).icon,null);
+  const opens=p.litAt+16*H;
+  const tended={...p,lastDrink:opens-2*H};
+  assert.equal(careIndicators(tended,opens-1).light,false);
+  assert.equal(careIndicators(tended,opens).light,'ready');
+  assert.equal(careIndicators(tended,p.litAt+DAY).light,'due');
   const now=time+3*DAY;
   let waiting={...p,lastDrink:now-4*H,companyAt:now-DAY,fedAt:now-2*DAY,litAt:now-DAY};
-  assert.deepEqual(careIndicators(waiting,now),{light:true,icon:'water'});
+  assert.deepEqual(careIndicators(waiting,now),{light:'due',icon:'water'});
   waiting=care(waiting,'water',now);
-  assert.deepEqual(careIndicators(waiting,now),{light:true,icon:'food'});
+  assert.deepEqual(careIndicators(waiting,now),{light:'due',icon:'food'});
   waiting=care(waiting,'food',now);
-  assert.deepEqual(careIndicators(waiting,now),{light:true,icon:'talk'});
-  assert.deepEqual(careIndicators(care(waiting,'talk',now),now),{light:true,icon:null});
+  assert.deepEqual(careIndicators(waiting,now),{light:'due',icon:'talk'});
+  assert.deepEqual(careIndicators(care(waiting,'talk',now),now),{light:'due',icon:null});
   assert.deepEqual(careIndicators(care(waiting,'sun',now),now),{light:false,icon:'talk'});
   for(const field of ['deadAt','fungusAt','rotAt']){
     assert.deepEqual(careIndicators({...waiting,[field]:now},now),{light:false,icon:null});

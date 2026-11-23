@@ -530,7 +530,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         {showMeters && <span className="lcd-menu-key" aria-hidden="true">{summary?'♥ Finish':sick?'♥ First Aid':'♥ Menu'}</span>}
         {browsing && <BranchIcons active={branch}/>}
         <span className={game?'lcd-art':'lcd-art lcd-plant'}>
-          {game?<GameArt game={game}/>:<PlantPixel careCues={careCues} species={plant.species} seedSteps={boosting?tutorial.blocks:0} key={feedback?.id ?? "idle"} stage={plant.stage} condition={soil} mood={displayMood} waterFrom={feedback?.waterFrom} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={feedback?.outbreak ?? severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
+          {game?<GameArt game={game}/>:<PlantPixel careCues={careCues} species={plant.species} seedSteps={boosting?tutorial.blocks:0} key={plant.id} reactionId={feedback?.id} stage={plant.stage} condition={soil} mood={displayMood} waterFrom={feedback?.waterFrom} hungry={plant.fedAt!==null && now>=plant.fedAt+FOOD_INTERVAL} lowLight={plant.litAt!==null && now>=plant.litAt+LIGHT_INTERVAL} outbreak={feedback?.outbreak ?? severity} showBottle={section==='aid' && sick} reaction={feedback?.effect}/>}
         </span>
         {browsing ? <MenuItem item={choice}/> : showMeters ? <div className="lcd-readout">
           {boosting?<ReadoutMeter name="Sprout" label={tutorial.blocks+' / 4'} detail="Sprouting boosts purchased" value={tutorial.blocks} steps={4}/>:<ReadoutMeter name="Growth" label={ageText} detail={ageText+' old · '+(growth.next?growth.next+' · ':'')+growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>}

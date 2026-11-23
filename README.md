@@ -16,7 +16,7 @@ Tap the three waves at the top right to open the glass pocket menu. The glass me
 
 Press a toy key to ease closer to the dot-matrix screen. Menus and games hold the close-up. After returning to the idle screen, the camera eases back. The LCD uses the bundled Silkscreen font under the SIL Open Font License.
 
-On the keychain, a hollow drop asks for water, a spoon means food is due, and a heart bubble means your plant would like company. Dimmed LCD edges and a small sun mean it needs light. Give the matching care from the toy’s Care menu.
+On the keychain, a hollow drop asks for water, a spoon means food is due, and a heart bubble means your plant would like company. The LCD edges start to dim when Sunlight opens, 16 hours after the last dose. The shade deepens at 24 hours and clears when you give light. Give the matching care from the toy’s Care menu.
 
 A sprouted Monstera dries out after 4 hours, becomes critical at 12, and dies after 24 without a drink. From 3 hours 30 minutes, a normal pour on healthy soil safely refills the water meter and restarts the clock. Dry and critically thirsty plants keep their leaves and look sad until watered. Two confirmed extra pours at least an hour apart in the same wet period cause root rot. Drain the pot within 12 hours. Care shows each need in place. Sleeping seeds are safe. After sprouting or treatment, a fungus outbreak becomes possible in 36–60 hours. The 12-hour rescue clock starts when you first see the gnats on the main toy screen. Growth pauses until you use one drop of G-NAT ASSASSIN under **First Aid**. Garden graduates are safe. A death adds a pressed leaf with its age, generation, and cause to the Leaf Book.
 
