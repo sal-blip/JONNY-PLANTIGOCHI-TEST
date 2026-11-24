@@ -29,6 +29,13 @@ function targetBounds(targets){
   return bounds;
 }
 
+function windowOffset(scroller,canvas,index,reduced){
+  const width=canvas?.closest('.room-frame')?.clientWidth;
+  if(!width || !scroller || reduced)return 0;
+  const center=(scroller.scrollLeft+scroller.clientWidth/2)/width;
+  return Math.round(Math.max(-8,Math.min(8,(center-index-.5)*12)));
+}
+
 export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,detailScale=1,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
   garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null),foreground=useRef(null);
@@ -62,25 +69,24 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     const paint=()=>{if(canvas.current && !document.hidden)drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:media.matches});};
     const scroller=stage?.current;
     let timer,frame;
-    function measure(){
-      const roomWidth=canvas.current?.closest('.room-frame')?.clientWidth;
-      if(!roomWidth || media.matches)return 0;
-      const center=(scroller.scrollLeft+scroller.clientWidth/2)/roomWidth;
-      return Math.round(Math.max(-8,Math.min(8,(center-index-.5)*12)));
-    }
     function scroll(){
       if(frame || media.matches)return;
       frame=requestAnimationFrame(()=>{
         frame=0;
-        const next=measure();
+        const next=windowOffset(scroller,canvas.current,index,media.matches);
         if(next!==outsideOffset.current){outsideOffset.current=next;paint();}
       });
     }
-    function refresh(){
+    function refresh(event){
       clearInterval(timer);
       if(onScreen && !document.hidden){
-        if(depth.current)drawRoomDepth(depth.current,scene.current.roomIndex,roomLight(scene.current.hour),scene.current.above);
-        outsideOffset.current=measure();paint();
+        // Layout painted this commit. Resume and motion preference changes
+        // also arrive between React commits and need their own fresh frame.
+        if(event){
+          outsideOffset.current=windowOffset(scroller,canvas.current,index,media.matches);
+          if(depth.current)drawRoomDepth(depth.current,index,roomLight(scene.current.hour),scene.current.above);
+          paint();
+        }
         if(animate && !media.matches)timer=setInterval(paint,160);
       }
     }
@@ -89,8 +95,11 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     return ()=>{cancelAnimationFrame(frame);scroller?.removeEventListener('scroll',scroll);clearInterval(timer);media.removeEventListener('change',refresh);document.removeEventListener('visibilitychange',refresh);};
   },[onScreen,animate,index,stage,worldHeight,rasterScale]);
   useLayoutEffect(()=>{
-    if(onScreen && !document.hidden && canvas.current)drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:matchMedia('(prefers-reduced-motion: reduce)').matches});
-  },[onScreen,running,rasterScale,plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId]);
+    if(!onScreen || document.hidden || !canvas.current)return;
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    outsideOffset.current=windowOffset(stage.current,canvas.current,index,reduced);
+    drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:reduced});
+  },[onScreen,stage,running,rasterScale,plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId]);
   useLayoutEffect(()=>{
     if(onScreen && !document.hidden && depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
   },[onScreen,worldHeight,above,hour,index]);

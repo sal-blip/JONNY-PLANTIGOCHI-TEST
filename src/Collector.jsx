@@ -58,7 +58,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const gesture=useRef(null),ignoreClick=useRef(false),edge=useRef(null),catTimer=useRef(null);
   const stage=useRef(null),roomReturn=useRef(null),ghostCanvas=useRef(null);
   const camera=useRef(null),cameraCenter=useRef(page+.5);
-  const [detailScale,setDetailScale]=useState(1);
+  const [detailScale,setDetailScale]=useState(0);
   const [worldHeight,setWorldHeight]=useState(ROOM_HEIGHT);
   const lens=useRef(null),zoomTimer=useRef(null),pressTimer=useRef(null),petNumber=useRef(0);
   const [visible,setVisible]=useState([page,page]);
@@ -583,7 +583,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         else inspect(e.clientX,e.clientY);
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
-        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={+k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} detailScale={detailScale} plants={potted[k]} hour={hour}
+        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={detailScale>0 && +k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} detailScale={detailScale} plants={potted[k]} hour={hour}
           garden={plant} playingItemId={playingRecordId} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
