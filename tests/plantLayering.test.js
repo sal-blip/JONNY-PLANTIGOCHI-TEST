@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {drawPottedPlant} from '../src/roomPlant.js';
+import {drawShopPreview} from '../src/roomShopArt.js';
 import {approvedArt} from '../src/shopSprites/approved.js';
 import {growthOrder} from '../src/game.js';
 import {catalog} from '../src/gardenEconomy.js';
@@ -138,4 +139,27 @@ test('starter Monstera sits above the heel of the Rain Boot',()=>{
   const standard=render(plant,'terra',{bare:true});
   const boot=render(plant,'rain-boot-pot',{bare:true});
   assert.deepEqual(boot,new Map([...standard].map(([point,color])=>[point+6-10*512,color])));
+});
+
+test('shop pot portraits keep only opaque art and room shadows touch the actual foot',()=>{
+  for(const [sku,product] of Object.entries(catalog)){
+    if(product.kind!=='pot')continue;
+    const portrait=new Map();
+    const ctx={save(){},restore(){},fillRect(x,y,w,h){
+      for(let j=y;j<y+h;j++)for(let i=x;i<x+w;i++)portrait.set(j*512+i,this.fillStyle);
+    }};
+    drawShopPreview(ctx,{sku,x:0,y:0,size:2});
+    const room=render(null,sku);
+    const shadows=[...room].filter(([,ink])=>ink.startsWith('rgba'));
+    const opaque=[...room].filter(([,ink])=>!ink.startsWith('rgba'));
+    assert.deepEqual(portrait,new Map(opaque),sku+' shop art');
+    assert.ok(shadows.length>0,sku+' missing contact shadow');
+    const night=render(null,sku,{night:1});
+    for(const [p,ink] of shadows){
+      const touchesFoot=[1,2,3].some(dy=>[-2,-1,0,1,2].some(dx=>
+        Math.abs(dx)+dy<=3 && portrait.has(p+dx-512*dy)));
+      assert.ok(touchesFoot,sku+' shadow extends away from the foot');
+      assert.notEqual(ink,night.get(p),sku+' night shadow');
+    }
+  }
 });

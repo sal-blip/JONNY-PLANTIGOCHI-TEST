@@ -221,8 +221,6 @@ function makeGrid({leftEdge,topEdge,width,height},density) {
 function ceramic(grid,style) {
   const { wall,motif }=ceramics[style];
   const { span,dot,line }=grid;
-  span(-8,0,21,shadowSoft); span(-10,1,27,shadowSoft);
-  span(-7,2,20,shadowSoft); span(-5,0,16,shadowFirm); span(-4,1,13,shadowFirm);
   wall.forEach((radius,row) => {
     const y=row-wall.length+1;
     span(-radius,y,2*radius+1,clay);
@@ -417,23 +415,40 @@ function nurseryPot(grid,plant){
   drawSpriteRows(grid.nativeDot,plant.pot,glazeInk);
 }
 
+// Trace only the lowest four native rows of the empty vessel. A split foot
+// keeps its gap, and an asymmetric sole follows the pot instead of its plant.
+function addContactShadow(cells,width){
+  let last=cells.length-1;
+  while(last>=0 && cells[last]<clay)last--;
+  if(last<0)return;
+  const bottom=Math.floor(last/width);
+  function shade(col,row,ink){
+    if(col<0 || col>=width || row<0 || row*width+col>=cells.length)return;
+    const i=row*width+col;
+    if(cells[i]<ink)cells[i]=ink;
+  }
+  for(let col=0;col<width;col++){
+    for(let row=bottom;row>=Math.max(0,bottom-3);row--){
+      if(cells[row*width+col]<clay)continue;
+      shade(col,row+1,shadowFirm);
+      for(let dx=-2;dx<=2;dx++)shade(col+dx,row+1,shadowSoft);
+      for(let dx=-1;dx<=1;dx++)shade(col+dx,row+2,shadowSoft);
+      shade(col,row+3,shadowSoft);
+      break;
+    }
+  }
+}
+
 const potCache=new Map();
 function potLayers(bounds,density,style,pot,plant,preview,mouth){
   const nursery=pot?null:plant?.pot;
   const key=[style,pot?.id,nursery && plant.nurseryId,bounds.width,bounds.height,bounds.topEdge,preview].join('/');
   if(potCache.has(key))return potCache.get(key);
   const vessel=makeGrid(bounds,density);
-  if(pot || plant?.pot){
-    if(!preview && nursery){
-      const x=plant.crown[0];
-      for(let j=0;j<2;j++)for(let i=-8+j*2;i<=12-j*2;i++)vessel.nativeDot(x+i,j+1,shadowSoft);
-    }else if(!preview){
-      vessel.span(-12,1,30,shadowSoft);vessel.span(-9,2,24,shadowSoft);
-      vessel.span(-8,0,19,shadowFirm);vessel.span(-6,1,17,shadowFirm);
-    }
-    if(pot)drawSpriteRows(vessel.nativeDot,pot.art,glazeInk);
-    else nurseryPot(vessel,plant);
-  }else ceramic(vessel,style);
+  if(pot)drawSpriteRows(vessel.nativeDot,pot.art,glazeInk);
+  else if(nursery)nurseryPot(vessel,plant);
+  else ceramic(vessel,style);
+  if(!preview)addContactShadow(vessel.cells,bounds.width);
   const front=new Uint16Array(vessel.cells.length);
   const factor=density/2;
   const cx=mouth.soil[0];
@@ -513,7 +528,7 @@ function colors(style,night,selected,finish,featuredSku) {
     const n=step/48,plant=featuredPlants[featuredSku];
     const base=shopPots[finish]?.art ?? plant?.pot;
     const foliage=(finish && plant?.repotted) || plant?.foliage;
-    blended.set(key,[null,'rgba(53,42,49,.14)','rgba(47,37,44,.28)',
+    blended.set(key,[null,`rgba(44,35,40,${.14-.06*n})`,`rgba(38,32,38,${.26-.10*n})`,
       ...[...common,...ceramics[style].day,...leaves.flat(),
         ...(base?.spritePalette ?? []),...(foliage?.spritePalette ?? [])]
         .map(ink=>litColor(ink,n,selected))]);

@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.33 · Garden contact shadows
+
+Pots cast a soft shadow at the actual foot, including the offset sole on the Rain Boot and the pedestal on the Low Sandstone Bowl. The shadow stays fixed during plant sway and softens at night. Shop portraits show clean item art. The garden size comparison includes the contact shadow.
+
 ## Plantigochi 0.1.32 · Six approved garden pots
 
 The iSEED Shop adds Honey-Glazed Terracotta, Blue Willow Porcelain, Low Sandstone Bowl, Stump Cottage, Rain Boot and Ringed Planet. The boot seats its roots over the heel. Existing plant and pot IDs remain compatible with saved gardens. Review images and their SpriteCook sources are in [regular pots](../art-review/regular-pots-01/README.md) and [wild pots](../art-review/wild-pots-01/README.md).

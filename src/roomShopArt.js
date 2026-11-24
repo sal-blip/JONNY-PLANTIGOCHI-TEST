@@ -151,7 +151,7 @@ export function drawSizeComparison(ctx,sku){
 /** Native pixel preview centered horizontally; y is the baseline of the item. */
 export function drawShopPreview(ctx,{sku,x,y,size=1}){
   if(isShopPot(sku)){
-    drawPottedPlant(ctx,{x,y,size,potSku:sku,reducedMotion:true,preview:Object.hasOwn(approvedArt,sku)});return;
+    drawPottedPlant(ctx,{x,y,size,potSku:sku,reducedMotion:true,preview:true});return;
   }
   if(isShopPlant(sku)){
     const plant={id:'nursery-'+sku,species:sku};
