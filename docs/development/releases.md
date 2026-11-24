@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v78 · Garden placement depth and shop size comparison · November 23, 2026
+
+Plantigochi 0.1.18 scales placeable assets with their supporting furniture or projected floor contact. The shop can show all 17 catalog items at windowsill scale beside a terracotta pot. Dragging a plant follows the scale of its source or prospective destination. The game reads existing slot addresses.
+
+All 164 unit tests passed. Mobile Chromium exercised comparison-mode purchase, placement, reload, and cross-room decor movement at 1× and 3× device pixel density. The neutral-pose study repeated all 1,296 combinations. Both coffee-table frogs measured 22.7 room units wide. Combinations with architectural clipping fell from 80 to 42, all on shelving or the studio cabinet. Six production resources matched the release, and the public welcome loaded. Hardware testing remains open. [Placement design and comparison image](interface-and-art.md#placement-depth-and-shop-size)
+
+Sites source `169b5187a7fbfbcfce45d7866bf0c2a17ca54132` · saved version 78 · deployment `appgdep_6b04f0356ee08191b4482d37f0be47aa` · [GitHub release commit 390a06e](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/390a06e)
+
 ## v77 · Continuous garden animation under iSEED · November 23, 2026
 
 Plantigochi 0.1.17 keeps the garden animation running as the handset opens, while players use its apps, and throughout the swipe back. A visible room can animate while the handset owns input.
