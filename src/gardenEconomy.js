@@ -97,13 +97,34 @@ function validPrize(prize){
   if(!prize || !spinTable.some(row=>row.id===prize.id))return false;
   return ['plant','pot'].includes(prize.id)?Object.hasOwn(catalog,prize.sku) && catalog[prize.sku].kind===prize.id:prize.sku===undefined;
 }
-export function settleDailySpin(plant,time,expected,prize){
+export const SPIN_TOKEN_COST=100;
+export function tokenBalance(life){
+  return (life.tokenBook?.bought ?? 0)-(life.tokenBook?.spent ?? 0);
+}
+export function buySpinToken(plant,expectedBought){
+  const life=lifeOf(plant),book=life.tokenBook ?? {bought:0,spent:0};
+  if(plant.tutorial || expectedBought!==book.bought || life.balance<SPIN_TOKEN_COST ||
+    !Number.isSafeInteger(book.bought+1))return plant;
+  return update(plant,{balance:life.balance-SPIN_TOKEN_COST,tokenBook:{...book,bought:book.bought+1}});
+}
+// Omit expectedSpent to use the daily free spin. A stale free tap can never spend a token.
+export function settleDailySpin(plant,time,expected,prize,expectedSpent){
   const life=lifeOf(plant),visit=lastVisit(life);
   if(plant.tutorial || expected!==localDay(time) || visit?.date!==expected || life.day!==expected ||
-    visit.spin || !validPrize(prize) || catalog[prize.sku]?.retired)return plant;
+    !validPrize(prize) || catalog[prize.sku]?.retired)return plant;
   const row=spinTable.find(row=>row.id===prize.id);
-  const fields={visit:{...visit,spin:prize}};
-  const id='daily-spin-'+expected;
+  let fields,id;
+  if(expectedSpent===undefined){
+    if(visit.spin)return plant;
+    fields={visit:{...visit,spin:prize}};
+    id='daily-spin-'+expected;
+  }else{
+    const book=life.tokenBook;
+    if(!visit.spin || !book || expectedSpent!==book.spent || tokenBalance(life)<1)return plant;
+    fields={tokenBook:{...book,spent:book.spent+1},
+      visit:{...visit,tokenPrize:prize,tokenCoins:(visit.tokenCoins || 0)+(row.coins || 0)}};
+    id='token-spin-'+(book.spent+1);
+  }
   if(row.coins)fields.balance=life.balance+row.coins;
   if(prize.id==='growth')fields.growthDays=(life.growthDays || 0)+1;
   if(prize.id==='pot')fields.items=[...life.items,{id,sku:prize.sku,slot:null}];
@@ -154,6 +175,10 @@ export function validGardenLife(plant) {
   if(g.visit && ((g.visit.claimed!==undefined && typeof g.visit.claimed!=='boolean') ||
     (g.visit.shown!==undefined && typeof g.visit.shown!=='boolean') ||
     (g.visit.spin!==undefined && !validPrize(g.visit.spin))))return false;
+  if(g.tokenBook!==undefined && (!g.tokenBook || !integer(g.tokenBook.bought) || !integer(g.tokenBook.spent) ||
+    g.tokenBook.spent>g.tokenBook.bought))return false;
+  if(g.visit?.tokenPrize!==undefined && (!g.visit.spin || !g.tokenBook?.spent || !validPrize(g.visit.tokenPrize)))return false;
+  if(g.visit?.tokenCoins!==undefined && (!g.visit.tokenPrize || !integer(g.visit.tokenCoins)))return false;
   if(g.growthDays!==undefined && !integer(g.growthDays))return false;
   if(![g.items,g.events,g.plants,g.notes].every(list=>Array.isArray(list) && list.every(i=>i && validId(i.id)) && unique(list)))return false;
   const placed=new Set();

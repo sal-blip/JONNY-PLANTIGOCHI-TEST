@@ -544,3 +544,20 @@ test('two windows can claim and spin concurrently without duplicating either rew
   assert.equal(fresh.plant.gardenLife.items.length,1);
   assert.equal(fresh.plant.gardenLife.visit.spin.sku,'terra');
 });
+
+test('concurrent token purchases and redemptions have one debit and one prize',async t=>{
+  const {store,storage}=installation(t);
+  const {openDailyVisit,localDay,buySpinToken,settleDailySpin,tokenBalance}=await import('../src/gardenEconomy.js');
+  const now=Date.now(),date=localDay(now);
+  const plant=openDailyVisit(newPlant(now),now);
+  plant.gardenLife.balance=200;
+  storage.setItem(KEY,JSON.stringify(plant));
+  const db=store(),save=await db.read();
+  await Promise.all([db,store()].map(client=>client.update(save,p=>buySpinToken(p,0))));
+  await db.update(save,p=>settleDailySpin(p,now,date,{id:'coins10'}));
+  await Promise.all([db,store()].map(client=>client.update(save,p=>settleDailySpin(p,now,date,{id:'plant',sku:'snake-plant'},0))));
+  const result=(await db.read()).plant;
+  assert.equal(result.gardenLife.balance,110);
+  assert.equal(tokenBalance(result.gardenLife),0);
+  assert.equal(result.waitingPlants.length,1);
+});

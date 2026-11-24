@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {catalog,checkIn,claimDaily,dailyActions,lifeOf,localDay,openDailyVisit,presentDaily,rollDailyPrize,settleDailySpin,spinTable,validGardenLife} from '../src/gardenEconomy.js';
+import {buySpinToken,tokenBalance,catalog,checkIn,claimDaily,dailyActions,lifeOf,localDay,openDailyVisit,presentDaily,rollDailyPrize,settleDailySpin,spinTable,validGardenLife} from '../src/gardenEconomy.js';
 import {DAY,HOUR,WEEK,care,earnedAt,graduate,newPlant,readPlant,useGrowthDay,wake} from '../src/game.js';
 
 const start=new Date(2026,10,3,9).getTime(),today=localDay(start);
@@ -89,4 +89,43 @@ test('invalid imported prize records and growth credits are rejected',()=>{
     assert.equal(validGardenLife({...p,gardenLife:{...p.gardenLife,visit:{...p.gardenLife.visit,spin}}}),false);
   }
   assert.equal(validGardenLife({...p,gardenLife:{...p.gardenLife,growthDays:-2}}),false);
+});
+
+test('tokens cost 100 coins, carry across days, and are used only after the free spin',()=>{
+  let p=visit();
+  assert.equal(buySpinToken(p,0),p);
+  p={...p,gardenLife:{...lifeOf(p),balance:200}};
+  p=buySpinToken(p,0);
+  assert.equal(buySpinToken(p,0),p);
+  assert.equal(tokenBalance(lifeOf(p)),1);
+  p=buySpinToken(p,1);
+  assert.equal(lifeOf(p).balance,0);
+  const prize={id:'pot',sku:'terra'};
+  const paid=(p,sequence)=>settleDailySpin(p,start,today,prize,sequence);
+  assert.equal(paid(p,0),p);
+  p=settleDailySpin(p,start,today,prize);
+  assert.equal(tokenBalance(lifeOf(p)),2);
+  p=paid(p,0);
+  assert.equal(paid(p,0),p);
+  assert.equal(new Set(p.gardenLife.items.map(i=>i.id)).size,2);
+  assert.equal(tokenBalance(lifeOf(p)),1);
+  p=readPlant(JSON.stringify(p),start);
+  assert.deepEqual(lifeOf(p).visit.tokenPrize,prize);
+  p=openDailyVisit(p,start+DAY);
+  assert.equal(tokenBalance(lifeOf(p)),1);
+  assert.equal(lifeOf(p).visit.tokenPrize,undefined);
+  assert.equal(dailyActions(lifeOf(p),p.gardenLife.day),2);
+  assert.equal(settleDailySpin(p,start,today,prize,1),p);
+});
+
+test('a spent token pays its drawn prize once and cannot overdraw',()=>{
+  let p=visit();
+  p=buySpinToken({...p,gardenLife:{...lifeOf(p),balance:100}},0);
+  p=spin(p,.1);
+  p=settleDailySpin(p,start,today,{id:'coins100'},0);
+  assert.equal(tokenBalance(lifeOf(p)),0);
+  assert.equal(lifeOf(p).balance,110);
+  assert.equal(lifeOf(p).visit.tokenCoins,100);
+  assert.equal(settleDailySpin(p,start,today,{id:'coins100'},1),p);
+  assert.equal(validGardenLife({...p,gardenLife:{...lifeOf(p),tokenBook:{bought:1,spent:2}}}),false);
 });

@@ -44,7 +44,7 @@ export function CoinBalance({plant}){
   const life=lifeOf(plant),today=localDay(Date.now()),visit=lastVisit(life);
   const visitCoins=visit?.date===today && visit.claimed!==false?weeklyRewards[(visit.streak-1)%weeklyRewards.length]:0;
   const spinCoins=visit?.date===today?(spinTable.find(row=>row.id===visit.spin?.id)?.coins || 0):0;
-  const earned=visitCoins+spinCoins+(life.day===today?life.waters*2+life.wins.length*3:0);
+  const earned=visitCoins+spinCoins+(visit?.date===today?(visit.tokenCoins || 0):0)+(life.day===today?life.waters*2+life.wins.length*3:0);
   return <div className="wallet"><img src="/art/iseed-coin.png" width="20" height="20" alt="" style={{imageRendering:"pixelated"}}/><strong>{life.balance} Garden Coins</strong>
     <small>Today +{earned}</small></div>;
 }

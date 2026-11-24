@@ -4,11 +4,8 @@
   overflow:hidden;border:0;background:transparent;color:#263e31;font:500 1rem/1.35 var(--display,system-ui);
 }
 .daily-dialog[open] {display:grid;grid-template:minmax(0,1fr) / minmax(0,1fr);place-items:center;isolation:isolate}
-.daily-dialog::before {content:"";position:absolute;z-index:-1;pointer-events:none;left:50%;top:50%;width:min(120vmax,1400px);aspect-ratio:1;
-  background:url('/assets/daily-spin/spiral.png') center/contain no-repeat;opacity:.22;transform:translate(-50%,-50%);animation:daily-halo 2.1s ease-out both}
 .daily-card {position:relative;width:min(26rem,100%);max-height:100%;min-height:0;overflow:auto;overscroll-behavior:contain;
   border:2px solid #486c50;border-radius:19px;background:#fbf5df;box-shadow:0 16px 60px #11281db3;scrollbar-width:thin}
-@keyframes daily-halo {from{opacity:0;transform:translate(-50%,-50%) rotate(-75deg) scale(.8)}25%{opacity:.4}to{opacity:.22;transform:translate(-50%,-50%)}}
 .daily-dialog::backdrop {background:radial-gradient(ellipse at center,#ffdb7840,#1b342bc9 75%);animation:daily-backdrop .8s ease-out both}
 .daily-card * {box-sizing:border-box}
 .daily-card button,.daily-card summary {cursor:pointer;font:inherit}
@@ -18,16 +15,17 @@
 .daily-headline {position:relative;text-shadow:0 2px 3px #213829}
 .daily-banner h1 {font:700 clamp(1.6rem,7vw,2.35rem)/1.05 var(--display);margin:2px 0 0}
 .daily-banner small {font-weight:750;color:#ffe39e}
-.daily-spiral,.daily-light {position:absolute;pointer-events:none;z-index:-1}
-.daily-spiral {right:-12%;top:50%;width:84%;aspect-ratio:1;background:url('/assets/daily-spin/spiral.png') center/contain no-repeat;image-rendering:pixelated;opacity:.57;transform:translateY(-50%);animation:daily-spiral 2.8s cubic-bezier(.12,.69,.21,1) both}
+.daily-light {position:absolute;pointer-events:none;z-index:-1}
 .daily-light {inset:0;background:radial-gradient(ellipse at 70% 50%,#fffaaf 0,transparent 75%);animation:daily-flare 1.1s ease-out both}
 .daily-close {position:absolute;right:8px;top:8px;display:grid;place-items:center;width:44px;height:44px;border:1px solid #cadabd66;background:#223f32e8;color:#fff;border-radius:50%}
 .daily-body {padding:12px clamp(9px,3vw,18px) 16px}
 .daily-heading,.daily-browse {display:flex;align-items:center;justify-content:space-between;gap:4px}
 .daily-heading h2,.daily-slot h2 {margin:0;font-size:1.19rem}
-.daily-heading output {display:inline-flex;align-items:center;gap:5px;border-radius:20px;background:#efe2b7;padding:4px 10px;color:#604316}
-.daily-heading output img {height:21px;width:21px;object-fit:contain;image-rendering:pixelated}
-.daily-heading output b {animation:daily-credit .5s both}
+.spin-token-balance {display:inline-flex;align-items:center;gap:6px;min-height:44px;border:1px solid #b99654;border-radius:16px;padding:5px 12px;background:#f5df9d;color:#56401c;font-weight:700!important}
+.token-purchase {margin-top:6px;padding:12px;border:1px solid #bdb79b;border-radius:9px;background:#f5edcf}
+.token-purchase p {margin:4px 0 9px}
+.token-purchase .daily-action {width:auto}
+.token-cancel {background:none;color:#385840;min-height:44px;padding:6px 12px;border:0}
 .daily-week {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;padding:0;margin:9px 0 1px;list-style:none}
 .daily-week button {display:grid;justify-items:center;align-content:center;gap:1px;min-height:62px;width:100%;padding:3px 0;border:1px solid #b7c0a3;border-radius:7px;background:#f4eed9;color:#344936}
 .daily-week button[aria-current=date] {background:#d6e4ba;border-color:#608956}
@@ -42,7 +40,8 @@
 .daily-action,.daily-voucher button {min-height:44px;border-radius:12px;border:1px solid #275338;background:#356142;color:#fff9e7;font-weight:700!important;padding:8px 14px}
 .daily-action {width:100%}
 .daily-slot {border-top:1px solid #c5c5a7;text-align:center;margin-top:12px;padding-top:10px}
-.daily-machine {position:relative;width:clamp(145px,33vh,218px);max-width:100%;margin:4px auto;aspect-ratio:171 / 133}
+.daily-machine {position:relative;isolation:isolate;width:clamp(145px,33vh,218px);max-width:100%;margin:4px auto;aspect-ratio:171 / 133}
+.daily-machine .slot-rest-glow {z-index:-1;top:50%;width:135%;opacity:.65;animation:none;background-color:#e8ae4e55}
 .daily-cabinet {width:100%;display:block;image-rendering:pixelated}
 .daily-windows {position:absolute;left:17.54%;top:30.83%;width:56.14%;height:36.09%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:2px}
 .daily-reel {overflow:hidden;border-radius:4px;position:relative;background:linear-gradient(#c8bd90,#fcf5c8 25%,#fff4cd 66%,#c8bc94);box-shadow:inset 0 0 0 1px #594f2b}
@@ -50,7 +49,7 @@
 .reel-strip span {width:100%;height:100%;display:grid;position:relative;place-items:center}
 .reel-strip img {width:78%;height:70%;object-fit:contain;image-rendering:pixelated}
 .reel-strip b {position:absolute;bottom:0;right:1px;background:#ffedaa;color:#4e391c;border-radius:2px;font:bold 11px/1 system-ui}
-.reel-strip.in-motion {animation:daily-reel calc(.83s + var(--turn)*.31s) cubic-bezier(.18,.58,.32,1) both}
+.reel-strip.in-motion {animation:daily-reel var(--reel-time) cubic-bezier(.16,.44,.46,1) both}
 .daily-result {min-height:1.5em;margin:5px 0 7px;font-size:.94rem}
 .spin-action {background:#f7cb69;color:#433419;border-color:#a17b37}
 .daily-voucher,.daily-odds {margin-top:12px;border-top:1px solid #ccc6a7;padding-top:9px}
@@ -65,14 +64,36 @@
 .iseed-corner .iseed-reward-key {position:relative;width:44px;height:44px;padding:2px;border-radius:10px}
 .iseed-reward-key img {width:35px;height:35px;object-fit:contain;image-rendering:pixelated}
 .iseed-reward-key b {position:absolute;top:0;right:-1px;min-width:17px;padding:1px 3px;border-radius:12px;border:1px solid #ffedbf;background:#9d3e2c;color:white;font:700 12px/1.1 system-ui}
-@keyframes daily-reel {from{transform:translateY(0)}to{transform:translateY(-800%)}}
-@keyframes daily-credit {45%{transform:scale(1.18)}}
+.spin-theater {text-align:center;color:#fff4c9;background:radial-gradient(ellipse at 50% 58%,#456746,#203e31 72%);padding:clamp(16px,4vmin,28px)}
+.spin-theater .daily-close {z-index:1}
+.spin-theater h1 {margin:0 38px;font-size:clamp(1.35rem,5vw,1.9rem);line-height:1.12}
+.spin-theater p {margin:8px 0 0}
+.spin-camera {position:relative;isolation:isolate;display:grid;place-items:center;min-height:min(46dvh,265px);padding:12px 0}
+.spin-camera .daily-machine {width:min(66%,28dvh,218px);transform-origin:47% 50%}
+.spin-light-rig {position:absolute;inset:0;pointer-events:none;z-index:-1;overflow:clip}
+.spin-light-rig .sprout-rays {top:50%;width:min(115%,440px);opacity:.28;animation:none}
+.spin-camera.lit .sprout-rays {animation:spin-rays var(--last-stop) ease-out both}
+@keyframes spin-rays {from{rotate:-24deg;scale:.82;opacity:.32}60%{opacity:.68}to{rotate:54deg;scale:1.14;opacity:.98}}
+.spin-corona {position:absolute;inset:0;opacity:0;background:radial-gradient(ellipse at center,#fff7bc 0%,#ffed9a99 36%,transparent 69%)}
+.spin-camera.lit .spin-corona {animation:spin-land .42s var(--last-stop) ease-out both}
+@keyframes spin-land {from{opacity:0;transform:scale(.86)}55%{opacity:.92}to{opacity:.45;transform:scale(1.08)}}
+.spin-light-rig .sprout-star {--star-size:10px;left:19%;top:32%;opacity:0;animation:none}
+.spin-light-rig .sprout-star:nth-last-child(2) {--star-size:8px;left:82%;top:39%;--spark-delay:.85s}
+.spin-light-rig .sprout-star:last-child {--star-size:6px;left:23%;top:76%;--spark-delay:1.65s}
+.spin-camera.lit .sprout-star {animation:sprout-twinkle 1.35s var(--spark-delay,.2s) ease-in-out 2 both}
+.spin-closeup {animation:daily-zoom var(--zoom-time) var(--zoom-start) cubic-bezier(.28,.05,.38,1) both}
+@keyframes daily-zoom {from{transform:scale(1)}to{transform:scale(1.28)}}
+.spin-win {display:grid;justify-items:center;gap:6px;padding:12px 0 2px;animation:daily-win .32s ease-out both}
+.spin-win h1 {color:#ffdf8f;overflow-wrap:anywhere}
+.spin-award {width:clamp(54px,13dvh,86px);aspect-ratio:1;object-fit:contain;image-rendering:pixelated}
+.spin-win .daily-action {margin-top:14px;width:auto}
+@keyframes daily-win {from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes daily-reel {from{transform:translateY(0)}to{transform:translateY(var(--landing))}}
 @keyframes daily-stamp {0%{transform:scale(0) rotate(-25deg)}65%{transform:scale(1.3)}}
 @keyframes daily-backdrop {from{opacity:.15}to{opacity:1}}
-@keyframes daily-spiral {from{transform:translateY(-50%) rotate(-90deg) scale(.78)}to{transform:translateY(-50%) rotate(0) scale(1)}}
 @keyframes daily-flare {0%{opacity:0}20%{opacity:.75}100%{opacity:.09}}
 @media (prefers-reduced-motion:reduce){
-  .daily-dialog::before,.daily-dialog::backdrop,.daily-dialog * {animation:none!important}
-  .reel-strip.in-motion {transform:translateY(-800%)}
+  .daily-dialog::backdrop,.daily-dialog * {animation:none!important}
+  .reel-strip.in-motion {transform:translateY(var(--landing))}
   .daily-light {opacity:.09}
 }
