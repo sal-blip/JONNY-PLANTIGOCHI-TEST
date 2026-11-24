@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v80 · Radial garden inspection light · November 24, 2026
+
+Plantigochi 0.1.20 centers a radial gradient on the selected artwork. All 165 unit tests passed. Mobile Chromium checked day and night framing, repotting, pot swaps and reload. Six public resources matched the local build.
+
+Sites source `960b46af2d0d493ba41d57839d156b58b5305d3e` · saved version 80 · deployment `appgdep_6b04f5bf73508191965780d9fc5bbdb6` · [GitHub source 3fe1f4c](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/3fe1f4c)
+
 ## v79 · Inspect and repot in the garden · November 24, 2026
 
 Plantigochi 0.1.19 frames room assets with text above and actions below. Open scenery holds its closer view for five seconds and eases back over 2.2 seconds. Repotting leaves the original container behind, while moving a purchased pot can swap it under a resident plant. The release passed 165 unit tests, a production build, day and night inspection, repotting and swap persistence, shared HUD and touch-passage checks in mobile Chromium. Physical-device testing remains open.

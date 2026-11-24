@@ -99,10 +99,10 @@
   position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;
   margin:0;padding:0;border:0;overflow:hidden;
   color:#fff9e8;font-family:var(--display);text-align:center;
-  text-shadow:0 1px 3px #13241f;
+  text-shadow:0 1px 3px #13241f,0 0 7px #13241fd9,0 0 2px #13241f;
   background:radial-gradient(ellipse var(--light-width,34vw) var(--light-height,18vh)
-    at var(--subject-x,50%) var(--subject-y,46%),transparent 38%,#15231d10 64%,
-    #15231d5c 90%,#15231db8 120%,#15231dc7 165%);
+    at var(--subject-x,50%) var(--subject-y,46%),transparent 18%,#15231d09 45%,
+    #15231d26 73%,#15231d50 102%,#15231d80 137%,#15231da3 178%,#15231dba 225%);
 }
 .garden-inspection::backdrop {background:transparent}
 .garden-inspection header,.inspection-options {
