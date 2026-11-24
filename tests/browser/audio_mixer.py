@@ -8,13 +8,13 @@ from playwright.sync_api import expect, sync_playwright
 from dew_lesson import READ_PLANT, ROOT
 from scene_music import SEED_SETUP, button, context_for, taps
 
-CHANNELS = {"Music": "musicVolume", "Sound effects": "fxVolume", "Garden ambience": "ambienceVolume"}
+CHANNELS = {"Music": "musicVolume", "Sound effects": "fxVolume"}
 
 
 def legacy_seed(sound, ambience):
     data = subprocess.run(
         ["node", "--input-type=module", "-e",
-         "import {newPlant} from './src/game.js'; console.log(JSON.stringify(newPlant()));"],
+         "import {newPlant} from './src/game.js'; import {checkIn} from './src/gardenEconomy.js'; const p=checkIn(newPlant(),Date.now()); p.gardenLife.visit.shown=true; console.log(JSON.stringify(p));"],
         cwd=ROOT, capture_output=True, text=True, check=True,
     )
     plant = json.loads(data.stdout)
@@ -54,16 +54,6 @@ def adjust(page, label, value):
     expect(control).to_have_attribute("aria-valuetext", f"{value}%")
 
 
-def audible_loop(page, seconds, level):
-    page.wait_for_function(
-        """([seconds,level]) => {
-          const loops=loopMix().filter(s=>Math.abs(s.seconds-seconds)<.02);
-          return level ? loops.some(s=>Math.abs(s.level-level)<.012) :
-                         loops.every(s=>s.level<.002);
-        }""", arg=[seconds,level],
-    )
-
-
 def theme_level(page, value):
     page.wait_for_function(
         """value => {
@@ -93,7 +83,7 @@ def mobile_layout(page):
     for w,h in ((393,710), (320,568), (568,320)):
         page.set_viewport_size({"width":w, "height":h})
         sliders = page.get_by_role("slider")
-        expect(sliders).to_have_count(3)
+        expect(sliders).to_have_count(2)
         for name in CHANNELS:
             control = slider(page, name)
             control.scroll_into_view_if_needed()
@@ -123,8 +113,8 @@ def mobile_layout(page):
 
 
 def play(browser, source):
-    # Start from an old seed without any of the three numeric preferences.
-    for sound, ambience, expected in [(True,False,[0,100,0]),(False,True,[0,0,0])]:
+    # Start from an old seed without any numeric preferences.
+    for sound, ambience, expected in [(True,False,[0,100]),(False,True,[0,0])]:
         ctx,url,blank = context_for(browser,source)
         try:
             page = ctx.new_page()
@@ -139,16 +129,12 @@ def play(browser, source):
             if sound:
                 assert_click(page, "Close menu", 1)
                 continue
+            expect(slider(page,"Garden ambience")).to_have_count(0)
             mobile_layout(page)
             adjust(page, "Sound effects", 30)
             assert_click(page, "Close menu", .3)
             theme_level(page, 0)
-            audible_loop(page, 23, 0)
             settings(page)
-            adjust(page, "Garden ambience", 60)
-            audible_loop(page, 23, .6)
-            audible_loop(page, 19, 0)
-            theme_level(page, 0)
             adjust(page, "Music", 40)
             track = theme_level(page,.20)
             adjust(page, "Music", 70)
@@ -159,35 +145,27 @@ def play(browser, source):
             adjust(page, "Music", 0)
             before_mute = page.evaluate("window.lastMusicPosition")
             page.wait_for_function("score().every(song=>song.ended)")
-            audible_loop(page, 23, .6)
             adjust(page, "Music", 70)
             resumed = theme_level(page,.35)
             assert resumed != track
             assert abs(page.evaluate("score().at(-1).offset") - before_mute) < .65
             track = resumed
-            audible_loop(page, 23, .6)
             adjust(page, "Sound effects", 0)
             assert_click(page, "Close menu", 0)
             theme_level(page,.35)
-            audible_loop(page, 23, .6)
+            assert page.evaluate("loopMix().length") == 0
             taps(page, "Open garden")
-            audible_loop(page, 19, .6)
             settings(page)
-            adjust(page, "Garden ambience", 0)
-            audible_loop(page,19,0)
-            audible_loop(page,23,0)
             assert theme_level(page,.35) == track
-            adjust(page, "Garden ambience", 47)
+            assert page.evaluate("loopMix().length") == 0
             adjust(page, "Sound effects", 31)
             taps(page, "Close menu")
             saved = page.evaluate(READ_PLANT)
-            assert [round(saved[key]*100) for key in CHANNELS.values()] == [70,31,47], saved
+            assert [round(saved[key]*100) for key in CHANNELS.values()] == [70,31], saved
             page.reload()
             settings(page)
-            assert levels(page) == [70,31,47]
+            assert levels(page) == [70,31]
             theme_level(page,.35)
-            audible_loop(page,23,.47)
-            audible_loop(page,19,0)
             assert_click(page, "Close menu", .31)
             taps(page, "Open garden", "Open iSEED")
             before = page.evaluate("oneShotMix().length")
@@ -210,6 +188,6 @@ if __name__ == "__main__":
         browser = runtime.chromium.launch(executable_path=args.chromium)
         try:
             play(browser,args.source)
-            print("Passed legacy migration, mobile mixer, live music, ambience, effects and reload")
+            print("Passed legacy migration, mobile mixer, live music, effects, silent garden background and reload")
         finally:
             browser.close()

@@ -62,7 +62,7 @@ Progress saves on this device. To move a garden or keep a copy before uninstalli
 
 Once the game finishes caching, you can reopen it offline. Care reminders require permission and a server-confirmed schedule. Water reminders are due at four and twelve hours after a drink. Delivery also depends on the dispatch queue, connectivity and the phone’s notification settings. On iPhone and iPad, Web Push requires a Home Screen installation on iOS or iPadOS 16.4 or later.
 
-The three-wave menu also lets you change backgrounds or use your own photo. **Settings** has separate music, sound effects and garden ambience sliders, tilt controls, update checks and uninstall help. Music and sound effects start at 40%. The optional garden record player plays Jason Singh’s orchid-biodata recording *Earth Day*. [Recording credits](public/records/earth-day-credits.txt) · [Stonewashed Pocket background photograph](https://www.pexels.com/photo/photo-of-denim-pants-6843233/) · [Photo license](https://www.pexels.com/license/)
+The three-wave menu also lets you change backgrounds or use your own photo. **Settings** has separate music and sound effects sliders, tilt controls, update checks and uninstall help. Music and sound effects start at 40%. The optional garden record player plays Jason Singh’s orchid-biodata recording *Earth Day*. [Recording credits](public/records/earth-day-credits.txt) · [Stonewashed Pocket background photograph](https://www.pexels.com/photo/photo-of-denim-pants-6843233/) · [Photo license](https://www.pexels.com/license/)
 
 ## Work on the game
 

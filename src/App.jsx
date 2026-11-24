@@ -143,7 +143,7 @@ const emptyRoom={graduates:[],book:[],jar:null,deadAt:null};
 function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,drinkReminder,storage,phone,careMessage,consumeCareMessage,alerts,setupScene,setupScreen}) {
   const {plant,current,commit,replace,issue}=storage;
   const {levels,adjust,save:saveVolume}=useAudioSettings(plant,commit);
-  const {musicVolume,fxVolume,ambienceVolume}=levels;
+  const {musicVolume,fxVolume}=levels;
   const roomGarden=plant ?? emptyRoom;
   const saveOK=!issue;
   const lesson=storage.phase==='water' || storage.phase==='watered' ? storage.phase : null;
@@ -239,7 +239,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     if(!plant || tutorial)return;
     return watchDailyVisit(visit?.date || '',time=>{void commit(p=>openDailyVisit(p,time));});
   },[day,visit?.date,plant?.id,Boolean(tutorial),commit]);
-  const { play, unlock, running } = useGardenSound({enabled:Boolean(plant), effectsVolume:intro && revealMuted ? 0 : fxVolume, ambienceVolume, gardenActive:roomActive, instrumental:false, recordPlaying:Boolean(playingRecordId), sleeping:plant?.stage === 'seed', intro, leafReady});
+  const { play, unlock, running } = useGardenSound({enabled:Boolean(plant), effectsVolume:intro && revealMuted ? 0 : fxVolume, intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
   const originalPhoto=useRef(null);
   const scenery = useRef(null);

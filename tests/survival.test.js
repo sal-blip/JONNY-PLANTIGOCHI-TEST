@@ -34,7 +34,7 @@ test('overwatering requires confirmation and separated pours; drain has a strict
   assert.equal(care(rot,'drain',end).book[0].cause,'Root rot');
 });
 test('a jar keeps rooting after death; a pot or fresh seed preserves the book and preferences',()=>{
-  const p={...sprout(),species:'golden-pothos',stage:'grown',sound:false,scene:'clouds',ambience:false};
+  const p={...sprout(),species:'golden-pothos',stage:'grown',sound:false,scene:'clouds',musicVolume:0,fxVolume:0};
   const cutAt=H+DAY-1,cut=takeCutting(p,'left',cutAt);
   assert.equal(takeCutting(cut,'right',cutAt+1).jar.stem,'left');
   const dead=wake(cut,H+DAY);assert.equal(dead.book.length,1);

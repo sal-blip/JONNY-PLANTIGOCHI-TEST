@@ -325,6 +325,8 @@ export function readPlant(text, now = Date.now(), visible = true) {
     delete p.sproutBurstPending;
     if (!validGarden(p) || !validGardenLife(p)) return null;
     Object.assign(p, audioLevels(p));
+    delete p.ambienceVolume;
+    delete p.ambience;
     p.name=plantName(p.name);
     for (const item of [...p.book,...p.graduates]) item.name=item.source==='shop' && catalog[item.species]?.kind==='plant'?catalog[item.species].name:plantName(item.name);
     if(p.seenHints!==undefined && (!Array.isArray(p.seenHints) || !p.seenHints.every(id=>typeof id==='string')))return null;

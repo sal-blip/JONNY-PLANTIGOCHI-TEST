@@ -4,7 +4,6 @@ import { audioLevels, setAudioLevel } from './audioLevels.js';
 const channels = [
   ['musicVolume', 'Music'],
   ['fxVolume', 'Sound effects'],
-  ['ambienceVolume', 'Garden ambience'],
 ];
 
 export function useAudioSettings(plant, commit) {

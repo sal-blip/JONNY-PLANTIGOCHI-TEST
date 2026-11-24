@@ -508,23 +508,23 @@ test('mixer settings migrate on disk, merge across tabs and survive backup, rest
   for(const key of ['musicVolume','fxVolume','ambienceVolume'])delete legacy[key];
   storage.setItem(KEY,JSON.stringify(legacy));
   const saved=await a.read();
-  assert.deepEqual(audioLevels(saved.plant),{musicVolume:0,fxVolume:1,ambienceVolume:0});
+  assert.deepEqual(audioLevels(saved.plant),{musicVolume:0,fxVolume:1});
   assert.equal(JSON.parse(await a.exportRaw()).musicVolume,0);
   await Promise.all([
     a.update(saved,p=>setAudioLevel(p,'musicVolume',.35)),
     b.update(saved,p=>setAudioLevel(p,'fxVolume',.7)),
   ]);
-  const mixed={musicVolume:.35,fxVolume:.7,ambienceVolume:0};
+  const mixed={musicVolume:.35,fxVolume:.7};
   const reopened=await store().read();
   assert.deepEqual(audioLevels(reopened.plant),mixed);
   const backup=await readGardenBackup((await a.exportBackup()).blob);
   await a.reset(reopened);
   const clean=await a.finishReset(async()=>{});
-  await assert.rejects(b.update(reopened,p=>setAudioLevel(p,'ambienceVolume',1)),/another window/);
+  await assert.rejects(b.update(reopened,p=>setAudioLevel(p,'musicVolume',1)),/another window/);
   let fresh=await a.setup(clean,'welcome');
   fresh=await a.setup(fresh,'name');
   fresh=await a.setup(fresh,'first-water','Juniper');
-  assert.deepEqual(audioLevels(fresh.plant),{musicVolume:.4,fxVolume:.4,ambienceVolume:1});
+  assert.deepEqual(audioLevels(fresh.plant),{musicVolume:.4,fxVolume:.4});
   const imported=await a.replace(fresh,backup);
   assert.deepEqual(audioLevels(imported.plant),mixed);
   assert.deepEqual(audioLevels((await store().read()).plant),mixed);

@@ -9,7 +9,7 @@ from dew_lesson import READ_PLANT
 
 
 # Observe the real decoded tracks and their gain automation. The much shorter
-# synthesized ambience and button buffers are unrelated to the score.
+# synthesized effect buffers are unrelated to the score.
 PROBE = """(() => {
   const next = new WeakMap(), automation = new WeakMap(), tracks = [], voices = [];
   const decks = new WeakMap();
@@ -260,7 +260,6 @@ def saved_record(browser, source, completed):
         taps(page, "Close menu", "Open Plantigochi menu", "Settings")
         effects = page.get_by_role("slider", name="Sound effects", exact=True)
         effects.press("Home")
-        page.get_by_role("slider", name="Garden ambience", exact=True).press("Home")
         page.wait_for_function("Math.abs(recordMix() - .56 * .4) < .012")
         music = page.get_by_role("slider", name="Music", exact=True)
         music.press("Home")
