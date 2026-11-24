@@ -69,6 +69,7 @@ with sync_playwright() as pw:
     for name in ['Prayer Plant','Golden Pothos']:
         expect(page.locator('.toy-collection').get_by_text(name,exact=True)).to_be_visible()
     expect(page.locator('.toy-tile.revealed canvas')).to_have_count(2)
+    expect(page.locator('.toy-tile.revealed canvas').first).to_have_attribute('width','216')
     queen=page.locator('.toy-collection li').filter(has_text='Queen Anthurium')
     expect(queen.locator('.seed-mask')).to_have_count(1)
     day = 24 * 60 * 60 * 1000

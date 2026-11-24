@@ -92,8 +92,9 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
       }
     }
     if(onScreen)scroller?.addEventListener('scroll',scroll,{passive:true});
+    if(onScreen)window.addEventListener('pot-art-ready',paint);
     refresh();media.addEventListener('change',refresh);document.addEventListener('visibilitychange',refresh);
-    return ()=>{cancelAnimationFrame(frame);scroller?.removeEventListener('scroll',scroll);clearInterval(timer);media.removeEventListener('change',refresh);document.removeEventListener('visibilitychange',refresh);};
+    return ()=>{window.removeEventListener('pot-art-ready',paint);cancelAnimationFrame(frame);scroller?.removeEventListener('scroll',scroll);clearInterval(timer);media.removeEventListener('change',refresh);document.removeEventListener('visibilitychange',refresh);};
   },[onScreen,animate,index,stage,worldHeight,rasterScale]);
   useLayoutEffect(()=>{
     if(!onScreen || document.hidden || !canvas.current)return;

@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.34 · Higher-resolution pots and plants
+
+iSEED portraits and garden specimens render at 3×. The six pots with larger approved source artwork show their original ceramic details in both places. Physical-phone testing is pending. [Rendering details](research/garden-item-resolution.md)
+
 ## Plantigochi 0.1.33 · Garden contact shadows
 
 Pots cast a soft shadow at the actual foot, including the offset sole on the Rain Boot and the pedestal on the Low Sandstone Bowl. The shadow stays fixed during plant sway and softens at night. Shop portraits show clean item art. The garden size comparison includes the contact shadow.

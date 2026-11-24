@@ -35,7 +35,7 @@ with sync_playwright() as pw:
         page.goto(blank)
         page.evaluate(SEED_SETUP, fixture)
         page.goto(url)
-        expected_width = 800 if density == 1 else 1200
+        expected_width = 1200
         page.wait_for_function('window.launchPaints.length >= 2')
         first_paints = sorted(page.evaluate('window.launchPaints'))
         assert first_paints == [['room-actors', expected_width], ['room-depth', 400]], first_paints

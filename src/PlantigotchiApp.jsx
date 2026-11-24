@@ -2,8 +2,7 @@ import React,{memo,useEffect,useRef,useState} from 'react';
 import PlantPixel from './PlantPixel.jsx';
 import {ACTIONS,DAY,HOUR,WEEK,careStatus,condition,earnedAt,growthHolds,growthOrder,
   healthLabels,moodOf,nextMilestone,stageLabel,timeLeft,toyVarietyName} from './game.js';
-import {drawShopPreview} from './roomShopArt.js';
-import {previewLayout} from './shopPreviewLayout.js';
+import SpecimenPortrait from './SpecimenPortrait.jsx';
 import './PlantigotchiApp.css';
 
 const sections=['My plant','Collection','Toy guide'];
@@ -69,22 +68,10 @@ function Dashboard({plant,now}){
   </section>;
 }
 
-const RaisedPortrait=memo(function RaisedPortrait({species}){
-  const ref=useRef(null);
-  useEffect(()=>{
-    const canvas=ref.current,ctx=canvas.getContext('2d');
-    if(!ctx)return;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    const [x,y,size]=previewLayout[species];
-    drawShopPreview(ctx,{sku:species,x,y,size});
-  },[species]);
-  return <canvas aria-hidden="true" ref={ref} width="72" height="64"/>;
-});
-
 const SpecimenTile=memo(function SpecimenTile({species,unlocked}){
   return <li>
     <div className={'toy-tile '+(unlocked?'revealed':'mystery')}>
-      {unlocked?<RaisedPortrait species={species}/>:
+      {unlocked?<SpecimenPortrait sku={species}/>:
         <img className="seed-mask" src={'/art/seed-silhouettes/'+species+'.png'} width="64" height="64" alt=""/>}
     </div>
     <span>{toyVarietyName(species)}</span>

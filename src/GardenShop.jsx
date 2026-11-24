@@ -1,28 +1,22 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay} from './gardenEconomy.js';
 import {toyVarietyName,canHomePlant} from './game.js';
-import {drawShopPreview,drawSizeComparison,framePhotoBounds} from './roomShopArt.js';
+import {drawSizeComparison,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
 import {readFrameUpload} from './frameUpload.js';
 import {ChevronRight,ShoppingBag} from 'lucide-react';
 
+import SpecimenPortrait,{portraitDensity} from './SpecimenPortrait.jsx';
 import {previewLayout} from './shopPreviewLayout.js';
 
 function ItemArt({sku,photo,large=false,zoom=large?2:1}){
-  const canvas=useRef(null);
   const width=72*zoom,height=64*zoom;
   const [center,baseline,scale]=previewLayout[sku];
   const x=center*zoom,y=baseline*zoom,size=scale*zoom;
-  const aperture=photo && framePhotoBounds(sku,x,y,size);
-  useEffect(()=>{
-    const tile=canvas.current,ctx=tile.getContext('2d');
-    if(!ctx)return;
-    ctx.clearRect(0,0,tile.width,tile.height);
-    drawShopPreview(ctx,{sku,x,y,size});
-  },[sku,x,y,size]);
+  const aperture=photo && framePhotoBounds(sku,x,y,size,portraitDensity);
   return <span className={'shop-specimen'+(large?' large':'')+(aperture?' framed-photo':'')} aria-hidden="true">
     <span className="shop-preview-stage">
-      <canvas ref={canvas} className="shop-art" width={width} height={height}/>
+      <SpecimenPortrait sku={sku} zoom={zoom} className="shop-art"/>
       {aperture && <FramePhoto photo={photo} deferOriginal={!large} style={{
         left:100*aperture.left/width+'%',top:100*aperture.top/height+'%',
         width:100*aperture.width/width+'%',height:100*aperture.height/height+'%',
@@ -35,9 +29,14 @@ function SizeComparison({sku}){
   useEffect(()=>{
     const ctx=canvas.current.getContext('2d');
     if(!ctx)return;
-    ctx.setTransform(3,0,0,3,0,0);
-    ctx.clearRect(0,0,72,80);
-    drawSizeComparison(ctx,sku);
+    function paint(){
+      ctx.setTransform(3,0,0,3,0,0);
+      ctx.clearRect(0,0,72,80);
+      drawSizeComparison(ctx,sku);
+    }
+    window.addEventListener('pot-art-ready',paint);
+    paint();
+    return ()=>window.removeEventListener('pot-art-ready',paint);
   },[sku]);
   return <span className="shop-specimen" aria-hidden="true"><canvas className="shop-scale-art" ref={canvas} width={216} height={240}/></span>;
 }

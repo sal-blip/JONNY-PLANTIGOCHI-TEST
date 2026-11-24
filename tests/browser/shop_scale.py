@@ -15,9 +15,13 @@ with sync_playwright() as p:
     page.evaluate(SEED_SETUP,plant)
     page.goto(url)
     taps(page,'Open garden','Open iSEED','Shop')
+    thumbnails=page.locator('.shop-list .shop-art')
+    count=thumbnails.count()
+    assert count>0
+    assert all(w==216 and h==192 for w,h in thumbnails.evaluate_all("tiles=>tiles.map(c=>[c.width,c.height])"))
     page.get_by_label('Compare garden sizes').check()
     canvases=page.locator('.shop-scale-art')
-    expect(canvases).to_have_count(17)
+    expect(canvases).to_have_count(count)
     result=canvases.evaluate_all("""tiles=>tiles.map(c=>{
       const ctx=c.getContext('2d'),{data}=ctx.getImageData(0,0,c.width,c.height);
       let touches=false, item=false, reference=false;
@@ -36,7 +40,7 @@ with sync_playwright() as p:
     expect(page.get_by_label('Compare garden sizes')).to_be_checked()
     taps(page,'Bog Frog Pot · 30 coins')
     detail=page.get_by_role('dialog',name='Bog Frog Pot')
-    expect(detail.locator('canvas')).to_be_visible()
+    expect(detail.locator('canvas')).to_have_attribute('width','648')
     page.keyboard.press('Escape')
     expect(page.get_by_role('button',name='Bog Frog Pot · 30 coins')).to_be_focused()
     taps(page,'Bog Frog Pot · 30 coins','Buy','Place at Center of the coffee table','Buy for 30 coins')
@@ -44,5 +48,5 @@ with sync_playwright() as p:
     page.reload()
     taps(page,'Open garden')
     expect(page.get_by_label('Bog Frog Pot · Center of the coffee table')).to_be_visible()
-    print('All 17 shop SKUs render alongside an unclipped reference; comparison purchase, table placement and reload passed.')
+    print('All shop SKUs render alongside an unclipped reference; comparison purchase, table placement and reload passed.')
     b.close()

@@ -138,10 +138,9 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       const height=Math.max(ROOM_HEIGHT,Math.ceil(el.clientHeight*ROOM_WIDTH/frame));
       el.style.setProperty('--room-height',height*frame/ROOM_WIDTH+'px');
       setWorldHeight(height);
-      const requested=Math.ceil(frame*(window.devicePixelRatio || 1)*assetZoom/ROOM_WIDTH);
       // Limit each detailed layer on very tall screens as well as high-DPI phones.
       const budget=Math.floor(Math.min(4096/height,Math.sqrt(4000000/(ROOM_WIDTH*height))));
-      setDetailScale(Math.max(1,Math.min(3,requested,budget)));
+      setDetailScale(Math.max(1,Math.min(3,budget)));
       el.scrollLeft=center*frame-el.clientWidth/2;
       el.scrollTop=Math.max(0,(el.scrollHeight-el.clientHeight)/2);
       cameraCenter.current=(el.scrollLeft+el.clientWidth/2)/frame;

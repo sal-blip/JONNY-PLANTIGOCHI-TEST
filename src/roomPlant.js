@@ -1,3 +1,5 @@
+import {drawGardenStamp} from './gardenSpecimenStamp.js';
+import {potMaster} from './shopSprites/potPortraits.js';
 import {collectorFoliage} from './shopSprites/collectorFoliage.js';
 import * as flytrap from './shopSprites/venus-flytrap.js';
 import * as sundew from './shopSprites/cape-sundew.js';
@@ -563,6 +565,23 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
   // A stationary reflection on the rim also works with reduced motion.
   const sweep=(reducedMotion ? -8 : (time%3600)*.035-45)*density;
   size/=density;
+  let stamped=false;
+  if(!preview && typeof document!=='undefined'){
+    const source=!bare && potMaster(finish);
+    const master=source?.image.complete && source.image.naturalWidth ? source : null;
+    const lightStep=Math.round(Math.max(0,Math.min(1,night))*48);
+    const stampKey=[key,lightStep,Boolean(master),selected].join('/');
+    const glaze=master && {first:glazeInk,end:glazeInk+pot.art.spritePalette.length};
+    // Paint the outline first so the stamp covers its interior at every zoom.
+    if(selected){
+      ctx.save();
+      ctx.scale(1/rasterScale,1/rasterScale);
+      drawSelectionContour(ctx,runs,{x:x*rasterScale,y:y*rasterScale,size:size*rasterScale,firstInk:soilShadow,rasterScale});
+      ctx.restore();
+    }
+    stamped=drawGardenStamp(ctx,stampKey,runs,ink,x,y,size,glaze,master,lightStep/48);
+    if(stamped && !selected)return;
+  }
   ctx.save();
   if(rasterScale!==1){
     // Snap authored runs after converting the anchor and size to backing pixels.
@@ -570,7 +589,7 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
     x*=rasterScale;y*=rasterScale;size*=rasterScale;
   }
   for(let i=1;i<runs.length;i++){
-    if(selected && i===soilShadow)
+    if(!stamped && selected && i===soilShadow)
       drawSelectionContour(ctx,runs,{x,y,size,firstInk:soilShadow,rasterScale});
     const cells=runs[i];
     if(!cells)continue;
@@ -578,7 +597,7 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
     for(let j=0;j<cells.length;j+=3){
       const px=cells[j],py=cells[j+1],left=Math.round(x+size*px),top=Math.round(y+size*py);
       const w=Math.round(x+size*(px+cells[j+2]))-left,h=Math.round(y+size*(py+1))-top;
-      if(w && h)ctx.fillRect(left,top,w,h);
+      if(!stamped && w && h)ctx.fillRect(left,top,w,h);
       if(selected && i>shadowFirm && w && h){
         const start=Math.round(sweep-py*.36);
         const first=Math.max(px,start),end=Math.min(px+cells[j+2],start+4*density);
