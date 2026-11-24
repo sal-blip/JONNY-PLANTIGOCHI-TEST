@@ -30,7 +30,7 @@ function targetBounds(targets){
 }
 
 export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,detailScale=1,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
-  garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,selectedKeepsake=null,jarProgress=null,leafCount=0}) {
+  garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null),foreground=useRef(null);
   // Changing canvas dimensions clears its pixels. Keep visible rooms at the
   // same resolution while another surface owns input or is sliding past.
@@ -41,8 +41,8 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   const spots=placesFor(index,worldHeight-above-ROOM_HEIGHT);
   const object=keepsakeFor(index);
   const blocked=busy || panelOpen || !onScreen || !running;
-  const selectedFixture=!placing && object?.id===selectedKeepsake?selectedKeepsake:null;
-  const active=running && onScreen?(focused ?? selectedFixture ?? selected ?? carry?.from ?? (cat?'cat':null)):null;
+  // Inspection uses the vignette alone. Keep placement and keyboard cues for navigation.
+  const active=running && onScreen && !panelOpen?(focused ?? selected ?? carry?.from ?? (cat?'cat':null)):null;
   const decor=decorPlaces(index);
   const photoFrames=[];
   for(const spot of decor){
