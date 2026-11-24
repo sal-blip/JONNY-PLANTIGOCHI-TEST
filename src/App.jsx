@@ -246,6 +246,8 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const scene = selectedScene(roomGarden);
   const photo=page==='photo' && draftPhoto ? draftPhoto : scene==='photo' ? plant.photo : null;
   const background=photo?'photo':scene;
+  // The handset owns input while raised, but the room behind it stays in motion.
+  const roomVisible=!onToy || background==='garden';
   const time = new Date(wallNow);
   const TimeIcon = time.getHours() >= 6 && time.getHours() < 18 ? Sun : Moon;
 
@@ -436,7 +438,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     }}>
     <div className="garden-room-layer" {...passage.roomGestureProps} inert={!roomActive?'':undefined} aria-hidden={!roomActive || undefined}>
       <Collector ref={roomRef} playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} recordActive={recordActive} musicVolume={musicVolume}
-        onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={roomActive} backdropVisible={surface==='toy' && background==='garden'} plant={roomGarden} commit={commit} now={now} wallNow={wallNow} plantClock={plantClock}
+        onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={roomActive} backdropVisible={roomVisible} plant={roomGarden} commit={commit} now={now} wallNow={wallNow} plantClock={plantClock}
         onPlacementDone={()=>{if(current.current?.tutorial?.step==='return')setApp('phone');}}
         raisePhone={raiseGardenPhone} returnToToy={returnToSeed} onPlacementCancel={()=>go('phone')}
         move={async(slot,id)=>{

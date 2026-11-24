@@ -22,6 +22,28 @@ def artwork(page):
     }""")
 
 
+def room_frame_changes(page):
+    """Compare the actual room artwork across several sprite frames."""
+    return page.locator('.room-frame:not([inert]) .room-actors').first.evaluate("""async canvas => {
+        const sample = document.createElement('canvas');
+        sample.width = 400;
+        sample.height = 320;
+        const ctx = sample.getContext('2d', {willReadFrequently:true});
+        ctx.globalCompositeOperation = 'copy';
+        const scale = canvas.width / sample.width;
+        const above = Math.round((canvas.height / scale - sample.height) * .39);
+        let previous, changes = 0;
+        for (let i = 0; i < 9; i++) {
+            ctx.drawImage(canvas, 0, above*scale, canvas.width, 320*scale, 0, 0, 400, 320);
+            const pixels = ctx.getImageData(0,0,400,320).data;
+            if (previous && pixels.some((v,j) => v !== previous[j])) changes++;
+            previous = pixels;
+            if (i < 8) await new Promise(resolve => setTimeout(resolve, 210));
+        }
+        return changes;
+    }""")
+
+
 def swipe(page, session, x, y, dy, expected, cancel=False):
     touch(session, 'touchStart', x, y)
     touch(session, 'touchMove', x, y + dy//2)
@@ -68,8 +90,23 @@ with sync_playwright() as pw:
         taps(page, 'Open iSEED')
         surface(page, 'phone')
         assert artwork(page) == painted
+        assert room_frame_changes(page) >= 3, 'Room froze behind iSEED'
+        touch(cdp, 'touchStart', 100, 115)
+        touch(cdp, 'touchMove', 100, 170)
+        expect(page.locator('main[data-transitioning]')).to_have_count(1)
+        assert room_frame_changes(page) >= 3, 'Room froze during a held swipe'
+        touch(cdp, 'touchCancel')
+        surface(page, 'phone')
         swipe(page, cdp, 100, 115, 180, painted)
         surface(page, 'garden')
+    taps(page, 'Open iSEED', 'Journal')
+    assert room_frame_changes(page) >= 3, 'Room froze inside Journal'
+    page.emulate_media(reduced_motion='reduce')
+    # A minute boundary can update the room lighting once.
+    assert room_frame_changes(page) <= 1, 'Room kept animating with reduced motion'
+    taps(page, 'Put down iSEED')
+    surface(page, 'garden')
+    page.emulate_media(reduced_motion='no-preference')
     stage = page.locator('.room-picture')
     start = stage.evaluate('el => el.scrollLeft')
     touch(cdp, 'touchStart', 285, y)
