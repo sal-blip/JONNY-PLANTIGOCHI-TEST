@@ -29,6 +29,8 @@ with sync_playwright() as pw:
             }""")
         taps(page, 'Install app')
         expect(page.get_by_role('heading', name='Install Plantigochi')).to_be_visible()
+        expect(page.get_by_text('Need to install or move your garden?')).to_have_count(0)
+        expect(page.get_by_text('Export existing garden')).to_have_count(0)
         assert page.url.endswith('#install')
         if platform == 'android':
             assert page.evaluate('installCalls') == [True]

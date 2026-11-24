@@ -13,13 +13,14 @@ import GardenDialog from './GardenDialog.jsx';
 import GameLink, { gameLink } from './GameLink.jsx';
 import { useGardenTilt } from './useGardenTilt.js';
 import { useGardenSound } from './GardenSound.js';
-import {GameMusic, PublicTourMusic, useGameplayMusic} from './GameMusic.jsx';
+import {GameMusic, useGameplayMusic} from './GameMusic.jsx';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
 import {wake,graduate,relocateGraduate,condition,toyVarietyName,plantName} from './game.js';
 import {useGardenSave} from './useGardenSave.js';
 import WelcomeTour from './WelcomeTour.jsx';
+import PublicEntry from './PublicEntry.jsx';
 import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.jsx';
 import {SetupWelcome,NameEditor} from './PlantSetup.jsx';
 import ResetGarden from './ResetGarden.jsx';
@@ -53,7 +54,7 @@ function MenuItems({ items, open }) {
 export default function App() {
   const phone=usePhoneApp();
   return <GameMusic>{phone.standalone ? <InstalledGame phone={phone}/> :
-    <><PublicTourMusic/><WelcomeTour phone={phone}/></>}</GameMusic>;
+    <PublicEntry phone={phone}/>}</GameMusic>;
 }
 function InstalledGame({phone}){
   const storage=useGardenSave();

@@ -1,6 +1,5 @@
 import React, {createContext, useCallback, useContext, useEffect, useLayoutEffect, useState} from 'react';
 import {clearScoreHandoff, useScorePlayback} from './scorePlayback.js';
-import {exportGardenRaw} from './useGardenSave.js';
 import {audioLevels} from './audioLevels.js';
 
 const silent = {enabled:false};
@@ -20,29 +19,18 @@ function useMusicRoute({cotton=false, mystic=false, enabled=false, cottonSession
   useLayoutEffect(() => () => setMix(silent), [setMix]);
 }
 
-export function PublicTourMusic() {
-  const [mix, setMix] = useState(silent);
-  useEffect(() => {
-    let read = 0;
-    async function refresh() {
-      const request = ++read;
-      try {
-        const raw = await exportGardenRaw();
-        if (request !== read) return;
-        const saved = raw === null ? null : JSON.parse(raw);
-        const cotton = !saved || Boolean(saved.tutorial || saved.dewLesson?.status === 'round' ||
-          (saved.sproutDebut && saved.sproutDebut === saved.id));
-        setMix({cotton, enabled:true, volume:audioLevels(saved).musicVolume,
-          cottonSession:cotton ? saved?.id ?? 'intro' : null});
-      } catch {
-        if (request === read) setMix(silent);
-      }
+export function PublicTourMusic({raw}) {
+  const mix = React.useMemo(() => {
+    try {
+      const saved = JSON.parse(raw);
+      const cotton = !saved || Boolean(saved.tutorial || saved.dewLesson?.status === 'round' ||
+        (saved.sproutDebut && saved.sproutDebut === saved.id));
+      return {cotton, enabled:true, volume:audioLevels(saved).musicVolume,
+        cottonSession:cotton ? saved?.id ?? 'intro' : null};
+    } catch {
+      return silent;
     }
-    function onVisible() { if (!document.hidden) void refresh(); }
-    void refresh();
-    document.addEventListener('visibilitychange', onVisible);
-    return () => { read++; document.removeEventListener('visibilitychange', onVisible); };
-  }, []);
+  }, [raw]);
   useMusicRoute(mix);
   return null;
 }

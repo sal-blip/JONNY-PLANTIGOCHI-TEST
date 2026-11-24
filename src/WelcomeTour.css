@@ -118,3 +118,12 @@
 @media(prefers-reduced-motion:reduce){
   :root::view-transition-group(*),:root::view-transition-old(*),:root::view-transition-new(*){animation-duration:0s!important}
 }
+
+.returning-garden{overflow-y:auto}
+.returning-garden .tour-sheet{height:auto;min-height:100%;max-width:780px;grid-template-rows:auto 1fr}
+.returning-garden .tour-words{grid-row:2;align-self:center;padding-block:clamp(18px,5vh,52px)}
+.returning-garden .tour-words>img{border-radius:20%;margin-bottom:14px}
+.returning-garden .tour-caption{max-width:44ch}
+.returning-help{margin-top:18px;border-top:1px solid var(--tour-line);padding-top:4px}
+.returning-help summary{cursor:pointer;padding:12px 0;font-weight:650}
+.returning-help p{max-width:48ch;line-height:1.4}

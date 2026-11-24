@@ -15,11 +15,12 @@ with sync_playwright() as pw, TemporaryDirectory() as directory:
     page.evaluate(SEED_SETUP, legacy)
     page.evaluate("localStorage.setItem('plantigochi.browser-play','yes')")
     page.goto(url+'#play')
-    taps(page,'Take a peek','Next','Continue')
-    expect(page.locator('.tour-actions button')).to_have_count(1)
-    taps(page,'Install app')
+    expect(page.get_by_role('heading', name='Welcome back, gardener')).to_be_visible()
+    expect(page.get_by_role('button', name='Take a peek')).to_have_count(0)
+    expect(page.get_by_role('button', name='Back up my garden')).to_be_hidden()
+    page.get_by_text('Need to install or move your garden?', exact=True).click()
     with page.expect_download() as download:
-        taps(page,'Export existing garden')
+        taps(page,'Back up my garden')
     file = Path(directory)/download.value.suggested_filename
     download.value.save_as(file)
     assert page.evaluate(READ_PLANT)['id'] == legacy['id']
@@ -31,7 +32,20 @@ with sync_playwright() as pw, TemporaryDirectory() as directory:
     taps(app,'Restore this garden')
     expect(app.get_by_role('button',name='Play one round')).to_be_visible()
     assert app.evaluate(READ_PLANT)['id'] == legacy['id']
-    print('Former browser player sees install only, exports the seed, and resumes its lesson after restore.')
+    app.reload()
+    expect(app.get_by_role('button', name='Play one round')).to_be_visible()
+    expect(app.get_by_role('heading', name='Welcome back, gardener')).to_have_count(0)
+    assert app.evaluate(READ_PLANT)['id'] == legacy['id']
+    old, url, blank = context_for(browser, source, installed=False)
+    tab = old.new_page()
+    tab.goto(blank)
+    tab.evaluate("([key, plant]) => localStorage.setItem(key, JSON.stringify(plant))",
+                 [sprout_fixture()['key'], legacy])
+    tab.goto(url+'#install')
+    expect(tab.get_by_role('heading', name='Welcome back, gardener')).to_be_visible()
+    expect(tab.get_by_role('button', name='Back up my garden')).to_be_visible()
+    old.close()
+    print('Saved browser gardens bypass the tour, export a backup, and resume the same lesson after restore and relaunch.')
     for context in (installed,ctx):
         context.unroute_all(behavior='wait')
         context.close()

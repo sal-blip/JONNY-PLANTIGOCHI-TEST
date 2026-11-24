@@ -4,7 +4,6 @@ import LeafReveal from './LeafReveal.jsx';
 import {drawRoom,roomLight,ROOM_WIDTH,ROOM_HEIGHT} from './roomArt.js';
 import {drawRoomDepth} from './roomScenery.js';
 import InstallHelp from './InstallHelp.jsx';
-import {exportGardenRaw,downloadCurrentGarden} from './useGardenSave.js';
 import {transitionOnboarding} from './OnboardingTransition.jsx';
 import './WelcomeTour.css';
 
@@ -61,8 +60,6 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
   const [step,setStep]=useState(()=>!installed && location.hash==='#install'?installStep:0);
   const [splash,setSplash]=useState(()=>!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const heading=useRef(null), dialog=useRef(null), touch=useRef(null), requested=useRef(step);
-  const [canExport,setCanExport]=useState(false);
-  const [exportNotice,setExportNotice]=useState(''),[exporting,setExporting]=useState(false);
   const installing=!installed && step===installStep;
   const pages=installed?installedCards:cards;
   const card=installing?{lead:'Install',name:'Plantigochi',copy:'Your garden saves on this phone. After installing, open the Plantigochi icon to meet your seed.'}:pages[step];
@@ -72,19 +69,6 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
     return ()=>{if(el?.open)el.close();};
   },[]);
   useLayoutEffect(()=>{heading.current?.focus({preventScroll:true});},[step]);
-  useEffect(()=>{
-    if(!installing)return;
-    let active=true;
-    exportGardenRaw().then(raw=>{if(active)setCanExport(raw!=null);}).catch(()=>{});
-    return ()=>{active=false;};
-  },[installing]);
-  async function exportExisting(){
-    setExporting(true);setExportNotice('');
-    try {
-      setExportNotice(await downloadCurrentGarden('plantigochi-backup'));
-    }catch{setExportNotice('Could not download this browser garden. Try again.');}
-    finally{setExporting(false);}
-  }
   useEffect(()=>{
     if(!splash)return;
     const stop=()=>setSplash(false);
@@ -154,9 +138,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
       {!installing && <nav className="tour-dots" aria-label="Welcome screens">{pages.map((c,i)=>
         <button key={c.name} aria-label={'Show '+titleOf(c)} aria-current={step===i?'step':undefined}
           onClick={()=>go(i)}><i/></button>)}</nav>}
-      {installing && canExport && <button className="tour-skip" disabled={exporting} onClick={exportExisting}>Export existing garden</button>}
       {issue && <span role="alert">{issue}</span>}
-      {exportNotice && <span role="status">{exportNotice}</span>}
     </footer>
   </div>;
   return onClose ? <dialog className="welcome-modal" ref={dialog} aria-labelledby="welcome-title"
