@@ -1,4 +1,4 @@
-import {canPlaceAt,gardenViews,placesFor,slotFor,viewForSlot} from './gardenLayout.js';
+import {canPlaceAt,gardenViews,viewForSlot} from './gardenLayout.js';
 import {backupLimit,validPhoto} from './gardenScenes.js';
 import {validOriginalId} from './frameUpload.js';
 import {decorPlaces} from './roomShopArt.js';
@@ -6,21 +6,34 @@ import {decorPlaces} from './roomShopArt.js';
 export const catalog = {
   terra:{name:'Terracotta pot',kind:'pot',price:10},
   wave:{name:'Blue wave pot',kind:'pot',price:18},
+  'honey-glazed-terracotta':{name:'Honey-Glazed Terracotta',kind:'pot',price:16},
+  'blue-willow-porcelain':{name:'Blue Willow Porcelain',kind:'pot',price:28},
+  'low-sandstone-bowl':{name:'Low Sandstone Bowl',kind:'pot',price:20},
+  'stump-cottage-pot':{name:'Stump Cottage',kind:'pot',price:34},
+  'rain-boot-pot':{name:'Rain Boot',kind:'pot',price:24},
+  'ringed-planet-pot':{name:'Ringed Planet',kind:'pot',price:38},
   'bog-frog-pot':{name:'Bog Frog Pot',kind:'pot',price:30},
   'lava-pop-pot':{name:'Lava Pop Pot',kind:'pot',price:36},
   oak:{name:'Oak photo frame',kind:'frame',price:20},
   lacquer:{name:'Lacquer photo frame',kind:'frame',price:28},
   neko:{name:'Maneki-neko',kind:'decor',price:30},
   record:{name:'Record player',kind:'decor',price:65},
-  'golden-pothos':{name:'Golden pothos',kind:'plant',price:250},
-  'snake-plant':{name:'Snake plant',kind:'plant',price:350},
+  'golden-pothos':{retired:true,name:'Golden pothos',kind:'plant',price:250},
+  'snake-plant':{name:'Snake plant',kind:'plant',price:100},
   'monstera-albo':{name:'Monstera Albo',kind:'plant',price:450},
-  'pink-micans':{name:'Pink Micans',kind:'plant',price:300},
-  'hoya-serpens-splash':{name:'Hoya serpens “Splash”',kind:'plant',price:325},
-  'queen-anthurium':{name:'Queen Anthurium',kind:'plant',price:500},
-  'monkey-tail-cactus':{name:'Monkey Tail Cactus',kind:'plant',price:225},
-  'bird-of-paradise':{name:'Bird of Paradise',kind:'plant',price:600},
-  'moth-orchid':{name:'Moth Orchid',kind:'plant',price:700},
+  'pink-micans':{retired:true,name:'Pink Micans',kind:'plant',price:300},
+  'hoya-serpens-splash':{retired:true,name:'Hoya serpens “Splash”',kind:'plant',price:325},
+  'queen-anthurium':{retired:true,name:'Queen Anthurium',kind:'plant',price:500},
+  'monkey-tail-cactus':{retired:true,name:'Monkey Tail Cactus',kind:'plant',price:225},
+  'bird-of-paradise':{retired:true,name:'Bird of Paradise',kind:'plant',price:600},
+  'moth-orchid':{retired:true,name:'Moth Orchid',kind:'plant',price:700},
+  'variegated-billie':{name:'Variegated Billie',kind:'plant',price:650},
+  'pink-princess':{name:'Pink Princess Philodendron',kind:'plant',price:375},
+  'thai-constellation':{name:'Thai Constellation',kind:'plant',price:550},
+  'raven-zz':{name:'Raven ZZ',kind:'plant',price:180},
+  'polka-dot-begonia':{name:'Polka Dot Begonia',kind:'plant',price:225},
+  'pearls-and-jade':{name:'Pearls and Jade Pothos',kind:'plant',price:150},
+  'pink-diamond':{name:'Homalomena Pink Diamond',kind:'plant',price:700},
 };
 const empty = {balance:0,day:'',waters:0,wins:[],items:[],events:[],plants:[],notes:[]};
 export const lifeOf = plant => plant.gardenLife ?? empty;
@@ -98,11 +111,10 @@ export function canSetItem(plant,sku,slot,from=null) {
   if(view<0 || view>=gardenViews(plant.graduates))return false;
   return !items.some(i=>i.slot===slot) || (decorView(from)>=0 && items.some(i=>i.slot===from && i.sku===sku));
 }
-// Empty purchased pots and the built-in shelf pots are both visible containers.
+// Repotting requires an empty vessel that actually occupies the destination.
 export function canRepotAt(plant,slot) {
   if(!canPlaceAt(plant.graduates,slot))return false;
-  return lifeOf(plant).items.some(i=>i.slot===slot && catalog[i.sku].kind==='pot') ||
-    placesFor(viewForSlot(slot)).some(spot=>spot.shelf && slotFor(viewForSlot(slot),spot)===slot);
+  return lifeOf(plant).items.some(i=>i.slot===slot && catalog[i.sku].kind==='pot');
 }
 export function destinationKey(plant,slot) {
   return JSON.stringify([plant.graduates.find(g=>g.slot===slot)?.id,lifeOf(plant).items.find(i=>i.slot===slot)?.id]);
@@ -111,13 +123,14 @@ export function itemPrice(plant,sku){return plant.tutorial?.step==='pot' && sku=
 export function placeItem(plant,{id,sku,from,buy,slot,expected},time) {
   const g=lifeOf(plant), product=catalog[sku], existing=g.items.find(i=>i.id===id);
   if(!product || !validId(id) || !canSetItem(plant,sku,slot,buy?null:from) || destinationKey(plant,slot)!==expected)return plant;
+  if(buy && product.retired)return plant;
   if(buy && plant.tutorial && (plant.tutorial.step!=='pot' || sku!=='terra'))return plant;
   if(buy && (g.balance<itemPrice(plant,sku) || existing || plant.graduates.some(p=>p.id===id)))return plant;
   if(!buy && (!existing || existing.sku!==sku || existing.slot!==from || from===slot))return plant;
   const balance=g.balance-(buy?itemPrice(plant,sku):0);
   if(product.kind==='plant'){
     const resident={id,source:'shop',species:sku,name:product.name,slot,plantedAt:time,movedAt:time,generation:1};
-    plant=update({...plant,graduates:[...plant.graduates,resident]},{balance});
+    plant=update({...plant,version:4,graduates:[...plant.graduates,resident]},{balance});
     return milestone(plant,'bought',product.name+' came home from the shop.',time,id);
   }
   if(buy && plant.tutorial)plant={...plant,tutorial:{...plant.tutorial,step:'return'}};

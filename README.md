@@ -9,7 +9,7 @@ Raise a plant in a leaf-shaped pocket keychain, then give it a permanent spot in
 Open the game link on your phone. The four-card welcome tour ends with **Install app**. On Android, accept Chrome’s install prompt when offered. On iPhone, open the link in Safari and choose **Share → Add to Home Screen → Add**. If you came from Facebook, follow the handoff to your phone’s browser. Open the new Home Screen icon to play. If the browser already holds a garden, the link shows **Welcome back, gardener** with help opening or transferring it.
 
 1. **Name your seed and give it a drink.** The leaf case has four buttons. Heart opens a menu or selects an item, the arrows browse, and Back goes up one level. Follow the chat to **Care → Water**. Your first visit earns 10 Garden Coins and the first watering adds 2.
-2. **Find a home for it.** Visit the garden, tap the iSEED phone at the lower right, and open **Shop**. Choose the terracotta pot, tap a glowing spot, and confirm. The tutorial pot costs exactly the 12 coins you just earned.
+2. **Find a home for it.** Visit the garden, tap the iSEED phone at the lower right, and open **Shop**. Tap the terracotta pot to see it up close, choose **Buy**, then tap a glowing spot and confirm. The tutorial pot costs exactly the 12 coins you just earned.
 3. **See it sprout.** Back at the keychain, you receive 200 coins for the lesson. Buy four 50-coin spurts under **Growth → Growth Spurt**. The fourth reveals the Monstera and starts its regular care clock.
 4. **Finish the lesson.** Try a short Dew Catch round or choose **Maybe later**. Either path lets you claim 20 good-luck coins. On supported devices, the plant can then offer care reminders. You can revisit that choice under **App & data → Plant alerts**.
 
@@ -30,13 +30,13 @@ After the tutorial, a new seed needs water and one hour of growth to sprout natu
 
 ## Bring a grown plant home
 
-At full growth, your plant appears in **iSEED → Inventory**. Tap **Choose a garden spot** on the keychain, or resume from Inventory, then select a spot and confirm. Placing it starts the next free seed. Return to the keychain to name it. The nine-species cycle goes from Monstera to Golden Pothos, Snake Plant, Hoya Splash, Monkey Tail Cactus, Queen Anthurium, Pink Micans, Bird of Paradise and finally Moth Orchid. After the orchid, it begins again with Monstera.
+At full growth, your plant appears in **iSEED → Inventory**. Tap **Choose a garden spot** on the keychain, or resume from Inventory, then select a spot and confirm. Placing the active plant saves two free seed packets. On your keychain, browse with the arrows, choose with Heart, then name your seed. Back takes you to the garden and keeps both offers for later. The first pair after Monstera is Prayer Plant and Monkey Tail Cactus. Later pairs favor species you haven’t raised. There are 32 growable species. You can browse their names and silhouettes in the iSEED Seed collection. The Prayer Plant spreads its red-veined leaves by day and lifts them at night.
 
 Swipe up from the keychain to visit the garden. Swipe up or down on open scenery to return, or tap the bottom chevrons on either screen. Move sideways between the living room and studio. Each has twelve plant spots, and more rooms open as the collection grows. Tap open scenery for a five-second closer look. The cutting jar on the living-room shelf can root a cutting from a fully grown active plant over 12 hours. The Leaf Book on the studio desk keeps a pressed leaf when a plant dies. You can then start again with a seed or pot a rooted cutting.
 
 Tap a garden object to inspect it. If a plant occupies a purchased pot, choose what you want to handle before choosing a destination.
 
-- **Plant only** repots the plant into an available empty pot. The original container stays in place.
+- **Plant only** repots the plant into an available empty pot. The original purchased pot stays in place. Empty shelves are open for placing a plant or pot.
 - **Pot only** lets you move, swap or store the container. The plant stays in its spot.
 - **Plant + pot** moves both together. Choose a pulsing placement circle and confirm. Rearranging the room is free.
 
@@ -46,13 +46,14 @@ Tap the phone icon in the garden. The seed-shaped Home button returns to the iSE
 
 | App | What you can do |
 | --- | --- |
-| **Shop** | Buy pots, photo frames, decorations or fully grown plants with Garden Coins. **Compare garden sizes** shows each item beside a terracotta pot at windowsill depth. Choose a spot before confirming a purchase. |
+| **Shop** | Buy pots, photo frames, decorations or fully grown plants with Garden Coins. **Compare garden sizes** shows each item beside a terracotta pot at windowsill depth. Tap an item for a closer look. Back returns to browsing. Buy lets you choose a spot, and confirming placement spends the coins. |
+| **Plantigotchi** | See your current plant’s growth and care readings, read the toy guide, and browse all 32 named silhouettes. Each species you raise to maturity reveals its full-color portrait. |
 | **Inventory** | Find a mature plant awaiting placement, place stored items, or manage items already in the room. |
 | **Journal** | Read your pocket plant’s milestones, write notes, and track observations, watering, feeding and repotting for your real plants. |
 | **Care library** | Read built-in plant guides offline or look up real species online. The last six opened species guides are available offline. |
 | **Postcard** | Save or share a picture of your furnished room and the plants you placed there. |
 
-The regular terracotta pot costs **10 coins** after the tutorial. Fully grown shop plants range from **225 coins** for the Monkey Tail Cactus to **700 coins** for the Moth Orchid. The Bird of Paradise costs **600**. Monstera Albo is a shop exclusive. Buying a grown plant places it directly in the room while your keychain plant continues its own cycle. [Current catalog and prices](src/gardenEconomy.js)
+The regular terracotta pot costs **10 coins** after the tutorial. Six more garden pots are available in iSEED: Honey-Glazed Terracotta (16), Low Sandstone Bowl (20), Rain Boot (24), Blue Willow Porcelain (28), Stump Cottage (34) and Ringed Planet (38). The nine fully grown shop plants have a separate roster: Snake Plant (100 coins), Pearls and Jade Pothos (150), Raven ZZ (180), Polka Dot Begonia (225), Pink Princess Philodendron (375), Monstera Albo (450), Thai Constellation (550), Variegated Billie (650) and Homalomena Pink Diamond (700). Existing gardens keep plants bought under earlier catalogs. Buying a grown plant places it directly in the room while your keychain plant continues its own cycle. [Current catalog and prices](src/gardenEconomy.js)
 
 ## Saves, settings and reminders
 

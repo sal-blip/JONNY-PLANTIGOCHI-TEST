@@ -4,7 +4,7 @@ from pathlib import Path
 from runpy import run_path
 from tempfile import TemporaryDirectory
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 REFERENCE = Path(__file__).resolve().parent
 encode = run_path(str(REFERENCE.parent.parent / 'scripts' / 'encode-sprite.py'))['encode']
@@ -15,11 +15,6 @@ BASELINES = {
     'terra': 55, 'wave': 55, 'oak': 55, 'lacquer': 55, 'neko': 55, 'record': 55,
     'golden-pothos': 32, 'snake-plant': 55, 'hoya-serpens-splash': 28,
     'queen-anthurium': 30, 'monkey-tail-cactus': 26,
-}
-TRAILING = {
-    'hoya-serpens-splash': (35, 12),
-    'queen-anthurium': (36, 15),
-    'monkey-tail-cactus': (35, 8),
 }
 ROOM_SCALE = 1.65
 
@@ -49,6 +44,60 @@ def foliage_for(sku, tile):
     return leaves
 
 
+# Original SpriteCook sheet coordinates. The attachment is a living node or the
+# center of the basal fan. Finished dimensions exclude the nursery ceramic.
+ROOM_MASTERS = {
+    'golden-pothos': ('established-plants', (0, 0, 110, 180), (47, 68), (64, 91)),
+    'snake-plant': ('established-plants', (111, 0, 198, 132), (149, 131), (49, 81)),
+    'hoya-serpens-splash': ('plant-retake', (0, 0, 101, 198), (53, 44), (61, 91)),
+    'queen-anthurium': ('plant-retake', (103, 0, 199, 198), (150, 62), (53, 99)),
+}
+
+
+def master_foliage(sku):
+    sheet, box, root, size = ROOM_MASTERS[sku]
+    with Image.open(REFERENCE / 'source' / (sheet + '.png')) as source:
+        cut = source.convert('RGBA').crop(box)
+    if sheet == 'established-plants':
+        # Remove clay and its outline. Preserve the black leaf outlines touching
+        # live green tissue, including the runner crossing the old pot wall.
+        green = Image.new('L', cut.size)
+        for y in range(cut.height):
+            for x in range(cut.width):
+                r, g, b, a = cut.getpixel((x, y))
+                if a and g > r + 6:
+                    green.putpixel((x, y), 255)
+        border = green.filter(ImageFilter.MaxFilter(5))
+        for y in range(cut.height):
+            for x in range(cut.width):
+                r, g, b, a = cut.getpixel((x, y))
+                in_ceramic = (y >= 129 if sku == 'snake-plant' else 19 <= x <= 74 and 64 <= y <= 109)
+                if in_ceramic and (not border.getpixel((x, y)) or r > g + 4):
+                    cut.putpixel((x, y), (0, 0, 0, 0))
+    if sku == 'queen-anthurium':
+        # Lift velvet midtones and separate the pale veins from the deep edges.
+        for y in range(cut.height):
+            for x in range(cut.width):
+                r, g, b, a = cut.getpixel((x, y))
+                if a:
+                    lift = min(49, max(0, round((g - 18)*1.45)))
+                    cut.putpixel((x, y), (min(255, r+lift), min(255, g+lift), min(255, b+lift//2), a))
+    bounds = cut.getchannel('A').getbbox()
+    cut = cut.crop(bounds)
+    sx = (root[0]-box[0]-bounds[0]) / cut.width
+    sy = (root[1]-box[1]-bounds[1]) / cut.height
+    return cut, (sx, sy), size
+
+
+def encode_mount(path, crop, root, size, socket):
+    image = crop.resize(size, Image.Resampling.NEAREST)
+    alpha = image.getchannel('A')
+    image = image.convert('RGB').quantize(48, dither=Image.Dither.NONE).convert('RGBA')
+    image.putalpha(alpha)
+    image.save(path)
+    return object_code(path, round(root[1]*size[1])-socket[1], round(root[0]*size[0])-socket[0])
+
+
 def object_code(png, baseline, center=36):
     lines = encode(png, center, baseline).decode().splitlines()[1:]
     return ['    ' + prop.removeprefix('export const ').replace(' = ', ': ', 1).rstrip(';') + ','
@@ -67,16 +116,26 @@ def compile_sprites():
             with Image.open(master) as source:
                 tile = source.convert('RGBA')
             leaves = foliage_for(sku, tile)
-            leaves.save(path)
-            lines.extend([f'  "{sku}-foliage": {{', *object_code(path, baseline), '  },'])
+            if sku in ROOM_MASTERS:
+                crop, root, size = master_foliage(sku)
+                socket = {'golden-pothos': (-5,-15), 'snake-plant': (-1,-14),
+                          'hoya-serpens-splash': (-1,-16), 'queen-anthurium': (0,-15)}[sku]
+                nursery_size = tuple(round(n / ROOM_SCALE) for n in size)
+                foliage = encode_mount(path, crop, root, nursery_size, socket)
+                mounted = encode_mount(path, crop, root, size, (0,0))
+                lines.extend([f'  "{sku}-repotted": {{', *mounted, '  },'])
+            else:
+                leaves.save(path)
+                foliage = object_code(path, baseline)
+            lines.extend([f'  "{sku}-foliage": {{', *foliage, '  },'])
             for y in range(tile.height):
                 for x in range(tile.width):
                     if leaves.getpixel((x, y))[3]:
                         tile.putpixel((x, y), (0, 0, 0, 0))
             tile.save(path)
             lines.extend([f'  "{sku}-pot": {{', *object_code(path, baseline), '  },'])
-            if sku in TRAILING:
-                x, y = TRAILING[sku]
+            if sku == 'monkey-tail-cactus':
+                x, y = 35, 8
                 bounds = leaves.getbbox()
                 crop = leaves.crop(bounds)
                 scaled = crop.resize(tuple(round(n * ROOM_SCALE) for n in crop.size), Image.Resampling.NEAREST)

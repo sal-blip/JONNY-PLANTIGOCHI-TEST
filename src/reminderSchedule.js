@@ -1,7 +1,7 @@
 import {criticalReminder,deathDeadline,milestoneDue,nextMilestone,HOUR,DAY,WATER_INTERVAL} from './game.js';
 
 export function reminderSchedule(plant,companyEnabled,lastNudge=0) {
-  if(plant.tutorial)return null;
+  if(plant.tutorial || plant.seedOffers)return null;
   const next=nextMilestone(plant);
   return {
     id:plant.id, stage:plant.stage,nextStage:({seed:'sprout',sprout:'young',young:'split',split:'grown'})[plant.stage] ?? null,next:next?.label ?? null,due:milestoneDue(plant),

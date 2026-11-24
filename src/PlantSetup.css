@@ -100,3 +100,8 @@
 
 
 .room-guide .chat-actions button{pointer-events:auto}
+
+.seed-choice-lcd .seed-packets{display:flex;justify-content:center;gap:9%;width:90%;height:41%}
+.seed-packets span{display:grid;place-items:center;position:relative;width:32%;border:1px solid #698574;border-top:3px double #607d6c;background:#e1e1b3}
+.seed-packets .chosen{outline:2px solid #315a49;background:#f5e8b9}
+.seed-packets .plant-pixel{width:100%;height:100%}

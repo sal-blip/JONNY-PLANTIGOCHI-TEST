@@ -1,0 +1,17 @@
+[
+  {
+    "asset_id": "0bf5d015-2677-4937-9ebe-636e99896e7c",
+    "sha12": "3f3ff818f896",
+    "label": "first"
+  },
+  {
+    "asset_id": "8d47103e-5279-4baa-8066-fd465b029c9e",
+    "sha12": "b78b04132086",
+    "label": "second"
+  },
+  {
+    "asset_id": "f42fc4dd-0530-4f70-a81a-2f2822c1e830",
+    "sha12": "9bf807669fd2",
+    "label": "third"
+  }
+]

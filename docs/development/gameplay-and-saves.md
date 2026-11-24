@@ -2,6 +2,10 @@
 
 [Growth and care](#growth-and-care) · [Games and rewards](#games-and-rewards) · [Saving an edit](#saving-an-edit) · [Changing the save format](#changing-the-save-format) · [Worked example](#worked-example)
 
+Plant and pot IDs resolve independently at the current slot. On a move the transaction checks the selected pair and destination against the latest save. The [garden composition specification](interface-and-art.md#pot-and-plant-composition) defines the visual result for carrying, swapping, repotting and reload.
+
+
+
 ## Growth and care
 
 Start with `game.js` when changing a rule. Follow a water button press from the keychain into `care(saved, 'water', now, confirmed)`. It calls `wake` to resolve elapsed time, checks the same `careStatus` used by the menu, settles earned growth, then updates the plant. Blocked actions return the current state after waking. The LCD derives its meters from that state, so a change to watering eligibility should flow through to its readout. [Game rules](../../src/game.js) · [Button handlers](../../src/PocketDevice.jsx) · [LCD readouts](../../src/plantReadout.js)
@@ -11,7 +15,7 @@ Start with `game.js` when changing a rule. Follow a water button press from the 
 | Growth | `earnedAt`, `wake`, `nextMilestone`, `milestoneDue` | A watered seed sprouts on a visible wake at or after one hour from planting. Later milestones use **earned** time at days 3, 5 and 7. `earned` and `anchor` record settled progress. Critical thirst, overdue food or light, root rot and active fungus stop accrual. |
 | Soil and food | `condition`, `careStatus`, `care`, `soilDeadline` | After sprouting, soil dries at 4 hours, becomes critical at 12, and reaches its thirst deadline at 24. A confirmed extra pour can soak the soil. Another confirmed pour at least an hour later in the same wet period can cause rot. Food and light have 48- and 24-hour intervals and each opens 8 hours early. |
 | Illness and death | `discoverFungus`, `treatFungus`, `deathDeadline`, `wake` | Fungus becomes eligible 36–60 hours after sprouting or treatment. Seeing it on the eligible main toy screen starts the 12-hour rescue window. Treatment checks the outbreak timestamp. Root rot has its own 12-hour rescue window. A missed deadline records one pressed leaf and its cause. |
-| Company and succession | `company`, `moodOf`, `graduate`, `replant` | Talk and completed game rounds update company. Mood is independent of physical growth. Graduation moves the mature plant’s ID and variety into a garden slot and creates the next seed at no cost. The initial order starts with Monstera, continues through Golden Pothos, Snake Plant, Hoya Splash, Monkey Tail Cactus, Queen Anthurium, Pink Micans, Bird of Paradise and Moth Orchid, and then repeats. A rooted 12-hour cutting starts a new generation of the parent’s variety after death. |
+| Company and succession | `company`, `moodOf`, `graduate`, `replant` | Talk and completed game rounds update company. Mood is independent of physical growth. Graduation moves the active mature plant into a garden slot and saves two free seed offers. Choosing a species starts its clock and opens naming. Snake Plant remains supported for legacy gardens. A rooted 12-hour cutting starts a new generation of the parent’s variety after death. |
 
 The LCD uses the Care menu’s eligibility rules. Concurrent needs appear in one compact row above the meters, ordered water, sunlight, food and company. Each square fades independently as its need changes. The LCD dims when sunlight opens at 16 hours and deepens at 24 hours. First Aid and root rot take precedence. [Readout selection](../../src/plantReadout.js) · [Care indicators](../../src/CareIndicator.jsx)
 
@@ -19,7 +23,7 @@ Use explicit millisecond timestamps in tests. Check the exact boundary, a reload
 
 The active plant, cuttings and pressed leaves record their variety independently of the player’s chosen name. Records that predate the variety field read as Monstera. Earlier active plants continue their current cycle and use the new order when they move in. The day-five milestone is called **Vining plant** for Golden Pothos, **Rosette** for Snake Plant, **First runner** for Hoya Splash, **First trail** for Monkey Tail Cactus followed by **Velvet blade** for Queen Anthurium, **Blush vine** for Pink Micans, **Flower bract** for Bird of Paradise and **Budding spike** for Moth Orchid. Adding another variety to the order also requires its LCD art across growth stages and its garden sprite. [Lifecycle and save validation](../../src/game.js) · [LCD plant art](../../src/PlantPixel.jsx) · [Succession checks](../../tests/collector.test.js)
 
-Each newly earned stage queues a radial flare for the next visible keychain visit. At maturity, the save also records the plant in `waitingPlants`. iSEED Inventory can take that same earned plant into room placement after a cancellation or reload. Confirming an open spot removes the inventory entry, places the original plant and starts the next free seed in one transaction. If the active plant has already been replaced, placing an older earned plant only updates the collection. Each successor carries its own pending naming prompt until the player names it or keeps the default on the keychain. [Lifecycle](../../src/game.js) · [Growth celebration](../../src/SproutCelebration.jsx)
+Each newly earned stage queues a radial flare for the next visible keychain visit. At maturity, the save also records the plant in `waitingPlants`. iSEED Inventory can take that same earned plant into room placement after a cancellation or reload. Confirming an open spot removes the inventory entry, places the original plant and saves the pair of seed offers in one transaction. If the active plant has already been replaced, placing an older earned plant only updates the collection. Each successor carries its own pending naming prompt until the player names it or keeps the default on the keychain. [Lifecycle](../../src/game.js) · [Growth celebration](../../src/SproutCelebration.jsx)
 
 ## Testing growth on a phone
 
@@ -37,7 +41,7 @@ The wallet, purchases, journal events, real-plant records and saved notes live i
 
 ## Saving an edit
 
-Garden plants and purchased pots have independent IDs and share a slot while potted. Moving with a purchased pot sends a displaced destination pot to inventory. Repotting moves only the plant into an empty purchased or built-in shelf pot and verifies the destination against the latest save. Moving a pot under an existing plant preserves that plant's slot. If moving the last resident closes a distant room, its stranded items go to inventory in the same transaction. [Placement rules](../../src/gardenEconomy.js) · [Save regressions](../../tests/collector.test.js)
+Garden plants and purchased pots have independent IDs and share a slot while potted. Moving with a purchased pot sends a displaced destination pot to inventory. Repotting moves only the plant into an empty player-placed pot and verifies the destination against the latest save. Moving a pot under an existing plant preserves that plant's slot. If moving the last resident closes a distant room, its stranded items go to inventory in the same transaction. [Placement rules](../../src/gardenEconomy.js) · [Save regressions](../../tests/collector.test.js)
 
 Call `commit(current => next)` from the UI. The hook queues operations, and the store reads the latest plant inside a read/write IndexedDB transaction. Base the change on that argument and return it unchanged if the action is no longer possible. If the UI promises that a purchase or move happened, check both whether the operation changed the plant and whether the transaction succeeded. A successful no-op can occur when another window already moved the item. [Save hook](../../src/useGardenSave.js) · [Transactions](../../src/gardenStore.js) · [Room operations](../../src/Collector.jsx)
 
@@ -59,3 +63,5 @@ From the repository root, run the focused cases, then the complete suite.
 node --test tests/survival.test.js tests/simulationTiming.test.js tests/gardenEconomy.test.js tests/gardenStore.test.js
 npm test
 ```
+
+The collection uses the complete catalog for legacy purchases and the active sale entries for the shop. New plant purchases and pending seed choices use save version 4 so older clients open recovery rather than overwriting those records. Shop residents are excluded when ranking species already raised. [Collection plan](../plant-collection-plan.md) · [Homecoming walkthrough](../../tests/browser/garden_homecoming.py)

@@ -9,6 +9,12 @@ import {queenStages, queenSeedRows} from "./queenAnthuriumArt.js";
 import {micansStages, micansSeedRows} from "./pinkMicansArt.js";
 import {flowerFrames, flowerInks, flowerSeeds} from "./floweringPlantArt.js";
 import "./PlantPixel.css";
+import CollectorSeedBody from './CollectorSeedBody.jsx';
+import collectorSeeds from './collectorSeeds.json';
+import CarnivorePlant from './CarnivorePlant.jsx';
+import {carnivoreFrames} from './carnivoreFrames.js';
+import {toyVarietyName} from './game.js';
+import PrayerPlant from "./PrayerPlant.jsx";
 export {GnatBottle} from "./GnatArt.jsx";
 
 // Glyphs identify a material's outline, shade, smaller details, lit surface and midtone.
@@ -283,6 +289,7 @@ function seedImages(rows, material) {
     y: 26-rows.length,
   };
 }
+const prayerSeed = seedImages(["....##..","..#+--#.",".#+::-+#","#+-==-+#","#+=---+#",".#++=+#.","..####.."],"seed");
 const hoyaSeed = seedImages(hoyaSeedRows,"pothosSeed");
 const queenSeed = seedImages(queenSeedRows,"seed");
 const micansSeed = seedImages(micansSeedRows,"seed");
@@ -489,7 +496,7 @@ const queenStageName = {seed:"Sleeping Queen Anthurium seed", sprout:"Queen Anth
 const micansStageName = {seed:"Sleeping Pink Micans seed", sprout:"Pink Micans sprout", young:"Young Pink Micans", split:"Pink Micans with a trailing vine", grown:"Grown Pink Micans with blush-patched velvet hearts"};
 const birdStageName = {seed:"Sleeping Bird of Paradise seed",sprout:"Bird of Paradise sprout",young:"Young Bird of Paradise",split:"Bird of Paradise with a flower bract",grown:"Grown Bird of Paradise with an orange and blue flower"};
 const orchidStageName = {seed:"Sleeping Moth Orchid seed",sprout:"Moth Orchid sprout",young:"Young Moth Orchid",split:"Moth Orchid with a budding spike",grown:"Grown Moth Orchid with an arch of pink flowers"};
-const speciesStageNames = {"bird-of-paradise":birdStageName,"moth-orchid":orchidStageName,"pink-micans":micansStageName,"queen-anthurium":queenStageName,"monkey-tail-cactus":cactusStageName, "hoya-serpens-splash": hoyaStageName, "snake-plant": snakeStageName, "golden-pothos": pothosStageName};
+const speciesStageNames = {"prayer-plant":{seed:"Sleeping Prayer Plant seed",sprout:"Prayer Plant sprout",young:"Young Prayer Plant",split:"Prayer Plant with patterned leaves",grown:"Grown red-veined Prayer Plant"},"bird-of-paradise":birdStageName,"moth-orchid":orchidStageName,"pink-micans":micansStageName,"queen-anthurium":queenStageName,"monkey-tail-cactus":cactusStageName, "hoya-serpens-splash": hoyaStageName, "snake-plant": snakeStageName, "golden-pothos": pothosStageName};
 const healthName = { dry: "dry and wilting", critical: "critically thirsty and deeply wilted", soggy: "soggy and dripping", rootRot: "root rot with mottled leaves and damaged roots", dead: "dead and still" };
 const effectName = { water: "being watered", food: "receiving food", sun: "receiving sunlight", talk: "hearing kind words", drain: "draining excess water", overwater: "an extra pour", growth: "growing", death: "a fallen leaf", replant: "newly planted", gameWin: "celebrating a game win", gameLoss: "a game loss", gnatCure: "one drop of G-NAT ASSASSIN reaches the soil and the fungus gnats scatter" };
 
@@ -642,6 +649,10 @@ function EventArt({ kind }) {
 }
 
 function PlantBody({stage, condition, lowLight, severity, species}) {
+  if(Object.hasOwn(collectorSeeds,species)) return condition==="dead"?<Remains stage={stage}/>:<CollectorSeedBody {...{species,stage,condition,severity}}/>;
+  if(Object.hasOwn(carnivoreFrames,species)) return condition==="dead"?<Remains stage={stage}/>:<CarnivorePlant {...{species,stage,condition,severity}}/>;
+  if(species==="prayer-plant" && stage==="seed")return <BreathingSeed images={prayerSeed} x={32} condition={condition} severity={severity}/>;
+  if(species==="prayer-plant")return <PrayerPlant stage={stage} condition={condition} severity={severity}/>;
   if (Object.hasOwn(flowerFrames,species)) return <FloweringPlant species={species} stage={stage} condition={condition} lowLight={lowLight} severity={severity}/>;
   if (species === "monkey-tail-cactus") return <MonkeyTail stage={stage} condition={condition} lowLight={lowLight} severity={severity}/>;
   if (species === "snake-plant") return <SnakePlant stage={stage} condition={condition} lowLight={lowLight} severity={severity}/>;
@@ -658,7 +669,7 @@ function PlantBody({stage, condition, lowLight, severity, species}) {
 
 export default function PlantPixel({ careCues, reactionId, species, seedSteps=0, stage = "seed", reaction = null, condition = "healthy", mood = "content", hungry = false, lowLight = false, outbreak = 0, showBottle = false, waterFrom = "dry" }) {
   const growth = Object.hasOwn(stageName, stage) ? stage : "seed";
-  const stageNames = Object.hasOwn(speciesStageNames, species) ? speciesStageNames[species] : stageName;
+  const stageNames = (Object.hasOwn(collectorSeeds,species) || Object.hasOwn(carnivoreFrames,species)) ? { [growth]:toyVarietyName(species)+" · "+stageName[growth] } : Object.hasOwn(speciesStageNames, species) ? speciesStageNames[species] : stageName;
   const soil = Object.hasOwn(healthName, condition) ? condition : "healthy";
   const socialMood = ["happy", "content", "quiet", "lonely"].includes(mood) ? mood : "content";
   const feeling = thirsty(soil) ? "sad" : socialMood;

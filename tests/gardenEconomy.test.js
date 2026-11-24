@@ -33,7 +33,7 @@ test('day one pays for a physical pot, with safe caps on repeated care and game 
 });
 test('placement is atomic, physical pots travel with plants and swapped pots stay owned',()=>{
   let p=checkIn(seed(),morning);p={...p,gardenLife:{...p.gardenLife,balance:400}};
-  p=buy(p,'golden-pothos','pothos',0);
+  p=buy(p,'pearls-and-jade','pothos',0);
   p=buy(p,'terra','pot1',0);p=buy(p,'wave','pot2',1);
   const before=p,stale={sku:'wave',id:'third',buy:true,slot:1,expected:destinationKey(p,1)};
   p=relocateGraduate(p,'pothos',0,1);
@@ -49,28 +49,29 @@ test('placement is atomic, physical pots travel with plants and swapped pots sta
   const photo={src:'data:image/jpeg;base64,/9j/AA==',width:40,height:32,x:50,y:50};
   p=framePhoto(p,'frame',photo);
   const reload=readPlant(JSON.stringify(p),morning);
-  assert.deepEqual(reload,p);assert.equal(reload.graduates[0].name,'Golden pothos');
+  assert.deepEqual(reload,p);assert.equal(reload.graduates[0].name,'Pearls and Jade Pothos');
   assert.equal(framePhoto(reload,'pot1',photo),reload);
 });
 
 test('launch shop plants and pots survive a room move, a reload and a backup restore',async()=>{
-  const plants=['monstera-albo','pink-micans','hoya-serpens-splash','queen-anthurium','monkey-tail-cactus','bird-of-paradise','moth-orchid'];
-  const pots=['bog-frog-pot','lava-pop-pot'];
+  const plants=['monstera-albo','snake-plant','variegated-billie','pink-princess','thai-constellation','raven-zz','polka-dot-begonia','pearls-and-jade','pink-diamond'];
+  const pots=['bog-frog-pot','lava-pop-pot','stump-cottage-pot','rain-boot-pot','ringed-planet-pot','honey-glazed-terracotta','blue-willow-porcelain','low-sandstone-bowl'];
   const start=checkIn(seed(),morning);
   const startingBalance=4000;
-  const byPrice=Object.keys(catalog).sort((a,b)=>catalog[b].price-catalog[a].price);
-  assert.deepEqual(byPrice.slice(0,2),['moth-orchid','bird-of-paradise']);
-  assert.deepEqual(byPrice.slice(0,2).map(sku=>catalog[sku].price),[700,600]);
+  const byPrice=Object.keys(catalog).filter(sku=>!catalog[sku].retired).sort((a,b)=>catalog[b].price-catalog[a].price);
+  assert.deepEqual(byPrice.slice(0,2),['pink-diamond','variegated-billie']);
+  assert.deepEqual(byPrice.slice(0,2).map(sku=>catalog[sku].price),[700,650]);
   let p={...start,gardenLife:{...start.gardenLife,balance:startingBalance}};
+  assert.equal(buy(p,'moth-orchid','retired',0),p);
   for(const [slot,sku] of plants.entries())p=buy(p,sku,sku,slot);
   for(const [slot,sku] of pots.entries())p=buy(p,sku,sku,slot);
   const balance=startingBalance-[...plants,...pots].reduce((total,sku)=>total+catalog[sku].price,0);
   assert.equal(lifeOf(p).balance,balance);
   assert.deepEqual(p.graduates.map(plant=>plant.species),plants);
   assert.deepEqual(p.graduates.map(plant=>plant.name),plants.map(sku=>catalog[sku].name));
-  p=relocateGraduate(p,plants[0],0,7);
-  assert.equal(p.graduates.find(plant=>plant.id===plants[0]).slot,7);
-  assert.deepEqual(lifeOf(p).items.map(({sku,slot})=>[sku,slot]),[[pots[0],7],[pots[1],1]]);
+  p=relocateGraduate(p,plants[0],0,'0/front-right');
+  assert.equal(p.graduates.find(plant=>plant.id===plants[0]).slot,'0/front-right');
+  assert.deepEqual(lifeOf(p).items.map(({sku,slot})=>[sku,slot]),pots.map((sku,i)=>[sku,i===0?'0/front-right':i]));
   assert.equal(buy(p,pots[0],pots[0],2),p);
   assert.equal(lifeOf(p).balance,balance);
   const raw=JSON.stringify(p);
@@ -128,7 +129,7 @@ test('placed decorations can trade surfaces in a full room without changing owne
 
 test('swapping pots from shelf zero moves only the ceramics and preserves both plants',()=>{
   let p=checkIn(seed(),morning);p={...p,gardenLife:{...p.gardenLife,balance:700}};
-  p=buy(p,'golden-pothos','pothos',0);p=buy(p,'snake-plant','snake',6);
+  p=buy(p,'pearls-and-jade','pothos',0);p=buy(p,'snake-plant','snake',6);
   p=buy(p,'terra','clay',0);p=buy(p,'wave','glaze',6);
   const moved=placeItem(p,{id:'clay',sku:'terra',buy:false,from:0,slot:6,expected:destinationKey(p,6)},morning);
   assert.equal(moved.graduates.length,2);

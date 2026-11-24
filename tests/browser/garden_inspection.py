@@ -58,7 +58,22 @@ with sync_playwright() as pw:
         large.evaluate('el => el.remove()')
         taps(page,'Plant + pot')
         expect(view.get_by_role('button',name='Move plant and pot together')).to_be_visible()
-        taps(page,'Plant only','Repot plant','Repot in Terracotta pot at Living room windowsill')
+        taps(page,'Plant only','Repot plant')
+        if hour == 12:
+            source = page.locator('[data-slot="0/window-middle"][data-occupied]').bounding_box()
+            target = page.get_by_role('button',name='Repot in Terracotta pot at Living room windowsill').bounding_box()
+            sx, sy = source['x']+source['width']/2, source['y']+source['height']/2
+            tx, ty = target['x']+target['width']/2, target['y']+target['height']/2
+            page.mouse.move(sx,sy)
+            page.mouse.down()
+            page.mouse.move(sx,sy-65,steps=6)
+            expect(page.locator('.carried-plant')).to_be_visible()
+            page.mouse.move(tx,ty,steps=8)
+            expect(page.locator('.carried-plant')).to_have_count(0)
+            assert page.evaluate(READ_PLANT)['graduates'][0]['slot'] == '0/window-middle'
+            page.mouse.up()
+        else:
+            taps(page,'Repot in Terracotta pot at Living room windowsill')
         expect(page.get_by_role('status').filter(has_text='Repotted at')).to_be_visible()
         saved = page.evaluate(READ_PLANT)
         assert saved['graduates'][0]['slot'] == 3 and saved['gardenLife']['items'] == plant['gardenLife']['items']

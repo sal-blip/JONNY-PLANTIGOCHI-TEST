@@ -17,7 +17,8 @@ import {GameMusic, useGameplayMusic} from './GameMusic.jsx';
 import { usePlantAlerts } from './usePlantAlerts.js';
 import { usePhoneApp } from './usePhoneApp.js';
 import PocketDevice from './PocketDevice.jsx';
-import {wake,graduate,relocateGraduate,condition,toyVarietyName,plantName} from './game.js';
+import SeedChoice from './SeedChoice.jsx';
+import {chooseSeed,wake,graduate,relocateGraduate,condition,toyVarietyName,plantName} from './game.js';
 import {useGardenSave} from './useGardenSave.js';
 import WelcomeTour from './WelcomeTour.jsx';
 import PublicEntry from './PublicEntry.jsx';
@@ -212,7 +213,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const phoneActive=surface==='phone' && !transitioning;
   const phoneVisible=phoneActive && !page;
   const onToy=surface==='toy' && !transitioning;
-  const namingSeed=Boolean(onToy && !page && !setupScreen && plant && plant.seedNamePending===plant.id);
+  const namingSeed=Boolean(onToy && !page && !setupScreen && plant && (plant.seedNamePending===plant.id || plant.seedOffers));
   const toyActive=!namingSeed && onToy && !setupScreen && !intro && !page && !sharing;
   const tilt=useGardenTilt(!toyActive,passage.rootRef);
   const [leafReady, setLeafReady] = useState(false);
@@ -222,7 +223,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     plant.deadAt===null && plant.fungusAt==null && (storage.firstDay?.id===plant.id || plant.sproutDebut===plant.id));
   const onFarewellReveal=useGameplayMusic({plant,musicVolume,phase:storage.phase,sproutInvitation,roomActive,recordPlaying:Boolean(playingRecordId)});
   const recordActive=surface!=='toy';
-  const apps=useGardenPhoneApps({page:app,open:setApp,plant,musicVolume,commit,roomRef,raised:phoneActive,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement,homePlant:enterGraduation});
+  const apps=useGardenPhoneApps({page:app,open:setApp,plant,now,musicVolume,commit,roomRef,raised:phoneActive,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement,homePlant:enterGraduation});
   const gardenLife=lifeOf(roomGarden);
   const [revealMuted,setRevealMuted]=useState(false);
   useEffect(()=>{
@@ -449,12 +450,12 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
             return moved;
           });
           const next=current.current;
-          return {ok:Boolean(saved && next?.graduates.some(g=>g.id===id && g.slot===slot)),newSeed,nextVariety:toyVarietyName(next?.species)};
+          return {ok:Boolean(saved && next?.graduates.some(g=>g.id===id && g.slot===slot)),newSeed};
         }}
-      relocate={async (id,from,to,repotTarget)=>{
+      relocate={async (id,from,to,repotTarget,sourceKey,targetKey)=>{
         let moved=false,storedCount=0;
         const saved=await commit(p=>{
-          const next=relocateGraduate(p,id,from,to,repotTarget);
+          const next=relocateGraduate(p,id,from,to,repotTarget,sourceKey,targetKey);
           moved=next!==p;
           if(moved)storedCount=lifeOf(next).items.filter(i=>i.slot===null).length-lifeOf(p).items.filter(i=>i.slot===null).length;
           return next;
@@ -480,7 +481,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
           if(guide && !tutorial && id==='shop' && !await storage.setup('game'))return;
           apps.openApp(id);
         }} busy={apps.busy} active={phoneVisible}/>:<>
-          {app==='shop' && tutorial?.step==='pot' && <GuideChat className="app-guide" cue={phoneVisible?app:null}><p>Pick the terracotta pot, tap a glowing spot in the room, then confirm to put it there.</p></GuideChat>}
+          {app==='shop' && tutorial?.step==='pot' && <GuideChat className="app-guide" cue={phoneVisible?app:null}><p>Open the terracotta pot and tap Buy. Then pick a glowing spot to place it.</p></GuideChat>}
           {phoneVisible && Object.hasOwn(appHints,app) && <FirstHint key={app} id={app} plant={plant} commit={commit} className="app-guide">{appHints[app]}</FirstHint>}
           {apps.content}</>}
       </ISeedPhone>}
@@ -515,7 +516,9 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     {page === 'photo' && <PhotoBackground photo={draftPhoto} update={setDraftPhoto} layer={scenery} apply={savePhoto}
       cancel={() => { setDraftPhoto(null); open('scenes'); }}/>}
     {page === 'welcome' && <WelcomeTour phone={phone} onClose={closeOnboarding}/>}
-    {namingSeed && <NameEditor modal variety={toyVarietyName(plant.species)} key={plant.id} original={plant.name}
+    {namingSeed && plant.seedOffers && <SeedChoice key={plant.id} offers={plant.seedOffers} issue={issue}
+      onLater={()=>go('garden')} onChoose={species=>commit(p=>chooseSeed(p,plant.id,species,plantClock()))}/>}
+    {namingSeed && !plant.seedOffers && <NameEditor modal variety={toyVarietyName(plant.species)} key={plant.id} original={plant.name}
       onSave={nameNewSeed} onCancel={()=>nameNewSeed(plant.name)} issue={issue}/>}
     {page === 'rename' && <NameEditor rename original={plant.name} onCancel={closeOnboarding} issue={issue}
       onSave={async name=>{if(await commit(p=>p.name===name?p:milestone({...p,name},'rename-'+now,'Renamed '+p.name+' to '+name+'.',now)))closeOnboarding();}}/>}

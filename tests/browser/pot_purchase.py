@@ -96,7 +96,7 @@ def select_center(page):
     for label in (
         "Name your seed", "Keep Monstera", "Open toy menu", "Next toy item",
         "Back on toy", "Open toy menu", "Choose Care", "Choose Water",
-        "Visit my garden", "Open iSEED", "Shop", "Terracotta pot · 12 coins", CENTER,
+        "Visit my garden", "Open iSEED", "Shop", "Terracotta pot · 12 coins", "Buy", CENTER,
     ):
         button(page, label).tap()
     expect(button(page, BUY)).to_be_enabled()
@@ -167,7 +167,7 @@ def exercise(browser, source, case):
         elif case == "other-window":
             other = context.new_page()
             other.goto(url)
-            for label in ("Shop", "Terracotta pot · 12 coins", CENTER):
+            for label in ("Shop", "Terracotta pot · 12 coins", "Buy", CENTER):
                 button(other, label).tap()
             page.bring_to_front()
             page.evaluate(DELAY_REFRESH)

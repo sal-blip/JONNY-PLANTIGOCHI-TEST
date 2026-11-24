@@ -68,6 +68,12 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const picking=Boolean(graduating && canHomePlant(plant,graduating));
   const source=carry && collection.get(carry.from)?.id===carry.id?collection.get(carry.from):null;
   const inHand=carry?.confirmed && source;
+  const sourcePot=source && items.find(i=>i.slot===source.slot && catalog[i.sku]?.kind==='pot');
+  const hoverPlacement=useMemo(()=>{
+    if(!ghost || !inHand || dropOver===null || collection.has(dropOver))return null;
+    if(carry.repot && !canRepotAt(plant,dropOver))return null;
+    return {slot:dropOver,plant:inHand,pot:carry.repot?null:sourcePot};
+  },[Boolean(ghost),inHand,dropOver,collection,carry?.repot,sourcePot,plant]);
   const placing=Boolean(inHand) || picking || Boolean(shopMove);
   canFocus.current=active && !globalMenuOpen && !panel;
   const sceneItems=useMemo(()=>{
@@ -94,23 +100,23 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     return ()=>{mounted.current=false;clearInterval(edge.current);clearTimeout(catTimer.current);clearTimeout(zoomTimer.current);clearTimeout(pressTimer.current);};
   },[]);
   useEffect(()=>{
-    if(carry && !source && !pending.current){
+    if(carry && (!source || destinationKey(plant,carry.from)!==carry.sourceKey) && !pending.current){
       setCarry(null);setGhost(null);setPanel(p=>p==='move'?null:p);setSlot(null);
-      setNotice('This plant has moved. Select it again.');
+      setNotice('This plant or its pot changed. Select it again.');
     }
-  },[carry,source,busy]);
+  },[carry,source,plant,busy]);
   useEffect(()=>{
     if(!ghostCanvas.current || !inHand)return;
     const ctx=ghostCanvas.current.getContext('2d');
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-    const pot=items.find(i=>i.slot===(carry.repot?dropOver:carry.from) && i.slot!=null && catalog[i.sku]?.kind==='pot');
+    const pot=carry.repot?null:sourcePot;
     ctx.setTransform(detailScale,0,0,detailScale,0,0);
     const slot=dropOver ?? carry.from,view=viewForSlot(slot);
     const extra=worldHeight-ROOM_HEIGHT;
     const spot=placesFor(view,extra-Math.round(extra*.39)).find(p=>slotFor(view,p)===slot);
-    drawPottedPlant(ctx,{x:44,y:74,size:spot.size,rasterScale:detailScale,plant:inHand,potSku:pot?.sku,night:1-roomLight(hour).day,reducedMotion:true,selected:true});
-  },[Boolean(ghost),inHand,hour,items,detailScale,worldHeight,dropOver,carry?.from,carry?.repot]);
+    drawPottedPlant(ctx,{x:56,y:94,size:spot.size,rasterScale:detailScale,plant:inHand,potSku:pot?.sku,bare:carry.repot,night:1-roomLight(hour).day,reducedMotion:true,selected:true});
+  },[Boolean(ghost),Boolean(hoverPlacement),inHand,hour,sourcePot,detailScale,worldHeight,dropOver,carry?.from,carry?.repot]);
 
   function readCamera(){
     const el=stage.current,frame=camera.current;
@@ -290,7 +296,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   }
   function startPlacement(request,fromPhone=false){
     const product=catalog[request?.sku];
-    if(!product || pending.current || phonePlacement.current || shopMove || carry || picking)return false;
+    if(!product || (request.buy && product.retired) || pending.current || phonePlacement.current || shopMove || carry || picking)return false;
     const hasSpace=Array.from({length:count},(_,view)=>view).some(view=>{
       const addresses=['frame','decor'].includes(product.kind)?decorPlaces(view).map(s=>s.slot):placesFor(view).map(s=>slotFor(view,s));
       return addresses.some(s=>canSetItem(plant,request.sku,s,request.from));
@@ -414,12 +420,12 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     if(!canPlaceAt(graduates,target) || (origin?.repot && !canRepotAt(plant,target))){setNotice('Choose an open circle.');return;}
     pending.current=true;setBusy(true);
     try{
-      const result=origin ? await relocate(origin.id,origin.from,target,origin.repot?destinationKey(plant,target):undefined) : await move(target,graduating);
+      const result=origin ? await relocate(origin.id,origin.from,target,origin.repot?destinationKey(plant,target):undefined,origin.sourceKey,destinationKey(plant,target)) : await move(target,graduating);
       if(!mounted.current)return;
       if(result.ok){
         setCarry(null);if(!origin)setGraduating(null);setSlot(target);focusSlot(target);
         const stored=result.storedCount?' '+result.storedCount+(result.storedCount===1?' item returned':' items returned')+' to inventory.':'';
-        setNotice(origin?(origin.repot?'Repotted at ':'Moved to ')+placeName(target).toLowerCase()+'.'+stored:!result.newSeed?'Your plant is home.':'A '+result.nextVariety+' seed is waiting in your Plantigochi.');
+        setNotice(origin?(origin.repot?'Repotted at ':'Moved to ')+placeName(target).toLowerCase()+'.'+stored:!result.newSeed?'Your plant is home.':'Two seeds are waiting. Return to your Plantigochi to choose one.');
       }else setNotice('That spot or plant changed. Choose again.');
     }catch{if(mounted.current)setNotice('Could not save this move. Please try again.');}
     finally{pending.current=false;if(mounted.current)setBusy(false);}
@@ -444,12 +450,8 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     if(occupant){
       const pot=items.find(i=>i.slot===target && catalog[i.sku]?.kind==='pot');
       if(pot){inspectItem(pot);return;}
-      inspectTarget.current=roomOpener.current;setCarry({id:occupant.id,from:target,confirmed:false});setPanel('move');
-    }else if(!picking){
-      const spot=placesFor(viewForSlot(target)).find(p=>slotFor(viewForSlot(target),p)===target);
-      if(spot?.shelf){inspectTarget.current=roomOpener.current;setPanel('shelf');}
-      else setSlot(null);
-    }
+      inspectTarget.current=roomOpener.current;setCarry({id:occupant.id,from:target,sourceKey:destinationKey(plant,target),confirmed:false});setPanel('move');
+    }else if(!picking)setSlot(null);
   }
   function onCat(index){
     if(placing)return;
@@ -549,7 +551,6 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       return {file,url:URL.createObjectURL(file)};
     }catch{return null;}
   }
-  const sourcePot=source && items.find(i=>i.slot===source.slot && catalog[i.sku]?.kind==='pot');
   const message=notice || (shopMove ? (preview?placeName(preview.slot)+' · '+catalog[shopMove.sku].name:'Choose a spot for '+catalog[shopMove.sku].name.toLowerCase()+'.') : inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):
     carry.repot?'Choose an empty pot for '+(inHand.name || speciesName(inHand))+'.':'Choose a spot for '+(inHand.name || speciesName(inHand))+(sourcePot?' and '+catalog[sourcePot.sku].name:'')+'.'):
     picking?(slot!==null&&!chosen?'Settle here on the '+placeName(slot).toLowerCase()+'?':'Choose an open circle for your grown plant.'):
@@ -557,16 +558,16 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     '');
   const displaced=shopMove && preview && catalog[shopMove.sku].kind!=='plant' && items.find(i=>i.slot===preview.slot);
   const swapping=Boolean(displaced && shopMove.from!=null);
-  const inspectLocation=panel==='move'?carry?.from:panel==='item'?item?.slot:panel==='shelf'?slot:null;
+  const inspectLocation=panel==='move'?carry?.from:panel==='item'?item?.slot:null;
   const paired=panel==='item' && Boolean(itemPlant);
   const plantName=paired && (itemPlant.name || speciesName(itemPlant));
   const potName=paired && catalog[item.sku].name;
   const hasEmptyPot=(panel==='move' || (paired && inspectionPart==='plant')) && Array.from({length:count},(_,view)=>placesFor(view).some(spot=>canRepotAt(plant,slotFor(view,spot)))).some(Boolean);
-  const panelTitle={cat:'Garden cat',shelf:'Empty pot',move:source && (source.name || speciesName(source)),item:catalog[item?.sku]?.name || 'My items',jar:'Cutting Jar',book:'Leaf Book'};
+  const panelTitle={cat:'Garden cat',move:source && (source.name || speciesName(source)),item:catalog[item?.sku]?.name || 'My items',jar:'Cutting Jar',book:'Leaf Book'};
   if(paired)panelTitle.item=inspectionPart==='plant'?plantName:inspectionPart==='pot'?potName:plantName+' in '+potName;
   function moveInspectedPlant(repot){
     if(pending.current || !paired)return;
-    setCarry({id:itemPlant.id,from:item.slot,confirmed:true,repot});
+    setCarry({id:itemPlant.id,from:item.slot,sourceKey:destinationKey(plant,item.slot),confirmed:true,repot});
     setPanel(null);setNotice('');focusDestination();
   }
   const available=active && !globalMenuOpen;
@@ -600,7 +601,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
         {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={detailScale>0 && +k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} detailScale={detailScale} plants={potted[k]} hour={hour}
-          garden={plant} playingItemId={playingRecordId} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
+          garden={plant} playingItemId={playingRecordId} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} hoverPlacement={hoverPlacement} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
     <div className="room-controls" hidden={(!available && !guidingPot) || Boolean(panel)}>
@@ -636,7 +637,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         {picking && slot!==null && !chosen && <button onClick={()=>putDown(slot,null)} disabled={busy}>Move in</button>}
         {!placing && <button aria-label="Dismiss garden message" onClick={()=>{setSlot(null);setNotice('');}}>×</button>}
       </div>}
-      {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width={88*detailScale} height={116*detailScale} aria-hidden="true" style={{left:ghost.x,top:ghost.y,'--carry-scale':camera.current/ROOM_WIDTH}}/>}
+      {ghost && inHand && !hoverPlacement && <canvas className="carried-plant" ref={ghostCanvas} width={112*detailScale} height={154*detailScale} aria-hidden="true" style={{left:ghost.x,top:ghost.y,'--carry-scale':camera.current/ROOM_WIDTH}}/>}
     </div>
     <GardenRecord active={recordActive} musicVolume={musicVolume} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
     {available && panel && inspectTarget.current && <GardenInspection title={panelTitle[panel]}
@@ -648,7 +649,6 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
 
       </div>}
       {panel==='cat' && <button onClick={()=>onCat(Number(inspectTarget.current.dataset.catRoom))}>Pet again</button>}
-      {panel==='shelf' && <p>Choose Repot on a plant to move it here.</p>}
       {paired && <div className="inspection-selection">
         <p id="inspection-part">What would you like to manage?</p>
         <div role="group" aria-labelledby="inspection-part" className="inspection-parts">

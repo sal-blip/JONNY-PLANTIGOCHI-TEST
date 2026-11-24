@@ -1,5 +1,6 @@
 import React, {useEffect,useRef,useState} from 'react';
 import GardenShop,{ShopItemDetail} from './GardenShop.jsx';
+import PlantigotchiApp from './PlantigotchiApp.jsx';
 import GardenJournal from './GardenJournal.jsx';
 import {leaveEditor,newJournalSession} from './journalDrafts.js';
 import {RecordControls} from './GardenRecord.jsx';
@@ -10,10 +11,11 @@ import {gardenViews,placesFor,slotFor,speciesName} from './gardenLayout.js';
 import {decorPlaces} from './roomShopArt.js';
 import './gardenMarket.css';
 
-const titles={shop:'Garden shop',inventory:'Inventory',journal:'Journal',library:'Care library',postcard:'Garden postcard'};
+const titles={plantigotchi:'Plantigotchi',shop:'Garden shop',inventory:'Inventory',journal:'Journal',library:'Care library',postcard:'Garden postcard'};
 
 function phonePlacementError(plant,request){
   const product=catalog[request.sku],garden=lifeOf(plant);
+  if(request.buy && product.retired)return 'This plant has retired from the shop. Your coins are safe.';
   if(request.buy && garden.balance<itemPrice(plant,request.sku))return 'You need '+itemPrice(plant,request.sku)+' Garden Coins for this item.';
   if(!request.buy && !garden.items.some(item=>item.id===request.id && item.slot===request.from))
     return 'This item has moved. Reopen it in Inventory.';
@@ -76,7 +78,7 @@ function Postcard({roomRef,raised}){
 
 /** App owns the raised/lowered surface and current route. Keep its contents
  * mounted while lowered so journal forms, library articles and scrolling survive. */
-export function useGardenPhoneApps({page,open,plant,musicVolume,commit,beginPlacement,homePlant,roomRef,raised=true,playingRecordId,onSelectRecord}){
+export function useGardenPhoneApps({page,open,plant,now,musicVolume,commit,beginPlacement,homePlant,roomRef,raised=true,playingRecordId,onSelectRecord}){
   const [itemId,setItemId]=useState(null),[journal,setJournal]=useState(newJournalSession);
   const [busy,setBusy]=useState(false),[notice,setNotice]=useState(null);
   const pending=useRef(false),alive=useRef(false),route=useRef(null),handedOff=useRef(false);
@@ -125,6 +127,7 @@ export function useGardenPhoneApps({page,open,plant,musicVolume,commit,beginPlac
       const accepted=await beginPlacement({...request,returnTo:request.buy?'shop':'item'});
       if(accepted)handedOff.current=true;
       else showError('The room is busy. Try placing the item again.',origin);
+      return accepted;
     }catch{showError('Could not start placing this item. Try again.',origin);}
     finally{pending.current=false;if(alive.current)setBusy(false);}
   }
@@ -149,9 +152,11 @@ export function useGardenPhoneApps({page,open,plant,musicVolume,commit,beginPlac
   }
   let app=null;
   if(plant && (page==='shop' || page==='inventory')){
-    app=<GardenShop plant={plant} homePlant={homePlant} initialTab={page==='inventory'?'bag':'shop'} onTabChange={tab=>navigate(tab==='bag'?'inventory':'shop')} onPlace={place} inspect={inspect}/>;
+    app=<GardenShop busy={busy} raised={raised} notice={notice?.page===page?notice.text:null} clearNotice={()=>setNotice(null)} plant={plant} homePlant={homePlant} initialTab={page==='inventory'?'bag':'shop'} onTabChange={tab=>navigate(tab==='bag'?'inventory':'shop')} onPlace={place} inspect={inspect}/>;
   }else if(plant && (page==='journal' || page==='library')){
     app=<GardenJournal plant={plant} tab={page==='library'?'library':journal.tab} session={journal} setSession={setJournal} onTabChange={journalPage} change={operation=>change(operation,false)} busy={busy}/>;
+  }else if(plant && page==='plantigotchi'){
+    app=<PlantigotchiApp plant={plant} now={now}/>;
   }else if(page==='item'){
     const resident=item && item.slot!=null && catalog[item.sku].kind==='pot'?plant.graduates.find(p=>p.slot===item.slot):null;
     app=item?<ShopItemDetail key={item.id} item={item} busy={busy} move={()=>place({id:item.id,sku:item.sku,from:item.slot,buy:false})}

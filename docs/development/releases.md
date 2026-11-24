@@ -2,6 +2,50 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.32 · Six approved garden pots
+
+The iSEED Shop adds Honey-Glazed Terracotta, Blue Willow Porcelain, Low Sandstone Bowl, Stump Cottage, Rain Boot and Ringed Planet. The boot seats its roots over the heel. Existing plant and pot IDs remain compatible with saved gardens. Review images and their SpriteCook sources are in [regular pots](../art-review/regular-pots-01/README.md) and [wild pots](../art-review/wild-pots-01/README.md).
+
+## v91 · Named seed silhouettes and 32 growable species · November 24, 2026
+
+Plantigochi 0.1.31 brings the 23 new growable plants into the live game. Each species has a named silhouette on animated question-mark paper and reveals its portrait at maturity. All 173 unit tests passed, including soil contact for all additions at three poses across four pots. Mobile Chromium checked all 32 silhouettes, returning gardens and reduced motion. The production bundle, worker, 32 masks and 20 LCD atlases matched the build. Physical handset testing is pending.
+
+Sites source `fa006dfece0c202ee89527ea98c5a6a18e261752` · saved version 91 · deployment `appgdep_6b05b3f054208191b67d633eb42b1e0b`.
+
+## v90 · Earned growth in days and hours · November 24, 2026
+
+Plantigochi 0.1.30 introduces seven numbered day segments for maturity and four-hour stage segments, with quarter hours for seeds. Mobile Chromium verified elapsed time, segment counts, a partial final segment and maturity. All 172 unit tests passed. The public entry module and service worker matched the build.
+
+Sites source `10b59c63ab687fb0a326e51f01bc321fd1bf2329` · saved version 90 · deployment `appgdep_6b05aeafcda081919f5ae1c114773394`.
+
+## v89 · Full growth meter · November 24, 2026
+
+Plantigochi 0.1.29 displays earned growth toward full maturity alongside the current stage in iSEED. All 172 unit tests passed. Mobile Chromium checked the sprout, four days of earned growth and the completed meter. The public entry module and service worker matched the build.
+
+Sites source `cfec92b5ce49b822bbbe91cbb3eb80dd914ddccb` · saved version 89 · deployment `appgdep_6b05ac7cbc388191b9dbd5b9a2bb709a`.
+
+## v88 · Plantigotchi companion on iSEED · November 24, 2026
+
+Plantigochi 0.1.28 adds a live growth and care dashboard, a nine-plant collection and a toy guide. Raising a plant to maturity reveals its portrait. Repeat graduates count once, and purchasing a plant leaves its mystery square hidden.
+
+All 172 unit tests passed. Mobile Chromium checks covered opening the app, reading the guide, dashboard and collection, and verifying portraits against fresh and returning gardens. The public entry module, service worker, manifest and launcher artwork matched the build. Physical phone testing is pending.
+
+Sites source `9a66af295157a2b5522e8151fdc4505f696e57f7` · saved version 88 · deployment `appgdep_6b05ab3aa1488191a488f67340318f10`.
+
+## v87 · iSEED shop close-up · November 24, 2026
+
+Plantigochi 0.1.27 opens an enlarged catalog portrait with Back and Buy. Players can inspect items above their balance. The room still charges on confirmed placement. All 172 unit tests passed. Chromium exercised the full tutorial, Back and Escape, affordability, purchase, placement and reload. The public bundle, service worker and manifest matched the build. Physical phone testing is pending.
+
+Sites source `c02aa59f44500952671b017caa907672c04cf6ad` · saved version 87 · deployment `appgdep_6b05a8e798808191a8a71870a89d6c7c`.
+
+## v86 · Garden collection and pot fitting · November 24, 2026
+
+Plantigochi 0.1.26 ships the reviewed seed and shop collections, revised layered plant artwork, and clear starter shelves in both rooms. Existing residents keep their slots and purchased pots. Players can repot into a placed, empty pot.
+
+All 172 unit tests passed. Browser checks on the review build exercised placement, repotting, graduation and reload. After deployment the public page loaded the expected entry module, and the public JavaScript, service worker and manifest matched the release build. An installed physical phone remains to be checked.
+
+Sites source `b541e88eb506f8ee2c91d3a4258210549b92ebfb` · saved version 86 · deployment `appgdep_6b05a76669bc8191891862e4701f5b4f`. Published from the local review checkout based on GitHub revision `eacd9ad`.
+
 ## v85 · Garden inspection selection · November 24, 2026
 
 Plantigochi 0.1.25 gives a shared plant and pot one inspection view. Either touch target opens the same explicit Plant only, Pot only and Plant + pot choices. Actions appear after selection. The title, artwork, scrolling actions and Done footer occupy separate rows. The pot instruction previously inherited absolute positioning from the tutorial bubble and could overlap the inventory action.

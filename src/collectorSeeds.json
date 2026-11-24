@@ -1,0 +1,22 @@
+{
+  "birds-nest-fern": {"name":"Bird’s Nest Fern","seedName":"Nest Fern","dayFive":"Rippling fronds","clue":"My fronds unfurl around an open nest."},
+  "maidenhair-fern": {"name":"Maidenhair Fern","seedName":"Maidenhair","dayFive":"Fan leaflets","clue":"My tiny fans balance on dark wires."},
+  "blue-star-fern": {"name":"Blue Star Fern","seedName":"Blue Star","dayFive":"Forked fronds","clue":"My blue-green fronds grow fingers."},
+  "ponytail-palm": {"name":"Ponytail Palm","seedName":"Ponytail","dayFive":"Swollen trunk","clue":"A fountain of leaves grows from my round foot."},
+  "dragon-tree": {"name":"Madagascar Dragon Tree","seedName":"Dragon Tree","dayFive":"Forked crowns","clue":"Red lines trace my spiky crowns."},
+  "chinese-fan-palm": {"name":"Chinese Fan Palm","seedName":"Fan Palm","dayFive":"Pleated fan","clue":"My pleated leaves open like fans."},
+  "panda-plant": {"name":"Panda Plant","seedName":"Panda Plant","dayFive":"Velvet tips","clue":"Cinnamon spots tip my fuzzy ears."},
+  "gollum-jade": {"name":"Gollum Jade","seedName":"Gollum Jade","dayFive":"Tubular leaves","clue":"My jade fingers have little cups."},
+  "zebra-haworthiopsis": {"name":"Zebra Haworthiopsis","seedName":"Zebra","dayFive":"Raised stripes","clue":"White ridges wrap my pointed leaves."},
+  "watermelon-peperomia": {"name":"Watermelon Peperomia","seedName":"Melon Leaf","dayFive":"Silver stripes","clue":"My round leaves wear melon stripes."},
+  "chinese-money-plant": {"name":"Chinese Money Plant","seedName":"Money Plant","dayFive":"Coin leaves","clue":"My leafy coins balance on long stems."},
+  "silver-squill": {"name":"Silver Squill","seedName":"Squill","dayFive":"Spotted blades","clue":"Silver spotted leaves rise from purple bulbs."},
+  "flamingo-flower": {"name":"Flamingo Flower","seedName":"Flamingo","dayFive":"Scarlet spathe","clue":"A golden spike rises above my scarlet heart."},
+  "african-violet": {"name":"African Violet","seedName":"Violet","dayFive":"Violet buds","clue":"Five violet petals frame a golden center."},
+  "florists-cyclamen": {"name":"Florist’s Cyclamen","seedName":"Cyclamen","dayFive":"Furled flowers","clue":"My petals sweep upward like little flames."},
+  "goldfish-plant": {"name":"Goldfish Plant","seedName":"Goldfish","dayFive":"Fish blooms","clue":"Orange fish hide among my glossy leaves."},
+  "shrimp-plant": {"name":"Shrimp Plant","seedName":"Shrimp Plant","dayFive":"Rosy bracts","clue":"My layered pink bracts hang in arches."},
+  "lipstick-plant": {"name":"Lipstick Plant","seedName":"Lipstick","dayFive":"Crimson tubes","clue":"Red tubes peek out of burgundy cups."},
+  "zebra-alocasia": {"name":"Zebra Alocasia","seedName":"Zebra Arrow","dayFive":"Striped stalks","clue":"Striped stems hold up broad arrows."},
+  "escargot-begonia": {"name":"Escargot Rex Begonia","seedName":"Escargot","dayFive":"Spiral leaves","clue":"A silver spiral curls inside each leaf."}
+}

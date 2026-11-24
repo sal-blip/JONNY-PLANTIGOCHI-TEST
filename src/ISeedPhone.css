@@ -62,7 +62,6 @@
 .iseed-home-clock span {font:600 clamp(14px,3.6vmin,18px)/1.2 var(--display);color:#375346}
 .iseed-launcher {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(8px,4.3cqh,26px) 2px;justify-self:center;width:min(100%,540px)}
 .iseed-app {grid-column:span 2;appearance:none;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;min-width:0;min-height:65px;margin:0;padding:2px 0;border:none;background:transparent;color:#20382d;cursor:pointer;touch-action:manipulation}
-.iseed-app:nth-child(4) {grid-column:2 / span 2}
 .iseed-app>span:last-child {
   font:650 clamp(14px,3.7vmin,17px)/1.15 var(--display);
   padding:3px 7px;text-align:center;color:#fffbea;background:#334d40df;border-radius:6px;
@@ -92,7 +91,7 @@
 @container (max-height:415px) and (min-width:480px) {
   .iseed-home {grid-template-rows:minmax(46px,1fr) auto minmax(0,.2fr) auto;padding:8px 70px 5px}
   .iseed-launcher {grid-template-columns:repeat(var(--app-count),minmax(0,1fr));gap:3px;width:min(100%,620px)}
-  .iseed-app,.iseed-app:nth-child(4) {grid-column:auto}
+  .iseed-app {grid-column:auto}
   .iseed-home-clock time {font-size:24px}.iseed-home-clock span {font-size:14px}
   .iseed-app {min-height:55px;gap:2px}
   .iseed-icon-tile {width:44px}

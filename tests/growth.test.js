@@ -63,7 +63,7 @@ test('a name follows its plant through a backup, graduation or death',async()=>{
   assert.equal(dead.book[0].name,'Aki');
   const grown={...sprout,stage:'grown',earned:WEEK};
   const next=graduate(grown,grown.id,0,HOUR+1);
-  assert.equal(next.name,'Pothos');
+  assert.deepEqual(next.seedOffers,['prayer-plant','monkey-tail-cactus']);
   assert.equal(restore(JSON.stringify(next),HOUR+2).graduates[0].name,'Aki');
   assert.equal(plantName(' bad! '),'Monstera');
   const old={...seed};delete old.name;

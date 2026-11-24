@@ -11,7 +11,7 @@ with sync_playwright() as p:
     plant=sprout_fixture()['plant']
     for key in ('tutorial','sproutDebut','sproutBurstPending','dewLesson'):
         plant.pop(key,None)
-    plant['gardenLife']['balance']=800
+    plant['gardenLife']['balance']=30
     page.evaluate(SEED_SETUP,plant)
     page.goto(url)
     taps(page,'Open garden','Open iSEED','Shop')
@@ -29,7 +29,17 @@ with sync_playwright() as p:
       return {name:c.closest('button').ariaLabel,item,reference,touches};
     })""")
     assert all(v['item'] and v['reference'] and not v['touches'] for v in result),result
-    taps(page,'Bog Frog Pot · 30 coins','Place at Center of the coffee table','Buy for 30 coins')
+    taps(page,'Monstera Albo · 450 coins')
+    detail=page.get_by_role('dialog',name='Monstera Albo')
+    expect(detail.get_by_role('button',name='Buy')).to_be_disabled()
+    detail.get_by_role('button',name='Back').tap()
+    expect(page.get_by_label('Compare garden sizes')).to_be_checked()
+    taps(page,'Bog Frog Pot · 30 coins')
+    detail=page.get_by_role('dialog',name='Bog Frog Pot')
+    expect(detail.locator('canvas')).to_be_visible()
+    page.keyboard.press('Escape')
+    expect(page.get_by_role('button',name='Bog Frog Pot · 30 coins')).to_be_focused()
+    taps(page,'Bog Frog Pot · 30 coins','Buy','Place at Center of the coffee table','Buy for 30 coins')
     expect(page.get_by_label('Bog Frog Pot · Center of the coffee table')).to_be_visible()
     page.reload()
     taps(page,'Open garden')

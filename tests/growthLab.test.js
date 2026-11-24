@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {care,newPlant,graduate,treatFungus,deathDeadline,HOUR} from '../src/game.js';
+import {care,newPlant,graduate,chooseSeed,treatFungus,deathDeadline,HOUR} from '../src/game.js';
 import {createGrowthLab,fillDebugPurse} from '../src/growthLab.js';
 import {lifeOf,localDay} from '../src/gardenEconomy.js';
 
@@ -34,7 +34,9 @@ test('a copied seed grows through seven days of care and graduates without chang
   assert.equal(mature.stage,'grown');assert.ok(seen.has('fungus'));
   assert.equal(lifeOf(mature).day,localDay(start));assert.equal(lifeOf(mature).balance,16);
   lab.change(p=>graduate(p,p.id,0,lab.clock()));
-  assert.equal(lab.snapshot().plant.species,'golden-pothos');
+  assert.equal(lab.stop(),null);
+  lab.change(p=>chooseSeed(p,p.id,'prayer-plant',lab.clock()));
+  assert.equal(lab.snapshot().plant.species,'prayer-plant');
   assert.equal(lab.snapshot().plant.graduates[0].id,old.id);assert.deepEqual(old,before);
 });
 

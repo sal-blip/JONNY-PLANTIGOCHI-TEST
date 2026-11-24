@@ -10,6 +10,7 @@ const apps=[
   {id:'journal',label:'Journal'},
   {id:'library',label:'Care library'},
   {id:'postcard',label:'Postcard'},
+  {id:'plantigotchi',label:'Plantigotchi'},
 ];
 
 const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'short',day:'numeric'});

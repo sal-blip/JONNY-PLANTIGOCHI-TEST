@@ -7,6 +7,7 @@
   overflow: hidden;
 }
 
+.collector-seed-wilt {filter:saturate(.55) sepia(.18)}
 .plant-pixel-rest { --neutral: 1; --active: 0; --return: 0; }
 .plant-pixel-active { --neutral: 0; --active: 1; --return: 0; opacity: 0; }
 .plant-pixel-return { --neutral: 0; --active: 0; --return: 1; opacity: 0; }

@@ -43,14 +43,21 @@ with sync_playwright() as pw:
     expect(entry).to_be_visible()
     entry.tap()
     taps(page,'Place at Coffee table','Move in')
-    expect(page.get_by_text('A Golden Pothos seed is waiting in your Plantigochi.',exact=True)).to_be_visible()
+    expect(page.get_by_text('Two seeds are waiting. Return to your Plantigochi to choose one.',exact=True)).to_be_visible()
     expect(page.get_by_role('heading',name='Name your seed')).to_have_count(0)
+    page.reload()
+    chooser=page.get_by_role('dialog',name='What should we grow next?')
+    expect(chooser).to_be_visible()
+    expect(chooser.get_by_role('button',name='Plant Prayer Plant')).to_be_visible()
+    taps(page,'Return to garden','Return to Plantigochi')
+    expect(chooser).to_be_visible()
+    taps(page,'Next seed','Plant Monkey Tail Cactus')
     page.reload()
     expect(page.get_by_role('dialog',name='Name your seed')).to_be_visible()
     taps(page,'Next toy item','A','Previous toy item','Done')
     expect(page.get_by_role('dialog',name='Name your seed')).to_have_count(0)
     saved=page.evaluate(READ_PLANT)
-    assert saved['name']=='A' and saved['species']=='golden-pothos' and saved['id']!=fixture['id']
+    assert saved['name']=='A' and saved['species']=='monkey-tail-cactus' and saved['id']!=fixture['id']
     assert saved['waitingPlants']==[] and [p['id'] for p in saved['graduates']]==[fixture['id']]
     page.reload()
     expect(page.get_by_role('button',name='Open toy menu')).to_be_visible()

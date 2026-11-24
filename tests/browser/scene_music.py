@@ -189,7 +189,7 @@ def first_visit(browser, source):
         cotton = audible(page, "cotton")
         taps(page, "Next", "Continue", "Begin setup", "Name your seed", "Keep Monstera",
              "Open toy menu", "Next toy item", "Back on toy", "Open toy menu", "Choose Care",
-             "Choose Water", "Visit my garden", "Open iSEED", "Shop", "Terracotta pot · 12 coins",
+             "Choose Water", "Visit my garden", "Open iSEED", "Shop", "Terracotta pot · 12 coins", "Buy",
              "Place at Center of the living room windowsill", "Buy for 12 coins", "Return to my seed",
              "Open toy menu", "Next toy item", "Next toy item", "Choose Growth", "Choose Growth Spurt")
         for _ in range(4):

@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {newPlant,wake,care,company,graduate,replant,moodOf,earnedAt,readPlant,HOUR as H,DAY,WEEK} from '../src/game.js';
+import {growthOrder,newPlant,wake,care,company,graduate,chooseSeed,replant,moodOf,earnedAt,readPlant,HOUR as H,DAY,WEEK} from '../src/game.js';
 import {loadSnapshot,SaveIssue} from '../src/gardenStore.js';
 import {reminderSchedule} from '../src/reminderSchedule.js';
 const sprout=()=>wake(care(newPlant(0),'water',0),H);
 
 test('save recovery retains corrupt bytes and rejects a newer version',()=>{
-  for(const input of ['{"version":',JSON.stringify({...newPlant(),version:4})]){
+  for(const input of ['{"version":',JSON.stringify({...newPlant(),version:5})]){
     assert.throws(()=>loadSnapshot(input),error=>error instanceof SaveIssue && error.raw===input);
   }
 });
@@ -31,7 +31,8 @@ test('overdue care pauses earned time offline and resumes from the rescue',()=>{
 test('successive seven-day generations fill a room, graduate once and keep the whole collection in a backup',()=>{
   let p=newPlant(0);let first;
   delete p.species; // An older Monstera save enters the same succession.
-  const cycle=['monstera','golden-pothos','snake-plant','hoya-serpens-splash','monkey-tail-cactus','queen-anthurium','pink-micans','bird-of-paradise','moth-orchid'];
+  const cycle=growthOrder;
+  assert.equal(new Set(cycle).size,32);
   for(let generation=1;generation<=cycle.length;generation++){
     const start=p.plantedAt;
     p=care(p,'water',start);p=wake(p,start+H);
@@ -42,6 +43,8 @@ test('successive seven-day generations fill a room, graduate once and keep the w
     assert.equal(graduate(p,old,slot+12,start+WEEK),p);
     p=graduate(p,old,slot,start+WEEK);
     assert.equal(p.stage,'seed');assert.equal(p.generation,generation+1);assert.equal(p.graduates.length,generation);
+    assert.ok(p.seedOffers.includes(nextSpecies));
+    p=chooseSeed(p,p.id,nextSpecies,start+WEEK);
     assert.equal(p.species,nextSpecies);
     assert.equal(p.graduates.at(-1).species,grownSpecies);
     assert.equal(p.gardenLife.balance,balance);
@@ -98,7 +101,7 @@ test('old numbered pots and new surfaces share a collection and keep their addre
   assert.deepEqual(readPlant(JSON.stringify(moved),WEEK).graduates,[{...first,slot:dest}]);
   let second={...mature,id:p.id,generation:2,graduates:moved.graduates};
   second=graduate(second,second.id,'1/desk-end',WEEK);
-  assert.ok(Number.isInteger(second.graduates[1].potStyle));
+  assert.equal(second.graduates[1].potStyle,undefined);
   assert.equal(gardenViews(second.graduates),2);
   assert.deepEqual(readPlant(JSON.stringify(second),WEEK).graduates,second.graduates);
 });
@@ -165,7 +168,17 @@ test('full growth queues the flare and earns a plant before picking a garden spo
   assert.deepEqual(reload,full);
   const next=graduate(reload,p.id,4,2*H);
   assert.deepEqual(next.waitingPlants,[]);assert.equal(next.graduates[0].id,p.id);
-  assert.equal(next.seedNamePending,next.id);assert.equal(next.species,'golden-pothos');
+  assert.deepEqual(next.seedOffers,['prayer-plant','monkey-tail-cactus']);
+  assert.equal(reminderSchedule(next,true),null);
+  const tomorrow=2*H+DAY, restored=readPlant(JSON.stringify(next),tomorrow);
+  assert.deepEqual(restored,next);
+  assert.equal(care(restored,'water',tomorrow),restored);
+  assert.equal(chooseSeed(restored,next.id,'moth-orchid',tomorrow),restored);
+  const chosen=chooseSeed(restored,next.id,'monkey-tail-cactus',tomorrow);
+  assert.equal(chosen.plantedAt,tomorrow);
+  assert.equal(chosen.seedNamePending,chosen.id);
+  assert.equal(chooseSeed(chosen,next.id,'prayer-plant',tomorrow),chosen);
+  assert.equal(wake(care(chosen,'water',tomorrow),tomorrow).stage,'seed');
   assert.equal(graduate(next,p.id,5,2*H),next);
   assert.deepEqual(readPlant(JSON.stringify(next),2*H),next);
 });
@@ -193,7 +206,9 @@ test('repotting preserves both containers, rejects a changed pot and recovers a 
   const items=[{id:'a',sku:'wave',slot:4},{id:'b',sku:'terra',slot:3}];
   const start={...p,graduates:[resident],gardenLife:{...p.gardenLife,items}};
   const key=destinationKey(start,3);
-  assert.ok(canRepotAt(start,0));
+  assert.ok(!canRepotAt(start,0));
+  assert.ok(canRepotAt(start,3));
+  assert.equal(relocateGraduate(start,'momo',4,0,destinationKey(start,0)),start);
   assert.ok(!canRepotAt(start,4) && !canRepotAt(start,5));
   const after=relocateGraduate(start,'momo',4,3,key);
   assert.deepEqual(after.graduates,[{...resident,slot:3}]);
@@ -203,4 +218,18 @@ test('repotting preserves both containers, rejects a changed pot and recovers a 
   assert.equal(relocateGraduate(changed,'momo',4,3,key),changed);
   const distant={...start,graduates:[{...resident,slot:12}],gardenLife:{...start.gardenLife,items:[{...items[0],slot:12},items[1]]}};
   assert.deepEqual(relocateGraduate(distant,'momo',12,3,key).gardenLife.items,[{...items[0],slot:null},items[1]]);
+});
+
+test('a pair move rechecks the chosen pot and the destination before displacing any item',async()=>{
+  const {destinationKey}=await import('../src/gardenEconomy.js');
+  const {relocateGraduate}=await import('../src/game.js');
+  const resident={id:'queen',name:'Queen',species:'queen-anthurium',generation:1,plantedAt:0,movedAt:1,slot:4};
+  const start={...newPlant(0),graduates:[resident],gardenLife:{items:[{id:'frog',sku:'bog-frog-pot',slot:4},{id:'clay',sku:'terra',slot:3}]}};
+  const from=destinationKey(start,4),to=destinationKey(start,3);
+  const move=p=>relocateGraduate(p,'queen',4,3,undefined,from,to);
+  for(const changedId of ['frog','clay']){
+    const edited={...start,gardenLife:{items:start.gardenLife.items.map(i=>i.id===changedId?{...i,id:'replacement'}:i)}};
+    assert.equal(move(edited),edited);
+  }
+  assert.deepEqual(move(start).gardenLife.items.map(i=>[i.id,i.slot]),[['frog',3],['clay',null]]);
 });

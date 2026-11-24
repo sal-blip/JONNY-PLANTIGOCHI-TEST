@@ -1,3 +1,15 @@
+import {collectorFoliage} from './shopSprites/collectorFoliage.js';
+import * as flytrap from './shopSprites/venus-flytrap.js';
+import * as sundew from './shopSprites/cape-sundew.js';
+import * as pitcher from './shopSprites/white-top-pitcher.js';
+import * as prayerPlant from './shopSprites/prayer-plant.js';
+import * as pinkDiamond from './shopSprites/pink-diamond.js';
+import * as pearlsAndJade from './shopSprites/pearls-and-jade.js';
+import * as polkaDotBegonia from './shopSprites/polka-dot-begonia.js';
+import * as ravenZz from './shopSprites/raven-zz.js';
+import * as thaiConstellation from './shopSprites/thai-constellation.js';
+import * as pinkPrincess from './shopSprites/pink-princess.js';
+import * as variegatedBillie from './shopSprites/variegated-billie.js';
 import {drawSelectionContour} from './roomContour.js';
 import {approvedArt,featuredRoomScale} from './shopSprites/approved.js';
 import * as monsteraAlbo from './shopSprites/monstera-albo.js';
@@ -6,6 +18,15 @@ import * as birdOfParadise from './shopSprites/bird-of-paradise.js';
 import * as mothOrchid from './shopSprites/moth-orchid.js';
 import * as bogFrog from './shopSprites/bog-frog-pot.js';
 import * as lavaPop from './shopSprites/lava-pop-pot.js';
+
+import * as honeyTerracotta from './shopSprites/honey-glazed-terracotta.js';
+import * as blueWillow from './shopSprites/blue-willow-porcelain.js';
+import * as sandstoneBowl from './shopSprites/low-sandstone-bowl.js';
+import * as stumpCottage from './shopSprites/stump-cottage-pot.js';
+
+import * as rainBoot from './shopSprites/rain-boot-pot.js';
+
+import * as ringedPlanet from './shopSprites/ringed-planet-pot.js';
 
 // Each graduate is inked on a small logical grid. Transparent cells in each
 // blade reveal the stem, other leaves, or the actual room through the splits.
@@ -96,27 +117,54 @@ const ceramics = [
   { // indigo ceramic with pooling blue glaze
     day:['#3c5057','#4b646c','#658186','#809a9d','#a7b6ac','#c9cdb6'], wall:[9,9,10,10,10,10,10,9,9,8,7,6], motif:'glaze' },
 ];
+// All geometry uses native art pixels, relative to the pot's bottom center.
 const shopPots={
-  terra:{art:approvedArt.terra,lift:2},
-  wave:{art:approvedArt.wave,lift:2},
-  'bog-frog-pot':{art:bogFrog,lift:6},
-  'lava-pop-pot':{art:lavaPop,lift:6},
+  'honey-glazed-terracotta':{id:'honey-glazed-terracotta',art:honeyTerracotta,mouth:{soil:[0,-35],half:16,front:-32,arc:3},rise:0},
+  'blue-willow-porcelain':{id:'blue-willow-porcelain',art:blueWillow,mouth:{soil:[0,-35],half:14,front:-32,arc:3},rise:0},
+  'low-sandstone-bowl':{id:'low-sandstone-bowl',art:sandstoneBowl,mouth:{soil:[0,-20],half:19,front:-18,arc:3},rise:0},
+  'ringed-planet-pot':{id:'ringed-planet-pot',art:ringedPlanet,mouth:{soil:[0,-37],half:7,front:-34,arc:2},rise:0},
+  'rain-boot-pot':{id:'rain-boot-pot',art:rainBoot,mouth:{soil:[6,-42],half:8,front:-39,arc:3},rise:0},
+  'stump-cottage-pot':{id:'stump-cottage-pot',art:stumpCottage,mouth:{soil:[0,-38],half:15,front:-33,arc:5},rise:0},
+  terra:{id:'terra',art:approvedArt.terra,mouth:{soil:[0,-31],half:15,front:-27,arc:4},rise:0},
+  wave:{id:'wave',art:approvedArt.wave,mouth:{soil:[0,-31],half:15,front:-26,arc:4},rise:0},
+  'bog-frog-pot':{id:'bog-frog-pot',art:bogFrog,mouth:{soil:[0,-37],half:19,front:-35,arc:5,eyes:true},rise:0},
+  'lava-pop-pot':{id:'lava-pop-pot',art:lavaPop,mouth:{soil:[0,-39],half:19,front:-33,arc:5},rise:5},
 };
-// Positions are in native double-density pixels from the pot's contact point.
+// A stalk strip is [first row, last row, left, right] in the foliage master.
+// Everything outside the rooted stalks is crown artwork (blades, blooms and
+// cascading shoots). It always paints above the ceramic, including both sides.
+function plantArt(foliage,potStyle,socket,stalks,seatDepth=0){
+  return {foliage,potStyle,socket,stalks,seatDepth};
+}
 const featuredPlants={
-  'monstera-albo':{foliage:monsteraAlbo,potStyle:3},
-  'pink-micans':{foliage:pinkMicans,potStyle:2},
-  'bird-of-paradise':{foliage:birdOfParadise,potStyle:1},
-  'moth-orchid':{foliage:mothOrchid,potStyle:3},
-  'golden-pothos':nurserySpecimen('golden-pothos',[-5,-15],true),
-  'snake-plant':nurserySpecimen('snake-plant',[-1,-14],false),
-  'hoya-serpens-splash':nurserySpecimen('hoya-serpens-splash',[-1,-16],true),
+  ...Object.fromEntries(Object.entries(collectorFoliage).map(([sku,art]) => [sku,{
+    ...plantArt(art,0,[0,-30],art.stalks),habit:'basal'
+  }])),
+  'venus-flytrap':{...plantArt(flytrap,0,[0,-30],[[-33,-28,-2,2]]),habit:'basal'},
+  'cape-sundew':{...plantArt(sundew,0,[0,-30],[[-42,-28,-4,4]]),habit:'basal'},
+  'white-top-pitcher':{...plantArt(pitcher,0,[0,-30],[[-46,-27,-5,5]]),habit:'basal'},
+  'prayer-plant':{...plantArt(prayerPlant,1,[0,-28],[[-38,-33,-6,5],[-32,-25,-7,6]],12),maxRise:3},
+  'pink-diamond':plantArt(pinkDiamond,0,[0,-28],[[-57,-38,-2,1],[-37,-25,-4,4]]),
+  'pearls-and-jade':plantArt(pearlsAndJade,5,[0,-27],[[-29,-25,-2,2]]),
+  'polka-dot-begonia':plantArt(polkaDotBegonia,4,[0,-28],[[-60,-41,-2,0],[-40,-25,-3,4]],9),
+  'raven-zz':plantArt(ravenZz,3,[0,-28],[[-49,-35,-2,1],[-34,-25,-5,5]]),
+  'thai-constellation':plantArt(thaiConstellation,2,[0,-28],[[-81,-44,-2,2],[-43,-25,-3,3]]),
+  'pink-princess':plantArt(pinkPrincess,1,[3,-28],[[-56,-33,0,3],[-32,-25,1,5]]),
+  'variegated-billie':plantArt(variegatedBillie,0,[-1,-28],[[-85,-46,-3,2],[-45,-35,-8,6],[-34,-25,-5,3]],9),
+  'monstera-albo':plantArt(monsteraAlbo,3,[0,-32],[[-91,-52,-2,2],[-51,-29,-4,5]]),
+  'pink-micans':plantArt(pinkMicans,2,[0,-30],[[-43,-35,-3,2],[-34,-27,-4,4]]),
+  'bird-of-paradise':plantArt(birdOfParadise,1,[0,-30],[[-61,-39,-3,2],[-38,-27,-6,6]]),
+  'moth-orchid':plantArt(mothOrchid,3,[0,-30],[[-36,-27,-5,5]]),
+  'golden-pothos':nurserySpecimen('golden-pothos',[-5,-15],true,'vine'),
+  'snake-plant':nurserySpecimen('snake-plant',[-1,-14],false,'basal'),
+  'hoya-serpens-splash':nurserySpecimen('hoya-serpens-splash',[-1,-16],true,'vine'),
   'queen-anthurium':nurserySpecimen('queen-anthurium',[0,-15],true),
-  'monkey-tail-cactus':nurserySpecimen('monkey-tail-cactus',[-1,-18],true),
+  'monkey-tail-cactus':nurserySpecimen('monkey-tail-cactus',[-1,-18],true,'basal'),
 };
-function nurserySpecimen(sku,crown,trailing){
-  return {specimen:approvedArt[sku],pot:approvedArt[sku+'-pot'],foliage:approvedArt[sku+'-foliage'],
-    repotted:approvedArt[sku+'-repotted'],crown,trailing,potStyle:0};
+function nurserySpecimen(sku,crown,trailing,habit){
+  const [x,y]=crown;
+  return {...plantArt(approvedArt[sku+'-foliage'],0,crown,[[y-2,y+1,x-2,x+1]]),
+    habit,nurseryId:sku,pot:approvedArt[sku+'-pot'],repotted:approvedArt[sku+'-repotted'],crown,trailing};
 }
 const plantSpecies=sku=>sku==='pothos'?'golden-pothos':sku==='snake'?'snake-plant':sku;
 export const hasTrailingFoliage=sku=>featuredPlants[plantSpecies(sku)]?.trailing===true;
@@ -237,16 +285,17 @@ const outlines = [
   [1,-6,-43,1,1], [3,4,-42,-1,2], [0,-10,-31,1,0], [2,14,-33,-1,0], [3,2,-27,1,1],
 ];
 const notches = [[13,2],[11,2],[10,3],[9,1]];
-function canopy(grid,hash,pose) {
+function canopy(grid,blades,hash,pose) {
   const { line,dot,span }=grid;
   const mirror=(hash&1)?-1:1;
   const lean=((hash>>>1)%5)-2;
   const taller=(hash>>>5)%4;
-  const rootX=((hash>>>9)%3)-1;
+  const canopyDrop=6;
+  const rootX=0;
   const placed=outlines.map(([kind,ax,ay,direction,ramp],i) => {
     const bump=(hash>>>(8+i*3))&3;
     const x=(ax+(i===2?-Math.floor(bump/2):i===1?Math.floor(bump/2):i===4?bump-2:0))*mirror+lean+pose;
-    const y=ay-taller+(i<2?bump-1:0);
+    const y=ay+canopyDrop-taller+(i<2?bump-1:0);
     return {kind,x,y,direction:direction*mirror,ramp};
   });
   // Each petiole grows from its own staggered node. The last stretch arches up
@@ -262,17 +311,17 @@ function canopy(grid,hash,pose) {
   });
   // Curl and papery sheath of the next, still-unrolling blade.
   const unfurl=lean+2*mirror+pose;
-  line(rootX,-16,unfurl,-38-taller,stem);
-  line(unfurl,-37-taller,unfurl+2*mirror,-43-taller,newLeaf);
-  line(unfurl+mirror,-38-taller,unfurl+3*mirror,-43-taller,stemLight);
-  dot(unfurl+3*mirror,-44-taller,newLeaf);
-  line(unfurl+2*mirror,-41-taller,unfurl+4*mirror,-43-taller,newLeaf);
-  dot(unfurl+3*mirror,-42-taller,stemLight);
+  line(rootX,-16,unfurl,-38+canopyDrop-taller,stem);
+  line(unfurl,-37+canopyDrop-taller,unfurl+2*mirror,-43+canopyDrop-taller,newLeaf);
+  line(unfurl+mirror,-38+canopyDrop-taller,unfurl+3*mirror,-43+canopyDrop-taller,stemLight);
+  dot(unfurl+3*mirror,-44+canopyDrop-taller,newLeaf);
+  line(unfurl+2*mirror,-41+canopyDrop-taller,unfurl+4*mirror,-43+canopyDrop-taller,newLeaf);
+  dot(unfurl+3*mirror,-42+canopyDrop-taller,stemLight);
   placed.forEach(({kind,x,y,direction,ramp},i) => {
     const [nx,ny]=notches[kind], ink=leavesInInk[kind];
     if(i===3 && (hash&8)) ramp=2;
     ink.forEach((row,ry) => row.forEach((shade,rx) => {
-      if(shade>=0) dot(x+(rx-nx)*direction,y+ry-ny,green+ramp*7+shade);
+      if(shade>=0) blades.dot(x+(rx-nx)*direction,y+ry-ny,green+ramp*7+shade);
     }));
   });
   span(rootX-2,-14,4,stemDark); dot(rootX-1,-15,stemLight);
@@ -290,46 +339,144 @@ function drawSpriteRows(dot,{spriteRows,spriteOffset},firstInk,swayAt=still){
     const cells=spriteRows[row];
     for(let col=0;col<cells.length;col++){
       const shade=cells.charCodeAt(col)-65;
-      if(shade>=0)dot(spriteOffset.x+col+sway,y,firstInk+shade);
+      if(shade>=0)dot(spriteOffset.x+col+sway,y,firstInk+shade,spriteOffset.x+col);
     }
   }
 }
 
-function sprite(style,hash,pose,pot,featured,density,preview) {
-  const sourceBounds=featured?.trailing?trailingBounds:pot || featured?shopBounds:originalBounds;
-  const bounds=Object.fromEntries(Object.entries(sourceBounds).map(([key,value])=>[key,value*density]));
-  const grid=makeGrid(bounds,density);
-  const {nativeDot,span}=grid;
-  const specimen=featured?.specimen;
-  if(pot || specimen){
-    if(!preview){
-      span(-12,1,30,shadowSoft);span(-9,2,24,shadowSoft);span(-8,0,19,shadowFirm);span(-6,1,17,shadowFirm);
-    }
-    const base=pot?.art ?? (pose?featured.pot:specimen);
-    drawSpriteRows(nativeDot,base,glazeInk);
-    if(specimen && !pot && !pose)return runsFromGrid(grid,bounds);
-  }else ceramic(grid,style);
-  if(hash!==null){
-    const lift=pot?.lift ?? 0;
-    const foliage=lift?{
-      dot:(x,y,t)=>grid.dot(x,y-lift,t),
-      span:(x,y,w,t)=>grid.span(x,y-lift,w,t),
-      line:(a,b,c,d,t)=>grid.line(a,b-lift,c,d-lift,t),
-    }:grid;
-    if(featured){
-      const repotted=pot && featured.repotted;
-      const [cx,cy]=repotted?[0,0]:(featured.crown ?? [0,-28]);
-      const dx=pot?-cx:0,dy=pot?-28-lift*density-cy:0;
-      // Pin the roots and the part of the silhouette overlying the pot.
-      const sway=y=>{
-        const distance=specimen?(y<cy?cy-y:Math.max(0,y)):Math.abs(y-cy);
-        return Math.round(pose*density*Math.min(1,Math.max(0,(distance-9)/45)));
-      };
-      const base=pot?.art ?? featured.pot;
-      drawSpriteRows((x,y,t)=>nativeDot(x+dx,y+dy,t),repotted || featured.foliage,glazeInk+(base?.spritePalette.length ?? 0),sway);
-    }else canopy(foliage,hash,pose);
+// Coordinates are double-density pixels. The front edge curves up at the
+// sides of the opening. Keep the painted rim visible wherever a stalk enters it.
+function frontEdge(x,mouth){
+  const edge=Math.min(1,Math.abs(x)/mouth.half);
+  let y=mouth.front-mouth.arc*edge**2;
+  // The green brows are part of the front wall above the central lip.
+  if(mouth.eyes){
+    const distance=Math.abs(Math.abs(x)-10);
+    if(distance<=5)y=Math.min(y,-40+Math.max(0,distance-2));
   }
-  return runsFromGrid(grid,bounds);
+  return Math.ceil(y);
+}
+
+function paintStalkExtension(grid,art,firstInk,socket,topX,topY,rootX,rootY){
+  if(topY>=rootY)return;
+  const [sx,sy]=socket;
+  const row=art.spriteRows[sy-art.spriteOffset.y] ?? '';
+  const stroke=[];
+  for(let x=sx-2;x<=sx+2;x++){
+    const shade=row.charCodeAt(x-art.spriteOffset.x)-65;
+    if(shade>=0)stroke.push([x-sx,firstInk+shade]);
+  }
+  // A crown with an open center still has a short living neck below the leaves.
+  if(!stroke.length)stroke.push([-1,stemDark],[0,stemLight],[1,stem]);
+  for(let y=topY;y<=rootY;y++){
+    const t=(y-topY)/(rootY-topY);
+    const x=Math.round(topX+(rootX-topX)*t);
+    for(const [offset,ink] of stroke)grid.nativeDot(x+offset,y,ink);
+  }
+}
+
+function drawPlantParts(stalks,blades,plant,pot,mouth,pose,firstInk){
+  const hanging=pot && plant.repotted;
+  const art=hanging || plant.foliage;
+  const soilMounted=plant.habit==='basal' || plant.habit==='vine';
+  const socket=hanging?(plant.nurseryId==='monkey-tail-cactus'?[-1,1]:[0,0]):plant.socket;
+  const [soilX,soilY]=mouth.soil;
+  const dx=soilX-socket[0];
+  const rise=Math.min(plant.maxRise ?? Infinity,pot?.rise ?? 0);
+  let dy;
+  if(soilMounted)dy=soilY-socket[1];
+  else if(plant.nurseryId==='queen-anthurium'){
+    // Its pendant blades hang from short petioles above a single centered node.
+    dy=soilY-socket[1]-(hanging?8:5);
+  }else{
+    const crownY=plant.crown?.[1] ?? -28;
+    dy=(pot?mouth.front+2-crownY:0)+(rise?0:plant.seatDepth)-rise;
+  }
+  const sway=y=>Math.round(pose*2*Math.min(1,Math.max(0,(Math.abs(y-socket[1])-3)/42)));
+  if(!soilMounted)paintStalkExtension(stalks,art,firstInk,socket,socket[0]+dx,socket[1]+dy,soilX,mouth.front+1);
+  const strips=hanging?[[-4,1,-2,2]]:plant.stalks;
+  drawSpriteRows((x,y,ink,sourceX)=>{
+    const isStalk=strips.some(([top,bottom,left,right])=>y>=top && y<=bottom && sourceX>=left && sourceX<=right);
+    (isStalk?stalks:blades).nativeDot(x+dx,y+dy,ink);
+  },art,firstInk,sway);
+}
+
+// Restore the body behind the missing pixels in old nursery masters, which
+// were originally cut from flattened plant-and-pot illustrations.
+function nurseryPot(grid,plant){
+  const [cx,cy]=plant.crown;
+  const h=-cy+2;
+  const backing=makeGrid(originalBounds,1);
+  ceramic(backing,plant.potStyle);
+  for(let y=-h;y<=0;y++)for(let x=-9;x<=9;x++){
+    const row=Math.round(y*16/h)-originalBounds.topEdge;
+    const col=Math.round(x/.75)-originalBounds.leftEdge;
+    const ink=backing.cells[row*originalBounds.width+col];
+    if(ink>=soilShadow)grid.nativeDot(cx+x,y,ink);
+  }
+  drawSpriteRows(grid.nativeDot,plant.pot,glazeInk);
+}
+
+const potCache=new Map();
+function potLayers(bounds,density,style,pot,plant,preview,mouth){
+  const nursery=pot?null:plant?.pot;
+  const key=[style,pot?.id,nursery && plant.nurseryId,bounds.width,bounds.height,bounds.topEdge,preview].join('/');
+  if(potCache.has(key))return potCache.get(key);
+  const vessel=makeGrid(bounds,density);
+  if(pot || plant?.pot){
+    if(!preview && nursery){
+      const x=plant.crown[0];
+      for(let j=0;j<2;j++)for(let i=-8+j*2;i<=12-j*2;i++)vessel.nativeDot(x+i,j+1,shadowSoft);
+    }else if(!preview){
+      vessel.span(-12,1,30,shadowSoft);vessel.span(-9,2,24,shadowSoft);
+      vessel.span(-8,0,19,shadowFirm);vessel.span(-6,1,17,shadowFirm);
+    }
+    if(pot)drawSpriteRows(vessel.nativeDot,pot.art,glazeInk);
+    else nurseryPot(vessel,plant);
+  }else ceramic(vessel,style);
+  const front=new Uint16Array(vessel.cells.length);
+  const factor=density/2;
+  const cx=mouth.soil[0];
+  for(let col=0;col<bounds.width;col++){
+    const x=(bounds.leftEdge+col)/factor-cx;
+    const edge=Math.ceil(frontEdge(x,mouth)*factor)-bounds.topEdge;
+    for(let row=Math.max(0,edge);row<bounds.height;row++){
+      const i=row*bounds.width+col;
+      if(vessel.cells[i]>=clay){front[i]=vessel.cells[i];vessel.cells[i]=0;}
+    }
+  }
+  const layers={back:vessel.cells,front};
+  potCache.set(key,layers);
+  return layers;
+}
+
+function sprite(style,hash,pose,pot,plant,density,preview,bare) {
+  const sourceBounds=plant?.trailing?trailingBounds:pot || plant?shopBounds:originalBounds;
+  const bounds=Object.fromEntries(Object.entries(sourceBounds).map(([key,v])=>[key,v*density]));
+  // Preserve the full canopy when a tall vessel lifts it above the normal stamp.
+  if(pot){bounds.topEdge-=32;bounds.height+=32;}
+  const stalks=makeGrid(bounds,density),blades=makeGrid(bounds,density);
+  const mouth=pot?.mouth ?? (plant?.pot?{soil:plant.crown,half:9,front:plant.crown[1]+2,arc:2}:
+    {soil:[0,-29],half:(ceramics[style].wall[0]-1)*2,front:-26,arc:0});
+  const vessel=potLayers(bounds,density,style,pot,plant,preview,mouth);
+  if(plant){
+    const base=pot?.art ?? plant.pot;
+    drawPlantParts(stalks,blades,plant,pot,mouth,pose,glazeInk+(base?.spritePalette.length ?? 0));
+  }else if(hash!==null){
+    const lift=pot?Math.round((-28-mouth.soil[1])/2):0;
+    const dx=Math.round(mouth.soil[0]/2);
+    const shift=g=>({
+      dot:(x,y,i)=>g.dot(x+dx,y-lift,i),span:(x,y,n,i)=>g.span(x+dx,y-lift,n,i),
+      line:(x,y,ex,ey,i)=>g.line(x+dx,y-lift,ex+dx,ey-lift,i)
+    });
+    canopy(shift(stalks),shift(blades),hash,pose);
+  }
+  // Composite back pot/soil, stalks, front pot, leaves. Merge once per cached
+  // pose. Lighting and drawing reuse indexed runs without separate canvases.
+  for(let i=0;i<blades.cells.length;i++){
+    blades.cells[i]=blades.cells[i] || (!bare && vessel.front[i]) || stalks.cells[i] || (!bare && vessel.back[i]);
+  }
+  return runsFromGrid(blades,bounds);
 }
 
 function runsFromGrid(grid,{leftEdge,topEdge,width,height}){
@@ -359,13 +506,13 @@ function litColor(hex,night,selected) {
   };
   return 'rgb('+shift(r,r*.58+5,255)+','+shift(g,g*.62+9,230)+','+shift(b,b*.74+16,169)+')';
 }
-function colors(style,night,selected,finish,featuredSku,pose) {
-  const animated=Boolean(pose),step=Math.max(0,Math.min(48,Math.round(night*48)));
-  const key=[style,finish,featuredSku,animated,step,selected].join('/');
+function colors(style,night,selected,finish,featuredSku) {
+  const step=Math.max(0,Math.min(48,Math.round(night*48)));
+  const key=[style,finish,featuredSku,step,selected].join('/');
   if(!blended.has(key)){
     const n=step/48,plant=featuredPlants[featuredSku];
-    const base=shopPots[finish]?.art ?? (animated?plant?.pot:plant?.specimen);
-    const foliage=plant?.specimen && !finish && !animated?null:(finish && plant?.repotted) || plant?.foliage;
+    const base=shopPots[finish]?.art ?? plant?.pot;
+    const foliage=(finish && plant?.repotted) || plant?.foliage;
     blended.set(key,[null,'rgba(53,42,49,.14)','rgba(47,37,44,.28)',
       ...[...common,...ceramics[style].day,...leaves.flat(),
         ...(base?.spritePalette ?? []),...(foliage?.spritePalette ?? [])]
@@ -376,25 +523,27 @@ function colors(style,night,selected,finish,featuredSku,pose) {
 
 /** Draw at logical room coordinates. x/y is the bottom center of the ceramic,
  * size 1 gives a roughly 22px rim, and time is elapsed milliseconds. */
-export function drawPottedPlant(ctx,{x,y,size=1,plant=null,styleIndex=0,potSku=null,night=0,time=0,reducedMotion=false,selected=false,preview=false,rasterScale=1}) {
+export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,time=0,reducedMotion=false,selected=false,preview=false,bare=false,rasterScale=1}) {
   if(!ctx || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(size) || size<=0)return;
   const hash=plant?identity(plant):null;
   const species=plantSpecies(plant?.species);
   const featured=Object.hasOwn(featuredPlants,species)?featuredPlants[species]:null;
-  const chosen=Number.isInteger(plant?.potStyle)?plant.potStyle:hash===null?styleIndex:(featured?.potStyle ?? hash>>>12);
-  const style=((Math.trunc(chosen)||0)%ceramics.length+ceramics.length)%ceramics.length;
-  const finish=isShopPot(potSku)?potSku:null;
-  const pot=shopPots[finish],density=featured || pot?2:1;
+  if(!plant && !isShopPot(potSku))return;
+  // A resident supplies its own nursery vessel until an owned pot is placed.
+  const style=featured?.potStyle ?? 0;
+  const finish=isShopPot(potSku)?potSku:featured?.pot?null:'terra';
+  const pot=shopPots[finish],density=2;
   if(!preview && !pot && featured?.repotted)size*=featuredRoomScale;
   const pose=hash===null || reducedMotion || !Number.isFinite(time)?0:Math.round(Math.sin(time*.00115+(hash%83)*.12)*.82);
-  const key=[style,hash,pose,species,finish,preview].join(':');
+  const key=[style,hash,pose,species,finish,preview,bare].join(':');
   let runs=poses.get(key);
   if(!runs) {
-    runs=sprite(style,hash,pose,pot,featured,density,preview);
+    runs=sprite(style,hash,pose,pot,featured,density,preview,bare);
     if(poses.size>=192)poses.delete(poses.keys().next().value);
     poses.set(key,runs);
   }
-  const ink=colors(style,Number.isFinite(night)?night:0,selected,finish,featured?species:null,pose);
+  const paletteStyle=featured?.pot && !pot?featured.potStyle:style;
+  const ink=colors(paletteStyle,Number.isFinite(night)?night:0,selected,finish,featured?species:null);
   // The moving reflection is clipped to the painted leaves and ceramic runs.
   // A stationary reflection on the rim also works with reduced motion.
   const sweep=(reducedMotion ? -8 : (time%3600)*.035-45)*density;

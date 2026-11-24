@@ -1,4 +1,4 @@
-"""Draw the five iSEED launcher illustrations on their original 48-pixel grid.
+"""Draw the six iSEED launcher illustrations on their original 48-pixel grid.
 
 Run with Python and Pillow when changing the artwork. The app bundles the
 finished atlas and has no image generation or drawing dependencies at runtime.
@@ -391,7 +391,22 @@ def postcard(d):
 # One palette for each enamel backing: rim, upper reflecting edge, sky, ground,
 # and the cast shadow beneath the illustration. The backing is light enough for
 # the dark, local-color contours of the illustrated object to remain distinct.
+def plantigotchi(d):
+    # Leaf-shaped keychain with a tiny seedling on its LCD.
+    shape=[(8,24),(10,16),(14,16),(14,11),(20,12),(23,15),(27,9),(34,7),(39,8),(36,14),(40,13),(40,19),(36,22),(41,21),(41,28),(37,32),(37,36),(32,39),(22,39),(14,36),(9,32)]
+    d.polygon(shape,fill='#93ac7b',outline='#435d49')
+    d.line([(10,24),(13,18),(14,18)],fill='#d6e4af',width=2)
+    d.rounded_rectangle((14,17,34,31),radius=2,fill='#647e5e',outline='#46614b')
+    d.rectangle((16,19,32,29),fill='#b5d4af')
+    d.line([(24,25),(24,23),(27,20)],fill='#385e42')
+    d.rectangle((20,21,23,22),fill='#618458')
+    d.rectangle((22,25,27,27),fill='#9e7355')
+    for x in (16,21,26,31):d.rectangle((x,33,x+1,34),fill='#526d52')
+    for x,y in [(9,7),(11,10),(13,12)]:d.ellipse((x-2,y-2,x+2,y+2),outline='#687c75')
+    d.ellipse((4,2,11,9),outline='#4d6662');d.arc((5,3,10,8),150,305,fill='#ebecd9')
+
 TILES = {
+    'plantigotchi': ('#64806d','#f1f3d5','#e8ebd2','#a5c3a0','#839e83'),
     'shop':       ('#935e50','#ffe0af','#f5c89f','#db9b82','#b97d6a'),
     'inventory':  ('#566981','#d6e4e6','#b7cdda','#829cb6','#657f92'),
     'journal':    ('#746878','#f6dfd1','#e4c8c4','#b99eab','#967f8e'),
@@ -426,7 +441,7 @@ def pixel_tile(paint, colors):
 
 
 def render():
-    makers=(shop,inventory,journal,library,postcard)
+    makers=(shop,inventory,journal,library,postcard,plantigotchi)
     sheet=Image.new('RGBA',(48*len(makers),48))
     for i,maker in enumerate(makers):
         sheet.paste(pixel_tile(maker,TILES[maker.__name__]),(48*i,0))

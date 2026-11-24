@@ -15,7 +15,7 @@ function nextStop({plant:p,now,skipped}){
     const key=[p.id,kind,at].join('/');
     if(!skipped.includes(key))events.push({at,kind,key,label,skip});
   }
-  if(p.deadAt!==null)return null;
+  if(p.deadAt!==null || p.seedOffers)return null;
   if(p.fungusAt!=null)add(p.fungusAt,'fungus','Treat fungus in First Aid',true);
   if(p.rotAt!=null)add(p.rotAt,'rot','Drain the pot',true);
   if(p.stage==='grown' && !events.length && p.fungusAt==null && p.rotAt==null)return null;

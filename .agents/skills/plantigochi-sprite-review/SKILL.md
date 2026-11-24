@@ -13,6 +13,8 @@ Start with one named item. Pick the trait a player should recognize from across 
 4. **Get art direction early.** Show the first pass and ask one concrete question about the visible design. While it is under review, keep it outside the live game. Revise the same item if requested. When the player approves it, freeze the native shop tile and room PNG from that exact pass.
 5. **Integrate and verify.** Mount the approved art at the reviewed anchor. Keep the item's identity, lighting, selection outline and placement behavior. For plants, check both vine directions, pot swaps and idle motion with a fixed crown. Compare the neutral production render against the two frozen images pixel for pixel. Run the game's tests and build. Approval covers the item shown. If another draft exists when approval arrives, rebuild against the exact native captures used in the preview the player approved.
 
+For plant or pot work, use the [four-layer composition and movement specification](../../../docs/development/interface-and-art.md#pot-and-plant-composition). Share each new pass as it is rendered, including the centered still, sway keyframes and in-pot review.
+
 ## Reuse the Golden pothos setup
 
 Run these commands from the game repository root. The comparison tool uses Node.js and its own locked dependencies. The optional drawing and encoding scripts use Python 3 and Pillow.

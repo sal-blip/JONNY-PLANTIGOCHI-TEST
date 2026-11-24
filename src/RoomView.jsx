@@ -36,7 +36,7 @@ function windowOffset(scroller,canvas,index,reduced){
   return Math.round(Math.max(-8,Math.min(8,(center-index-.5)*12)));
 }
 
-export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,detailScale=1,plants,hour,placing,busy,carry,dragging,selected,choose,cat,petCat,
+export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,detailScale=1,plants,hour,placing,busy,carry,hoverPlacement,dragging,selected,choose,cat,petCat,
   garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null),foreground=useRef(null);
   // Changing canvas dimensions clears its pixels. Keep visible rooms at the
@@ -63,7 +63,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   const lifted=running && dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
   const animate=onScreen && (running || ambient);
   const showDestinations=running && placing;
-  scene.current={hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,leavePot:carry?.repot,above,worldHeight,separatePlanes:true,placing:showDestinations,jarProgress,leafCount};
+  scene.current={hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,hoverPlacement,leavePot:carry?.repot,above,worldHeight,separatePlanes:true,placing:showDestinations,jarProgress,leafCount};
   const outsideOffset=useRef(0);
   useEffect(()=>{
     const media=matchMedia('(prefers-reduced-motion: reduce)');
@@ -100,7 +100,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     outsideOffset.current=windowOffset(stage.current,canvas.current,index,reduced);
     drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:reduced});
-  },[onScreen,stage,rasterScale,plants,hour,index,cat,highlighted,lifted,worldHeight,above,showDestinations,jarProgress,leafCount,shopItems,playingItemId]);
+  },[onScreen,stage,rasterScale,plants,hour,index,cat,highlighted,lifted,hoverPlacement,worldHeight,above,showDestinations,jarProgress,leafCount,shopItems,playingItemId]);
   useLayoutEffect(()=>{
     if(onScreen && !document.hidden && depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
   },[onScreen,worldHeight,above,hour,index]);
@@ -110,7 +110,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     // A preview can put the moving item's artwork at this address. Describe
     // the destination using the saved occupant that would actually be moved.
     const occupant=(carry?.repot?shopItems:originalItems).find(item=>item.slot===slot);
-    if(carry?.repot)return {label:'Repot in '+(occupant?catalog[occupant.sku].name:'shelf pot')+' at '+name};
+    if(carry?.repot)return {label:'Repot in '+catalog[occupant.sku].name+' at '+name};
     if(!occupant || !['pot','frame','decor'].includes(catalog[shopMove.sku].kind))
       return {label:'Place at '+name};
     const swapping=shopMove.from!=null;
@@ -147,13 +147,13 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
         label:potName+' · '+spot.name+(plant?' · Holds '+plantName:''),click:()=>inspectItem(pot,true),
         attrs:{'data-item-id':pot.id,'data-pot-slot':slot,'aria-haspopup':'dialog'}});
     }
-    if(!placing && !plant && (pot || typeof spot.key==='string'))return;
+    if(!placing && !plant)return;
     const label=plant?plantName+(plant.source==='shop'?' · Shop plant':' · Gen '+plant.generation):'Empty';
     const split=Boolean(!placing && plant && pot);
     targets.push({key:'spot/'+slot,focus:slot,x:x+(split?3:0),y:open?y:y-(split?41:plant?26:11)*size,
       w:open?39:Math.max(34,46*size),h:open?39:split?Math.max(26,34*size):plant?Math.max(38,55*size):32,
       open,...(open?destination(slot,spot.name):{label:spot.name+' · '+label}),click:()=>choose(slot),
-      attrs:{'data-frame-top':plant?y-62*size:undefined,'data-frame-bottom':plant?y+(hasTrailingFoliage(plant.species)?40:4)*size:undefined,
+      attrs:{'data-frame-top':plant?y-(pot?.sku==='bog-frog-pot'?78:62)*size:undefined,'data-frame-bottom':plant?y+(hasTrailingFoliage(plant.species)?40:4)*size:undefined,
         'data-slot':slot,'data-occupied':plant?'':undefined,'aria-haspopup':plant && !placing?'dialog':undefined,
         'aria-pressed':selected===slot || carry?.from===slot}});
   });
@@ -161,7 +161,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   return <div className="room-frame" aria-hidden={!onScreen || undefined} inert={!onScreen?'':undefined}
     style={{left:'calc('+index+' * var(--room-width))'}}>
     <canvas className="room-depth" ref={depth} width={ROOM_WIDTH} height={worldHeight} aria-hidden="true"/>
-    <canvas className="room-actors" ref={canvas} width={ROOM_WIDTH*rasterScale} height={worldHeight*rasterScale} role="img" aria-label={viewName(index)+(index%2===0?' with an open pot shelf, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
+    <canvas className="room-actors" ref={canvas} width={ROOM_WIDTH*rasterScale} height={worldHeight*rasterScale} role="img" aria-label={viewName(index)+(index%2===0?' with a bookcase, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
     {photoFrames.map(({item,bounds})=><FramePhoto key={item.id} itemId={item.id} photo={item.photo} deferOriginal={typeof IntersectionObserver==='function'} allowOriginal={onScreen} night={1-roomLight(hour).day}
       style={{left:100*bounds.left/ROOM_WIDTH+'%',top:100*(above+bounds.top)/worldHeight+'%',
         width:100*bounds.width/ROOM_WIDTH+'%',height:100*bounds.height/worldHeight+'%'}}/>)}

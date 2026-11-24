@@ -209,6 +209,7 @@ def play(browser, url):
       sample();
     }""")
     tap("Terracotta pot · 12 coins")
+    tap("Buy")
     expect_arrival_bell("Terracotta pot")
     tap("Place at Center of the living room windowsill")
     tap("Buy for 12 coins")

@@ -45,7 +45,7 @@ const rows=[
 const places=rows.map((room,index)=>room.map(([key,name,x,y,layer,clip,front=0])=>{
   const surface=layer==='table'?(index===0?'coffeeTable':'desk'):layer;
   const size=layer==='floor'?floorScale(y,0):surfaceScale[surface];
-  return {key,name,x:x/400,y:y/320,baseY:y,size,layer,clip,front,shelf:layer==='shelf'};
+  return {key,name,x:x/400,y:y/320,baseY:y,size,layer,clip,front};
 }));
 export function placesFor(view,extraFloor=0){
   const room=places[view%2];

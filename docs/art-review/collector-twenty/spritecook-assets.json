@@ -1,0 +1,37 @@
+[
+  {
+    "asset_id": "a24ffef9-f41a-45ad-a54a-d666d64f2bf5",
+    "sha12": "bdebe3356c1e",
+    "label": "birds-nest-fern, maidenhair-fern, blue-star-fern"
+  },
+  {
+    "asset_id": "7cfeeefc-01ba-4a23-bbd1-d2f1f9602bcb",
+    "sha12": "8d510f0b219e",
+    "label": "ponytail-palm, dragon-tree, chinese-fan-palm"
+  },
+  {
+    "asset_id": "8bf0452c-2e48-42d0-85d8-6f78e21b1f47",
+    "sha12": "5517cc8f85c5",
+    "label": "panda-plant, gollum-jade, zebra-haworthiopsis"
+  },
+  {
+    "asset_id": "e5dd0197-cd20-4c10-b370-ac553db106a9",
+    "sha12": "84f69543abc0",
+    "label": "watermelon-peperomia, chinese-money-plant, silver-squill"
+  },
+  {
+    "asset_id": "18832277-078a-433a-b272-8187a035db59",
+    "sha12": "67eb824ed904",
+    "label": "flamingo-flower, african-violet, florists-cyclamen"
+  },
+  {
+    "asset_id": "81e5f597-81de-4b2b-922d-c0189f76cb3b",
+    "sha12": "a16a79ab3696",
+    "label": "goldfish-plant, shrimp-plant, lipstick-plant"
+  },
+  {
+    "asset_id": "ef61b45b-cc8b-43db-bed3-b84ee175776c",
+    "sha12": "0492da2f45da",
+    "label": "zebra-alocasia, escargot-begonia"
+  }
+]
