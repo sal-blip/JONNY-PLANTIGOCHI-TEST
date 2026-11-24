@@ -47,7 +47,7 @@ export function CoinBalance({plant}){
   return <div className="wallet"><img src="/art/iseed-coin.png" width="20" height="20" alt="" style={{imageRendering:"pixelated"}}/><strong>{life.balance} Garden Coins</strong>
     <small>Today +{life.day===localDay(Date.now())?10+life.waters*2+life.wins.length*3:0}</small></div>;
 }
-export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
+export function ShopItemDetail({item,move,store,savePhoto,busy,inRoom=false,children}){
   const [error,setError]=useState(''),[loading,setLoading]=useState(false);
   const input=useRef(null),pickerSource=useRef(null),request=useRef(0),product=catalog[item.sku];
   useEffect(()=>()=>{request.current++;},[item.id]);
@@ -75,7 +75,7 @@ export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
     finally {if(request.current===token)setLoading(false);}
   }
   return <div className="garden-page">
-    <ItemArt large sku={item.sku} photo={item.photo}/>
+    {!inRoom && <ItemArt large sku={item.sku} photo={item.photo}/>}
     <div className="menu-items">
       <button disabled={busy||loading} onClick={move}>{item.slot===null?'Place in room':'Move to another spot'}</button>
     </div>

@@ -184,3 +184,23 @@ test('a grown plant from an earlier build gets a single inventory entry; interru
   const invalid={...current,waitingPlants:[...current.waitingPlants,...current.waitingPlants]};
   assert.equal(readPlant(JSON.stringify(invalid),H),null);
 });
+
+test('repotting preserves both containers, rejects a changed pot and recovers a closing-room source',async()=>{
+  const {checkIn,canRepotAt,destinationKey}=await import('../src/gardenEconomy.js');
+  const {relocateGraduate}=await import('../src/game.js');
+  const p=checkIn(newPlant(0),0);
+  const resident={id:'momo',name:'Momo',species:'monstera',potStyle:1,generation:1,plantedAt:0,movedAt:1,slot:4};
+  const items=[{id:'a',sku:'wave',slot:4},{id:'b',sku:'terra',slot:3}];
+  const start={...p,graduates:[resident],gardenLife:{...p.gardenLife,items}};
+  const key=destinationKey(start,3);
+  assert.ok(canRepotAt(start,0));
+  assert.ok(!canRepotAt(start,4) && !canRepotAt(start,5));
+  const after=relocateGraduate(start,'momo',4,3,key);
+  assert.deepEqual(after.graduates,[{...resident,slot:3}]);
+  assert.deepEqual(after.gardenLife,start.gardenLife);
+  assert.deepEqual(loadSnapshot(JSON.stringify(after),1),after);
+  const changed={...start,gardenLife:{...start.gardenLife,items:[items[0],{...items[1],id:'different'}]}};
+  assert.equal(relocateGraduate(changed,'momo',4,3,key),changed);
+  const distant={...start,graduates:[{...resident,slot:12}],gardenLife:{...start.gardenLife,items:[{...items[0],slot:12},items[1]]}};
+  assert.deepEqual(relocateGraduate(distant,'momo',12,3,key).gardenLife.items,[{...items[0],slot:null},items[1]]);
+});

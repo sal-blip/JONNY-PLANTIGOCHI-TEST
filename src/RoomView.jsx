@@ -3,8 +3,9 @@ import {ArrowLeftRight} from 'lucide-react';
 import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,CAT_SEAT,roomLight} from './roomArt.js';
 import {decorPlaces,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
-import {catalog,canSetItem,lifeOf} from './gardenEconomy.js';
+import {catalog,canRepotAt,canSetItem,lifeOf} from './gardenEconomy.js';
 import {drawRoomDepth} from './roomScenery.js';
+import {hasTrailingFoliage} from './roomPlant.js';
 import {keepsakeFor} from './roomKeepsakes.js';
 import {slotFor,speciesName,viewName} from './gardenLayout.js';
 import './roomTargets.css';
@@ -54,7 +55,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     ?active:spots.findIndex(spot=>slotFor(index,spot)===active);
   const lifted=running && dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
   const animate=onScreen && (running || ambient);
-  scene.current={hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,above,worldHeight,separatePlanes:true,placing:running && placing,jarProgress,leafCount};
+  scene.current={hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,leavePot:carry?.repot,above,worldHeight,separatePlanes:true,placing:running && placing,jarProgress,leafCount};
   const outsideOffset=useRef(0);
   useEffect(()=>{
     const media=matchMedia('(prefers-reduced-motion: reduce)');
@@ -98,7 +99,8 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   function destination(slot,name){
     // A preview can put the moving item's artwork at this address. Describe
     // the destination using the saved occupant that would actually be moved.
-    const occupant=originalItems.find(item=>item.slot===slot);
+    const occupant=(carry?.repot?shopItems:originalItems).find(item=>item.slot===slot);
+    if(carry?.repot)return {label:'Repot in '+(occupant?catalog[occupant.sku].name:'shelf pot')+' at '+name};
     if(!occupant || !['pot','frame','decor'].includes(catalog[shopMove.sku].kind))
       return {label:'Place at '+name};
     const swapping=shopMove.from!=null;
@@ -110,7 +112,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
       attrs:{'aria-haspopup':'dialog','data-keepsake':object.id,className:'room-cat-target room-keepsake-target'}});
   }
   if(!placing && index%2===0)targets.push({key:'cat',focus:'cat',x:CAT_SEAT.x,y:CAT_SEAT.y-11*CAT_SEAT.size,
-    w:48,h:34,label:'Say hello to the cat',click:()=>petCat(index),attrs:{'data-audio':'cat',className:'room-cat-target'}});
+    w:48,h:34,label:'Say hello to the cat',click:()=>petCat(index),attrs:{'data-audio':'cat','data-cat-room':index,className:'room-cat-target'}});
 
   for(const place of decor){
     const item=shopItems.find(i=>i.slot===place.slot);
@@ -125,7 +127,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   spots.forEach((spot,i)=>{
     const slot=slotFor(index,spot),plant=plants[i],pot=shopItems.find(item=>item.slot===slot && catalog[item.sku]?.kind==='pot');
     const x=spot.x*ROOM_WIDTH,y=spot.baseY,size=spot.size;
-    const open=placing && (shopMove?slot!==shopMove.from && canSetItem(garden,shopMove.sku,slot,shopMove.from):!plant);
+    const open=placing && (shopMove?slot!==shopMove.from && canSetItem(garden,shopMove.sku,slot,shopMove.from):carry?.repot?canRepotAt(garden,slot):!plant);
     const isSource=placing && !shopMove && carry?.from===slot;
     if(placing && !open && !isSource)return;
     const plantName=plant && (plant.name || speciesName(plant));
@@ -141,7 +143,8 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     targets.push({key:'spot/'+slot,focus:slot,x:x+(split?3:0),y:open?y:y-(split?41:plant?26:11)*size,
       w:open?39:Math.max(34,46*size),h:open?39:split?Math.max(26,34*size):plant?Math.max(38,55*size):32,
       open,...(open?destination(slot,spot.name):{label:spot.name+' · '+label}),click:()=>choose(slot),
-      attrs:{'data-slot':slot,'data-occupied':plant?'':undefined,'aria-haspopup':plant && !placing?'dialog':undefined,
+      attrs:{'data-frame-top':plant?y-62*size:undefined,'data-frame-bottom':plant?y+(hasTrailingFoliage(plant.species)?40:4)*size:undefined,
+        'data-slot':slot,'data-occupied':plant?'':undefined,'aria-haspopup':plant && !placing?'dialog':undefined,
         'aria-pressed':selected===slot || carry?.from===slot}});
   });
   const bounds=targetBounds(targets);

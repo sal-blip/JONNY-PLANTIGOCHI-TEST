@@ -1,4 +1,4 @@
-import {canPlaceAt,gardenViews,viewForSlot} from './gardenLayout.js';
+import {canPlaceAt,gardenViews,placesFor,slotFor,viewForSlot} from './gardenLayout.js';
 import {backupLimit,validPhoto} from './gardenScenes.js';
 import {validOriginalId} from './frameUpload.js';
 import {decorPlaces} from './roomShopArt.js';
@@ -98,6 +98,12 @@ export function canSetItem(plant,sku,slot,from=null) {
   if(view<0 || view>=gardenViews(plant.graduates))return false;
   return !items.some(i=>i.slot===slot) || (decorView(from)>=0 && items.some(i=>i.slot===from && i.sku===sku));
 }
+// Empty purchased pots and the built-in shelf pots are both visible containers.
+export function canRepotAt(plant,slot) {
+  if(!canPlaceAt(plant.graduates,slot))return false;
+  return lifeOf(plant).items.some(i=>i.slot===slot && catalog[i.sku].kind==='pot') ||
+    placesFor(viewForSlot(slot)).some(spot=>spot.shelf && slotFor(viewForSlot(slot),spot)===slot);
+}
 export function destinationKey(plant,slot) {
   return JSON.stringify([plant.graduates.find(g=>g.slot===slot)?.id,lifeOf(plant).items.find(i=>i.slot===slot)?.id]);
 }
@@ -125,10 +131,10 @@ export function itemsFromClosingRooms(before,graduates,from) {
   // A pot at the graduate’s source comes along to the destination.
   return lifeOf(before).items.filter(item=>item.slot!==from && itemView(item)>=remaining);
 }
-export function relocateFurnishings(before,after,from,to) {
+export function relocateFurnishings(before,after,from,to,repot=false) {
   const items=lifeOf(before).items;
-  const moving=items.find(item=>catalog[item.sku].kind==='pot' && item.slot===from);
-  const stranded=new Set(itemsFromClosingRooms(before,after.graduates,from));
+  const moving=!repot && items.find(item=>catalog[item.sku].kind==='pot' && item.slot===from);
+  const stranded=new Set(itemsFromClosingRooms(before,after.graduates,moving?from:null));
   if(!moving && !stranded.size)return after;
   return update(after,{items:items.map(item=>{
     if(item===moving)return {...item,slot:to};

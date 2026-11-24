@@ -25,7 +25,7 @@ import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.
 import {SetupWelcome,NameEditor} from './PlantSetup.jsx';
 import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
-import {checkIn,fitsBackupChange,itemsFromClosingRooms,lifeOf,localDay,milestone} from './gardenEconomy.js';
+import {checkIn,fitsBackupChange,lifeOf,localDay,milestone} from './gardenEconomy.js';
 import {watchDailyVisit} from './dailyVisit.js';
 import Collector from './Collector.jsx';
 import SwipeCue from './SwipeCue.jsx';
@@ -451,12 +451,12 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
           const next=current.current;
           return {ok:Boolean(saved && next?.graduates.some(g=>g.id===id && g.slot===slot)),newSeed,nextVariety:toyVarietyName(next?.species)};
         }}
-      relocate={async (id,from,to)=>{
+      relocate={async (id,from,to,repotTarget)=>{
         let moved=false,storedCount=0;
         const saved=await commit(p=>{
-          const next=relocateGraduate(p,id,from,to);
+          const next=relocateGraduate(p,id,from,to,repotTarget);
           moved=next!==p;
-          if(moved)storedCount=itemsFromClosingRooms(p,next.graduates,from).length;
+          if(moved)storedCount=lifeOf(next).items.filter(i=>i.slot===null).length-lifeOf(p).items.filter(i=>i.slot===null).length;
           return next;
         });
         const ok=saved && moved && current.current?.graduates.some(g=>g.id===id && g.slot===to);

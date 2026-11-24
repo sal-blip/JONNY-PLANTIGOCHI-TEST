@@ -7,7 +7,7 @@
 .save-warning{position:absolute;left:50%;transform:translateX(-50%);z-index:2;border:0;color:white;font:600 14px/1.3 var(--display);padding:9px 16px;border-radius:20px}
 .save-warning{top:max(62px,env(safe-area-inset-top));background:#783f27}
 .collector{overflow:clip;background:#544b41;color:var(--ink);font-family:var(--display)}
-.room-lens{position:absolute;inset:0;transform-origin:0 0;transition:transform 1.6s cubic-bezier(.25,.65,.28,1)}
+.room-lens{position:absolute;inset:0;transform-origin:0 0;transition:transform 2.2s cubic-bezier(.25,.65,.28,1)}
 .room-lens.inspecting{transition-duration:.72s}
 .room-picture{overflow:auto;scrollbar-width:none;overscroll-behavior:none;touch-action:none;user-select:none;-webkit-user-select:none}
 .room-picture::-webkit-scrollbar{display:none}
@@ -44,7 +44,7 @@
 .cat-affection i:nth-of-type(2){left:7px;--drift:12px;animation-delay:.18s;background:#f38b88}
 .cat-affection i:nth-of-type(3){left:-5px;--drift:0px;animation-delay:.38s;background:#c85d6f}
 @keyframes cat-hearts{0%{opacity:0;transform:translateY(3px) scale(.7)}18%{opacity:1}73%{opacity:1}100%{opacity:0;transform:translate(var(--drift),-35px) scale(1)}}
-@media(prefers-reduced-motion:reduce){.room-lens{transform:none!important;transition:none}.cat-affection i{animation:none}.cat-affection i:not(:first-of-type){display:none}}
+@media(prefers-reduced-motion:reduce){.room-lens{transition:none}.cat-affection i{animation:none}.cat-affection i:not(:first-of-type){display:none}}
 
 .room-frame .open-destination{
   transform:translate(-50%,-50%);width:clamp(30px,8.7vw,42px);height:clamp(30px,8.7vw,42px);
@@ -92,3 +92,40 @@
  .collector[data-guiding-pot] .placement-guide{grid-column:1;font-size:13px;line-height:1.2}
  .collector[data-guiding-pot] .room-return{top:max(6px,env(safe-area-inset-top))}
 }
+
+/* The inspection camera frames the real room sprite. Keep the lightest part
+   of the scrim around it and reserve the shaded portions for lettering. */
+.garden-inspection {
+  position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;
+  margin:0;padding:0;border:0;overflow:hidden;
+  color:#fff9e8;font-family:var(--display);text-align:center;
+  text-shadow:0 1px 3px #13241f;
+  background:linear-gradient(to bottom,#15231dbf var(--inspect-top,28%),
+    transparent calc(var(--inspect-top,28%) + 34px),
+    transparent calc(var(--inspect-bottom,60%) - 28px),#15231dca var(--inspect-bottom,60%));
+}
+.garden-inspection::backdrop {background:transparent}
+.garden-inspection header,.inspection-options {
+  position:absolute;left:0;right:0;padding-inline:max(18px,env(safe-area-inset-left),env(safe-area-inset-right));
+}
+.garden-inspection header {bottom:calc(100% - var(--inspect-top,28%));pointer-events:none}
+.garden-inspection h2 {margin:0;font-size:clamp(21px,4vmin,34px);line-height:1.1;outline:0;text-wrap:balance}
+.garden-inspection header p {margin:4px 0;font-size:14px}
+.inspection-options {
+  top:var(--inspect-bottom,60%);bottom:0;overflow:auto;overscroll-behavior:contain;
+  padding-bottom:max(12px,env(safe-area-inset-bottom));scrollbar-width:thin;
+}
+.inspection-options :is(.garden-page,.room-guide,.keepsake-details,a,svg) {color:inherit}
+.inspection-options :is(.menu-items,.garden-page,.keepsake-details) {max-width:32rem;margin-inline:auto}
+.inspection-options .menu-items {display:flex;align-items:center;flex-direction:column}
+.inspection-options p {margin:4px auto 8px;line-height:1.35}
+.inspection-options .keepsake-print {display:none}
+.garden-inspection .inspection-options button {
+  display:inline-flex;align-items:center;justify-content:center;min-height:44px;
+  padding:5px 12px;border:0;border-radius:0;background:transparent;color:inherit;
+  font:600 17px/1.25 var(--display);text-align:center;text-shadow:inherit;cursor:pointer;
+}
+.garden-inspection .inspection-options>button:last-child {font-weight:400}
+.garden-inspection button:is(:hover,:focus-visible) {text-decoration:underline;text-underline-offset:.22em}
+.garden-inspection button:focus-visible {outline:2px solid currentColor}
+.garden-inspection button:disabled {opacity:.6}

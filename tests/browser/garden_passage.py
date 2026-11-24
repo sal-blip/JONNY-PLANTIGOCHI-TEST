@@ -78,6 +78,8 @@ with sync_playwright() as pw:
     touch(cdp, 'touchStart', x, y)
     touch(cdp, 'touchEnd')
     expect(lens).to_have_class('room-lens inspecting')
+    page.wait_for_timeout(4200)
+    expect(lens).to_have_class('room-lens inspecting')
     page.wait_for_function("!document.querySelector('.room-lens').classList.contains('inspecting')")
     touch(cdp, 'touchStart', x, y)
     expect(lens).to_have_class('room-lens inspecting')

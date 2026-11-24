@@ -17,7 +17,7 @@ export function roomLight(hour) {
 
 export function drawRoom(canvas,{
   hour,plants=[],outsideOffset=0,roomIndex=0,time=0,reducedMotion=false,awake=false,
-  highlighted=-1,lifted=-1,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false,
+  highlighted=-1,lifted=-1,leavePot=false,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false,
   jarProgress=null,leafCount=0,shopItems=[],playingItemId=null,photos,foregroundCanvas=null
 }={}) {
   const ctx=canvas.getContext('2d');
@@ -39,8 +39,8 @@ export function drawRoom(canvas,{
     }
     const place=places[slot],address=slotFor(roomIndex,place);
     const shopPot=shopItems.find(item=>item.slot===address && isShopPot(item.sku));
-    if(slot===lifted)return;
-    const plant=plants[slot],selected=slot===highlighted || Boolean(shopPot && highlighted===shopPot.id);
+    if(slot===lifted && !leavePot)return;
+    const plant=slot===lifted?null:plants[slot],selected=slot===highlighted || Boolean(shopPot && highlighted===shopPot.id);
     const preview=!plant && !place.shelf && !shopPot;
     if(preview && (placing || !selected))return;
     ctx.save();

@@ -1,6 +1,6 @@
 import {validTutorial,validDewLesson,finishSprouting,rememberHint} from './firstVisit.js';
 import {canPlaceAt,viewForSlot,placesFor,slotFor} from './gardenLayout.js';
-import {catalog,earnWater,milestone,relocateFurnishings,validGardenLife} from './gardenEconomy.js';
+import {canRepotAt,destinationKey,catalog,earnWater,milestone,relocateFurnishings,validGardenLife} from './gardenEconomy.js';
 import { validPhoto } from './gardenScenes.js';
 import { audioLevels } from './audioLevels.js';
 
@@ -361,12 +361,13 @@ export function graduate(saved, id, slot, now = Date.now()) {
 
 // Check both identity and source against the latest transaction so a stale
 // pointer gesture cannot move a plant someone already rearranged in another tab.
-export function relocateGraduate(p, id, from, to) {
+export function relocateGraduate(p, id, from, to, repotTarget) {
   const index=p.graduates.findIndex(g=>g.id===id && g.slot===from);
   if (index < 0 || !canPlaceAt(p.graduates,to)) return p;
+  if(repotTarget!==undefined && (!canRepotAt(p,to) || destinationKey(p,to)!==repotTarget))return p;
   const graduates=p.graduates.slice();
   graduates[index]={...graduates[index],slot:to};
-  return relocateFurnishings(p,{...p,graduates},from,to);
+  return relocateFurnishings(p,{...p,graduates},from,to,repotTarget!==undefined);
 }
 
 const happy = {
