@@ -164,6 +164,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
           style={{left:left/ROOM_WIDTH*100+'%',top:top/ROOM_HEIGHT*100+'%',width:(right-left)/ROOM_WIDTH*100+'%',height:(bottom-top)/ROOM_HEIGHT*100+'%'}}
           onFocus={e=>{if(e.currentTarget.matches(':focus-visible'))setFocused(focus);}}
           onBlur={()=>setFocused(null)} onPointerDown={()=>setFocused(null)} onClick={click}>
+          {open && <span className="placement-pulse" aria-hidden="true"/>}
           {exchange && <ArrowLeftRight className="room-exchange-mark" aria-hidden="true"/>}
         </button>;
       })}
