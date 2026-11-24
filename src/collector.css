@@ -80,14 +80,6 @@
   max-width:calc(100% - var(--hud-side-left) - var(--hud-side-right));
   transform:none;
 }
-@media (orientation:landscape) and (max-height:540px) {
-  /* The interactive garden keeps foreground pots above the controls. When the
-     garden is the keychain's backdrop the painted floor fills this space. */
-  .garden:not([data-tutorial]) .collector[data-room-hud]:not([data-room-placing]) .room-lens {
-    bottom:calc(max(12px,env(safe-area-inset-bottom) + 6px) + 50px);
-  }
-}
-
 /* Float the shopping controls over the ceiling. A changing label or receipt
    must never resize the painted room or move the spot under the player's finger. */
 .collector[data-guiding-pot] .room-controls{position:absolute;inset:0 0 auto;background:#f5f1e2f5;padding:max(6px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) 6px max(64px,calc(env(safe-area-inset-left) + 64px));z-index:1}

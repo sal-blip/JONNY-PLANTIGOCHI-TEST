@@ -40,7 +40,7 @@ with sync_playwright() as pw:
         saved = page.evaluate(READ_PLANT)
         assert saved['gardenLife']['items'][0]['slot'] == '1/decor-sill'
         taps(page, 'Return to Plantigochi')
-        expect(page.locator('.room-actors').first).to_have_attribute('width', '400')
+        expect(active.locator('.room-actors')).to_have_attribute('width', str(expected_width))
         assert not errors, errors
         ctx.close()
         print(f'{density}× phone density: room detail, depth, preview, placement and reload passed.')

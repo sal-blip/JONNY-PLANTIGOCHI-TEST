@@ -16,6 +16,7 @@ import {drawPottedPlant} from './roomPlant.js';
 import {gardenViews,slotFor,viewForSlot,canPlaceAt,speciesName,viewName} from './gardenLayout.js';
 import RoomView from './RoomView.jsx';
 
+const restingZoom=1.08;
 const focusZoom=1.32;
 const clamp=(v,max)=>Math.min(max,Math.max(0,v));
 function placeName(slot){
@@ -57,7 +58,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const camera=useRef(null),cameraCenter=useRef(page+.5);
   const [detailScale,setDetailScale]=useState(1);
   const [worldHeight,setWorldHeight]=useState(ROOM_HEIGHT);
-  const lens=useRef(null),zoomTimer=useRef(null),petNumber=useRef(0);
+  const lens=useRef(null),zoomTimer=useRef(null),pressTimer=useRef(null),petNumber=useRef(0);
   const [visible,setVisible]=useState([page,page]);
   const mounted=useRef(false),pending=useRef(false),canFocus=useRef(false);
   const collection=useMemo(()=>new Map(graduates.map(p=>[p.slot,p])),[graduates]);
@@ -86,7 +87,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   },[active,collection,count,page,shopMove,preview]);
   useEffect(()=>{
     mounted.current=true;
-    return ()=>{mounted.current=false;clearInterval(edge.current);clearTimeout(catTimer.current);clearTimeout(zoomTimer.current);};
+    return ()=>{mounted.current=false;clearInterval(edge.current);clearTimeout(catTimer.current);clearTimeout(zoomTimer.current);clearTimeout(pressTimer.current);};
   },[]);
   useEffect(()=>{
     if(carry && !source && !pending.current){
@@ -114,7 +115,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   useLayoutEffect(()=>{
     const el=stage.current;
     function size(){
-      const frame=Math.max(el.clientWidth/2,Math.min(el.clientWidth,el.clientHeight*1.15));
+      const frame=restingZoom*Math.max(el.clientWidth/2,Math.min(el.clientWidth,el.clientHeight*1.15));
       if(!frame)return;
       // Preserve the point in the panorama when the phone rotates.
       const center=cameraCenter.current;
@@ -164,7 +165,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     return ()=>onOverlayChange?.(false);
   },[active,panel,busy,placing,onOverlayChange]);
   function relax(){
-    clearTimeout(zoomTimer.current);
+    clearTimeout(pressTimer.current);clearTimeout(zoomTimer.current);
     const el=lens.current;
     if(el){el.classList.remove('inspecting');el.style.transform='';}
   }
@@ -418,6 +419,16 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const target=e.target.closest('[data-slot]'),slot=target?buttonSlot(target):null;
     const button=e.target.closest('button');
     gesture.current={pointer:e.pointerId,pointerType:e.pointerType,x:e.clientX,y:e.clientY,button,plant:collection.get(slot),mode:null,edge:0,left:stage.current.scrollLeft,top:stage.current.scrollTop};
+    if(!button && !placing){
+      const press=gesture.current;
+      stage.current.setPointerCapture(e.pointerId);
+      clearTimeout(pressTimer.current);
+      pressTimer.current=setTimeout(()=>{
+        if(gesture.current!==press || press.mode)return;
+        press.inspected=true;
+        inspect(press.x,press.y);
+      },180);
+    }
   }
   function clearEdge(){clearInterval(edge.current);edge.current=null;}
   function onMotion(e){
@@ -445,8 +456,11 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   }
   function end(e,cancelled=false){
     const g=gesture.current;if(!g || g.pointer!==e.pointerId)return;
-    gesture.current=null;clearEdge();
+    gesture.current=null;clearTimeout(pressTimer.current);clearEdge();
     if(!g.mode){
+      if(!cancelled && !placing && !g.button && !g.inspected && Math.hypot(e.clientX-g.x,e.clientY-g.y)<8){
+        inspect(e.clientX,e.clientY);
+      }
       // Mobile browsers may suppress the native click just after a swipe.
       // Commit a stationary touch once and consume any click synthesized afterward.
       if(e.pointerType==='touch' && !cancelled && g.button){
@@ -510,7 +524,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       onClickCapture={e=>{
         const target=e.target.closest('button');
         if(target)roomOpener.current=target;
-        if(placing || panel || target?.getAttribute('aria-haspopup')==='dialog' || target?.hasAttribute('data-occupied'))return;
+        if(!target || placing || panel || target.getAttribute('aria-haspopup')==='dialog' || target?.hasAttribute('data-occupied'))return;
         if(e.detail===0 && target){const r=target.getBoundingClientRect();inspect(r.left+r.width/2,r.top+r.height/2);}
         else inspect(e.clientX,e.clientY);
       }}>
