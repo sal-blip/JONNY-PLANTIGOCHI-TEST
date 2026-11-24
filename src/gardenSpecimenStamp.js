@@ -45,6 +45,12 @@ function makeStamp(runs,ink,pot,master,foliage){
   const ctx=canvas.getContext('2d');
   if(!ctx)return;
   ctx.setTransform(density,0,0,density,-left*density,-top*density);
+  paintSpecimen(ctx,runs,ink,pot,master,foliage,density);
+  return {canvas,left,top,density};
+}
+
+function paintSpecimen(ctx,runs,ink,pot,master,foliage,density){
+  const crown=runs.crown;
   ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality='high';
   function paintRuns(i){
@@ -66,11 +72,20 @@ function makeStamp(runs,ink,pot,master,foliage){
     if(!master || i<pot.first || i>=pot.end)paintRuns(i);
   }
   if(crown)paintCrown(ctx,foliage,crown);
-  return {canvas,left,top,density};
 }
 
-export function drawGardenStamp(ctx, key, runs, ink, x,y,size, pot, master, foliage) {
+export function drawGardenStamp(ctx, key, runs, ink, x,y,size, pot, master, foliage, preview) {
   if (typeof document === 'undefined' || typeof ctx.drawImage !== 'function') return false;
+  // A magnified iSEED portrait can address more pixels than the room stamp.
+  // Sample the mounted originals straight into its final backing canvas.
+  if(preview && size>3 && (master || foliage)){
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.scale(size,size);
+    paintSpecimen(ctx,runs,ink,pot,master,foliage,ctx.getTransform().a);
+    ctx.restore();
+    return true;
+  }
   let stamp = stamps.get(key);
   if (!stamp) {
     stamp = makeStamp(runs, ink, pot, master, foliage);

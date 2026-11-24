@@ -87,6 +87,7 @@ test('old glaze fields resolve to the current nursery art and its ceramic stays 
     const plant={species:s,id:s,potStyle};
     const rest=render(plant,null);
     assert.deepEqual(rest,render({species:s,id:s},null));
+    assert.deepEqual(rest,render(plant,'terra'),s+' default pot must match the approved Terracotta pot');
     const restPlant=render(plant,null,{bare:true});
     const moving=render(plant,null,{time:1300});
     const movingPlant=render(plant,null,{time:1300,bare:true});

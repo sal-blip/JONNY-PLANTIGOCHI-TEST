@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.37 · Snake Plant and nursery pots
+
+Snake Plant, Golden Pothos, Hoya Splash, Queen Anthurium and Monkey Tail Cactus now use their mounted foliage with the approved Terracotta pot by default. Their portraits frame the complete plant. Garden placements use the owned pot at the slot when one is present. Magnified iSEED portraits sample the native layers directly when they exceed the room stamp’s resolution.
+
 ## Plantigochi 0.1.36 · Native garden artwork
 
 Shop, Inventory, revealed Collection portraits and placed specimens now use the approved full-color source cutouts. Settled garden close-ups redraw the visible area at display density within the room's existing pixel budget. The [resolution study](research/garden-item-resolution.md) records the source sizes, measurements and remaining phone check.

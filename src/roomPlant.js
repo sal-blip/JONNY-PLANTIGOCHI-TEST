@@ -13,7 +13,7 @@ import * as thaiConstellation from './shopSprites/thai-constellation.js';
 import * as pinkPrincess from './shopSprites/pink-princess.js';
 import * as variegatedBillie from './shopSprites/variegated-billie.js';
 import {drawSelectionContour} from './roomContour.js';
-import {approvedArt,featuredRoomScale} from './shopSprites/approved.js';
+import {approvedArt} from './shopSprites/approved.js';
 import * as monsteraAlbo from './shopSprites/monstera-albo.js';
 import * as pinkMicans from './shopSprites/pink-micans.js';
 import * as birdOfParadise from './shopSprites/bird-of-paradise.js';
@@ -157,16 +157,14 @@ const featuredPlants={
   'pink-micans':plantArt(pinkMicans,2,[0,-30],[[-43,-35,-3,2],[-34,-27,-4,4]]),
   'bird-of-paradise':plantArt(birdOfParadise,1,[0,-30],[[-61,-39,-3,2],[-38,-27,-6,6]]),
   'moth-orchid':plantArt(mothOrchid,3,[0,-30],[[-36,-27,-5,5]]),
-  'golden-pothos':nurserySpecimen('golden-pothos',[-5,-15],true,'vine'),
-  'snake-plant':nurserySpecimen('snake-plant',[-1,-14],false,'basal'),
-  'hoya-serpens-splash':nurserySpecimen('hoya-serpens-splash',[-1,-16],true,'vine'),
-  'queen-anthurium':nurserySpecimen('queen-anthurium',[0,-15],true),
-  'monkey-tail-cactus':nurserySpecimen('monkey-tail-cactus',[-1,-18],true,'basal'),
+  'golden-pothos':mountedSpecimen('golden-pothos','vine',true),
+  'snake-plant':mountedSpecimen('snake-plant','basal',false),
+  'hoya-serpens-splash':mountedSpecimen('hoya-serpens-splash','vine',true),
+  'queen-anthurium':{...mountedSpecimen('queen-anthurium','pendant',true),crownLift:8},
+  'monkey-tail-cactus':mountedSpecimen('monkey-tail-cactus','basal',true,[-1,1]),
 };
-function nurserySpecimen(sku,crown,trailing,habit){
-  const [x,y]=crown;
-  return {...plantArt(approvedArt[sku+'-foliage'],0,crown,[[y-2,y+1,x-2,x+1]]),
-    habit,nurseryId:sku,pot:approvedArt[sku+'-pot'],repotted:approvedArt[sku+'-repotted'],crown,trailing};
+function mountedSpecimen(sku,habit,trailing,socket=[0,0]){
+  return {...plantArt(approvedArt[sku+'-repotted'],0,socket,[[-4,1,-2,2]]),habit,trailing};
 }
 const plantSpecies=sku=>sku==='pothos'?'golden-pothos':sku==='snake'?'snake-plant':sku;
 export const hasTrailingFoliage=sku=>featuredPlants[plantSpecies(sku)]?.trailing===true;
@@ -174,7 +172,6 @@ export const isShopPot=sku=>Object.hasOwn(shopPots,sku);
 export const isShopPlant=sku=>Object.hasOwn(featuredPlants,plantSpecies(sku)) || sku==='monstera';
 const glazeInk=38;
 
-const originalBounds={leftEdge:-29,topEdge:-54,width:59,height:58};
 const shopBounds={leftEdge:-32,topEdge:-60,width:65,height:67};
 const trailingBounds={...shopBounds,height:101};
 const shadowSoft = 1, shadowFirm = 2, soilShadow = 3, soil = 4, soilLight = 5, loam = 6;
@@ -218,66 +215,6 @@ function makeGrid({leftEdge,topEdge,width,height},density) {
     }
   }
   return { cells,dot,nativeDot,span,line };
-}
-
-function ceramic(grid,style) {
-  const { wall,motif }=ceramics[style];
-  const { span,dot,line }=grid;
-  wall.forEach((radius,row) => {
-    const y=row-wall.length+1;
-    span(-radius,y,2*radius+1,clay);
-    span(-radius+1,y,2*radius-1,clay+1);
-    if (row===wall.length-1) return;
-    span(-radius+1,y,2*radius-4,clay+2);
-    span(-radius+2,y,Math.max(2,radius+1-(row>>2)),clay+3);
-    span(-radius+3,y,Math.max(1,Math.floor(radius/2)-1-(row>>2)),clay+4);
-    if (row===wall.length-2) span(-radius+1,y,radius,clay+2);
-  });
-  if(motif==='flutes'){
-    for(const [x,tone] of [[-7,4],[-4,3],[0,3],[4,2],[7,1]]) {
-      const end=x-Math.sign(x);
-      line(x,-9,end,-4,clay+tone); line(x+1,-8,end+1,-4,clay+tone-1);
-    }
-  }else if(motif==='brush'){
-    const brush=clay;
-    line(-5,-4,-1,-7,brush); line(-1,-7,4,-9,brush);
-    span(-5,-7,3,clay+1); dot(-4,-6,brush);
-    span(-1,-9,2,clay+1); dot(0,-8,brush);span(2,-6,2,clay+1);
-    dot(2,-7,brush);dot(5,-10,clay+1);
-  }else if(motif==='bands'){
-    span(-8,-8,15,clay+4);span(-8,-7,15,clay+1);span(-7,-4,12,clay+3);
-    span(-5,-8,4,clay+5);dot(7,-8,clay+2);
-  }else if(motif==='stamps'){
-    for (const x of [-6,0,6]) {
-      dot(x,-8,clay+2); dot(x-1,-7,clay+1); dot(x+1,-7,clay+1);dot(x,-6,clay+2);
-    }
-    span(-8,-5,15,clay+3);
-  }else if(motif==='glaze'){
-    for (const [x,n] of [[-7,2],[-4,4],[-2,3],[3,2],[5,4]]) {
-      line(x,-9,x,-9+n,clay+3);dot(x,-9+n,clay+2);
-    }
-    dot(-6,-7,clay+5);dot(2,-8,clay+4);
-  }else{
-    for(const [x,y,tone] of [[-6,-8,2],[-7,-5,5],[-2,-6,4],[2,-8,4],[4,-5,1],[1,-4,2],[6,-7,2]])
-      dot(x,y,clay+tone);
-  }
-  // Elliptical lip with a dark inner wall; the warm soil is visible in empty pots.
-  const rim=wall[0]+1;
-  span(-rim+3,-16,2*rim-5,clay+3);
-  span(-rim+1,-15,2*rim-1,clay+4);
-  span(-rim,-14,2*rim+1,clay+1);
-  span(-rim,-13,2*rim+1,clay+3);
-  span(-rim+1,-12,2*rim-1,clay+1);
-  span(-rim+3,-12,2*rim-7,clay+2);
-  span(-rim+1,-13,rim+3,clay+5);
-  span(-rim+3,-15,2*rim-6,soil);
-  span(-rim+5,-15,2*rim-10,soilShadow);
-  span(-rim+2,-14,2*rim-4,soil);
-  const foot=wall[wall.length-1];
-  span(-foot+1,-1,2*foot-1,clay+1);
-  span(-foot+2,-1,Math.max(2,foot-1),clay+3);
-  span(-rim+2,-13,Math.max(2,rim-4),clay+4);
-  span(-rim+4,-14,3,soilLight);dot(-1,-15,soilLight);dot(3,-14,loam);
 }
 
 const outlines = [
@@ -376,25 +313,23 @@ function paintStalkExtension(grid,art,firstInk,socket,topX,topY,rootX,rootY){
 }
 
 function drawPlantParts(stalks,blades,plant,pot,mouth,pose,firstInk,nativeMount){
-  const hanging=pot && plant.repotted;
-  const art=hanging || plant.foliage;
+  const art=plant.foliage;
   const soilMounted=plant.habit==='basal' || plant.habit==='vine';
-  const socket=hanging?(plant.nurseryId==='monkey-tail-cactus'?[-1,1]:[0,0]):plant.socket;
+  const socket=plant.socket;
   const [soilX,soilY]=mouth.soil;
   const dx=soilX-socket[0];
   const rise=Math.min(plant.maxRise ?? Infinity,pot?.rise ?? 0);
   let dy;
   if(soilMounted)dy=soilY-socket[1];
-  else if(plant.nurseryId==='queen-anthurium'){
+  else if(plant.crownLift){
     // Its pendant blades hang from short petioles above a single centered node.
-    dy=soilY-socket[1]-(hanging?8:5);
+    dy=soilY-socket[1]-plant.crownLift;
   }else{
-    const crownY=plant.crown?.[1] ?? -28;
-    dy=(pot?mouth.front+2-crownY:0)+(rise?0:plant.seatDepth)-rise;
+    dy=mouth.front+30+(rise?0:plant.seatDepth)-rise;
   }
   const sway=y=>Math.round(pose*2*Math.min(1,Math.max(0,(Math.abs(y-socket[1])-3)/42)));
   if(!soilMounted)paintStalkExtension(stalks,art,firstInk,socket,socket[0]+dx,socket[1]+dy,soilX,mouth.front+1);
-  const strips=hanging?[[-4,1,-2,2]]:plant.stalks;
+  const strips=plant.stalks;
   if(nativeMount){
     const left=art.spriteOffset.x,top=art.spriteOffset.y;
     const width=Math.max(...art.spriteRows.map(row=>row.length)),height=art.spriteRows.length;
@@ -411,22 +346,6 @@ function drawPlantParts(stalks,blades,plant,pot,mouth,pose,firstInk,nativeMount)
     const isStalk=strips.some(([top,bottom,left,right])=>y>=top && y<=bottom && sourceX>=left && sourceX<=right);
     (isStalk?stalks:blades).nativeDot(x+dx,y+dy,ink);
   },art,firstInk,sway);
-}
-
-// Restore the body behind the missing pixels in old nursery masters, which
-// were originally cut from flattened plant-and-pot illustrations.
-function nurseryPot(grid,plant){
-  const [cx,cy]=plant.crown;
-  const h=-cy+2;
-  const backing=makeGrid(originalBounds,1);
-  ceramic(backing,plant.potStyle);
-  for(let y=-h;y<=0;y++)for(let x=-9;x<=9;x++){
-    const row=Math.round(y*16/h)-originalBounds.topEdge;
-    const col=Math.round(x/.75)-originalBounds.leftEdge;
-    const ink=backing.cells[row*originalBounds.width+col];
-    if(ink>=soilShadow)grid.nativeDot(cx+x,y,ink);
-  }
-  drawSpriteRows(grid.nativeDot,plant.pot,glazeInk);
 }
 
 // Trace only the lowest four native rows of the empty vessel. A split foot
@@ -454,14 +373,12 @@ function addContactShadow(cells,width){
 }
 
 const potCache=new Map();
-function potLayers(bounds,density,style,pot,plant,preview,mouth){
-  const nursery=pot?null:plant?.pot;
-  const key=[style,pot?.id,nursery && plant.nurseryId,bounds.width,bounds.height,bounds.topEdge,preview].join('/');
+function potLayers(bounds,density,pot,preview){
+  const mouth=pot.mouth;
+  const key=[pot.id,bounds.width,bounds.height,bounds.topEdge,preview].join('/');
   if(potCache.has(key))return potCache.get(key);
   const vessel=makeGrid(bounds,density);
-  if(pot)drawSpriteRows(vessel.nativeDot,pot.art,glazeInk);
-  else if(nursery)nurseryPot(vessel,plant);
-  else ceramic(vessel,style);
+  drawSpriteRows(vessel.nativeDot,pot.art,glazeInk);
   if(!preview)addContactShadow(vessel.cells,bounds.width);
   const front=new Uint16Array(vessel.cells.length);
   const factor=density/2;
@@ -480,17 +397,16 @@ function potLayers(bounds,density,style,pot,plant,preview,mouth){
 }
 
 function sprite(style,hash,pose,pot,plant,density,preview,bare,native=false) {
-  const sourceBounds=plant?.trailing?trailingBounds:pot || plant?shopBounds:originalBounds;
+  const sourceBounds=plant?.trailing?trailingBounds:shopBounds;
   const bounds=Object.fromEntries(Object.entries(sourceBounds).map(([key,v])=>[key,v*density]));
   // Preserve the full canopy when a tall vessel lifts it above the normal stamp.
-  if(pot){bounds.topEdge-=32;bounds.height+=32;}
+  bounds.topEdge-=32;bounds.height+=32;
   const stalks=makeGrid(bounds,density),blades=makeGrid(bounds,density);
-  const mouth=pot?.mouth ?? (plant?.pot?{soil:plant.crown,half:9,front:plant.crown[1]+2,arc:2}:
-    {soil:[0,-29],half:(ceramics[style].wall[0]-1)*2,front:-26,arc:0});
-  const vessel=potLayers(bounds,density,style,pot,plant,preview,mouth);
+  const mouth=pot.mouth;
+  const vessel=potLayers(bounds,density,pot,preview);
   let crown;
   if(plant){
-    const base=pot?.art ?? plant.pot;
+    const base=pot.art;
     const mount=native && {covered:(x,y)=>!bare && vessel.front[(y-bounds.topEdge)*bounds.width+x-bounds.leftEdge]>0};
     crown=drawPlantParts(stalks,blades,plant,pot,mouth,pose,glazeInk+(base?.spritePalette.length ?? 0),mount);
   }else if(hash!==null){
@@ -544,8 +460,8 @@ function colors(style,night,selected,finish,featuredSku) {
   const key=[style,finish,featuredSku,step,selected].join('/');
   if(!blended.has(key)){
     const n=step/48,plant=featuredPlants[featuredSku];
-    const base=shopPots[finish]?.art ?? plant?.pot;
-    const foliage=(finish && plant?.repotted) || plant?.foliage;
+    const base=shopPots[finish].art;
+    const foliage=plant?.foliage;
     blended.set(key,[null,`rgba(44,35,40,${.14-.06*n})`,`rgba(38,32,38,${.26-.10*n})`,
       ...[...common,...ceramics[style].day,...leaves.flat(),
         ...(base?.spritePalette ?? []),...(foliage?.spritePalette ?? [])]
@@ -562,11 +478,10 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
   const species=plantSpecies(plant?.species);
   const featured=Object.hasOwn(featuredPlants,species)?featuredPlants[species]:null;
   if(!plant && !isShopPot(potSku))return;
-  // A resident supplies its own nursery vessel until an owned pot is placed.
+  // A resident without an owned pot uses the same approved terracotta art as the shop.
   const style=featured?.potStyle ?? 0;
-  const finish=isShopPot(potSku)?potSku:featured?.pot?null:'terra';
+  const finish=isShopPot(potSku)?potSku:'terra';
   const pot=shopPots[finish],density=2;
-  if(!preview && !pot && featured?.repotted)size*=featuredRoomScale;
   const pose=hash===null || reducedMotion || !Number.isFinite(time)?0:Math.round(Math.sin(time*.00115+(hash%83)*.12)*.82);
   const key=[style,featured?null:hash,pose,species,finish,preview,bare].join(':');
   let runs=poses.get(key);
@@ -575,8 +490,7 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
     if(poses.size>=192)poses.delete(poses.keys().next().value);
     poses.set(key,runs);
   }
-  const paletteStyle=featured?.pot && !pot?featured.potStyle:style;
-  const ink=colors(paletteStyle,Number.isFinite(night)?night:0,selected,finish,featured?species:null);
+  const ink=colors(style,Number.isFinite(night)?night:0,selected,finish,featured?species:null);
   // The moving reflection is clipped to the painted leaves and ceramic runs.
   // A stationary reflection on the rim also works with reduced motion.
   const sweep=(reducedMotion ? -8 : (time%3600)*.035-45)*density;
@@ -605,7 +519,7 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
       drawSelectionContour(ctx,runs,{x:x*rasterScale,y:y*rasterScale,size:size*rasterScale,firstInk:soilShadow,rasterScale});
       ctx.restore();
     }
-    stamped=drawGardenStamp(ctx,stampKey,baseRuns,ink,x,y,size,glaze,master,image);
+    stamped=drawGardenStamp(ctx,stampKey,baseRuns,ink,x,y,size,glaze,master,image,preview);
     if(stamped && !selected)return;
   }
   ctx.save();
