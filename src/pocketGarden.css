@@ -1,7 +1,11 @@
-/* Position and focus travel independently. The passage controller updates both
-   properties on the garden root, including between the three resting surfaces. */
+/* Only four layers consume toy visibility. Their children keep a stable style
+   while a finger scrubs the passage, including the individual chain links. */
+@property --toy-visibility {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
 .garden[data-surface] {
-  --toy-visibility: 1;
   --phone-offset: 100%;
   --hud-side-left: max(20px, 3.5vw, env(safe-area-inset-left));
   --hud-side-right: max(20px, 3.5vw, env(safe-area-inset-right));
@@ -155,4 +159,24 @@
   position:fixed;z-index:12;top:calc(env(safe-area-inset-top,0px) + 3.3rem);left:50%;
   transform:translateX(-50%);max-width:90%;padding:.4rem .85rem;border:1px solid #d9dfc4;
   border-radius:1rem;background:#28473c;color:#fff9e8;font:600 .85rem/1.3 var(--display);
+}
+
+/* Drag positions follow touch directly; on release the browser interpolates
+   the visual layers without writing inherited styles on every frame. */
+@media (prefers-reduced-motion: no-preference) {
+  .garden[data-surface] :is(.standalone-toy-layer,.garden-corners,.room-controls) {
+    transition:opacity var(--passage-duration,0ms) cubic-bezier(.33333,1,.66667,1);
+  }
+  .garden[data-surface] .handset-layer {
+    transition:transform var(--passage-duration,0ms) cubic-bezier(.33333,1,.66667,1);
+  }
+  .garden[data-toy-background="garden"] .room-lens {
+    transition:transform 2.2s cubic-bezier(.25,.65,.28,1),filter var(--passage-duration,0ms) cubic-bezier(.33333,1,.66667,1);
+  }
+  .garden[data-toy-background="garden"] .room-lens.inspecting {
+    transition-duration:.72s,var(--passage-duration,0ms);
+  }
+  .garden[data-toy-background="garden"]:is([data-surface="toy"],[data-transitioning]) .garden-room-layer {
+    transition:translate var(--passage-duration,160ms) ease-out,scale var(--passage-duration,0ms) cubic-bezier(.33333,1,.66667,1);
+  }
 }

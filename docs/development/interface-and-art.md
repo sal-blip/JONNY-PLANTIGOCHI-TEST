@@ -84,6 +84,9 @@ The room uses Canvas 2D in a 400 × 320 logical space. Portrait extends the ceil
 
 On launch, measure the viewport before painting the garden. The layout effects paint the room and floor once at their final dimensions before the browser presents them. Starting the animation timer should not trigger another immediate paint. Returning to a visible tab or changing the reduced-motion setting does refresh the room. The resolution walkthrough also counts first-frame paints at two phone densities. [Launch regression](../../tests/browser/garden_resolution.py)
 
+While dragging between the toy and the room, write the toy visibility only to the layers that change. On release the browser interpolates opacity, blur, scale and handset position. The room continues painting at its measured resolution, including behind iSEED. Changing input ownership alone should not redraw a populated room. [Surface transitions](../../src/useHandsetPassage.js) · [Swipe walkthrough](../../tests/browser/garden_passage.py)
+
+
 
 Slot addresses are saved data. Each room retains its six numbered plant spots. Later surfaces have named addresses and decorations have their own slots. For a new spot, update its visual anchor, legal destinations and hit target together. For a shop item, follow `catalog`, `canSetItem` and `placeItem`. Placement circles carry a soft radial pulse inside their existing rim. The center dot or swap arrows stay steady, and reduced motion keeps the marker still. Selecting a circle previews a destination. Confirmation rechecks its occupant and commits the placement and any purchase charge together. Test canceling before confirmation and moving into an occupied spot. [Economy and placements](../../src/gardenEconomy.js) · [Shop](../../src/GardenShop.jsx) · [Garden controller](../../src/Collector.jsx)
 

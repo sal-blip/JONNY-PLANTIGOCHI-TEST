@@ -68,19 +68,34 @@ export function useHandsetPassage({blocked = false, onSwipeRequest, allowRoomRet
 
   useLayoutEffect(() => { options.current = {blocked, onSwipeRequest, allowRoomReturn}; }, [blocked, onSwipeRequest, allowRoomReturn]);
 
-  const draw = useCallback(value => {
-    progress.current = value;
-    if (!rootRef.current) return;
-    rootRef.current.style.setProperty('--toy-visibility', String(clamp(-value)));
-    rootRef.current.style.setProperty('--phone-offset', (1 - clamp(value)) * 100 + '%');
+  const draw = useCallback((value,initialize=false) => {
+    const previous=progress.current;
+    progress.current=value;
+    const root=rootRef.current;
+    if(!root)return;
+    const toy=clamp(-value);
+    if(initialize || toy!==clamp(-previous)){
+      for(const layer of root.querySelectorAll('.standalone-toy-layer,.garden-room-layer,.room-lens,.room-controls')){
+        layer.style.setProperty('--toy-visibility',String(toy));
+      }
+    }
+    if(initialize || clamp(value)!==clamp(previous)){
+      root.style.setProperty('--phone-offset',(1-clamp(value))*100+'%');
+    }
   }, []);
-  useLayoutEffect(() => { draw(progress.current); }, [draw]);
+  useLayoutEffect(() => { draw(progress.current,true); }, [draw]);
 
   const stopAnimation = useCallback(() => {
-    if (animation.current) cancelAnimationFrame(animation.current.frame);
+    if (animation.current) {
+      const {from,to,start,duration,timer}=animation.current;
+      clearTimeout(timer);
+      const left=1-clamp((performance.now()-start)/duration);
+      draw(to+(from-to)*left**3);
+    }
+    rootRef.current?.style.removeProperty('--passage-duration');
     animation.current = null;
     pendingFocus.current = false;
-  }, []);
+  }, [draw]);
 
   const rememberFocus = useCallback(origin => {
     const node = origin?.currentTarget || document.activeElement;
@@ -135,18 +150,21 @@ export function useHandsetPassage({blocked = false, onSwipeRequest, allowRoomRet
       return;
     }
     setTransitioning(true);
-    const start = performance.now();
-    const duration = 360 * Math.sqrt(Math.abs(to - from));
-    const run = {next, frame: 0};
-    animation.current = run;
-    function tick(now) {
-      if (animation.current !== run) return;
-      const t = clamp((now - start) / duration);
-      if (t === 1) { finish(next); return; }
-      draw(from + (to - from) * (1 - (1 - t) ** 3));
-      run.frame = requestAnimationFrame(tick);
+    const root=rootRef.current;
+    function settle(startPosition,endPosition){
+      const duration=360*Math.sqrt(Math.abs(endPosition-startPosition));
+      root.style.setProperty('--passage-duration',duration+'ms');
+      draw(endPosition);
+      const run={next,from:startPosition,to:endPosition,start:performance.now(),duration,timer:0};
+      animation.current=run;
+      run.timer=setTimeout(()=>{
+        if(animation.current!==run)return;
+        if(endPosition===to)finish(next);
+        else settle(endPosition,to);
+      },duration);
     }
-    run.frame = requestAnimationFrame(tick);
+    // For a direct trip between the toy and iSEED, pass through the garden.
+    settle(from,from*to<0?0:to);
   }, [draw, finish, rememberFocus, stopAnimation]);
 
   const resetToy = useCallback(() => {

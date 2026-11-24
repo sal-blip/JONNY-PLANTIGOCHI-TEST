@@ -66,8 +66,16 @@ with sync_playwright() as pw:
     page.goto(blank)
     page.evaluate(SEED_SETUP, plant)
     page.goto(url)
+    page.evaluate("""() => {
+        window.toyFadeStarted=false;
+        document.addEventListener('transitionrun', e=>{
+            if(e.target.matches('.standalone-toy-layer') && e.propertyName==='opacity')
+                window.toyFadeStarted=true;
+        });
+    }""")
     taps(page, 'Open garden')
     surface(page, 'garden')
+    assert page.evaluate('window.toyFadeStarted'), 'Browser did not animate the toy fade'
     painted = artwork(page)
     assert painted[1]
     # Open ceiling, clear of HUD and furniture.

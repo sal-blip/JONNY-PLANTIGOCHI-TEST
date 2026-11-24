@@ -76,17 +76,18 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   },[active,items,shopMove,preview]);
   const chosen=slot===null?null:collection.get(slot);
   const clock=new Date(wallNow),hour=clock.getHours()+clock.getMinutes()/60;
+  const plantPreview=active && shopMove && catalog[shopMove.sku].kind==='plant'?preview:null;
   const potted=useMemo(()=>{
     const result={};
     for(let view=Math.max(0,page-1);view<=Math.min(count-1,page+1);view++)
       result[view]=placesFor(view).map(spot=>{
         const slot=slotFor(view,spot);
-        if(active && preview?.slot===slot && shopMove && catalog[shopMove.sku].kind==='plant')
+        if(plantPreview?.slot===slot)
           return {id:shopMove.id,species:shopMove.sku,name:catalog[shopMove.sku].name};
         return collection.get(slot);
       });
     return result;
-  },[active,collection,count,page,shopMove,preview]);
+  },[collection,count,page,shopMove,plantPreview]);
   useEffect(()=>{
     mounted.current=true;
     return ()=>{mounted.current=false;clearInterval(edge.current);clearTimeout(catTimer.current);clearTimeout(zoomTimer.current);clearTimeout(pressTimer.current);};

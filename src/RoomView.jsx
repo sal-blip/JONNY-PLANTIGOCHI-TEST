@@ -62,7 +62,8 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     ?active:spots.findIndex(spot=>slotFor(index,spot)===active);
   const lifted=running && dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
   const animate=onScreen && (running || ambient);
-  scene.current={hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,leavePot:carry?.repot,above,worldHeight,separatePlanes:true,placing:running && placing,jarProgress,leafCount};
+  const showDestinations=running && placing;
+  scene.current={hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,leavePot:carry?.repot,above,worldHeight,separatePlanes:true,placing:showDestinations,jarProgress,leafCount};
   const outsideOffset=useRef(0);
   useEffect(()=>{
     const media=matchMedia('(prefers-reduced-motion: reduce)');
@@ -99,7 +100,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     outsideOffset.current=windowOffset(stage.current,canvas.current,index,reduced);
     drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:reduced});
-  },[onScreen,stage,running,rasterScale,plants,hour,index,cat,highlighted,lifted,worldHeight,above,placing,jarProgress,leafCount,shopItems,playingItemId]);
+  },[onScreen,stage,rasterScale,plants,hour,index,cat,highlighted,lifted,worldHeight,above,showDestinations,jarProgress,leafCount,shopItems,playingItemId]);
   useLayoutEffect(()=>{
     if(onScreen && !document.hidden && depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
   },[onScreen,worldHeight,above,hour,index]);
