@@ -227,3 +227,23 @@ test('a near-milestone spurt matches its quote after reload and keeps the wateri
   assert.equal(reminderSchedule(saved,false).dryDue,reminderSchedule(p,false).dryDue);
   assert.equal(growthSpurtOffer(saved,now).reason,'Need 25 more coins');
 });
+
+test('seven consecutive calendar dates pay once each, then repeat; gaps restart the ladder',()=>{
+  const dates=[7,8,9,10,11,12,13,14].map(d=>new Date(2026,2,d,11).getTime());
+  let p=seed();
+  for(const [i,amount] of [10,10,15,15,20,20,30,10].entries()){
+    const before=lifeOf(p).balance;
+    p=checkIn(p,dates[i]);
+    assert.equal(lifeOf(p).balance-before,amount);
+    assert.equal(lifeOf(p).visit.streak,i+1);
+    assert.equal(checkIn(p,dates[i]),p);
+  }
+  assert.equal(checkIn(p,dates[0]),p);
+  assert.equal(lifeOf(checkIn(p,new Date(2026,2,17).getTime())).visit.streak,1);
+  const legacy=structuredClone(checkIn(seed(),dates[0]));
+  delete legacy.gardenLife.visit;
+  assert.equal(checkIn(legacy,dates[0]),legacy);
+  assert.equal(lifeOf(checkIn(legacy,dates[1])).visit.streak,2);
+  assert.equal(validGardenLife(legacy),true);
+  assert.equal(validGardenLife({...p,gardenLife:{...lifeOf(p),visit:{date:'bad',streak:0}}}),false);
+});

@@ -4,14 +4,14 @@ import PlantigotchiApp from './PlantigotchiApp.jsx';
 import GardenJournal from './GardenJournal.jsx';
 import {leaveEditor,newJournalSession} from './journalDrafts.js';
 import {RecordControls} from './GardenRecord.jsx';
-import GameLink from './GameLink.jsx';
-import {downloadFile} from './Recovery.jsx';
+import GardenCamera from './GardenCamera.jsx';
+import DailyRewards from './DailyRewards.jsx';
 import {catalog,itemPrice,canSetItem,fitsBackupChange,framePhoto,lifeOf,storeItem} from './gardenEconomy.js';
 import {gardenViews,placesFor,slotFor,speciesName} from './gardenLayout.js';
 import {decorPlaces} from './roomShopArt.js';
 import './gardenMarket.css';
 
-const titles={plantigotchi:'Plantigotchi',shop:'Garden shop',inventory:'Inventory',journal:'Journal',library:'Care library',postcard:'Garden postcard'};
+const titles={plantigotchi:'Plantigotchi',shop:'Garden shop',inventory:'Inventory',journal:'Journal',rewards:'Daily rewards',postcard:'Share'};
 
 function phonePlacementError(plant,request){
   const product=catalog[request.sku],garden=lifeOf(plant);
@@ -26,54 +26,6 @@ function phonePlacementError(plant,request){
   }
   return product.kind==='plant'?'Every plant spot is occupied. Move a plant to free a spot.':
     'Every suitable display spot is occupied. Put a decoration in inventory to make room.';
-}
-
-function Postcard({roomRef,raised}){
-  const owned=useRef(null),[card,setCard]=useState(null),[status,setStatus]=useState('loading');
-  const [attempt,setAttempt]=useState(0),[shareMessage,setShareMessage]=useState('');
-  useEffect(()=>()=>{if(owned.current)URL.revokeObjectURL(owned.current.url);owned.current=null;},[]);
-  useEffect(()=>{
-    if(!raised)return;
-    let current=true;
-    setStatus('loading');setShareMessage('');
-    async function capture(){
-      if(!current)return;
-      try{
-        const next=await roomRef.current?.preparePostcard();
-        if(!next?.url || !next.file)throw Error('Postcard unavailable');
-        if(!current){URL.revokeObjectURL(next.url);return;}
-        if(owned.current && owned.current.url!==next.url)URL.revokeObjectURL(owned.current.url);
-        owned.current=next;setCard(next);setStatus('ready');
-      }catch{
-        if(!current)return;
-        if(owned.current)URL.revokeObjectURL(owned.current.url);
-        owned.current=null;setCard(null);setStatus('error');
-      }
-    }
-    // Defer until the current room and its imperative painter have mounted.
-    void Promise.resolve().then(capture);
-    return ()=>{current=false;};
-  },[roomRef,raised,attempt]);
-  function supportsFiles(){
-    try{return card && navigator.canShare?.({files:[card.file]});}catch{return false;}
-  }
-  async function share(){
-    const showing=card;setShareMessage('');
-    try{await navigator.share({files:[showing.file],title:'My Plantigochi garden'});}
-    catch(error){if(error?.name!=='AbortError' && owned.current===showing)setShareMessage('Save the image to share this postcard.');}
-  }
-  const roomName=card?.roomName || card?.file.name.replace(/^plantigochi-/,'').replace(/\.png$/i,'').replaceAll('-',' ');
-  return <div className="room-postcard">
-    {card && <img src={card.url} alt={'Your '+roomName+' postcard'}/>}
-    {status==='loading' && <p role="status">Preparing your garden postcard…</p>}
-    {status==='error' && <><p role="status">Could not prepare the postcard.</p>
-      <div className="menu-items"><button onClick={()=>setAttempt(n=>n+1)}>Try again</button></div></>}
-    {card && <div className="menu-items">
-      {supportsFiles() && <button disabled={status!=='ready'} onClick={share}>Share image</button>}
-      <button disabled={status!=='ready'} onClick={()=>downloadFile(card.file,card.file.name)}>Save image</button>
-    </div>}
-    <GameLink/>{shareMessage && <p role="status">{shareMessage}</p>}
-  </div>;
 }
 
 /** App owns the raised/lowered surface and current route. Keep its contents
@@ -145,16 +97,15 @@ export function useGardenPhoneApps({page,open,plant,now,musicVolume,commit,begin
     return change(p=>framePhoto(p,item.id,photo,expected),false,frameOriginal);
   }
   function journalPage(tab){
-    if(tab==='library' || tab!==journal.tab){
-      setJournal(current=>({...leaveEditor(current),tab:tab==='library'?current.tab:tab}));
-    }
-    navigate(tab==='library'?'library':'journal');
+    setJournal(current=>({...leaveEditor(current),tab}));
   }
   let app=null;
   if(plant && (page==='shop' || page==='inventory')){
     app=<GardenShop busy={busy} raised={raised} notice={notice?.page===page?notice.text:null} clearNotice={()=>setNotice(null)} plant={plant} homePlant={homePlant} initialTab={page==='inventory'?'bag':'shop'} onTabChange={tab=>navigate(tab==='bag'?'inventory':'shop')} onPlace={place} inspect={inspect}/>;
-  }else if(plant && (page==='journal' || page==='library')){
-    app=<GardenJournal plant={plant} tab={page==='library'?'library':journal.tab} session={journal} setSession={setJournal} onTabChange={journalPage} change={operation=>change(operation,false)} busy={busy}/>;
+  }else if(plant && page==='journal'){
+    app=<GardenJournal plant={plant} tab={journal.tab} session={journal} setSession={setJournal} onTabChange={journalPage} change={operation=>change(operation,false)} busy={busy}/>;
+  }else if(plant && page==='rewards'){
+    app=<DailyRewards plant={plant}/>;
   }else if(plant && page==='plantigotchi'){
     app=<PlantigotchiApp plant={plant} now={now}/>;
   }else if(page==='item'){
@@ -167,7 +118,7 @@ export function useGardenPhoneApps({page,open,plant,now,musicVolume,commit,begin
     </ShopItemDetail>:<div className="garden-page"><p role="status">This item is no longer available.</p>
       <div className="menu-items"><button onClick={back}>Back to Inventory</button></div></div>;
   }else if(page==='postcard'){
-    app=<Postcard roomRef={roomRef} raised={raised}/>;
+    app=<GardenCamera roomRef={roomRef} raised={raised} count={gardenViews(plant.graduates)}/>;
   }
   return {
     content:app && <>{app}{notice?.page===page && notice.itemId===itemId && <p role="status">{notice.text}</p>}</>,

@@ -26,7 +26,7 @@ Read the growth, water and mood meters under the plant. The badges just above th
 
 After the tutorial, a new seed needs water and one hour of growth to sprout naturally. Time away counts. With steady care, the young stage arrives at three days of earned growth, a species-specific stage at five, and full growth at seven. **Growth Spurt** can spend 50 coins to advance up to a quarter of the current stage when care needs are met. **Growth → Rename plant** lets you change the name that follows it into the garden.
 
-**Dew Catch** opens at sprouting. Catch falling drops across 20 levels. Three misses reset the run to level one. **Leaf Echo** opens at the young stage. Tap Back to pause a game or hold it to return to the plant. During regular play, the first visit each local day earns 10 coins, qualifying waterings earn 2 each up to three times a day, and game wins earn 3 each up to five times a day.
+**Dew Catch** opens at sprouting. Catch falling drops across 20 levels. Three misses reset the run to level one. **Leaf Echo** opens at the young stage. Tap Back to pause a game or hold it to return to the plant. During regular play, daily visits earn 10 to 30 coins on a seven-day streak, qualifying waterings earn 2 each up to three times a day, and game wins earn 3 each up to five times a day.
 
 ## Bring a grown plant home
 
@@ -50,8 +50,9 @@ Tap the phone icon in the garden. The seed-shaped Home button returns to the iSE
 | **Plantigotchi** | See your current plant’s growth and care readings, read the toy guide, and browse all 32 named silhouettes. Each species you raise to maturity reveals its full-color portrait. |
 | **Inventory** | Find a mature plant awaiting placement, place stored items, or manage items already in the room. |
 | **Journal** | Read your pocket plant’s milestones, write notes, and track observations, watering, feeding and repotting for your real plants. |
-| **Care library** | Read built-in plant guides offline or look up real species online. The last six opened species guides are available offline. |
-| **Postcard** | Save or share a picture of your furnished room and the plants you placed there. |
+| **Daily rewards** | Browse the seven check-in rewards and see which days you have collected. The first visit each local day automatically credits your purse. Days one through seven pay 10, 10, 15, 15, 20, 20 and 30 coins. Consecutive weeks repeat and a missed day restarts the streak. |
+| **Journal → Care library** | Read built-in plant guides offline or look up real species online. The last six opened species guides are available offline. |
+| **Share** | Choose a room, tap a plant to focus, drag to frame it and adjust zoom from 1× to 4×. Take a photo, then retake, save the PNG or share it on supported devices. |
 
 The regular terracotta pot costs **10 coins** after the tutorial. Six more garden pots are available in iSEED: Honey-Glazed Terracotta (16), Low Sandstone Bowl (20), Rain Boot (24), Blue Willow Porcelain (28), Stump Cottage (34) and Ringed Planet (38). The nine fully grown shop plants have a separate roster: Snake Plant (100 coins), Pearls and Jade Pothos (150), Raven ZZ (180), Polka Dot Begonia (225), Pink Princess Philodendron (375), Monstera Albo (450), Thai Constellation (550), Variegated Billie (650) and Homalomena Pink Diamond (700). Existing gardens keep plants bought under earlier catalogs. Buying a grown plant places it directly in the room while your keychain plant continues its own cycle. [Current catalog and prices](src/gardenEconomy.js)
 

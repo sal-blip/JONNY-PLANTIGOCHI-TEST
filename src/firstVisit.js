@@ -1,10 +1,10 @@
-import {lifeOf,localDay} from './gardenEconomy.js';
+import {lastVisit,lifeOf,localDay} from './gardenEconomy.js';
 // The current tutorial lives on the plant so portable backups resume the same lesson.
 export const appHints={
   inventory:'Inventory keeps your pots and decorations. Open an item here when you want to move it.',
-  journal:'Journal is yours to write in. You can keep a note about your toy or a real plant.',
+  journal:'Keep notes on your plants or open Care library for growing tips.',
   library:'Care library has real-world growing tips. Pick a plant whenever you need advice.',
-  postcard:'Postcard takes a picture of your room. You can save or share it whenever you like.'
+  postcard:'Frame your garden, take a photo, then save or share it.'
 };
 export function newTutorial(){return {step:'pot',visited:[],blocks:0,menu:0};}
 export function rememberHint(plant,id){
@@ -27,8 +27,9 @@ export function validTutorial(t,stage){
 
 export function finishSprouting(p,time){
   const {tutorial,...plant}=p;
+  const life=lifeOf(p),visit=lastVisit(life),today=localDay(time);
   return {...plant,sproutDebut:p.id,anchor:time,lastDrink:time,litAt:time,fedAt:time,companyAt:time,
-    gardenLife:{...plant.gardenLife,day:localDay(time)}};
+    gardenLife:{...life,...(visit && {visit}),day:today>life.day?today:life.day}};
 }
 
 export const GOOD_LUCK_COINS=20;

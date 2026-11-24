@@ -365,7 +365,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   useImperativeHandle(ref,()=>({
     beginPlacement:request=>startPlacement(request,true),beginGraduation,
     showBook:()=>{if(pending.current || placing)return false;openKeepsake('book');return true;},
-    preparePostcard,reset,
+    cameraRoom:page,prepareCameraRoom,reset,
   }));
   // Replace the placement UI before painting the committed lesson and regular shop prices.
   useLayoutEffect(()=>{
@@ -567,17 +567,11 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     }
     // A touch can synthesize its click after pointerup. The next press clears this flag.
   }
-  async function preparePostcard(){
-    const image=document.createElement('canvas');image.width=ROOM_WIDTH*3;image.height=ROOM_HEIGHT*3;
-    const plants=placesFor(page).map(spot=>collection.get(slotFor(page,spot)));
-    try{
-      const [photos]=await Promise.all([prepareRoomPhotos(items,page),prepareNativeArt()]);
-      drawRoom(image,{hour,shopItems:items,photos,plants,jarProgress,leafCount:plant.book.length,roomIndex:page,time:0,reducedMotion:true});
-      const blob=await new Promise(resolve=>image.toBlob(resolve,'image/png'));
-      if(!blob || !mounted.current)return null;
-      const file=new File([blob],'plantigochi-'+viewName(page).toLowerCase().replaceAll(' ','-')+'.png',{type:'image/png'});
-      return {file,url:URL.createObjectURL(file)};
-    }catch{return null;}
+  async function prepareCameraRoom(index){
+    const plants=placesFor(index).map(spot=>collection.get(slotFor(index,spot)));
+    const [photos]=await Promise.all([prepareRoomPhotos(items,index),prepareNativeArt()]);
+    return (canvas,region)=>drawRoom(canvas,{region,hour,shopItems:items,photos,plants,jarProgress,
+      leafCount:plant.book.length,roomIndex:index,playingItemId,time:0,reducedMotion:true});
   }
   const message=notice || (shopMove ? (preview?placeName(preview.slot)+' · '+catalog[shopMove.sku].name:'Choose a spot for '+catalog[shopMove.sku].name.toLowerCase()+'.') : inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):
     carry.repot?'Choose an empty pot for '+(inHand.name || speciesName(inHand))+'.':'Choose a spot for '+(inHand.name || speciesName(inHand))+(sourcePot?' and '+catalog[sourcePot.sku].name:'')+'.'):

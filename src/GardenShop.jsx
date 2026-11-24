@@ -1,5 +1,5 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
-import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay} from './gardenEconomy.js';
+import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay,lastVisit,weeklyRewards} from './gardenEconomy.js';
 import {toyVarietyName,canHomePlant} from './game.js';
 import {drawSizeComparison,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
@@ -41,9 +41,11 @@ function SizeComparison({sku}){
   return <span className="shop-specimen" aria-hidden="true"><canvas className="shop-scale-art" ref={canvas} width={216} height={240}/></span>;
 }
 export function CoinBalance({plant}){
-  const life=lifeOf(plant);
+  const life=lifeOf(plant),today=localDay(Date.now()),visit=lastVisit(life);
+  const visitCoins=visit?.date===today?weeklyRewards[(visit.streak-1)%weeklyRewards.length]:0;
+  const earned=visitCoins+(life.day===today?life.waters*2+life.wins.length*3:0);
   return <div className="wallet"><img src="/art/iseed-coin.png" width="20" height="20" alt="" style={{imageRendering:"pixelated"}}/><strong>{life.balance} Garden Coins</strong>
-    <small>Today +{life.day===localDay(Date.now())?10+life.waters*2+life.wins.length*3:0}</small></div>;
+    <small>Today +{earned}</small></div>;
 }
 export function ShopItemDetail({item,move,store,savePhoto,busy,inRoom=false,potOnly=false,children}){
   const [error,setError]=useState(''),[loading,setLoading]=useState(false);
@@ -147,6 +149,6 @@ export default function GardenShop({plant,homePlant,onPlace,inspect,initialTab='
         {!g.items.length && !plant.waitingPlants?.length && <p><ShoppingBag size={16}/> Your pots and decorations will appear here.</p>}
         {plant.graduates.some(p=>p.source==='shop') && <p>Purchased plants live in their garden spots.</p>}</div>}
     {previewSku && tab==='shop' && raised && <ShopPreview sku={previewSku} plant={plant} busy={busy} notice={notice} onBack={()=>preview(null)} onBuy={buy}/>}
-    <p className="garden-footnote">Visits earn 10 coins. Healthy watering earns 2 up to three times a day. Game wins earn 3 up to five times a day.</p>
+    <p className="garden-footnote">Visit Daily rewards to see your seven-day coin calendar. Healthy watering earns 2 up to three times a day. Game wins earn 3 up to five times a day.</p>
   </div>;
 }

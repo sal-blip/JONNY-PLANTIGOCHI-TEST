@@ -234,9 +234,9 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   useEffect(()=>{
     if(!plant || tutorial)return;
     return watchDailyVisit(gardenLife.day,time=>{
-      let credited=false;
-      void commit(p=>{const next=checkIn(p,time);credited=next!==p;return next;})
-        .then(saved=>{if(saved && credited && !lesson)setCoinsMessage('+10 Garden Coins · Visit iSEED');});
+      let reward=0;
+      void commit(p=>{const next=checkIn(p,time);reward=lifeOf(next).balance-lifeOf(p).balance;return next;})
+        .then(saved=>{if(saved && reward && !lesson)setCoinsMessage('Daily check-in · +'+reward+' Garden Coins');});
     });
   },[day,gardenLife.day,plant?.id,Boolean(tutorial),lesson,commit]);
   useEffect(()=>{if(coinsMessage){const timer=setTimeout(()=>setCoinsMessage(''),6500);return ()=>clearTimeout(timer);}},[coinsMessage]);

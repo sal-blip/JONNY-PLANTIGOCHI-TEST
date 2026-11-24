@@ -74,5 +74,17 @@
       }
     ]
   ],
-  "sha12": "c6abd00e18c3"
+  "sha12": "c6abd00e18c3",
+  "replacement_icons": [
+    {
+      "name": "Daily rewards",
+      "asset_id": "ed9a691b-282d-41dc-89ac-a73bdf756bac",
+      "file": "src/art/iseed-daily-rewards.png"
+    },
+    {
+      "name": "Share",
+      "asset_id": "42a77aec-94eb-4dd4-b53d-2b0196898d97",
+      "file": "src/art/iseed-share-camera.png"
+    }
+  ]
 }

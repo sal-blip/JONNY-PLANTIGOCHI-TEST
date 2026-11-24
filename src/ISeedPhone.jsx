@@ -8,8 +8,8 @@ const apps=[
   {id:'shop',label:'Shop'},
   {id:'inventory',label:'Inventory'},
   {id:'journal',label:'Journal'},
-  {id:'library',label:'Care library'},
-  {id:'postcard',label:'Postcard'},
+  {id:'rewards',label:'Daily rewards'},
+  {id:'postcard',label:'Share'},
   {id:'plantigotchi',label:'Plantigotchi'},
 ];
 

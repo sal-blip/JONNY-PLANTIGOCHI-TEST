@@ -42,10 +42,20 @@ export function localDay(time) {
   const d=new Date(time);
   return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
 }
+export const weeklyRewards=Object.freeze([10,10,15,15,20,20,30]);
+// Older wallets only recorded the last paid visit. Count that receipt once.
+export function lastVisit(life){
+  return life.visit ?? (life.day?{date:life.day,streak:1}:null);
+}
 export function checkIn(plant,time) {
   const life=lifeOf(plant), day=localDay(time);
   if((plant.tutorial && life.day) || day<=life.day)return plant;
-  return update(plant,{day,balance:life.balance+10,waters:0,wins:[]});
+  const previous=lastVisit(life);
+  // Compare calendar labels at UTC midnight so local DST never breaks a streak.
+  const consecutive=previous && Date.parse(day)-Date.parse(previous.date)===86400000;
+  const streak=consecutive?previous.streak+1:1;
+  const reward=weeklyRewards[(streak-1)%weeklyRewards.length];
+  return update(plant,{day,visit:{date:day,streak},balance:life.balance+reward,waters:0,wins:[]});
 }
 export function earnWater(plant,time) {
   plant=checkIn(plant,time);
@@ -83,6 +93,8 @@ export function validGardenLife(plant) {
   if(!g || !integer(g.balance) || typeof g.day!=='string' || !(g.day==='' || /^\d{4}-\d{2}-\d{2}$/.test(g.day)) ||
     !integer(g.waters) || g.waters>3 || !Array.isArray(g.wins) || g.wins.length>5 ||
     !g.wins.every(validId) || new Set(g.wins).size!==g.wins.length)return false;
+  if(g.visit!==undefined && (!g.visit || typeof g.visit.date!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(g.visit.date) ||
+    !Number.isFinite(Date.parse(g.visit.date)) || g.visit.date>g.day || !integer(g.visit.streak) || g.visit.streak<1))return false;
   if(![g.items,g.events,g.plants,g.notes].every(list=>Array.isArray(list) && list.every(i=>i && validId(i.id)) && unique(list)))return false;
   const placed=new Set();
   for(const item of g.items){

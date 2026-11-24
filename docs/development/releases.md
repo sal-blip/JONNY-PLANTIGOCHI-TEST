@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.38 · Weekly check-ins and garden camera
+
+Daily rewards shows the repeating seven-day calendar and collected coins. Journal now includes the Care library. Share opens a garden viewfinder with room selection, tap-to-focus, drag, zoom and PNG capture. This release follows the production navigation from 0.1.37. All 177 unit tests passed. Component checks exercised reward browsing, switching Journal tabs, choosing camera rooms, zooming, capturing a 1200 × 960 PNG and retaking it. Physical pinch gestures and the native file share sheet await device testing.
+
 ## Plantigochi 0.1.37 · Snake Plant and nursery pots
 
 Snake Plant, Golden Pothos, Hoya Splash, Queen Anthurium and Monkey Tail Cactus now use their mounted foliage with the approved Terracotta pot by default. Their portraits frame the complete plant. Garden placements use the owned pot at the slot when one is present. Magnified iSEED portraits sample the native layers directly when they exceed the room stamp’s resolution.
