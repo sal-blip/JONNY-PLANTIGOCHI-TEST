@@ -45,6 +45,14 @@ with sync_playwright() as pw:
         expect(active.locator('.room-depth')).to_have_attribute('width', '400')
         expect(page.locator('.room-frame[inert] .room-actors').first).to_have_attribute('width', '400')
         active.locator('[data-item-id="lucky-cat"]').tap()
+        if density==3:
+            # Inspection samples the visible crop at device density and releases
+            # it before moving the object into the second room.
+            page.wait_for_function("""() => {
+                const c=document.querySelector('.room-frame:not([inert]) .room-actors');
+                return c.style.width && Math.abs(c.width/c.getBoundingClientRect().width-devicePixelRatio)<.04
+                    && c.width*c.height<=4010000;
+            }""")
         taps(page, 'Move to another spot', 'Next placement room', 'Place at Right studio windowsill')
         expect(active.locator('.room-actors')).to_have_attribute('width', str(expected_width))
         taps(page, 'Place here')

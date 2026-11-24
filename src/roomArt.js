@@ -18,17 +18,20 @@ export function roomLight(hour) {
 export function drawRoom(canvas,{
   hour,plants=[],outsideOffset=0,roomIndex=0,time=0,reducedMotion=false,awake=false,
   highlighted=-1,lifted=-1,hoverPlacement=null,leavePot=false,worldHeight=BASE_HEIGHT,above=0,separatePlanes=false,placing=false,
-  jarProgress=null,leafCount=0,shopItems=[],playingItemId=null,photos,foregroundCanvas=null
+  jarProgress=null,leafCount=0,shopItems=[],playingItemId=null,photos,foregroundCanvas=null,region=null
 }={}) {
   const ctx=canvas.getContext('2d');
   if(!ctx)return;
   const view=roomIndex%2;
   const light=roomLight(hour);
   const places=placesFor(view,worldHeight-above-BASE_HEIGHT);
+  const scale=canvas.width/(region?.w || BASE_WIDTH);
   function startLayer(ctx){
     ctx.save();
-    ctx.setTransform(ctx.canvas.width/BASE_WIDTH,0,0,ctx.canvas.height/worldHeight,0,0);
-    ctx.clearRect(0,0,BASE_WIDTH,worldHeight);ctx.translate(0,above);
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    ctx.scale(scale,ctx.canvas.height/(region?.h || worldHeight));
+    ctx.translate(-(region?.x || 0),above-(region?.y || 0));
     ctx.imageSmoothingEnabled=false;
   }
   startLayer(ctx);
@@ -45,7 +48,7 @@ export function drawRoom(canvas,{
     const plant=hovering?.plant ?? (slot===lifted?null:plants[slot]),selected=slot===highlighted || Boolean(shopPot && highlighted===shopPot.id);
     if(!plant && !shopPot)return;
     drawPottedPlant(ctx,{x:place.x*BASE_WIDTH,y:place.baseY,size:place.size,
-      rasterScale:ctx.canvas.width/BASE_WIDTH,plant,potSku:shopPot?.sku,night:1-light.day,time,reducedMotion,selected});
+      rasterScale:scale,plant,potSku:shopPot?.sku,night:1-light.day,time,reducedMotion,selected});
   }
   const object=keepsakeFor(roomIndex);
   function paintKeepsake(id){
@@ -55,7 +58,7 @@ export function drawRoom(canvas,{
   }
   drawScenery(ctx,{view,light,time,reducedMotion,outsideOffset,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,
     occupantOverhang:slot=>hasTrailingFoliage(hoverPlacement?.slot===slotFor(roomIndex,places[slot])?hoverPlacement.plant.species:plants[slot]?.species)?28:0,separatePlanes});
-  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion,rasterScale:canvas.width/BASE_WIDTH});
+  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion,rasterScale:scale});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   // In the live room they also sit in front of the native-resolution photo apertures.
   const front=foregroundCanvas?.getContext('2d');

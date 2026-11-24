@@ -1,5 +1,5 @@
 import {drawGardenStamp} from './gardenSpecimenStamp.js';
-import {potMaster} from './shopSprites/potPortraits.js';
+import {nativeArt} from './shopSprites/nativeArt.js';
 import {collectorFoliage} from './shopSprites/collectorFoliage.js';
 import * as flytrap from './shopSprites/venus-flytrap.js';
 import * as sundew from './shopSprites/cape-sundew.js';
@@ -375,7 +375,7 @@ function paintStalkExtension(grid,art,firstInk,socket,topX,topY,rootX,rootY){
   }
 }
 
-function drawPlantParts(stalks,blades,plant,pot,mouth,pose,firstInk){
+function drawPlantParts(stalks,blades,plant,pot,mouth,pose,firstInk,nativeMount){
   const hanging=pot && plant.repotted;
   const art=hanging || plant.foliage;
   const soilMounted=plant.habit==='basal' || plant.habit==='vine';
@@ -395,6 +395,18 @@ function drawPlantParts(stalks,blades,plant,pot,mouth,pose,firstInk){
   const sway=y=>Math.round(pose*2*Math.min(1,Math.max(0,(Math.abs(y-socket[1])-3)/42)));
   if(!soilMounted)paintStalkExtension(stalks,art,firstInk,socket,socket[0]+dx,socket[1]+dy,soilX,mouth.front+1);
   const strips=hanging?[[-4,1,-2,2]]:plant.stalks;
+  if(nativeMount){
+    const left=art.spriteOffset.x,top=art.spriteOffset.y;
+    const width=Math.max(...art.spriteRows.map(row=>row.length)),height=art.spriteRows.length;
+    const holes=[];
+    for(const [first,last,l,r] of strips){
+      for(let y=first;y<=last;y++){
+        const shift=sway(y)+dx;
+        for(let x=l;x<=r;x++)if(nativeMount.covered(x+shift,y+dy))holes.push([x+shift,y+dy]);
+      }
+    }
+    return {x:left+dx,y:top+dy,width,height,shifts:art.spriteRows.map((_,row)=>sway(top+row)),holes};
+  }
   drawSpriteRows((x,y,ink,sourceX)=>{
     const isStalk=strips.some(([top,bottom,left,right])=>y>=top && y<=bottom && sourceX>=left && sourceX<=right);
     (isStalk?stalks:blades).nativeDot(x+dx,y+dy,ink);
@@ -467,7 +479,7 @@ function potLayers(bounds,density,style,pot,plant,preview,mouth){
   return layers;
 }
 
-function sprite(style,hash,pose,pot,plant,density,preview,bare) {
+function sprite(style,hash,pose,pot,plant,density,preview,bare,native=false) {
   const sourceBounds=plant?.trailing?trailingBounds:pot || plant?shopBounds:originalBounds;
   const bounds=Object.fromEntries(Object.entries(sourceBounds).map(([key,v])=>[key,v*density]));
   // Preserve the full canopy when a tall vessel lifts it above the normal stamp.
@@ -476,9 +488,11 @@ function sprite(style,hash,pose,pot,plant,density,preview,bare) {
   const mouth=pot?.mouth ?? (plant?.pot?{soil:plant.crown,half:9,front:plant.crown[1]+2,arc:2}:
     {soil:[0,-29],half:(ceramics[style].wall[0]-1)*2,front:-26,arc:0});
   const vessel=potLayers(bounds,density,style,pot,plant,preview,mouth);
+  let crown;
   if(plant){
     const base=pot?.art ?? plant.pot;
-    drawPlantParts(stalks,blades,plant,pot,mouth,pose,glazeInk+(base?.spritePalette.length ?? 0));
+    const mount=native && {covered:(x,y)=>!bare && vessel.front[(y-bounds.topEdge)*bounds.width+x-bounds.leftEdge]>0};
+    crown=drawPlantParts(stalks,blades,plant,pot,mouth,pose,glazeInk+(base?.spritePalette.length ?? 0),mount);
   }else if(hash!==null){
     const lift=pot?Math.round((-28-mouth.soil[1])/2):0;
     const dx=Math.round(mouth.soil[0]/2);
@@ -493,7 +507,9 @@ function sprite(style,hash,pose,pot,plant,density,preview,bare) {
   for(let i=0;i<blades.cells.length;i++){
     blades.cells[i]=blades.cells[i] || (!bare && vessel.front[i]) || stalks.cells[i] || (!bare && vessel.back[i]);
   }
-  return runsFromGrid(blades,bounds);
+  const runs=runsFromGrid(blades,bounds);
+  runs.crown=crown;
+  return runs;
 }
 
 function runsFromGrid(grid,{leftEdge,topEdge,width,height}){
@@ -552,7 +568,7 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
   const pot=shopPots[finish],density=2;
   if(!preview && !pot && featured?.repotted)size*=featuredRoomScale;
   const pose=hash===null || reducedMotion || !Number.isFinite(time)?0:Math.round(Math.sin(time*.00115+(hash%83)*.12)*.82);
-  const key=[style,hash,pose,species,finish,preview,bare].join(':');
+  const key=[style,featured?null:hash,pose,species,finish,preview,bare].join(':');
   let runs=poses.get(key);
   if(!runs) {
     runs=sprite(style,hash,pose,pot,featured,density,preview,bare);
@@ -566,12 +582,22 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
   const sweep=(reducedMotion ? -8 : (time%3600)*.035-45)*density;
   size/=density;
   let stamped=false;
-  if(!preview && typeof document!=='undefined'){
-    const source=!bare && potMaster(finish);
-    const master=source?.image.complete && source.image.naturalWidth ? source : null;
+  if(typeof document!=='undefined'){
+    const image=featured && nativeArt(species,night,selected);
+    const master=!bare && nativeArt(finish,night,selected);
+    let baseRuns=runs;
+    if(image){
+      const mountKey=key+'/mount';
+      baseRuns=poses.get(mountKey);
+      if(!baseRuns){
+        baseRuns=sprite(style,hash,pose,pot,featured,density,preview,bare,true);
+        if(poses.size>=192)poses.delete(poses.keys().next().value);
+        poses.set(mountKey,baseRuns);
+      }
+    }
     const lightStep=Math.round(Math.max(0,Math.min(1,night))*48);
-    const stampKey=[key,lightStep,Boolean(master),selected].join('/');
-    const glaze=master && {first:glazeInk,end:glazeInk+pot.art.spritePalette.length};
+    const stampKey=[key,lightStep,Boolean(master),Boolean(image),selected].join('/');
+    const glaze=master && {first:glazeInk,end:glazeInk+pot.art.spritePalette.length,art:pot.art};
     // Paint the outline first so the stamp covers its interior at every zoom.
     if(selected){
       ctx.save();
@@ -579,7 +605,7 @@ export function drawPottedPlant(ctx,{x,y,size=1,plant=null,potSku=null,night=0,t
       drawSelectionContour(ctx,runs,{x:x*rasterScale,y:y*rasterScale,size:size*rasterScale,firstInk:soilShadow,rasterScale});
       ctx.restore();
     }
-    stamped=drawGardenStamp(ctx,stampKey,runs,ink,x,y,size,glaze,master,lightStep/48);
+    stamped=drawGardenStamp(ctx,stampKey,baseRuns,ink,x,y,size,glaze,master,image);
     if(stamped && !selected)return;
   }
   ctx.save();

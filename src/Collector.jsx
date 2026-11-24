@@ -5,6 +5,7 @@ import SwipeCue from './SwipeCue.jsx';
 import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces} from './roomShopArt.js';
+import {prepareNativeArt} from './shopSprites/nativeArt.js';
 import {prepareRoomPhotos} from './framePhotoMedia.js';
 import {catalog,itemPrice,lifeOf,canRepotAt,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackupChange} from './gardenEconomy.js';
 import './gardenMarket.css';
@@ -60,6 +61,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const stage=useRef(null),roomReturn=useRef(null),ghostCanvas=useRef(null);
   const camera=useRef(null),cameraCenter=useRef(page+.5);
   const [detailScale,setDetailScale]=useState(0);
+  const [focusCrops,setFocusCrops]=useState(null);
   const [worldHeight,setWorldHeight]=useState(ROOM_HEIGHT);
   const lens=useRef(null),zoomTimer=useRef(null),pressTimer=useRef(null),petNumber=useRef(0);
   const [visible,setVisible]=useState([page,page]);
@@ -177,7 +179,29 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     onOverlayChange?.(Boolean(active && (panel || busy || placing)));
     return ()=>onOverlayChange?.(false);
   },[active,panel,busy,placing,onOverlayChange]);
+  function sampleZoom(){
+    const el=lens.current;
+    if(!el?.classList.contains('inspecting'))return;
+    const view=el.parentElement.getBoundingClientRect();
+    const crops={};
+    stage.current.querySelectorAll('.room-frame').forEach((frame,index)=>{
+      const rect=frame.getBoundingClientRect();
+      const unit=rect.width/ROOM_WIDTH;
+      if(!unit || rect.right<=view.left || rect.left>=view.right)return;
+      // Overscan a few world pixels. Allocate display pixels only for the
+      // visible area, even when the full magnified room would exceed GPU limits.
+      const x=clamp(Math.floor((view.left-rect.left)/unit)-2,ROOM_WIDTH);
+      const y=clamp(Math.floor((view.top-rect.top)/unit)-2,worldHeight);
+      const w=clamp(Math.ceil((view.right-rect.left)/unit)+2,ROOM_WIDTH)-x;
+      const h=clamp(Math.ceil((view.bottom-rect.top)/unit)+2,worldHeight)-y;
+      if(w<=0 || h<=0)return;
+      const scale=Math.min(unit*(window.devicePixelRatio||1),4096/w,4096/h,Math.sqrt(4000000/(w*h)));
+      if(scale>detailScale)crops[index]={x,y,w,h,scale};
+    });
+    setFocusCrops(crops);
+  }
   function relax(){
+    setFocusCrops(null);
     clearTimeout(pressTimer.current);clearTimeout(zoomTimer.current);
     const el=lens.current;
     if(el){el.classList.remove('inspecting','asset-focus');el.style.transform='';}
@@ -190,6 +214,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const y=clamp((clientY-rect.top)/rect.height,1)*el.clientHeight;
     clearTimeout(zoomTimer.current);el.classList.add('inspecting');
     el.style.transform='translate3d('+((1-scale)*x)+'px,'+((1-scale)*y)+'px,0) scale('+scale+')';
+    setFocusCrops(null);
     zoomTimer.current=setTimeout(relax,5000);
   }
   useLayoutEffect(()=>{
@@ -222,8 +247,12 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       overlay.setProperty('--inspect-top',Math.max(h*.19,centerY-gap)+'px');
       overlay.setProperty('--inspect-bottom',Math.min(h*.69,centerY+gap)+'px');
       clearTimeout(zoomTimer.current);clearTimeout(pressTimer.current);
+      setFocusCrops(null);
       el.classList.add('inspecting','asset-focus');
       el.style.transform='translate3d('+dx+'px,'+dy+'px,0) scale('+scale+')';
+      requestAnimationFrame(()=>{
+        if(!el.getAnimations().some(a=>a.transitionProperty==='transform'))sampleZoom();
+      });
     }
     frameAsset();
     const observer=new ResizeObserver(frameAsset);
@@ -542,7 +571,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const image=document.createElement('canvas');image.width=ROOM_WIDTH*3;image.height=ROOM_HEIGHT*3;
     const plants=placesFor(page).map(spot=>collection.get(slotFor(page,spot)));
     try{
-      const photos=await prepareRoomPhotos(items,page);
+      const [photos]=await Promise.all([prepareRoomPhotos(items,page),prepareNativeArt()]);
       drawRoom(image,{hour,shopItems:items,photos,plants,jarProgress,leafCount:plant.book.length,roomIndex:page,time:0,reducedMotion:true});
       const blob=await new Promise(resolve=>image.toBlob(resolve,'image/png'));
       if(!blob || !mounted.current)return null;
@@ -586,9 +615,10 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
     }
   }}>
-    <div className="room-lens" ref={lens}><div className="room-picture" ref={stage} onScroll={()=>{
+    <div className="room-lens" ref={lens} onTransitionEnd={e=>{if(e.target===lens.current && e.propertyName==='transform')sampleZoom();}}><div className="room-picture" ref={stage} onScroll={()=>{
       cameraCenter.current=(stage.current.scrollLeft+stage.current.clientWidth/2)/camera.current;
       readCamera();
+      if(focusCrops)sampleZoom();
     }} onPointerDown={start} onPointerMove={onMotion} onPointerUp={e=>end(e)} onPointerCancel={e=>end(e,true)}
       onLostPointerCapture={e=>{if(e.target===e.currentTarget)end(e,true);}}
       onClickCapture={e=>{
@@ -599,7 +629,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         else inspect(e.clientX,e.clientY);
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
-        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={detailScale>0 && +k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} detailScale={detailScale} plants={potted[k]} hour={hour}
+        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={detailScale>0 && +k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} detailScale={detailScale} crop={focusCrops?.[k]} plants={potted[k]} hour={hour}
           garden={plant} playingItemId={playingRecordId} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} hoverPlacement={hoverPlacement} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>

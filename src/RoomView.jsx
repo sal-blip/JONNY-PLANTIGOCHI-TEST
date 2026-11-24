@@ -36,12 +36,17 @@ function windowOffset(scroller,canvas,index,reduced){
   return Math.round(Math.max(-8,Math.min(8,(center-index-.5)*12)));
 }
 
-export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,detailScale=1,plants,hour,placing,busy,carry,hoverPlacement,dragging,selected,choose,cat,petCat,
+export default function RoomView({stage,index,onScreen,running,ambient=false,worldHeight,detailScale=1,crop,plants,hour,placing,busy,carry,hoverPlacement,dragging,selected,choose,cat,petCat,
   garden,shopItems=[],playingItemId=null,shopMove,inspectItem,openKeepsake,panelOpen=false,jarProgress=null,leafCount=0}) {
   const canvas=useRef(null),depth=useRef(null),foreground=useRef(null);
   // Changing canvas dimensions clears its pixels. Keep visible rooms at the
   // same resolution while another surface owns input or is sliding past.
-  const rasterScale=onScreen?detailScale:1;
+  const region=onScreen && crop;
+  const rasterScale=region?.scale || (onScreen?detailScale:1);
+  const actorWidth=Math.round((region?.w || ROOM_WIDTH)*rasterScale);
+  const actorHeight=Math.round((region?.h || worldHeight)*rasterScale);
+  const actorStyle=region?{left:100*region.x/ROOM_WIDTH+'%',top:100*region.y/worldHeight+'%',
+    width:100*region.w/ROOM_WIDTH+'%',height:100*region.h/worldHeight+'%'}:undefined;
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
   const scene=useRef(null);
   const [focused,setFocused]=useState(null);
@@ -63,7 +68,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   const lifted=running && dragging && carry?spots.findIndex(spot=>slotFor(index,spot)===carry.from):-1;
   const animate=onScreen && (running || ambient);
   const showDestinations=running && placing;
-  scene.current={hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,hoverPlacement,leavePot:carry?.repot,above,worldHeight,separatePlanes:true,placing:showDestinations,jarProgress,leafCount};
+  scene.current={region,hour,plants,shopItems,playingItemId,roomIndex:index,awake:Boolean(cat),highlighted,lifted,hoverPlacement,leavePot:carry?.repot,above,worldHeight,separatePlanes:true,placing:showDestinations,jarProgress,leafCount};
   const outsideOffset=useRef(0);
   useEffect(()=>{
     const media=matchMedia('(prefers-reduced-motion: reduce)');
@@ -101,7 +106,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     outsideOffset.current=windowOffset(stage.current,canvas.current,index,reduced);
     drawRoom(canvas.current,{...scene.current,outsideOffset:outsideOffset.current,foregroundCanvas:foreground.current,time:performance.now(),reducedMotion:reduced});
-  },[onScreen,stage,rasterScale,plants,hour,index,cat,highlighted,lifted,hoverPlacement,worldHeight,above,showDestinations,jarProgress,leafCount,shopItems,playingItemId]);
+  },[onScreen,stage,rasterScale,region,plants,hour,index,cat,highlighted,lifted,hoverPlacement,worldHeight,above,showDestinations,jarProgress,leafCount,shopItems,playingItemId]);
   useLayoutEffect(()=>{
     if(onScreen && !document.hidden && depth.current)drawRoomDepth(depth.current,index,roomLight(hour),above);
   },[onScreen,worldHeight,above,hour,index]);
@@ -162,11 +167,11 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   return <div className="room-frame" aria-hidden={!onScreen || undefined} inert={!onScreen?'':undefined}
     style={{left:'calc('+index+' * var(--room-width))'}}>
     <canvas className="room-depth" ref={depth} width={ROOM_WIDTH} height={worldHeight} aria-hidden="true"/>
-    <canvas className="room-actors" ref={canvas} width={ROOM_WIDTH*rasterScale} height={worldHeight*rasterScale} role="img" aria-label={viewName(index)+(index%2===0?' with a bookcase, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
+    <canvas className="room-actors" ref={canvas} style={actorStyle} width={actorWidth} height={actorHeight} role="img" aria-label={viewName(index)+(index%2===0?' with a bookcase, a sunlit window and a cat on the sofa':' with an artist’s desk and space for your plants')}/>
     {photoFrames.map(({item,bounds})=><FramePhoto key={item.id} itemId={item.id} photo={item.photo} deferOriginal={typeof IntersectionObserver==='function'} allowOriginal={onScreen} night={1-roomLight(hour).day}
       style={{left:100*bounds.left/ROOM_WIDTH+'%',top:100*(above+bounds.top)/worldHeight+'%',
         width:100*bounds.width/ROOM_WIDTH+'%',height:100*bounds.height/worldHeight+'%'}}/>)}
-    {photoFrames.length>0 && <canvas className="room-foreground" ref={foreground} width={ROOM_WIDTH*rasterScale} height={worldHeight*rasterScale} aria-hidden="true"/>}
+    {photoFrames.length>0 && <canvas className="room-foreground" ref={foreground} style={actorStyle} width={actorWidth} height={actorHeight} aria-hidden="true"/>}
     <div className="room-interior" hidden={!running} style={{top:(100*above/worldHeight)+'%',height:(100*ROOM_HEIGHT/worldHeight)+'%'}}>
       {targets.map(({key,focus,label,click,attrs,open,exchange},i)=>{
         const {left,right,top,bottom}=bounds[i];

@@ -19,7 +19,7 @@
   background:radial-gradient(ellipse at 50% 75%,#a1a88229 0%,transparent 48%),linear-gradient(145deg,#fcf9eac9,#dce5cbad);
 }
 .shop-preview-stage {display:block;position:relative}
-.shop-specimen .shop-art {display:block;width:72px;height:64px;image-rendering:pixelated}
+.shop-specimen .shop-art {display:block;width:72px;height:64px;image-rendering:auto}
 .shop-specimen.large {width:100%;margin:0 0 12px;padding:8px 0}
 .shop-specimen.large .shop-art {width:144px;height:128px}
 .shop-specimen.large.framed-photo .shop-preview-stage {width:min(100%,clamp(144px,32dvh,288px))}
@@ -46,7 +46,7 @@
 
 .shop-compare label{display:inline-flex;align-items:center;gap:8px;min-height:40px;cursor:pointer}
 .shop-compare p{margin:0 0 8px;font-size:14px}
-.shop-scale-art{display:block;width:100%;max-width:72px;height:auto;image-rendering:pixelated}
+.shop-scale-art{display:block;width:100%;max-width:72px;height:auto;image-rendering:auto}
 
 .shop-look {
   box-sizing:border-box; width:min(21rem,calc(100vw - 32px)); max-height:calc(100dvh - 32px);
@@ -62,7 +62,7 @@
 .shop-look-kind {margin:0;color:#4a6353;font-size:.875rem}
 .shop-look h2 {margin:2px 0 6px;font-size:1.35rem;line-height:1.2}
 .shop-look-price {display:flex;gap:6px;align-items:center;margin:0;font-weight:650}
-.shop-look-price img {image-rendering:pixelated}
+.shop-look-price img {image-rendering:auto}
 .shop-look-actions {margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .shop-look-actions button {min-height:44px;border:1px solid #819780;border-radius:8px;font:600 1rem var(--display);background:#e9ecdc;color:#233a2e}
 .shop-look-actions button:last-child {background:#315640;color:#fffbed;border-color:#315640}

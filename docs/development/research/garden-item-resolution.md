@@ -29,3 +29,19 @@ A 393 × 710 viewport at 3× device density allocated 1200 × 2169 for the visib
 The iSEED Shop and My Items previously drew normal portraits at 72 × 64. They now draw at 216 × 192, inventory detail at 432 × 384 and shop close-ups at 648 × 576. The earned collection tiles use the same renderer. The six reviewed SpriteCook pot masters supply the original glaze detail for both iSEED and the garden.
 
 Garden plants and pots use small cached images drawn at three samples per native sprite pixel. Each image is cropped to the visible pose. Only visible ceramic receives the higher-detail glaze, so crossing leaves, stems and contact shadows keep their positions. Cached images share a three-megapixel budget. The visible room requests a 3× output grid within its canvas limits. Offscreen rooms and background layers retain the lower-cost rendering introduced in the earlier swipe fix. [Garden renderer](../../../src/gardenSpecimenStamp.js) · [iSEED portraits](../../../src/SpecimenPortrait.jsx)
+
+## 0.1.36 · Use the original artwork at each display size
+
+The game packs the approved artwork for 40 plant crowns, 10 pots and four decorations into one 768 × 857 transparent atlas. The starter Monstera uses its procedural leaf renderer. The build script preserves original colors, approved edits, and native pixel dimensions. Rebuild with `python scripts/build-native-garden-art.py` using Pillow, NumPy and SciPy. The PNG and region map are committed and included in offline installs. The renderer uses the existing indexed art during decoding. [Atlas builder](../../../scripts/build-native-garden-art.py) · [Original cutouts](../../../src/shopSprites/native-regions.json)
+
+Use one fitted source for shop, inventory, earned portraits, carried plants, the room and postcards. Fit it to the existing socket and footprint. Root strips behind the pot lip stay hidden. The crown samples the same registered bitmap across its sway bands. Apply lighting once per source and lighting step. Render at a minimum of three backing samples per portrait layout unit and increase it when a larger on-screen portrait requires more device pixels.
+
+| Original cutout | Native pixels |
+| --- | --- |
+| Thai Constellation | 80 × 95 |
+| Prayer Plant | 95 × 78 |
+| Queen Anthurium | 86 × 178 |
+| Blue Willow Porcelain | 69 × 62 |
+| Bog Frog Pot | 48 × 48 |
+
+On a 393 × 710 CSS-pixel Chromium phone at 3× density, a focused windowsill previously stretched a 1,200-pixel canvas across 1,188 CSS pixels, providing about one sample per CSS pixel. After the camera settles the visible span uses 1,230 samples across 410 CSS pixels. Releasing focus restores the full room. This keeps a four-megapixel allocation limit per actor plane. Fine patterns below a display pixel blend on shelves. Close-ups can show detail up to the authored source. Check apparent sharpness and swipe performance on physical handsets.

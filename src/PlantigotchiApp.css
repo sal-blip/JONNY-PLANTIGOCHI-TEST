@@ -31,6 +31,7 @@
   .toy-collection li:nth-child(3n) .toy-tile::before {animation-delay:-9s}
 }
 .toy-tile :is(canvas,.seed-mask) {display:block;width:96%;height:auto;image-rendering:pixelated}
+.toy-tile canvas {image-rendering:auto}
 .toy-tile .seed-mask {width:90%}
 .seed-status {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 .toy-handbook details {border-top:1px solid #aaba9e}

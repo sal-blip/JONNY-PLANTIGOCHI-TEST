@@ -1,4 +1,5 @@
 import {surfaceScale} from './gardenLayout.js';
+import {nativeArt} from './shopSprites/nativeArt.js';
 import {approvedArt} from './shopSprites/approved.js';
 import {drawPottedPlant,isShopPlant,isShopPot} from './roomPlant.js';
 import {drawSelectionContour} from './roomContour.js';
@@ -120,10 +121,26 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=fa
   }
   if(!preview){ctx.fillStyle='rgba(59,42,42,.22)';r(-9,0,22,1);r(-6,1,17,1);}
   if(selected)drawSelectionContour(ctx,art,{x,y,size:size/2,firstInk:1,rasterScale});
-  art.forEach((cells,i)=>{
-    ctx.fillStyle=ink[i];
-    for(let j=0;j<cells.length;j+=3)r(cells[j]/2,cells[j+1]/2,cells[j+2]/2,.5);
-  });
+  const master=nativeArt(sku,night,selected);
+  if(master){
+    const {spriteOffset,spriteRows}=approvedArt[sku];
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality='high';
+    ctx.drawImage(master,x+spriteOffset.x*size/2,y+spriteOffset.y*size/2,
+      Math.max(...spriteRows.map(row=>row.length))*size/2,spriteRows.length*size/2);
+    if(sku==='record' && spinTime!==null){
+      const marks=labelOrbit[Math.floor(spinTime/255)%labelOrbit.length];
+      marks.forEach(([cx,cy],i)=>{
+        ctx.fillStyle=ink[index[i===2?labelShadow:labelHighlight]];
+        r((cx-36)/2,(cy-55)/2,.5,.5);
+      });
+    }
+  }else{
+    art.forEach((cells,i)=>{
+      ctx.fillStyle=ink[i];
+      for(let j=0;j<cells.length;j+=3)r(cells[j]/2,cells[j+1]/2,cells[j+2]/2,.5);
+    });
+  }
   if(image && photo)framedPhoto(ctx,image,photo,sku,x,y,size,night);
   ctx.restore();
 }
