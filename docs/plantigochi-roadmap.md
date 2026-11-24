@@ -2,6 +2,8 @@
 
 This is a historical planning and verification record. For current behavior, active decisions and development entry points, use the [developer guide](development/README.md).
 
+**Proposed for review.** The [seed and shop collection plan](plant-collection-plan.md) lists the nine grow-only plants, the replacement shop roster and the two-seed choice after graduation.
+
 **Deferred publishing plan.** The web-first launch, device-local saves, Android and iPhone distribution, Steam controls and optional Stripe shop are collected in the [publishing notes](deferred-publishing-plan.md).
 
 | Status at start | Feature and acceptance criteria |
