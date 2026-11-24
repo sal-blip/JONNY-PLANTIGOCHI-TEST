@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v83 · Installed garden launch · November 24, 2026
+
+Plantigochi 0.1.23 paints the room and floor at the measured phone size on launch. Two installed-mode runs with a saved garden went from eight initial layer paints to two. All 165 unit tests passed. The resolution and swipe walkthroughs passed, including room animation behind iSEED.
+
+Six public resources matched the release build. An immediate reload during the live rollout initially returned the old entry. In a separate Chromium test starting with the v82 files and serving the new files from production through a local test origin, Settings → Check for updates → Restart to update loaded v83. The saved sprout, purse and placed plant survived the update and offline relaunch. Physical-phone launch smoothness still needs confirmation.
+
+Sites source `f13eb437219fd59618d77d6d8158bc560fddc497` · saved version 83 · deployment `appgdep_6b04ff09fe508191a876680d21f80eb9` · [GitHub source c2cce52](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/c2cce522ceaaa2a8748083145096c8d1e23447f9)
+
 ## v82 · Garden placement pulse · November 24, 2026
 
 Plantigochi 0.1.22 adds a soft radial wave inside each placement marker every 2.8 seconds. The center dot and swap arrows stay legible. Reduced motion keeps the marker still. Mobile Chromium compared all 11 destination buttons in a furnished living room with v81 and confirmed matching rim and hit dimensions, checked both pulse types and completed a swap. All 165 unit tests passed. Six published resources matched the local release and the public welcome loaded.
