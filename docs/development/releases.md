@@ -4,7 +4,7 @@ Use this record to trace the source and verification for a player-facing release
 
 ## v84 · Garden swipe performance · November 24, 2026
 
-Plantigochi 0.1.24 lets the browser animate the transition after a player releases a swipe. During a drag, toy visibility updates only the layers that use it. The room retains its measured pixel dimensions and animation throughout. Across ten touch swipes with a populated garden in 4× CPU-throttled Chromium, the repeat comparison reduced time spent recalculating styles from 2,594 ms to 940 ms and the share of sampled frame intervals above 25 ms from 144/193 to 97/226. Results on physical phones are pending.
+Players noticed stutter when swiping between the toy and the garden. The swipe handler updated styles across the game on each animation frame, even after the player lifted their finger. Plantigochi 0.1.24 lets the browser animate the transition after a player releases a swipe. During a drag, toy visibility updates only the layers that use it. The room retains its measured pixel dimensions and animation throughout. Across ten touch swipes with a populated garden in 4× CPU-throttled Chromium, the repeat comparison reduced time spent recalculating styles from 2,594 ms to 940 ms and the share of sampled frame intervals above 25 ms from 144/193 to 97/226. After updating the installed app, one player described swiping as “definitely better.”
 
 All 165 unit tests passed. Browser checks covered cancellation, reduced motion, room animation behind iSEED, two rendering densities and placement after reload. Six public resources matched the build. A test profile on the live game used Settings to update from 0.1.23 and relaunched offline with the same plant, purse and placed resident.
 
