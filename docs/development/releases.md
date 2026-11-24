@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v79 · Inspect and repot in the garden · November 24, 2026
+
+Plantigochi 0.1.19 frames room assets with text above and actions below. Open scenery holds its closer view for five seconds and eases back over 2.2 seconds. Repotting leaves the original container behind, while moving a purchased pot can swap it under a resident plant. The release passed 165 unit tests, a production build, day and night inspection, repotting and swap persistence, shared HUD and touch-passage checks in mobile Chromium. Physical-device testing remains open.
+
+Sites source `17e7d3456f06102dd4f88629cdd31c0933fa011b` · saved version 79 · deployment `appgdep_6b04f54f59fc819191d233175e293f13` · [GitHub source 079bc43](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/079bc43)
+
 ## v78 · Garden placement depth and shop size comparison · November 23, 2026
 
 Plantigochi 0.1.18 scales placeable assets with their supporting furniture or projected floor contact. The shop can show all 17 catalog items at windowsill scale beside a terracotta pot. Dragging a plant follows the scale of its source or prospective destination. The game reads existing slot addresses.

@@ -100,9 +100,9 @@
   margin:0;padding:0;border:0;overflow:hidden;
   color:#fff9e8;font-family:var(--display);text-align:center;
   text-shadow:0 1px 3px #13241f;
-  background:linear-gradient(to bottom,#15231dbf var(--inspect-top,28%),
-    transparent calc(var(--inspect-top,28%) + 34px),
-    transparent calc(var(--inspect-bottom,60%) - 28px),#15231dca var(--inspect-bottom,60%));
+  background:radial-gradient(ellipse var(--light-width,34vw) var(--light-height,18vh)
+    at var(--subject-x,50%) var(--subject-y,46%),transparent 38%,#15231d10 64%,
+    #15231d5c 90%,#15231db8 120%,#15231dc7 165%);
 }
 .garden-inspection::backdrop {background:transparent}
 .garden-inspection header,.inspection-options {

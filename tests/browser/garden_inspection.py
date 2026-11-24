@@ -31,6 +31,7 @@ with sync_playwright() as pw:
             center = bbox['y']+bbox['height']/2
             assert title['y']+title['height'] < center < actions['y'], (title, bbox, actions)
         check_framing()
+        assert view.evaluate("el => getComputedStyle(el).backgroundImage.startsWith('radial-gradient(')")
         page.screenshot(path=f'/tmp/plantigochi-inspection-{hour}.png')
         taps(page,'Repot into another pot','Repot in Terracotta pot at Living room windowsill')
         expect(page.get_by_role('status').filter(has_text='Repotted at')).to_be_visible()

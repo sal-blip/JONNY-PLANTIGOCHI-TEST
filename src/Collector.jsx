@@ -207,8 +207,13 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       const dx=-clamp(x*scale-w*.5,w*(scale-1)),dy=-clamp(y*scale-h*.46,h*(scale-1));
       const centerY=y*scale+dy;
       const gap=Math.min(targetHeight*scale/2+12,h*.20);
-      el.parentElement.style.setProperty('--inspect-top',Math.max(h*.19,centerY-gap)+'px');
-      el.parentElement.style.setProperty('--inspect-bottom',Math.min(h*.69,centerY+gap)+'px');
+      const overlay=el.parentElement.style;
+      overlay.setProperty('--subject-x',(x*scale+dx)+'px');
+      overlay.setProperty('--subject-y',centerY+'px');
+      overlay.setProperty('--light-width',Math.max(65,Math.min(w*.48,Math.max(gap*1.15,bounds.width*w/rect.width*scale*.80)))+'px');
+      overlay.setProperty('--light-height',Math.max(54,gap)+'px');
+      overlay.setProperty('--inspect-top',Math.max(h*.19,centerY-gap)+'px');
+      overlay.setProperty('--inspect-bottom',Math.min(h*.69,centerY+gap)+'px');
       clearTimeout(zoomTimer.current);clearTimeout(pressTimer.current);
       el.classList.add('inspecting','asset-focus');
       el.style.transform='translate3d('+dx+'px,'+dy+'px,0) scale('+scale+')';
