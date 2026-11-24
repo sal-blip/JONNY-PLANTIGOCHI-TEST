@@ -105,27 +105,40 @@
     #15231d26 73%,#15231d50 102%,#15231d80 137%,#15231da3 178%,#15231dba 225%);
 }
 .garden-inspection::backdrop {background:transparent}
-.garden-inspection header,.inspection-options {
-  position:absolute;left:0;right:0;padding-inline:max(18px,env(safe-area-inset-left),env(safe-area-inset-right));
+.garden-inspection[open] {
+  display:grid;
+  --heading-end:clamp(19%,var(--inspect-top,28%),60%);
+  --actions-start:clamp(var(--heading-end),var(--inspect-bottom,60%),69%);
+  grid-template-rows:var(--heading-end) calc(var(--actions-start) - var(--heading-end)) minmax(0,1fr) auto;
 }
-.garden-inspection header {bottom:calc(100% - var(--inspect-top,28%));pointer-events:none}
+.garden-inspection :is(header,.inspection-options,footer) {
+  min-inline-size:0;overflow-wrap:anywhere;
+  padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right));
+}
+.garden-inspection header {display:flex;flex-direction:column;overflow:auto;min-height:0;padding-top:max(8px,env(safe-area-inset-top))}
+.garden-inspection header>div {margin:auto auto 0;max-width:36rem}
+.garden-inspection footer {grid-row:4;padding-bottom:max(4px,env(safe-area-inset-bottom))}
 .garden-inspection h2 {margin:0;font-size:clamp(21px,4vmin,34px);line-height:1.1;outline:0;text-wrap:balance}
 .garden-inspection header p {margin:4px 0;font-size:14px}
 .inspection-options {
-  top:var(--inspect-bottom,60%);bottom:0;overflow:auto;overscroll-behavior:contain;
-  padding-bottom:max(12px,env(safe-area-inset-bottom));scrollbar-width:thin;
+  grid-row:3;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;
+  display:flex;flex-direction:column;align-items:center;gap:8px;padding-block:6px;
 }
-.inspection-options :is(.garden-page,.room-guide,.keepsake-details,a,svg) {color:inherit}
-.inspection-options :is(.menu-items,.garden-page,.keepsake-details) {max-width:32rem;margin-inline:auto}
+.inspection-options>* {flex:none;max-width:100%;min-width:0}
+.inspection-options .inspection-parts {display:flex;flex-wrap:wrap;justify-content:center;gap:2px 6px}
+.garden-inspection .inspection-parts button[aria-pressed=true] {text-decoration:underline;text-underline-offset:.25em;background:#172b2390;border-radius:8px}
+.garden-inspection .inspection-options .inspection-selection p {margin:0;font-weight:600}
+.inspection-options :is(.garden-page,.keepsake-details,a,svg) {color:inherit}
+.inspection-options :is(.menu-items,.garden-page,.keepsake-details) {max-width:min(100%,32rem);margin-inline:auto}
 .inspection-options .menu-items {display:flex;align-items:center;flex-direction:column}
 .inspection-options p {margin:4px auto 8px;line-height:1.35}
 .inspection-options .keepsake-print {display:none}
-.garden-inspection .inspection-options button {
+.garden-inspection :is(.inspection-options,footer) button {
   display:inline-flex;align-items:center;justify-content:center;min-height:44px;
   padding:5px 12px;border:0;border-radius:0;background:transparent;color:inherit;
   font:600 17px/1.25 var(--display);text-align:center;text-shadow:inherit;cursor:pointer;
 }
-.garden-inspection .inspection-options>button:last-child {font-weight:400}
+.garden-inspection footer button {font-weight:400}
 .garden-inspection button:is(:hover,:focus-visible) {text-decoration:underline;text-underline-offset:.22em}
 .garden-inspection button:focus-visible {outline:2px solid currentColor}
 .garden-inspection button:disabled {opacity:.6}

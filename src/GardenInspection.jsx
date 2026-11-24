@@ -6,19 +6,19 @@ export default function GardenInspection({title,location,close,children}){
   useLayoutEffect(()=>{
     const el=surface.current;
     el.showModal();
+    heading.current.focus({preventScroll:true});
     return ()=>el.close();
   },[]);
-  useLayoutEffect(()=>{heading.current.focus({preventScroll:true});},[title]);
   return <dialog ref={surface} className="garden-inspection" aria-labelledby="inspection-name"
     onCancel={event=>{event.preventDefault();close();}}
     onClick={event=>{if(event.target===event.currentTarget)close();}}>
-    <header>
+    <header><div>
       <h2 id="inspection-name" tabIndex="-1" ref={heading}>{title}</h2>
       {location && <p>{location}</p>}
-    </header>
+    </div></header>
     <div className="inspection-options">
       {children}
-      <button type="button" aria-label="Close menu" onClick={close}>Done</button>
     </div>
+    <footer><button type="button" aria-label="Close menu" onClick={close}>Done</button></footer>
   </dialog>;
 }

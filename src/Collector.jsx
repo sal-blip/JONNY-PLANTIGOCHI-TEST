@@ -48,6 +48,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const [panel,setPanel]=useState(null),[ghost,setGhost]=useState(null),[cat,setCat]=useState(false);
   const items=lifeOf(plant).items;
   const [shopMove,setShopMove]=useState(null),[preview,setPreview]=useState(null),[itemId,setItemId]=useState(null);
+  const [inspectionPart,setInspectionPart]=useState(null);
   const starterPurchase=useRef(false);
   const [purchaseState,setPurchaseState]=useState('ready');
   const phonePlacement=useRef(null),roomOpener=useRef(null),placeButton=useRef(null);
@@ -281,7 +282,10 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   }
   function inspectItem(i){
     if(pending.current || placing)return;
-    inspectTarget.current=Array.from(stage.current.querySelectorAll('[data-item-id]')).find(b=>b.dataset.itemId===i.id);
+    const resident=catalog[i.sku].kind==='pot' && collection.get(i.slot);
+    const plantTarget=resident && stage.current.querySelector('[data-slot="'+i.slot+'"][data-occupied]');
+    inspectTarget.current=plantTarget || Array.from(stage.current.querySelectorAll('[data-item-id]')).find(b=>b.dataset.itemId===i.id);
+    setInspectionPart(null);
     setItemId(i.id);setNotice('');setPanel('item');
   }
   function startPlacement(request,fromPhone=false){
@@ -438,6 +442,8 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     if(picking && occupant)return;
     setSlot(target);
     if(occupant){
+      const pot=items.find(i=>i.slot===target && catalog[i.sku]?.kind==='pot');
+      if(pot){inspectItem(pot);return;}
       inspectTarget.current=roomOpener.current;setCarry({id:occupant.id,from:target,confirmed:false});setPanel('move');
     }else if(!picking){
       const spot=placesFor(viewForSlot(target)).find(p=>slotFor(viewForSlot(target),p)===target);
@@ -543,17 +549,26 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       return {file,url:URL.createObjectURL(file)};
     }catch{return null;}
   }
+  const sourcePot=source && items.find(i=>i.slot===source.slot && catalog[i.sku]?.kind==='pot');
   const message=notice || (shopMove ? (preview?placeName(preview.slot)+' · '+catalog[shopMove.sku].name:'Choose a spot for '+catalog[shopMove.sku].name.toLowerCase()+'.') : inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):
-    carry.repot?'Choose an empty pot for '+(inHand.name || speciesName(inHand))+'.':'Choose an open circle for '+(inHand.name || speciesName(inHand))+'.'):
+    carry.repot?'Choose an empty pot for '+(inHand.name || speciesName(inHand))+'.':'Choose a spot for '+(inHand.name || speciesName(inHand))+(sourcePot?' and '+catalog[sourcePot.sku].name:'')+'.'):
     picking?(slot!==null&&!chosen?'Settle here on the '+placeName(slot).toLowerCase()+'?':'Choose an open circle for your grown plant.'):
     slot!==null?(chosen?(chosen.name || speciesName(chosen))+(chosen.source==='shop'?' · Shop plant':' · Gen '+chosen.generation)+' · '+new Date(chosen.movedAt).toLocaleDateString():placeName(slot)+' · Open'):
     '');
   const displaced=shopMove && preview && catalog[shopMove.sku].kind!=='plant' && items.find(i=>i.slot===preview.slot);
   const swapping=Boolean(displaced && shopMove.from!=null);
-  const sourcePot=source && items.find(i=>i.slot===source.slot && catalog[i.sku]?.kind==='pot');
   const inspectLocation=panel==='move'?carry?.from:panel==='item'?item?.slot:panel==='shelf'?slot:null;
-  const hasEmptyPot=panel==='move' && Array.from({length:count},(_,view)=>placesFor(view).some(spot=>canRepotAt(plant,slotFor(view,spot)))).some(Boolean);
+  const paired=panel==='item' && Boolean(itemPlant);
+  const plantName=paired && (itemPlant.name || speciesName(itemPlant));
+  const potName=paired && catalog[item.sku].name;
+  const hasEmptyPot=(panel==='move' || (paired && inspectionPart==='plant')) && Array.from({length:count},(_,view)=>placesFor(view).some(spot=>canRepotAt(plant,slotFor(view,spot)))).some(Boolean);
   const panelTitle={cat:'Garden cat',shelf:'Empty pot',move:source && (source.name || speciesName(source)),item:catalog[item?.sku]?.name || 'My items',jar:'Cutting Jar',book:'Leaf Book'};
+  if(paired)panelTitle.item=inspectionPart==='plant'?plantName:inspectionPart==='pot'?potName:plantName+' in '+potName;
+  function moveInspectedPlant(repot){
+    if(pending.current || !paired)return;
+    setCarry({id:itemPlant.id,from:item.slot,confirmed:true,repot});
+    setPanel(null);setNotice('');focusDestination();
+  }
   const available=active && !globalMenuOpen;
   const guidingPot=Boolean(starterPurchase.current && shopMove);
   return <section className="collector" aria-label="Collector garden" aria-hidden={!available || undefined} inert={!available?'':undefined}
@@ -630,18 +645,32 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         <button onClick={()=>confirmMove()}>{sourcePot?'Move with pot':'Move plant'}</button>
         <button disabled={!hasEmptyPot} onClick={()=>confirmMove(true)}>Repot into another pot</button>
         {!hasEmptyPot && <p>Place an empty pot in the room first.</p>}
-        {sourcePot && <button onClick={()=>{setCarry(null);inspectItem(sourcePot);}}>Manage pot</button>}
+
       </div>}
       {panel==='cat' && <button onClick={()=>onCat(Number(inspectTarget.current.dataset.catRoom))}>Pet again</button>}
       {panel==='shelf' && <p>Choose Repot on a plant to move it here.</p>}
-      {panel==='item' && item && <ShopItemDetail inRoom key={item.id} item={item} busy={busy}
+      {paired && <div className="inspection-selection">
+        <p id="inspection-part">What would you like to manage?</p>
+        <div role="group" aria-labelledby="inspection-part" className="inspection-parts">
+          {[['plant','Plant only'],['pot','Pot only'],['both','Plant + pot']].map(([part,label])=>
+            <button key={part} type="button" disabled={busy} aria-pressed={inspectionPart===part}
+              onClick={()=>{setInspectionPart(part);setNotice('');}}>{label}</button>)}
+        </div>
+      </div>}
+      {paired && inspectionPart==='plant' && <div className="menu-items">
+        <p>{potName} stays here.</p>
+        <button disabled={busy || !hasEmptyPot} onClick={()=>moveInspectedPlant(true)}>Repot plant</button>
+        {!hasEmptyPot && <p>Place an empty pot in the room first.</p>}
+      </div>}
+      {paired && inspectionPart==='both' && <button disabled={busy} onClick={()=>moveInspectedPlant(false)}>Move plant and pot together</button>}
+      {panel==='item' && item && (!paired || inspectionPart==='pot') && <ShopItemDetail inRoom potOnly={paired} key={item.id} item={item} busy={busy}
         move={()=>startPlacement({id:item.id,sku:item.sku,buy:false,from:item.slot})}
         store={async()=>{if(await change(p=>storeItem(p,item.id,item.slot))){
           if(item.id===playingRecordId)onSelectRecord(null);
           closePanel();setNotice(catalog[item.sku].name+' put in inventory.');
         }}}
         savePhoto={(photo,expected,frameOriginal)=>change(p=>framePhoto(p,item.id,photo,expected),frameOriginal)}>
-        {itemPlant && <p className="room-guide">Moving just this pot leaves {itemPlant.name || speciesName(itemPlant)} here.</p>}
+        {paired && <p>{plantName} stays here.</p>}
         {item.sku==='record' && item.slot!==null && <RecordControls soundEnabled={musicVolume > 0} playing={playingRecordId===item.id} onPlayingChange={yes=>onSelectRecord(yes?item.id:null)}/>}
       </ShopItemDetail>}
       {panel==='item' && notice && <p role="status">{notice}</p>}

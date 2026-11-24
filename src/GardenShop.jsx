@@ -47,7 +47,7 @@ export function CoinBalance({plant}){
   return <div className="wallet"><img src="/art/iseed-coin.png" width="20" height="20" alt="" style={{imageRendering:"pixelated"}}/><strong>{life.balance} Garden Coins</strong>
     <small>Today +{life.day===localDay(Date.now())?10+life.waters*2+life.wins.length*3:0}</small></div>;
 }
-export function ShopItemDetail({item,move,store,savePhoto,busy,inRoom=false,children}){
+export function ShopItemDetail({item,move,store,savePhoto,busy,inRoom=false,potOnly=false,children}){
   const [error,setError]=useState(''),[loading,setLoading]=useState(false);
   const input=useRef(null),pickerSource=useRef(null),request=useRef(0),product=catalog[item.sku];
   useEffect(()=>()=>{request.current++;},[item.id]);
@@ -76,15 +76,16 @@ export function ShopItemDetail({item,move,store,savePhoto,busy,inRoom=false,chil
   }
   return <div className="garden-page">
     {!inRoom && <ItemArt large sku={item.sku} photo={item.photo}/>}
+    {potOnly && children}
     <div className="menu-items">
-      <button disabled={busy||loading} onClick={move}>{item.slot===null?'Place in room':'Move to another spot'}</button>
+      <button disabled={busy||loading} onClick={move}>{item.slot===null?'Place in room':potOnly?'Move pot only':'Move to another spot'}</button>
     </div>
-    {children}
+    {!potOnly && children}
     {(product.kind==='frame' || item.slot!==null) && <div className="menu-items">
       {product.kind==='frame' && <><button disabled={busy||loading} onClick={openPhotoPicker}>{loading?'Preparing photo…':item.photo?'Change photo':'Choose a photo'}</button>
         <input hidden type="file" accept="image/*" aria-label="Frame photo" ref={input} onChange={choosePhoto}/>
         {item.photo && <button disabled={busy||loading} onClick={()=>applyPhoto(null,framePhotoIdentity(item.photo))}>Remove photo</button>}</>}
-      {item.slot!==null && <button disabled={busy||loading} onClick={store}>Put in inventory</button>}
+      {item.slot!==null && <button disabled={busy||loading} onClick={store}>{potOnly?'Store pot only':'Put in inventory'}</button>}
     </div>}{error && <p role="status">{error}</p>}
   </div>;
 }
