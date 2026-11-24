@@ -55,6 +55,8 @@ The two 128 kbps MP3s live in `public/music`. One player spans the public tour, 
 
 ## Garden placement and rendering
 
+For shop portraits, placed sizes, shelf clearance and foreground-to-background depth, see the [illustrated pot and plant scale audit](research/garden-scale-audit.md).
+
 The garden rests 8% closer than the original wide view. A stationary press on open scenery uses the same temporary 1.32× focus as a scene tap. Swiping still changes surfaces or pans across rooms. Keep a visible room’s backing canvas at the same resolution throughout a gesture. Resizing it clears its pixels, including while input belongs to the handset or the toy. The visible room keeps its animation clock while iSEED is raised or moving, including during a held or cancelled swipe. Garden input stays with the active surface. The room animation timer pauses when the document is hidden or reduced motion is requested. [Touch transition regression](../../tests/browser/garden_passage.py)
 
 The room uses Canvas 2D in a 400 × 320 logical space. Portrait extends the ceiling and floor. `RoomView` uses the same vertical offset for pixels, framed photos and DOM hit targets. `roomArt.js` draws plants at their pot baselines in the order supplied by the scenery. Floor plants can overlap a framed photo through a separate foreground canvas. Keep those layers inside the same camera transform so pan and zoom agree. [Room layout](../../src/gardenLayout.js) · [Paint order](../../src/roomArt.js) · [Scenery](../../src/roomScenery.js) · [Photo layers](../../src/FramePhoto.jsx) · [Garden sprite resolution and verification](research/garden-item-resolution.md)

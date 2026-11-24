@@ -1,0 +1,1297 @@
+item,planter,room,saved_slot,placement,slot_scale,shop_tile_ink_width_px,shop_tile_ink_height_px,placed_visible_width_room_units,placed_visible_height_room_units,opaque_pixels_clipped_percent
+terra,terra,Living room,0,Upper bookcase shelf,0.78,38,37,14.67,14.33,0
+terra,terra,Living room,1,Middle bookcase shelf,0.72,38,37,14,13.33,0
+terra,terra,Living room,2,Lower bookcase shelf,0.73,38,37,14,13.67,0
+terra,terra,Living room,3,Living room windowsill,0.86,38,37,16.67,16,0
+terra,terra,Living room,4,Coffee table,0.94,38,37,18,17.33,0
+terra,terra,Living room,5,Beside the sofa,1.06,38,37,20,19.67,0
+terra,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,38,37,14.67,14.33,0
+terra,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,38,37,14.67,14.33,0
+terra,terra,Living room,0/table-end,Center of the coffee table,0.7,38,37,13.33,13,0
+terra,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,37,17.33,17,0
+terra,terra,Living room,0/front-left,Front left floor,1.1,38,37,20.67,20.33,0
+terra,terra,Living room,0/front-right,Front right floor,1.12,38,37,21.33,20.67,0
+terra,terra,Plant studio,6,Upper studio shelf,0.82,38,37,15.33,15.33,0
+terra,terra,Plant studio,7,Lower studio shelf,0.75,38,37,14,14,0
+terra,terra,Plant studio,8,Studio cabinet,0.77,38,37,14.67,14.33,0
+terra,terra,Plant studio,9,Studio windowsill,0.85,38,37,16,15.67,0
+terra,terra,Plant studio,10,Drawing desk,0.86,38,37,16.67,16,0
+terra,terra,Plant studio,11,Beside the easel,1.07,38,37,20,19.67,0
+terra,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,37,14.67,14.33,0
+terra,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,37,14.67,14.33,0
+terra,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,37,14.67,14.33,0
+terra,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,37,17.33,17,0
+terra,terra,Plant studio,1/front-left,Front left studio floor,1.1,38,37,20.67,20.33,0
+terra,terra,Plant studio,1/front-right,Front right studio floor,1.12,38,37,21.33,20.67,0
+wave,wave,Living room,0,Upper bookcase shelf,0.78,37,36,14.33,14,0
+wave,wave,Living room,1,Middle bookcase shelf,0.72,37,36,13.33,13,0
+wave,wave,Living room,2,Lower bookcase shelf,0.73,37,36,13.67,13,0
+wave,wave,Living room,3,Living room windowsill,0.86,37,36,16,15.33,0
+wave,wave,Living room,4,Coffee table,0.94,37,36,17.33,17,0
+wave,wave,Living room,5,Beside the sofa,1.06,37,36,19.67,19,0
+wave,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,37,36,14.33,14,0
+wave,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,37,36,14.33,14,0
+wave,wave,Living room,0/table-end,Center of the coffee table,0.7,37,36,13,12.67,0
+wave,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,37,36,17,16.33,0
+wave,wave,Living room,0/front-left,Front left floor,1.1,37,36,20.33,19.67,0
+wave,wave,Living room,0/front-right,Front right floor,1.12,37,36,20.67,20,0
+wave,wave,Plant studio,6,Upper studio shelf,0.82,37,36,15,14.67,0
+wave,wave,Plant studio,7,Lower studio shelf,0.75,37,36,13.67,13.33,0
+wave,wave,Plant studio,8,Studio cabinet,0.77,37,36,14.33,14,0
+wave,wave,Plant studio,9,Studio windowsill,0.85,37,36,15.67,15.33,0
+wave,wave,Plant studio,10,Drawing desk,0.86,37,36,16,15.33,0
+wave,wave,Plant studio,11,Beside the easel,1.07,37,36,19.67,19.33,0
+wave,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,37,36,14.33,14,0
+wave,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,37,36,14.33,14,0
+wave,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,37,36,14.33,14,0
+wave,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,37,36,17,16.33,0
+wave,wave,Plant studio,1/front-left,Front left studio floor,1.1,37,36,20.33,19.67,0
+wave,wave,Plant studio,1/front-right,Front right studio floor,1.12,37,36,20.67,20,0
+bog-frog-pot,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,48,48,18.67,18.67,0
+bog-frog-pot,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,48,48,17.33,17.33,0
+bog-frog-pot,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,48,48,17.33,17.67,0
+bog-frog-pot,bog-frog-pot,Living room,3,Living room windowsill,0.86,48,48,20.67,20.67,0
+bog-frog-pot,bog-frog-pot,Living room,4,Coffee table,0.94,48,48,22.67,22.67,0
+bog-frog-pot,bog-frog-pot,Living room,5,Beside the sofa,1.06,48,48,25.33,25.33,0
+bog-frog-pot,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,48,48,18.67,18.67,0
+bog-frog-pot,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,48,48,18.67,18.67,0
+bog-frog-pot,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,48,48,16.67,16.67,0
+bog-frog-pot,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,48,48,22,22,0
+bog-frog-pot,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,48,48,26.67,26.33,0
+bog-frog-pot,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,48,48,26.67,27,0
+bog-frog-pot,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,48,48,20,19.67,0
+bog-frog-pot,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,48,48,18,18,0
+bog-frog-pot,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,48,48,18.67,18.33,0
+bog-frog-pot,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,48,48,20.67,20.33,0
+bog-frog-pot,bog-frog-pot,Plant studio,10,Drawing desk,0.86,48,48,20.67,20.67,0
+bog-frog-pot,bog-frog-pot,Plant studio,11,Beside the easel,1.07,48,48,26,25.67,0
+bog-frog-pot,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,48,48,18.67,18.67,0
+bog-frog-pot,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,48,48,18.67,18.67,0
+bog-frog-pot,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,48,48,18.67,18.67,0
+bog-frog-pot,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,48,48,22,22,0
+bog-frog-pot,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,48,48,26.67,26.33,0
+bog-frog-pot,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,48,48,26.67,27,0
+lava-pop-pot,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,48,48,18.67,18.67,0
+lava-pop-pot,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,48,48,17.33,17.33,0
+lava-pop-pot,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,48,48,17.33,17.67,0
+lava-pop-pot,lava-pop-pot,Living room,3,Living room windowsill,0.86,48,48,20.67,20.67,0
+lava-pop-pot,lava-pop-pot,Living room,4,Coffee table,0.94,48,48,22.67,22.67,0
+lava-pop-pot,lava-pop-pot,Living room,5,Beside the sofa,1.06,48,48,25.33,25.33,0
+lava-pop-pot,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,48,48,18.67,18.67,0
+lava-pop-pot,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,48,48,18.67,18.67,0
+lava-pop-pot,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,48,48,16.67,16.67,0
+lava-pop-pot,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,48,48,22,22,0
+lava-pop-pot,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,48,48,26.67,26.33,0
+lava-pop-pot,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,48,48,26.67,27,0
+lava-pop-pot,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,48,48,20,19.67,0
+lava-pop-pot,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,48,48,18,18,0
+lava-pop-pot,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,48,48,18.67,18.33,0
+lava-pop-pot,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,48,48,20.67,20.33,0
+lava-pop-pot,lava-pop-pot,Plant studio,10,Drawing desk,0.86,48,48,20.67,20.67,0
+lava-pop-pot,lava-pop-pot,Plant studio,11,Beside the easel,1.07,48,48,26,25.67,0
+lava-pop-pot,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,48,48,18.67,18.67,0
+lava-pop-pot,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,48,48,18.67,18.67,0
+lava-pop-pot,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,48,48,18.67,18.67,0
+lava-pop-pot,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,48,48,22,22,0
+lava-pop-pot,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,48,48,26.67,26.33,0
+lava-pop-pot,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,48,48,26.67,27,0
+monstera,original,Living room,0,Upper bookcase shelf,0.78,47,50,36.33,39,0
+monstera,original,Living room,1,Middle bookcase shelf,0.72,47,50,34,36,0
+monstera,original,Living room,2,Lower bookcase shelf,0.73,47,50,34.33,36.33,0
+monstera,original,Living room,3,Living room windowsill,0.86,47,50,40.33,43,0
+monstera,original,Living room,4,Coffee table,0.94,47,50,44,47,0
+monstera,original,Living room,5,Beside the sofa,1.06,47,50,49.67,53,0
+monstera,original,Living room,0/window-left,Left end of the living room windowsill,0.78,47,50,36.33,39,0
+monstera,original,Living room,0/window-middle,Center of the living room windowsill,0.78,47,50,36.33,39,0
+monstera,original,Living room,0/table-end,Center of the coffee table,0.7,47,50,32.67,35,0
+monstera,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,47,50,42.67,45.67,0
+monstera,original,Living room,0/front-left,Front left floor,1.1,47,50,51.67,55,0
+monstera,original,Living room,0/front-right,Front right floor,1.12,47,50,52.67,56,0
+monstera,original,Plant studio,6,Upper studio shelf,0.82,47,50,38.33,41,0
+monstera,original,Plant studio,7,Lower studio shelf,0.75,47,50,35.33,37.33,0
+monstera,original,Plant studio,8,Studio cabinet,0.77,47,50,36.33,38.33,0
+monstera,original,Plant studio,9,Studio windowsill,0.85,47,50,40,42.67,0
+monstera,original,Plant studio,10,Drawing desk,0.86,47,50,40.33,43,0
+monstera,original,Plant studio,11,Beside the easel,1.07,47,50,50.33,53.33,0
+monstera,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,47,50,36.33,39,0
+monstera,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,47,50,36.33,39,0
+monstera,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,47,50,36.33,39,0
+monstera,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,47,50,42.67,45.67,0
+monstera,original,Plant studio,1/front-left,Front left studio floor,1.1,47,50,51.67,55,0
+monstera,original,Plant studio,1/front-right,Front right studio floor,1.12,47,50,52.67,56,0
+monstera,terra,Living room,0,Upper bookcase shelf,0.78,47,50,36.33,39.67,0
+monstera,terra,Living room,1,Middle bookcase shelf,0.72,47,50,34,36.67,0
+monstera,terra,Living room,2,Lower bookcase shelf,0.73,47,50,34.33,37,0.4
+monstera,terra,Living room,3,Living room windowsill,0.86,47,50,40.33,44,0
+monstera,terra,Living room,4,Coffee table,0.94,47,50,44,48,0
+monstera,terra,Living room,5,Beside the sofa,1.06,47,50,49.67,54,0
+monstera,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,47,50,36.33,39.67,0
+monstera,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,47,50,36.33,39.67,0
+monstera,terra,Living room,0/table-end,Center of the coffee table,0.7,47,50,32.67,35.67,0
+monstera,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,47,50,42.67,46.33,0
+monstera,terra,Living room,0/front-left,Front left floor,1.1,47,50,51.67,56,0
+monstera,terra,Living room,0/front-right,Front right floor,1.12,47,50,52.67,57,0
+monstera,terra,Plant studio,6,Upper studio shelf,0.82,47,50,38.33,41.67,0
+monstera,terra,Plant studio,7,Lower studio shelf,0.75,47,50,35.33,38.33,0
+monstera,terra,Plant studio,8,Studio cabinet,0.77,47,50,36.33,39.33,0
+monstera,terra,Plant studio,9,Studio windowsill,0.85,47,50,40,43.33,0
+monstera,terra,Plant studio,10,Drawing desk,0.86,47,50,40.33,44,0
+monstera,terra,Plant studio,11,Beside the easel,1.07,47,50,50.33,54.67,0
+monstera,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,47,50,36.33,39.67,0
+monstera,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,47,50,36.33,39.67,0
+monstera,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,47,50,36.33,39.67,0
+monstera,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,47,50,42.67,46.33,0
+monstera,terra,Plant studio,1/front-left,Front left studio floor,1.1,47,50,51.67,56,0
+monstera,terra,Plant studio,1/front-right,Front right studio floor,1.12,47,50,52.67,57,0
+monstera,wave,Living room,0,Upper bookcase shelf,0.78,47,50,36.33,39.67,0
+monstera,wave,Living room,1,Middle bookcase shelf,0.72,47,50,34,36.67,0
+monstera,wave,Living room,2,Lower bookcase shelf,0.73,47,50,34.33,37,0.4
+monstera,wave,Living room,3,Living room windowsill,0.86,47,50,40.33,44,0
+monstera,wave,Living room,4,Coffee table,0.94,47,50,44,48,0
+monstera,wave,Living room,5,Beside the sofa,1.06,47,50,49.67,54,0
+monstera,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,47,50,36.33,39.67,0
+monstera,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,47,50,36.33,39.67,0
+monstera,wave,Living room,0/table-end,Center of the coffee table,0.7,47,50,32.67,35.67,0
+monstera,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,47,50,42.67,46.33,0
+monstera,wave,Living room,0/front-left,Front left floor,1.1,47,50,51.67,56,0
+monstera,wave,Living room,0/front-right,Front right floor,1.12,47,50,52.67,57,0
+monstera,wave,Plant studio,6,Upper studio shelf,0.82,47,50,38.33,41.67,0
+monstera,wave,Plant studio,7,Lower studio shelf,0.75,47,50,35.33,38.33,0
+monstera,wave,Plant studio,8,Studio cabinet,0.77,47,50,36.33,39.33,0
+monstera,wave,Plant studio,9,Studio windowsill,0.85,47,50,40,43.33,0
+monstera,wave,Plant studio,10,Drawing desk,0.86,47,50,40.33,44,0
+monstera,wave,Plant studio,11,Beside the easel,1.07,47,50,50.33,54.67,0
+monstera,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,47,50,36.33,39.67,0
+monstera,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,47,50,36.33,39.67,0
+monstera,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,47,50,36.33,39.67,0
+monstera,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,47,50,42.67,46.33,0
+monstera,wave,Plant studio,1/front-left,Front left studio floor,1.1,47,50,51.67,56,0
+monstera,wave,Plant studio,1/front-right,Front right studio floor,1.12,47,50,52.67,57,0
+monstera,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,47,50,36.33,42,0.8
+monstera,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,47,50,34,37,4.4
+monstera,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,47,50,34.33,37,5.7
+monstera,bog-frog-pot,Living room,3,Living room windowsill,0.86,47,50,40.33,47.33,0
+monstera,bog-frog-pot,Living room,4,Coffee table,0.94,47,50,44,51.67,0
+monstera,bog-frog-pot,Living room,5,Beside the sofa,1.06,47,50,49.67,58.33,0
+monstera,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,47,50,36.33,43,0
+monstera,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,47,50,36.33,43,0
+monstera,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,47,50,32.67,38.33,0
+monstera,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,47,50,42.67,50,0
+monstera,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,47,50,51.67,60.67,0
+monstera,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,47,50,52.67,61.67,0
+monstera,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,47,50,38.33,45,0
+monstera,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,47,50,35.33,41,0.3
+monstera,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,47,50,36.33,42.33,0
+monstera,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,47,50,40,46.67,0
+monstera,bog-frog-pot,Plant studio,10,Drawing desk,0.86,47,50,40.33,47.33,0
+monstera,bog-frog-pot,Plant studio,11,Beside the easel,1.07,47,50,50.33,59,0
+monstera,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,47,50,36.33,43,0
+monstera,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,47,50,36.33,43,0
+monstera,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,47,50,36.33,43,0
+monstera,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,47,50,42.67,50,0
+monstera,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,47,50,51.67,60.67,0
+monstera,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,47,50,52.67,61.67,0
+monstera,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,47,50,36.33,42,0.8
+monstera,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,47,50,34,37,4.4
+monstera,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,47,50,34.33,37,5.7
+monstera,lava-pop-pot,Living room,3,Living room windowsill,0.86,47,50,40.33,47.33,0
+monstera,lava-pop-pot,Living room,4,Coffee table,0.94,47,50,44,51.67,0
+monstera,lava-pop-pot,Living room,5,Beside the sofa,1.06,47,50,49.67,58.33,0
+monstera,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,47,50,36.33,43,0
+monstera,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,47,50,36.33,43,0
+monstera,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,47,50,32.67,38.33,0
+monstera,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,47,50,42.67,50,0
+monstera,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,47,50,51.67,60.67,0
+monstera,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,47,50,52.67,61.67,0
+monstera,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,47,50,38.33,45,0
+monstera,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,47,50,35.33,41,0.3
+monstera,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,47,50,36.33,42.33,0
+monstera,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,47,50,40,46.67,0
+monstera,lava-pop-pot,Plant studio,10,Drawing desk,0.86,47,50,40.33,47.33,0
+monstera,lava-pop-pot,Plant studio,11,Beside the easel,1.07,47,50,50.33,59,0
+monstera,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,47,50,36.33,43,0
+monstera,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,47,50,36.33,43,0
+monstera,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,47,50,36.33,43,0
+monstera,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,47,50,42.67,50,0
+monstera,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,47,50,51.67,60.67,0
+monstera,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,47,50,52.67,61.67,0
+golden-pothos,original,Living room,0,Upper bookcase shelf,0.78,38,53,14.67,20.67,0
+golden-pothos,original,Living room,1,Middle bookcase shelf,0.72,38,53,14,19,0
+golden-pothos,original,Living room,2,Lower bookcase shelf,0.73,38,53,14,19.33,0
+golden-pothos,original,Living room,3,Living room windowsill,0.86,38,53,16.67,23,0
+golden-pothos,original,Living room,4,Coffee table,0.94,38,53,18,24.67,0
+golden-pothos,original,Living room,5,Beside the sofa,1.06,38,53,20,28.33,0
+golden-pothos,original,Living room,0/window-left,Left end of the living room windowsill,0.78,38,53,14.67,20.67,0
+golden-pothos,original,Living room,0/window-middle,Center of the living room windowsill,0.78,38,53,14.67,20.67,0
+golden-pothos,original,Living room,0/table-end,Center of the coffee table,0.7,38,53,13.33,18.33,0
+golden-pothos,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,53,17.33,24,0
+golden-pothos,original,Living room,0/front-left,Front left floor,1.1,38,53,20.67,29,0
+golden-pothos,original,Living room,0/front-right,Front right floor,1.12,38,53,21.33,29.67,0
+golden-pothos,original,Plant studio,6,Upper studio shelf,0.82,38,53,15.33,21.67,0
+golden-pothos,original,Plant studio,7,Lower studio shelf,0.75,38,53,14,20,0
+golden-pothos,original,Plant studio,8,Studio cabinet,0.77,38,53,14.67,20.67,0
+golden-pothos,original,Plant studio,9,Studio windowsill,0.85,38,53,16,22.33,0
+golden-pothos,original,Plant studio,10,Drawing desk,0.86,38,53,16.67,23,0
+golden-pothos,original,Plant studio,11,Beside the easel,1.07,38,53,20,28.33,0
+golden-pothos,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,53,14.67,20.67,0
+golden-pothos,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,53,14.67,20.67,0
+golden-pothos,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,53,14.67,20.67,0
+golden-pothos,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,53,17.33,24,0
+golden-pothos,original,Plant studio,1/front-left,Front left studio floor,1.1,38,53,20.67,29,0
+golden-pothos,original,Plant studio,1/front-right,Front right studio floor,1.12,38,53,21.33,29.67,0
+golden-pothos,terra,Living room,0,Upper bookcase shelf,0.78,38,53,16.67,20.67,0
+golden-pothos,terra,Living room,1,Middle bookcase shelf,0.72,38,53,15.67,19,0
+golden-pothos,terra,Living room,2,Lower bookcase shelf,0.73,38,53,15.67,19.33,0
+golden-pothos,terra,Living room,3,Living room windowsill,0.86,38,53,18.67,23,0
+golden-pothos,terra,Living room,4,Coffee table,0.94,38,53,20.33,24.67,0
+golden-pothos,terra,Living room,5,Beside the sofa,1.06,38,53,22.67,28.33,0
+golden-pothos,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,38,53,16.67,20.67,0
+golden-pothos,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,38,53,16.67,20.67,0
+golden-pothos,terra,Living room,0/table-end,Center of the coffee table,0.7,38,53,15,18.33,0
+golden-pothos,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,53,19.67,24,0
+golden-pothos,terra,Living room,0/front-left,Front left floor,1.1,38,53,23.67,29.33,0
+golden-pothos,terra,Living room,0/front-right,Front right floor,1.12,38,53,24,29.67,0
+golden-pothos,terra,Plant studio,6,Upper studio shelf,0.82,38,53,17.67,21.67,0
+golden-pothos,terra,Plant studio,7,Lower studio shelf,0.75,38,53,16,20,0
+golden-pothos,terra,Plant studio,8,Studio cabinet,0.77,38,53,16.67,20.33,0
+golden-pothos,terra,Plant studio,9,Studio windowsill,0.85,38,53,18.33,22.67,0
+golden-pothos,terra,Plant studio,10,Drawing desk,0.86,38,53,18.67,23,0
+golden-pothos,terra,Plant studio,11,Beside the easel,1.07,38,53,23,28.33,0
+golden-pothos,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,53,16.67,20.67,0
+golden-pothos,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,53,16.67,20.67,0
+golden-pothos,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,53,16.67,20.67,0
+golden-pothos,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,53,19.67,24,0
+golden-pothos,terra,Plant studio,1/front-left,Front left studio floor,1.1,38,53,23.67,29.33,0
+golden-pothos,terra,Plant studio,1/front-right,Front right studio floor,1.12,38,53,24,29.67,0
+golden-pothos,wave,Living room,0,Upper bookcase shelf,0.78,38,53,16.67,20.67,0
+golden-pothos,wave,Living room,1,Middle bookcase shelf,0.72,38,53,15.67,19,0
+golden-pothos,wave,Living room,2,Lower bookcase shelf,0.73,38,53,15.67,19.33,0
+golden-pothos,wave,Living room,3,Living room windowsill,0.86,38,53,18.67,23,0
+golden-pothos,wave,Living room,4,Coffee table,0.94,38,53,20.33,24.67,0
+golden-pothos,wave,Living room,5,Beside the sofa,1.06,38,53,22.67,28.33,0
+golden-pothos,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,38,53,16.67,20.67,0
+golden-pothos,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,38,53,16.67,20.67,0
+golden-pothos,wave,Living room,0/table-end,Center of the coffee table,0.7,38,53,15,18.33,0
+golden-pothos,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,53,19.67,24,0
+golden-pothos,wave,Living room,0/front-left,Front left floor,1.1,38,53,23.67,29.33,0
+golden-pothos,wave,Living room,0/front-right,Front right floor,1.12,38,53,24,29.67,0
+golden-pothos,wave,Plant studio,6,Upper studio shelf,0.82,38,53,17.67,21.67,0
+golden-pothos,wave,Plant studio,7,Lower studio shelf,0.75,38,53,16,20,0
+golden-pothos,wave,Plant studio,8,Studio cabinet,0.77,38,53,16.67,20.33,0
+golden-pothos,wave,Plant studio,9,Studio windowsill,0.85,38,53,18.33,22.67,0
+golden-pothos,wave,Plant studio,10,Drawing desk,0.86,38,53,18.67,23,0
+golden-pothos,wave,Plant studio,11,Beside the easel,1.07,38,53,23,28.33,0
+golden-pothos,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,53,16.67,20.67,0
+golden-pothos,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,53,16.67,20.67,0
+golden-pothos,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,53,16.67,20.67,0
+golden-pothos,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,53,19.67,24,0
+golden-pothos,wave,Plant studio,1/front-left,Front left studio floor,1.1,38,53,23.67,29.33,0
+golden-pothos,wave,Plant studio,1/front-right,Front right studio floor,1.12,38,53,24,29.67,0
+golden-pothos,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,38,53,18.67,21.33,0
+golden-pothos,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,38,53,17.33,19.67,0
+golden-pothos,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,38,53,17.33,20,0
+golden-pothos,bog-frog-pot,Living room,3,Living room windowsill,0.86,38,53,20.67,23.67,0
+golden-pothos,bog-frog-pot,Living room,4,Coffee table,0.94,38,53,22.67,26,0
+golden-pothos,bog-frog-pot,Living room,5,Beside the sofa,1.06,38,53,25.33,29,0
+golden-pothos,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,38,53,18.67,21.33,0
+golden-pothos,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,38,53,18.67,21.33,0
+golden-pothos,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,38,53,16.67,19.33,0
+golden-pothos,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,53,22,25,0
+golden-pothos,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,38,53,26.67,30.33,0
+golden-pothos,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,38,53,26.67,30.67,0
+golden-pothos,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,38,53,20,22.67,0
+golden-pothos,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,38,53,18,20.67,0
+golden-pothos,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,38,53,18.67,21.33,0
+golden-pothos,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,38,53,20.67,23.33,0
+golden-pothos,bog-frog-pot,Plant studio,10,Drawing desk,0.86,38,53,20.67,23.67,0
+golden-pothos,bog-frog-pot,Plant studio,11,Beside the easel,1.07,38,53,26,29.33,0
+golden-pothos,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,53,18.67,21.33,0
+golden-pothos,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,53,18.67,21.33,0
+golden-pothos,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,53,18.67,21.33,0
+golden-pothos,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,53,22,25,0
+golden-pothos,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,38,53,26.67,30.33,0
+golden-pothos,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,38,53,26.67,30.67,0
+golden-pothos,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,38,53,18.67,21.33,0
+golden-pothos,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,38,53,17.33,19.67,0
+golden-pothos,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,38,53,17.33,20,0
+golden-pothos,lava-pop-pot,Living room,3,Living room windowsill,0.86,38,53,20.67,23.67,0
+golden-pothos,lava-pop-pot,Living room,4,Coffee table,0.94,38,53,22.67,26,0
+golden-pothos,lava-pop-pot,Living room,5,Beside the sofa,1.06,38,53,25.33,29,0
+golden-pothos,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,38,53,18.67,21.33,0
+golden-pothos,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,38,53,18.67,21.33,0
+golden-pothos,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,38,53,16.67,19.33,0
+golden-pothos,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,53,22,25,0
+golden-pothos,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,38,53,26.67,30.33,0
+golden-pothos,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,38,53,26.67,30.67,0
+golden-pothos,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,38,53,20,22.67,0
+golden-pothos,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,38,53,18,20.67,0
+golden-pothos,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,38,53,18.67,21.33,0
+golden-pothos,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,38,53,20.67,23.33,0
+golden-pothos,lava-pop-pot,Plant studio,10,Drawing desk,0.86,38,53,20.67,23.67,0
+golden-pothos,lava-pop-pot,Plant studio,11,Beside the easel,1.07,38,53,26,29.33,0
+golden-pothos,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,53,18.67,21.33,0
+golden-pothos,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,53,18.67,21.33,0
+golden-pothos,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,53,18.67,21.33,0
+golden-pothos,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,53,22,25,0
+golden-pothos,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,38,53,26.67,30.33,0
+golden-pothos,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,38,53,26.67,30.67,0
+snake-plant,original,Living room,0,Upper bookcase shelf,0.78,24,52,9.33,20.33,0
+snake-plant,original,Living room,1,Middle bookcase shelf,0.72,24,52,8.67,18.67,0
+snake-plant,original,Living room,2,Lower bookcase shelf,0.73,24,52,8.67,19,0
+snake-plant,original,Living room,3,Living room windowsill,0.86,24,52,10,22.33,0
+snake-plant,original,Living room,4,Coffee table,0.94,24,52,11.33,24.33,0
+snake-plant,original,Living room,5,Beside the sofa,1.06,24,52,12.67,27.67,0
+snake-plant,original,Living room,0/window-left,Left end of the living room windowsill,0.78,24,52,9.33,20.33,0
+snake-plant,original,Living room,0/window-middle,Center of the living room windowsill,0.78,24,52,9.33,20.33,0
+snake-plant,original,Living room,0/table-end,Center of the coffee table,0.7,24,52,8.67,18.33,0
+snake-plant,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,24,52,10.67,23.67,0
+snake-plant,original,Living room,0/front-left,Front left floor,1.1,24,52,13.33,28.67,0
+snake-plant,original,Living room,0/front-right,Front right floor,1.12,24,52,13.33,29,0
+snake-plant,original,Plant studio,6,Upper studio shelf,0.82,24,52,10,21.33,0
+snake-plant,original,Plant studio,7,Lower studio shelf,0.75,24,52,9,19.33,0
+snake-plant,original,Plant studio,8,Studio cabinet,0.77,24,52,9.33,20,0
+snake-plant,original,Plant studio,9,Studio windowsill,0.85,24,52,10,22,0
+snake-plant,original,Plant studio,10,Drawing desk,0.86,24,52,10,22.33,0
+snake-plant,original,Plant studio,11,Beside the easel,1.07,24,52,12.67,27.67,0
+snake-plant,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,24,52,9.33,20.33,0
+snake-plant,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,24,52,9.33,20.33,0
+snake-plant,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,24,52,9.33,20.33,0
+snake-plant,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,24,52,10.67,23.67,0
+snake-plant,original,Plant studio,1/front-left,Front left studio floor,1.1,24,52,13.33,28.67,0
+snake-plant,original,Plant studio,1/front-right,Front right studio floor,1.12,24,52,13.33,29,0
+snake-plant,terra,Living room,0,Upper bookcase shelf,0.78,24,52,14.67,27.33,0
+snake-plant,terra,Living room,1,Middle bookcase shelf,0.72,24,52,14,25.33,0
+snake-plant,terra,Living room,2,Lower bookcase shelf,0.73,24,52,14,25.67,0
+snake-plant,terra,Living room,3,Living room windowsill,0.86,24,52,16.67,30,0
+snake-plant,terra,Living room,4,Coffee table,0.94,24,52,18,33,0
+snake-plant,terra,Living room,5,Beside the sofa,1.06,24,52,20,37,0
+snake-plant,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,24,52,14.67,27.33,0
+snake-plant,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,24,52,14.67,27.33,0
+snake-plant,terra,Living room,0/table-end,Center of the coffee table,0.7,24,52,13.33,24.33,0
+snake-plant,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,24,52,17.33,32,0
+snake-plant,terra,Living room,0/front-left,Front left floor,1.1,24,52,20.67,38.33,0
+snake-plant,terra,Living room,0/front-right,Front right floor,1.12,24,52,21.33,39.33,0
+snake-plant,terra,Plant studio,6,Upper studio shelf,0.82,24,52,15.33,28.67,0
+snake-plant,terra,Plant studio,7,Lower studio shelf,0.75,24,52,14,26.33,0
+snake-plant,terra,Plant studio,8,Studio cabinet,0.77,24,52,14.67,27,0
+snake-plant,terra,Plant studio,9,Studio windowsill,0.85,24,52,16,29.67,0
+snake-plant,terra,Plant studio,10,Drawing desk,0.86,24,52,16.67,30,0
+snake-plant,terra,Plant studio,11,Beside the easel,1.07,24,52,20,37.33,0
+snake-plant,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,24,52,14.67,27.33,0
+snake-plant,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,24,52,14.67,27.33,0
+snake-plant,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,24,52,14.67,27.33,0
+snake-plant,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,24,52,17.33,32,0
+snake-plant,terra,Plant studio,1/front-left,Front left studio floor,1.1,24,52,20.67,38.33,0
+snake-plant,terra,Plant studio,1/front-right,Front right studio floor,1.12,24,52,21.33,39.33,0
+snake-plant,wave,Living room,0,Upper bookcase shelf,0.78,24,52,14.33,27.33,0
+snake-plant,wave,Living room,1,Middle bookcase shelf,0.72,24,52,13.33,25.33,0
+snake-plant,wave,Living room,2,Lower bookcase shelf,0.73,24,52,13.67,25.67,0
+snake-plant,wave,Living room,3,Living room windowsill,0.86,24,52,16,30,0
+snake-plant,wave,Living room,4,Coffee table,0.94,24,52,17.33,33,0
+snake-plant,wave,Living room,5,Beside the sofa,1.06,24,52,19.67,37,0
+snake-plant,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,24,52,14.33,27.33,0
+snake-plant,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,24,52,14.33,27.33,0
+snake-plant,wave,Living room,0/table-end,Center of the coffee table,0.7,24,52,13,24.33,0
+snake-plant,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,24,52,17,32,0
+snake-plant,wave,Living room,0/front-left,Front left floor,1.1,24,52,20.33,38.33,0
+snake-plant,wave,Living room,0/front-right,Front right floor,1.12,24,52,20.67,39.33,0
+snake-plant,wave,Plant studio,6,Upper studio shelf,0.82,24,52,15,28.67,0
+snake-plant,wave,Plant studio,7,Lower studio shelf,0.75,24,52,13.67,26.33,0
+snake-plant,wave,Plant studio,8,Studio cabinet,0.77,24,52,14.33,27,0
+snake-plant,wave,Plant studio,9,Studio windowsill,0.85,24,52,15.67,29.67,0
+snake-plant,wave,Plant studio,10,Drawing desk,0.86,24,52,16,30,0
+snake-plant,wave,Plant studio,11,Beside the easel,1.07,24,52,19.67,37.33,0
+snake-plant,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,24,52,14.33,27.33,0
+snake-plant,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,24,52,14.33,27.33,0
+snake-plant,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,24,52,14.33,27.33,0
+snake-plant,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,24,52,17,32,0
+snake-plant,wave,Plant studio,1/front-left,Front left studio floor,1.1,24,52,20.33,38.33,0
+snake-plant,wave,Plant studio,1/front-right,Front right studio floor,1.12,24,52,20.67,39.33,0
+snake-plant,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,24,52,18.67,30.33,0
+snake-plant,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,24,52,17.33,28,0
+snake-plant,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,24,52,17.33,28.33,0
+snake-plant,bog-frog-pot,Living room,3,Living room windowsill,0.86,24,52,20.67,33.67,0
+snake-plant,bog-frog-pot,Living room,4,Coffee table,0.94,24,52,22.67,36.67,0
+snake-plant,bog-frog-pot,Living room,5,Beside the sofa,1.06,24,52,25.33,41.33,0
+snake-plant,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,24,52,18.67,30.33,0
+snake-plant,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,24,52,18.67,30.33,0
+snake-plant,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,24,52,16.67,27.33,0
+snake-plant,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,24,52,22,35.33,0
+snake-plant,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,24,52,26.67,43,0
+snake-plant,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,24,52,26.67,43.67,0
+snake-plant,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,24,52,20,32,0
+snake-plant,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,24,52,18,29.33,0
+snake-plant,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,24,52,18.67,30,0
+snake-plant,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,24,52,20.67,33,0
+snake-plant,bog-frog-pot,Plant studio,10,Drawing desk,0.86,24,52,20.67,33.67,0
+snake-plant,bog-frog-pot,Plant studio,11,Beside the easel,1.07,24,52,26,41.67,0
+snake-plant,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,24,52,18.67,30.33,0
+snake-plant,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,24,52,18.67,30.33,0
+snake-plant,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,24,52,18.67,30.33,0
+snake-plant,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,24,52,22,35.33,0
+snake-plant,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,24,52,26.67,43,0
+snake-plant,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,24,52,26.67,43.67,0
+snake-plant,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,24,52,18.67,30.33,0
+snake-plant,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,24,52,17.33,28,0
+snake-plant,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,24,52,17.33,28.33,0
+snake-plant,lava-pop-pot,Living room,3,Living room windowsill,0.86,24,52,20.67,33.67,0
+snake-plant,lava-pop-pot,Living room,4,Coffee table,0.94,24,52,22.67,36.67,0
+snake-plant,lava-pop-pot,Living room,5,Beside the sofa,1.06,24,52,25.33,41.33,0
+snake-plant,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,24,52,18.67,30.33,0
+snake-plant,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,24,52,18.67,30.33,0
+snake-plant,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,24,52,16.67,27.33,0
+snake-plant,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,24,52,22,35.33,0
+snake-plant,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,24,52,26.67,43,0
+snake-plant,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,24,52,26.67,43.67,0
+snake-plant,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,24,52,20,32,0
+snake-plant,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,24,52,18,29.33,0
+snake-plant,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,24,52,18.67,30,0
+snake-plant,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,24,52,20.67,33,0
+snake-plant,lava-pop-pot,Plant studio,10,Drawing desk,0.86,24,52,20.67,33.67,0
+snake-plant,lava-pop-pot,Plant studio,11,Beside the easel,1.07,24,52,26,41.67,0
+snake-plant,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,24,52,18.67,30.33,0
+snake-plant,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,24,52,18.67,30.33,0
+snake-plant,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,24,52,18.67,30.33,0
+snake-plant,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,24,52,22,35.33,0
+snake-plant,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,24,52,26.67,43,0
+snake-plant,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,24,52,26.67,43.67,0
+monstera-albo,original,Living room,0,Upper bookcase shelf,0.78,42,57,33,42.67,1.9
+monstera-albo,original,Living room,1,Middle bookcase shelf,0.72,42,57,30.33,37.67,5.7
+monstera-albo,original,Living room,2,Lower bookcase shelf,0.73,42,57,31,37.67,7.2
+monstera-albo,original,Living room,3,Living room windowsill,0.86,42,57,36.33,49.67,0
+monstera-albo,original,Living room,4,Coffee table,0.94,42,57,40,54,0
+monstera-albo,original,Living room,5,Beside the sofa,1.06,42,57,45,61,0
+monstera-albo,original,Living room,0/window-left,Left end of the living room windowsill,0.78,42,57,33,44.67,0
+monstera-albo,original,Living room,0/window-middle,Center of the living room windowsill,0.78,42,57,33,44.67,0
+monstera-albo,original,Living room,0/table-end,Center of the coffee table,0.7,42,57,29.67,40.33,0
+monstera-albo,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,42,57,38.67,52.33,0
+monstera-albo,original,Living room,0/front-left,Front left floor,1.1,42,57,46.67,63,0
+monstera-albo,original,Living room,0/front-right,Front right floor,1.12,42,57,47.67,64.33,0
+monstera-albo,original,Plant studio,6,Upper studio shelf,0.82,42,57,35,47,0
+monstera-albo,original,Plant studio,7,Lower studio shelf,0.75,42,57,31.67,41.67,1.1
+monstera-albo,original,Plant studio,8,Studio cabinet,0.77,42,57,33,43.67,0.4
+monstera-albo,original,Plant studio,9,Studio windowsill,0.85,42,57,36.33,49,0
+monstera-albo,original,Plant studio,10,Drawing desk,0.86,42,57,36.33,49,0.3
+monstera-albo,original,Plant studio,11,Beside the easel,1.07,42,57,45.33,61.33,0
+monstera-albo,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,42,57,33,44.67,0
+monstera-albo,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,42,57,33,44.67,0
+monstera-albo,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,42,57,33,44.67,0
+monstera-albo,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,42,57,38.67,52.33,0
+monstera-albo,original,Plant studio,1/front-left,Front left studio floor,1.1,42,57,46.67,63,0
+monstera-albo,original,Plant studio,1/front-right,Front right studio floor,1.12,42,57,47.67,64.33,0
+monstera-albo,terra,Living room,0,Upper bookcase shelf,0.78,42,57,33,42,5
+monstera-albo,terra,Living room,1,Middle bookcase shelf,0.72,42,57,30.33,37,10.7
+monstera-albo,terra,Living room,2,Lower bookcase shelf,0.73,42,57,31,37,12.4
+monstera-albo,terra,Living room,3,Living room windowsill,0.86,42,57,36.33,50.33,0
+monstera-albo,terra,Living room,4,Coffee table,0.94,42,57,40,55,0
+monstera-albo,terra,Living room,5,Beside the sofa,1.06,42,57,45,62,0
+monstera-albo,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,42,57,33,45.67,0
+monstera-albo,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,42,57,33,45.67,0
+monstera-albo,terra,Living room,0/table-end,Center of the coffee table,0.7,42,57,29.67,41,0
+monstera-albo,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,42,57,38.67,53.33,0
+monstera-albo,terra,Living room,0/front-left,Front left floor,1.1,42,57,46.67,64.33,0
+monstera-albo,terra,Living room,0/front-right,Front right floor,1.12,42,57,47.67,65.67,0
+monstera-albo,terra,Plant studio,6,Upper studio shelf,0.82,42,57,35,48,0
+monstera-albo,terra,Plant studio,7,Lower studio shelf,0.75,42,57,31.67,41,3.4
+monstera-albo,terra,Plant studio,8,Studio cabinet,0.77,42,57,33,43,1.9
+monstera-albo,terra,Plant studio,9,Studio windowsill,0.85,42,57,36.33,49.67,0
+monstera-albo,terra,Plant studio,10,Drawing desk,0.86,42,57,36.33,48,1.9
+monstera-albo,terra,Plant studio,11,Beside the easel,1.07,42,57,45.33,62.67,0
+monstera-albo,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,42,57,33,45.67,0
+monstera-albo,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,42,57,33,45.67,0
+monstera-albo,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,42,57,33,45.67,0
+monstera-albo,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,42,57,38.67,53.33,0
+monstera-albo,terra,Plant studio,1/front-left,Front left studio floor,1.1,42,57,46.67,64.33,0
+monstera-albo,terra,Plant studio,1/front-right,Front right studio floor,1.12,42,57,47.67,65.67,0
+monstera-albo,wave,Living room,0,Upper bookcase shelf,0.78,42,57,33,42,5
+monstera-albo,wave,Living room,1,Middle bookcase shelf,0.72,42,57,30.33,37,10.7
+monstera-albo,wave,Living room,2,Lower bookcase shelf,0.73,42,57,31,37,12.4
+monstera-albo,wave,Living room,3,Living room windowsill,0.86,42,57,36.33,50.33,0
+monstera-albo,wave,Living room,4,Coffee table,0.94,42,57,40,55,0
+monstera-albo,wave,Living room,5,Beside the sofa,1.06,42,57,45,62,0
+monstera-albo,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,42,57,33,45.67,0
+monstera-albo,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,42,57,33,45.67,0
+monstera-albo,wave,Living room,0/table-end,Center of the coffee table,0.7,42,57,29.67,41,0
+monstera-albo,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,42,57,38.67,53.33,0
+monstera-albo,wave,Living room,0/front-left,Front left floor,1.1,42,57,46.67,64.33,0
+monstera-albo,wave,Living room,0/front-right,Front right floor,1.12,42,57,47.67,65.67,0
+monstera-albo,wave,Plant studio,6,Upper studio shelf,0.82,42,57,35,48,0
+monstera-albo,wave,Plant studio,7,Lower studio shelf,0.75,42,57,31.67,41,3.5
+monstera-albo,wave,Plant studio,8,Studio cabinet,0.77,42,57,33,43,1.9
+monstera-albo,wave,Plant studio,9,Studio windowsill,0.85,42,57,36.33,49.67,0
+monstera-albo,wave,Plant studio,10,Drawing desk,0.86,42,57,36.33,48,1.9
+monstera-albo,wave,Plant studio,11,Beside the easel,1.07,42,57,45.33,62.67,0
+monstera-albo,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,42,57,33,45.67,0
+monstera-albo,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,42,57,33,45.67,0
+monstera-albo,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,42,57,33,45.67,0
+monstera-albo,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,42,57,38.67,53.33,0
+monstera-albo,wave,Plant studio,1/front-left,Front left studio floor,1.1,42,57,46.67,64.33,0
+monstera-albo,wave,Plant studio,1/front-right,Front right studio floor,1.12,42,57,47.67,65.67,0
+monstera-albo,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,42,57,33,42,11.5
+monstera-albo,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,42,57,30.33,37,17.4
+monstera-albo,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,42,57,31,37,18.9
+monstera-albo,bog-frog-pot,Living room,3,Living room windowsill,0.86,42,57,36.33,51.67,0
+monstera-albo,bog-frog-pot,Living room,4,Coffee table,0.94,42,57,40,56.33,0
+monstera-albo,bog-frog-pot,Living room,5,Beside the sofa,1.06,42,57,45,63.67,0
+monstera-albo,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,42,57,33,46.67,0
+monstera-albo,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,42,57,33,46.67,0
+monstera-albo,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,42,57,29.67,42,0
+monstera-albo,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,42,57,38.67,54.67,0
+monstera-albo,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,42,57,46.67,66,0
+monstera-albo,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,42,57,47.67,67.33,0
+monstera-albo,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,42,57,35,48,1.9
+monstera-albo,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,42,57,31.67,41,9.8
+monstera-albo,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,42,57,33,43,7.3
+monstera-albo,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,42,57,36.33,51,0
+monstera-albo,bog-frog-pot,Plant studio,10,Drawing desk,0.86,42,57,36.33,48,7.2
+monstera-albo,bog-frog-pot,Plant studio,11,Beside the easel,1.07,42,57,45.33,64.33,0
+monstera-albo,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,42,57,33,46.67,0
+monstera-albo,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,42,57,33,46.67,0
+monstera-albo,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,42,57,33,46.67,0
+monstera-albo,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,42,57,38.67,54.67,0
+monstera-albo,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,42,57,46.67,66,0
+monstera-albo,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,42,57,47.67,67.33,0
+monstera-albo,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,42,57,33,42,11.6
+monstera-albo,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,42,57,30.33,37,17.5
+monstera-albo,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,42,57,31,37,19
+monstera-albo,lava-pop-pot,Living room,3,Living room windowsill,0.86,42,57,36.33,51.67,0
+monstera-albo,lava-pop-pot,Living room,4,Coffee table,0.94,42,57,40,56.33,0
+monstera-albo,lava-pop-pot,Living room,5,Beside the sofa,1.06,42,57,45,63.67,0
+monstera-albo,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,42,57,33,46.67,0
+monstera-albo,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,42,57,33,46.67,0
+monstera-albo,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,42,57,29.67,42,0
+monstera-albo,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,42,57,38.67,54.67,0
+monstera-albo,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,42,57,46.67,66,0
+monstera-albo,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,42,57,47.67,67.33,0
+monstera-albo,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,42,57,35,48,1.9
+monstera-albo,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,42,57,31.67,41,9.9
+monstera-albo,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,42,57,33,43,7.3
+monstera-albo,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,42,57,36.33,51,0
+monstera-albo,lava-pop-pot,Plant studio,10,Drawing desk,0.86,42,57,36.33,48,7.2
+monstera-albo,lava-pop-pot,Plant studio,11,Beside the easel,1.07,42,57,45.33,64.33,0
+monstera-albo,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,42,57,33,46.67,0
+monstera-albo,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,42,57,33,46.67,0
+monstera-albo,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,42,57,33,46.67,0
+monstera-albo,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,42,57,38.67,54.67,0
+monstera-albo,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,42,57,46.67,66,0
+monstera-albo,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,42,57,47.67,67.33,0
+pink-micans,original,Living room,0,Upper bookcase shelf,0.78,43,51,32.33,38,0
+pink-micans,original,Living room,1,Middle bookcase shelf,0.72,43,51,29.67,35.33,0
+pink-micans,original,Living room,2,Lower bookcase shelf,0.73,43,51,30.33,35.67,0
+pink-micans,original,Living room,3,Living room windowsill,0.86,43,51,35.67,42.33,0
+pink-micans,original,Living room,4,Coffee table,0.94,43,51,39,46,0
+pink-micans,original,Living room,5,Beside the sofa,1.06,43,51,44,52,0
+pink-micans,original,Living room,0/window-left,Left end of the living room windowsill,0.78,43,51,32.33,38,0
+pink-micans,original,Living room,0/window-middle,Center of the living room windowsill,0.78,43,51,32.33,38,0
+pink-micans,original,Living room,0/table-end,Center of the coffee table,0.7,43,51,29,34.33,0
+pink-micans,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,43,51,37.67,44.67,0
+pink-micans,original,Living room,0/front-left,Front left floor,1.1,43,51,45.67,53.67,0
+pink-micans,original,Living room,0/front-right,Front right floor,1.12,43,51,46.67,54.67,0
+pink-micans,original,Plant studio,6,Upper studio shelf,0.82,43,51,34,40,0
+pink-micans,original,Plant studio,7,Lower studio shelf,0.75,43,51,31,36.67,0
+pink-micans,original,Plant studio,8,Studio cabinet,0.77,43,51,32,37.67,0
+pink-micans,original,Plant studio,9,Studio windowsill,0.85,43,51,35.33,41.67,0
+pink-micans,original,Plant studio,10,Drawing desk,0.86,43,51,35.67,42.33,0
+pink-micans,original,Plant studio,11,Beside the easel,1.07,43,51,44.33,52.33,0
+pink-micans,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,43,51,32.33,38,0
+pink-micans,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,43,51,32.33,38,0
+pink-micans,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,43,51,32.33,38,0
+pink-micans,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,43,51,37.67,44.67,0
+pink-micans,original,Plant studio,1/front-left,Front left studio floor,1.1,43,51,45.67,53.67,0
+pink-micans,original,Plant studio,1/front-right,Front right studio floor,1.12,43,51,46.67,54.67,0
+pink-micans,terra,Living room,0,Upper bookcase shelf,0.78,43,51,32.33,39,0
+pink-micans,terra,Living room,1,Middle bookcase shelf,0.72,43,51,29.67,36,0
+pink-micans,terra,Living room,2,Lower bookcase shelf,0.73,43,51,30.33,36.33,0
+pink-micans,terra,Living room,3,Living room windowsill,0.86,43,51,35.67,43,0
+pink-micans,terra,Living room,4,Coffee table,0.94,43,51,39,47,0
+pink-micans,terra,Living room,5,Beside the sofa,1.06,43,51,44,53,0
+pink-micans,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,43,51,32.33,39,0
+pink-micans,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,43,51,32.33,39,0
+pink-micans,terra,Living room,0/table-end,Center of the coffee table,0.7,43,51,29,35,0
+pink-micans,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,43,51,37.67,45.33,0
+pink-micans,terra,Living room,0/front-left,Front left floor,1.1,43,51,45.67,55,0
+pink-micans,terra,Living room,0/front-right,Front right floor,1.12,43,51,46.67,56,0
+pink-micans,terra,Plant studio,6,Upper studio shelf,0.82,43,51,34,41,0
+pink-micans,terra,Plant studio,7,Lower studio shelf,0.75,43,51,31,37.33,0
+pink-micans,terra,Plant studio,8,Studio cabinet,0.77,43,51,32,38.33,0
+pink-micans,terra,Plant studio,9,Studio windowsill,0.85,43,51,35.33,42.33,0
+pink-micans,terra,Plant studio,10,Drawing desk,0.86,43,51,35.67,43,0
+pink-micans,terra,Plant studio,11,Beside the easel,1.07,43,51,44.33,53.33,0
+pink-micans,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,43,51,32.33,39,0
+pink-micans,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,43,51,32.33,39,0
+pink-micans,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,43,51,32.33,39,0
+pink-micans,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,43,51,37.67,45.33,0
+pink-micans,terra,Plant studio,1/front-left,Front left studio floor,1.1,43,51,45.67,55,0
+pink-micans,terra,Plant studio,1/front-right,Front right studio floor,1.12,43,51,46.67,56,0
+pink-micans,wave,Living room,0,Upper bookcase shelf,0.78,43,51,32.33,39,0
+pink-micans,wave,Living room,1,Middle bookcase shelf,0.72,43,51,29.67,36,0
+pink-micans,wave,Living room,2,Lower bookcase shelf,0.73,43,51,30.33,36.33,0
+pink-micans,wave,Living room,3,Living room windowsill,0.86,43,51,35.67,43,0
+pink-micans,wave,Living room,4,Coffee table,0.94,43,51,39,47,0
+pink-micans,wave,Living room,5,Beside the sofa,1.06,43,51,44,53,0
+pink-micans,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,43,51,32.33,39,0
+pink-micans,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,43,51,32.33,39,0
+pink-micans,wave,Living room,0/table-end,Center of the coffee table,0.7,43,51,29,35,0
+pink-micans,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,43,51,37.67,45.33,0
+pink-micans,wave,Living room,0/front-left,Front left floor,1.1,43,51,45.67,55,0
+pink-micans,wave,Living room,0/front-right,Front right floor,1.12,43,51,46.67,56,0
+pink-micans,wave,Plant studio,6,Upper studio shelf,0.82,43,51,34,41,0
+pink-micans,wave,Plant studio,7,Lower studio shelf,0.75,43,51,31,37.33,0
+pink-micans,wave,Plant studio,8,Studio cabinet,0.77,43,51,32,38.33,0
+pink-micans,wave,Plant studio,9,Studio windowsill,0.85,43,51,35.33,42.33,0
+pink-micans,wave,Plant studio,10,Drawing desk,0.86,43,51,35.67,43,0
+pink-micans,wave,Plant studio,11,Beside the easel,1.07,43,51,44.33,53.33,0
+pink-micans,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,43,51,32.33,39,0
+pink-micans,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,43,51,32.33,39,0
+pink-micans,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,43,51,32.33,39,0
+pink-micans,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,43,51,37.67,45.33,0
+pink-micans,wave,Plant studio,1/front-left,Front left studio floor,1.1,43,51,45.67,55,0
+pink-micans,wave,Plant studio,1/front-right,Front right studio floor,1.12,43,51,46.67,56,0
+pink-micans,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,43,51,32.33,42,0
+pink-micans,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,43,51,29.67,37,1.2
+pink-micans,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,43,51,30.33,37,1.6
+pink-micans,bog-frog-pot,Living room,3,Living room windowsill,0.86,43,51,35.67,46.33,0
+pink-micans,bog-frog-pot,Living room,4,Coffee table,0.94,43,51,39,50.67,0
+pink-micans,bog-frog-pot,Living room,5,Beside the sofa,1.06,43,51,44,57.33,0
+pink-micans,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,43,51,32.33,42,0
+pink-micans,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,43,51,32.33,42,0
+pink-micans,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,43,51,29,37.67,0
+pink-micans,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,43,51,37.67,49,0
+pink-micans,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,43,51,45.67,59.33,0
+pink-micans,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,43,51,46.67,60.33,0
+pink-micans,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,43,51,34,44.33,0
+pink-micans,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,43,51,31,40.33,0
+pink-micans,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,43,51,32,41.67,0
+pink-micans,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,43,51,35.33,46,0
+pink-micans,bog-frog-pot,Plant studio,10,Drawing desk,0.86,43,51,35.67,46.33,0
+pink-micans,bog-frog-pot,Plant studio,11,Beside the easel,1.07,43,51,44.33,57.67,0
+pink-micans,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,43,51,32.33,42,0
+pink-micans,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,43,51,32.33,42,0
+pink-micans,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,43,51,32.33,42,0
+pink-micans,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,43,51,37.67,49,0
+pink-micans,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,43,51,45.67,59.33,0
+pink-micans,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,43,51,46.67,60.33,0
+pink-micans,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,43,51,32.33,42,0
+pink-micans,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,43,51,29.67,37,1.2
+pink-micans,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,43,51,30.33,37,1.6
+pink-micans,lava-pop-pot,Living room,3,Living room windowsill,0.86,43,51,35.67,46.33,0
+pink-micans,lava-pop-pot,Living room,4,Coffee table,0.94,43,51,39,50.67,0
+pink-micans,lava-pop-pot,Living room,5,Beside the sofa,1.06,43,51,44,57.33,0
+pink-micans,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,43,51,32.33,42,0
+pink-micans,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,43,51,32.33,42,0
+pink-micans,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,43,51,29,37.67,0
+pink-micans,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,43,51,37.67,49,0
+pink-micans,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,43,51,45.67,59.33,0
+pink-micans,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,43,51,46.67,60.33,0
+pink-micans,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,43,51,34,44.33,0
+pink-micans,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,43,51,31,40.33,0
+pink-micans,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,43,51,32,41.67,0
+pink-micans,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,43,51,35.33,46,0
+pink-micans,lava-pop-pot,Plant studio,10,Drawing desk,0.86,43,51,35.67,46.33,0
+pink-micans,lava-pop-pot,Plant studio,11,Beside the easel,1.07,43,51,44.33,57.67,0
+pink-micans,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,43,51,32.33,42,0
+pink-micans,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,43,51,32.33,42,0
+pink-micans,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,43,51,32.33,42,0
+pink-micans,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,43,51,37.67,49,0
+pink-micans,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,43,51,45.67,59.33,0
+pink-micans,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,43,51,46.67,60.33,0
+hoya-serpens-splash,original,Living room,0,Upper bookcase shelf,0.78,25,48,16,30.67,0
+hoya-serpens-splash,original,Living room,1,Middle bookcase shelf,0.72,25,48,14.67,28.67,0
+hoya-serpens-splash,original,Living room,2,Lower bookcase shelf,0.73,25,48,15,29,0
+hoya-serpens-splash,original,Living room,3,Living room windowsill,0.86,25,48,18,34,0
+hoya-serpens-splash,original,Living room,4,Coffee table,0.94,25,48,19.33,37.33,0
+hoya-serpens-splash,original,Living room,5,Beside the sofa,1.06,25,48,21.67,42,0
+hoya-serpens-splash,original,Living room,0/window-left,Left end of the living room windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,original,Living room,0/window-middle,Center of the living room windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,original,Living room,0/table-end,Center of the coffee table,0.7,25,48,14.67,27.67,0
+hoya-serpens-splash,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,48,18.67,36,0
+hoya-serpens-splash,original,Living room,0/front-left,Front left floor,1.1,25,48,22.67,43.67,0
+hoya-serpens-splash,original,Living room,0/front-right,Front right floor,1.12,25,48,23,44.33,0
+hoya-serpens-splash,original,Plant studio,6,Upper studio shelf,0.82,25,48,16.67,32.67,0
+hoya-serpens-splash,original,Plant studio,7,Lower studio shelf,0.75,25,48,15.33,29.67,0
+hoya-serpens-splash,original,Plant studio,8,Studio cabinet,0.77,25,48,16,30.67,0
+hoya-serpens-splash,original,Plant studio,9,Studio windowsill,0.85,25,48,17.33,33.67,0
+hoya-serpens-splash,original,Plant studio,10,Drawing desk,0.86,25,48,18,34,0
+hoya-serpens-splash,original,Plant studio,11,Beside the easel,1.07,25,48,22,42.33,0
+hoya-serpens-splash,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,48,16,30.67,0
+hoya-serpens-splash,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,48,18.67,36,0
+hoya-serpens-splash,original,Plant studio,1/front-left,Front left studio floor,1.1,25,48,22.67,43.67,0
+hoya-serpens-splash,original,Plant studio,1/front-right,Front right studio floor,1.12,25,48,23,44.33,0
+hoya-serpens-splash,terra,Living room,0,Upper bookcase shelf,0.78,25,48,16,30.67,0
+hoya-serpens-splash,terra,Living room,1,Middle bookcase shelf,0.72,25,48,15,28.67,0
+hoya-serpens-splash,terra,Living room,2,Lower bookcase shelf,0.73,25,48,15,28.67,0
+hoya-serpens-splash,terra,Living room,3,Living room windowsill,0.86,25,48,17.67,34,0
+hoya-serpens-splash,terra,Living room,4,Coffee table,0.94,25,48,19.33,37,0
+hoya-serpens-splash,terra,Living room,5,Beside the sofa,1.06,25,48,21.67,42,0
+hoya-serpens-splash,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,terra,Living room,0/table-end,Center of the coffee table,0.7,25,48,14.33,27.67,0
+hoya-serpens-splash,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,48,18.67,36,0
+hoya-serpens-splash,terra,Living room,0/front-left,Front left floor,1.1,25,48,22.67,43.67,0
+hoya-serpens-splash,terra,Living room,0/front-right,Front right floor,1.12,25,48,23,44.33,0
+hoya-serpens-splash,terra,Plant studio,6,Upper studio shelf,0.82,25,48,17,32.33,0
+hoya-serpens-splash,terra,Plant studio,7,Lower studio shelf,0.75,25,48,15.33,29.33,0
+hoya-serpens-splash,terra,Plant studio,8,Studio cabinet,0.77,25,48,15.67,30.33,0
+hoya-serpens-splash,terra,Plant studio,9,Studio windowsill,0.85,25,48,17.33,33.67,0
+hoya-serpens-splash,terra,Plant studio,10,Drawing desk,0.86,25,48,17.67,34,0
+hoya-serpens-splash,terra,Plant studio,11,Beside the easel,1.07,25,48,22,42.33,0
+hoya-serpens-splash,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,48,16,30.67,0
+hoya-serpens-splash,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,48,18.67,36,0
+hoya-serpens-splash,terra,Plant studio,1/front-left,Front left studio floor,1.1,25,48,22.67,43.67,0
+hoya-serpens-splash,terra,Plant studio,1/front-right,Front right studio floor,1.12,25,48,23,44.33,0
+hoya-serpens-splash,wave,Living room,0,Upper bookcase shelf,0.78,25,48,16,30.67,0
+hoya-serpens-splash,wave,Living room,1,Middle bookcase shelf,0.72,25,48,15,28.67,0
+hoya-serpens-splash,wave,Living room,2,Lower bookcase shelf,0.73,25,48,15,28.67,0
+hoya-serpens-splash,wave,Living room,3,Living room windowsill,0.86,25,48,17.67,34,0
+hoya-serpens-splash,wave,Living room,4,Coffee table,0.94,25,48,19.33,37,0
+hoya-serpens-splash,wave,Living room,5,Beside the sofa,1.06,25,48,21.67,42,0
+hoya-serpens-splash,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,wave,Living room,0/table-end,Center of the coffee table,0.7,25,48,14.33,27.67,0
+hoya-serpens-splash,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,48,18.67,36,0
+hoya-serpens-splash,wave,Living room,0/front-left,Front left floor,1.1,25,48,22.67,43.67,0
+hoya-serpens-splash,wave,Living room,0/front-right,Front right floor,1.12,25,48,23,44.33,0
+hoya-serpens-splash,wave,Plant studio,6,Upper studio shelf,0.82,25,48,17,32.33,0
+hoya-serpens-splash,wave,Plant studio,7,Lower studio shelf,0.75,25,48,15.33,29.33,0
+hoya-serpens-splash,wave,Plant studio,8,Studio cabinet,0.77,25,48,15.67,30.33,0
+hoya-serpens-splash,wave,Plant studio,9,Studio windowsill,0.85,25,48,17.33,33.67,0
+hoya-serpens-splash,wave,Plant studio,10,Drawing desk,0.86,25,48,17.67,34,0
+hoya-serpens-splash,wave,Plant studio,11,Beside the easel,1.07,25,48,22,42.33,0
+hoya-serpens-splash,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,48,16,30.67,0
+hoya-serpens-splash,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,48,16,30.67,0
+hoya-serpens-splash,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,48,18.67,36,0
+hoya-serpens-splash,wave,Plant studio,1/front-left,Front left studio floor,1.1,25,48,22.67,43.67,0
+hoya-serpens-splash,wave,Plant studio,1/front-right,Front right studio floor,1.12,25,48,23,44.33,0
+hoya-serpens-splash,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,25,48,18.67,31,0
+hoya-serpens-splash,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,25,48,17.33,28.33,0
+hoya-serpens-splash,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,25,48,17.33,29,0
+hoya-serpens-splash,bog-frog-pot,Living room,3,Living room windowsill,0.86,25,48,20.67,34,0
+hoya-serpens-splash,bog-frog-pot,Living room,4,Coffee table,0.94,25,48,22.67,37,0
+hoya-serpens-splash,bog-frog-pot,Living room,5,Beside the sofa,1.06,25,48,25.33,42,0
+hoya-serpens-splash,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,25,48,18.67,31,0
+hoya-serpens-splash,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,25,48,18.67,31,0
+hoya-serpens-splash,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,25,48,16.67,27.67,0
+hoya-serpens-splash,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,48,22,36,0
+hoya-serpens-splash,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,25,48,26.67,43.67,0
+hoya-serpens-splash,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,25,48,26.67,44,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,25,48,20,32.33,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,25,48,18,29.33,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,25,48,18.67,30.33,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,25,48,20.67,33.33,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,10,Drawing desk,0.86,25,48,20.67,34,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,11,Beside the easel,1.07,25,48,26,42,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,48,18.67,31,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,48,18.67,31,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,48,18.67,31,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,48,22,36,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,25,48,26.67,43.67,0
+hoya-serpens-splash,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,25,48,26.67,44,0
+hoya-serpens-splash,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,25,48,18.67,31,0
+hoya-serpens-splash,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,25,48,17.33,28.33,0
+hoya-serpens-splash,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,25,48,17.33,29,0
+hoya-serpens-splash,lava-pop-pot,Living room,3,Living room windowsill,0.86,25,48,20.67,34,0
+hoya-serpens-splash,lava-pop-pot,Living room,4,Coffee table,0.94,25,48,22.67,37,0
+hoya-serpens-splash,lava-pop-pot,Living room,5,Beside the sofa,1.06,25,48,25.33,42,0
+hoya-serpens-splash,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,25,48,18.67,31,0
+hoya-serpens-splash,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,25,48,18.67,31,0
+hoya-serpens-splash,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,25,48,16.67,27.67,0
+hoya-serpens-splash,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,48,22,36,0
+hoya-serpens-splash,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,25,48,26.67,43.67,0
+hoya-serpens-splash,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,25,48,26.67,44,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,25,48,20,32.33,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,25,48,18,29.33,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,25,48,18.67,30.33,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,25,48,20.67,33.33,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,10,Drawing desk,0.86,25,48,20.67,34,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,11,Beside the easel,1.07,25,48,26,42,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,48,18.67,31,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,48,18.67,31,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,48,18.67,31,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,48,22,36,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,25,48,26.67,43.67,0
+hoya-serpens-splash,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,25,48,26.67,44,0
+queen-anthurium,original,Living room,0,Upper bookcase shelf,0.78,25,52,16,33.33,0
+queen-anthurium,original,Living room,1,Middle bookcase shelf,0.72,25,52,14.67,31,0
+queen-anthurium,original,Living room,2,Lower bookcase shelf,0.73,25,52,15,31.33,0
+queen-anthurium,original,Living room,3,Living room windowsill,0.86,25,52,18,36.67,0
+queen-anthurium,original,Living room,4,Coffee table,0.94,25,52,19.33,40.33,0
+queen-anthurium,original,Living room,5,Beside the sofa,1.06,25,52,21.67,45.67,0
+queen-anthurium,original,Living room,0/window-left,Left end of the living room windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,original,Living room,0/window-middle,Center of the living room windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,original,Living room,0/table-end,Center of the coffee table,0.7,25,52,14.67,30,0
+queen-anthurium,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,52,18.67,39,0
+queen-anthurium,original,Living room,0/front-left,Front left floor,1.1,25,52,22.67,47.33,0
+queen-anthurium,original,Living room,0/front-right,Front right floor,1.12,25,52,23,48,0
+queen-anthurium,original,Plant studio,6,Upper studio shelf,0.82,25,52,16.67,35.33,0
+queen-anthurium,original,Plant studio,7,Lower studio shelf,0.75,25,52,15.33,32,0
+queen-anthurium,original,Plant studio,8,Studio cabinet,0.77,25,52,16,33,0
+queen-anthurium,original,Plant studio,9,Studio windowsill,0.85,25,52,17.33,36.67,0
+queen-anthurium,original,Plant studio,10,Drawing desk,0.86,25,52,18,36.67,0
+queen-anthurium,original,Plant studio,11,Beside the easel,1.07,25,52,22,46,0
+queen-anthurium,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,52,16,33.33,0
+queen-anthurium,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,52,18.67,39,0
+queen-anthurium,original,Plant studio,1/front-left,Front left studio floor,1.1,25,52,22.67,47.33,0
+queen-anthurium,original,Plant studio,1/front-right,Front right studio floor,1.12,25,52,23,48,0
+queen-anthurium,terra,Living room,0,Upper bookcase shelf,0.78,25,52,16,33.33,0
+queen-anthurium,terra,Living room,1,Middle bookcase shelf,0.72,25,52,15,31,0
+queen-anthurium,terra,Living room,2,Lower bookcase shelf,0.73,25,52,15,31.67,0
+queen-anthurium,terra,Living room,3,Living room windowsill,0.86,25,52,17.67,37,0
+queen-anthurium,terra,Living room,4,Coffee table,0.94,25,52,19.33,40.67,0
+queen-anthurium,terra,Living room,5,Beside the sofa,1.06,25,52,21.67,45.33,0
+queen-anthurium,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,terra,Living room,0/table-end,Center of the coffee table,0.7,25,52,14.33,30,0
+queen-anthurium,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,52,18.67,39.33,0
+queen-anthurium,terra,Living room,0/front-left,Front left floor,1.1,25,52,22.67,47.33,0
+queen-anthurium,terra,Living room,0/front-right,Front right floor,1.12,25,52,23,48.33,0
+queen-anthurium,terra,Plant studio,6,Upper studio shelf,0.82,25,52,17,35.33,0
+queen-anthurium,terra,Plant studio,7,Lower studio shelf,0.75,25,52,15.67,32.33,0
+queen-anthurium,terra,Plant studio,8,Studio cabinet,0.77,25,52,15.67,33,0
+queen-anthurium,terra,Plant studio,9,Studio windowsill,0.85,25,52,17.67,36.33,0
+queen-anthurium,terra,Plant studio,10,Drawing desk,0.86,25,52,17.67,37,0
+queen-anthurium,terra,Plant studio,11,Beside the easel,1.07,25,52,22,46,0
+queen-anthurium,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,52,16,33.33,0
+queen-anthurium,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,52,18.67,39.33,0
+queen-anthurium,terra,Plant studio,1/front-left,Front left studio floor,1.1,25,52,22.67,47.33,0
+queen-anthurium,terra,Plant studio,1/front-right,Front right studio floor,1.12,25,52,23,48.33,0
+queen-anthurium,wave,Living room,0,Upper bookcase shelf,0.78,25,52,16,33.33,0
+queen-anthurium,wave,Living room,1,Middle bookcase shelf,0.72,25,52,15,31,0
+queen-anthurium,wave,Living room,2,Lower bookcase shelf,0.73,25,52,15,31.67,0
+queen-anthurium,wave,Living room,3,Living room windowsill,0.86,25,52,17.67,37,0
+queen-anthurium,wave,Living room,4,Coffee table,0.94,25,52,19.33,40.67,0
+queen-anthurium,wave,Living room,5,Beside the sofa,1.06,25,52,21.67,45.33,0
+queen-anthurium,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,wave,Living room,0/table-end,Center of the coffee table,0.7,25,52,14.33,30,0
+queen-anthurium,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,52,18.67,39.33,0
+queen-anthurium,wave,Living room,0/front-left,Front left floor,1.1,25,52,22.67,47.33,0
+queen-anthurium,wave,Living room,0/front-right,Front right floor,1.12,25,52,23,48.33,0
+queen-anthurium,wave,Plant studio,6,Upper studio shelf,0.82,25,52,17,35.33,0
+queen-anthurium,wave,Plant studio,7,Lower studio shelf,0.75,25,52,15.67,32.33,0
+queen-anthurium,wave,Plant studio,8,Studio cabinet,0.77,25,52,15.67,33,0
+queen-anthurium,wave,Plant studio,9,Studio windowsill,0.85,25,52,17.67,36.33,0
+queen-anthurium,wave,Plant studio,10,Drawing desk,0.86,25,52,17.67,37,0
+queen-anthurium,wave,Plant studio,11,Beside the easel,1.07,25,52,22,46,0
+queen-anthurium,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,52,16,33.33,0
+queen-anthurium,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,52,16,33.33,0
+queen-anthurium,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,52,18.67,39.33,0
+queen-anthurium,wave,Plant studio,1/front-left,Front left studio floor,1.1,25,52,22.67,47.33,0
+queen-anthurium,wave,Plant studio,1/front-right,Front right studio floor,1.12,25,52,23,48.33,0
+queen-anthurium,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,25,52,18.67,33.67,0
+queen-anthurium,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,25,52,17.33,30.67,0
+queen-anthurium,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,25,52,17.33,31.33,0
+queen-anthurium,bog-frog-pot,Living room,3,Living room windowsill,0.86,25,52,20.67,37,0
+queen-anthurium,bog-frog-pot,Living room,4,Coffee table,0.94,25,52,22.67,40.33,0
+queen-anthurium,bog-frog-pot,Living room,5,Beside the sofa,1.06,25,52,25.33,45.67,0
+queen-anthurium,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,25,52,18.67,33.67,0
+queen-anthurium,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,25,52,18.67,33.67,0
+queen-anthurium,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,25,52,16.67,30.33,0
+queen-anthurium,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,52,22,39,0
+queen-anthurium,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,25,52,26.67,47.33,0
+queen-anthurium,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,25,52,26.67,48,0
+queen-anthurium,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,25,52,20,35.33,0
+queen-anthurium,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,25,52,18,32.33,0
+queen-anthurium,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,25,52,18.67,33.33,0
+queen-anthurium,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,25,52,20.67,36.33,0
+queen-anthurium,bog-frog-pot,Plant studio,10,Drawing desk,0.86,25,52,20.67,37,0
+queen-anthurium,bog-frog-pot,Plant studio,11,Beside the easel,1.07,25,52,26,46,0
+queen-anthurium,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,52,18.67,33.67,0
+queen-anthurium,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,52,18.67,33.67,0
+queen-anthurium,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,52,18.67,33.67,0
+queen-anthurium,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,52,22,39,0
+queen-anthurium,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,25,52,26.67,47.33,0
+queen-anthurium,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,25,52,26.67,48,0
+queen-anthurium,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,25,52,18.67,33.67,0
+queen-anthurium,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,25,52,17.33,30.67,0
+queen-anthurium,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,25,52,17.33,31.33,0
+queen-anthurium,lava-pop-pot,Living room,3,Living room windowsill,0.86,25,52,20.67,37,0
+queen-anthurium,lava-pop-pot,Living room,4,Coffee table,0.94,25,52,22.67,40.33,0
+queen-anthurium,lava-pop-pot,Living room,5,Beside the sofa,1.06,25,52,25.33,45.67,0
+queen-anthurium,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,25,52,18.67,33.67,0
+queen-anthurium,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,25,52,18.67,33.67,0
+queen-anthurium,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,25,52,16.67,30.33,0
+queen-anthurium,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,25,52,22,39,0
+queen-anthurium,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,25,52,26.67,47.33,0
+queen-anthurium,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,25,52,26.67,48,0
+queen-anthurium,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,25,52,20,35.33,0
+queen-anthurium,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,25,52,18,32.33,0
+queen-anthurium,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,25,52,18.67,33.33,0
+queen-anthurium,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,25,52,20.67,36.33,0
+queen-anthurium,lava-pop-pot,Plant studio,10,Drawing desk,0.86,25,52,20.67,37,0
+queen-anthurium,lava-pop-pot,Plant studio,11,Beside the easel,1.07,25,52,26,46,0
+queen-anthurium,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,25,52,18.67,33.67,0
+queen-anthurium,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,25,52,18.67,33.67,0
+queen-anthurium,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,25,52,18.67,33.67,0
+queen-anthurium,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,25,52,22,39,0
+queen-anthurium,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,25,52,26.67,47.33,0
+queen-anthurium,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,25,52,26.67,48,0
+monkey-tail-cactus,original,Living room,0,Upper bookcase shelf,0.78,38,55,24.67,35.33,0
+monkey-tail-cactus,original,Living room,1,Middle bookcase shelf,0.72,38,55,22.67,32.67,0
+monkey-tail-cactus,original,Living room,2,Lower bookcase shelf,0.73,38,55,22.67,33.33,0
+monkey-tail-cactus,original,Living room,3,Living room windowsill,0.86,38,55,26.67,39,0
+monkey-tail-cactus,original,Living room,4,Coffee table,0.94,38,55,29.33,42.67,0
+monkey-tail-cactus,original,Living room,5,Beside the sofa,1.06,38,55,33.33,48.33,0
+monkey-tail-cactus,original,Living room,0/window-left,Left end of the living room windowsill,0.78,38,55,24.67,35.33,0
+monkey-tail-cactus,original,Living room,0/window-middle,Center of the living room windowsill,0.78,38,55,24.67,35.33,0
+monkey-tail-cactus,original,Living room,0/table-end,Center of the coffee table,0.7,38,55,22,31.67,0
+monkey-tail-cactus,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,55,28.67,41.33,0
+monkey-tail-cactus,original,Living room,0/front-left,Front left floor,1.1,38,55,34.67,50,0
+monkey-tail-cactus,original,Living room,0/front-right,Front right floor,1.12,38,55,35.33,50.67,0
+monkey-tail-cactus,original,Plant studio,6,Upper studio shelf,0.82,38,55,26,37.33,0
+monkey-tail-cactus,original,Plant studio,7,Lower studio shelf,0.75,38,55,23.33,34,0
+monkey-tail-cactus,original,Plant studio,8,Studio cabinet,0.77,38,55,24,35,0
+monkey-tail-cactus,original,Plant studio,9,Studio windowsill,0.85,38,55,26.67,38.33,0
+monkey-tail-cactus,original,Plant studio,10,Drawing desk,0.86,38,55,26.67,39,0
+monkey-tail-cactus,original,Plant studio,11,Beside the easel,1.07,38,55,33.33,48.33,0
+monkey-tail-cactus,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,55,24.67,35.33,0
+monkey-tail-cactus,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,55,24.67,35.33,0
+monkey-tail-cactus,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,55,24.67,35.33,0
+monkey-tail-cactus,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,55,28.67,41.33,0
+monkey-tail-cactus,original,Plant studio,1/front-left,Front left studio floor,1.1,38,55,34.67,50,0
+monkey-tail-cactus,original,Plant studio,1/front-right,Front right studio floor,1.12,38,55,35.33,50.67,0
+monkey-tail-cactus,terra,Living room,0,Upper bookcase shelf,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,terra,Living room,1,Middle bookcase shelf,0.72,38,55,22.67,32.67,0
+monkey-tail-cactus,terra,Living room,2,Lower bookcase shelf,0.73,38,55,23,33.33,0
+monkey-tail-cactus,terra,Living room,3,Living room windowsill,0.86,38,55,27.33,39,0
+monkey-tail-cactus,terra,Living room,4,Coffee table,0.94,38,55,29.67,42.67,0
+monkey-tail-cactus,terra,Living room,5,Beside the sofa,1.06,38,55,33.33,48.33,0
+monkey-tail-cactus,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,terra,Living room,0/table-end,Center of the coffee table,0.7,38,55,22,32,0
+monkey-tail-cactus,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,55,28.67,41.33,0
+monkey-tail-cactus,terra,Living room,0/front-left,Front left floor,1.1,38,55,34.33,50,0
+monkey-tail-cactus,terra,Living room,0/front-right,Front right floor,1.12,38,55,35,51,0
+monkey-tail-cactus,terra,Plant studio,6,Upper studio shelf,0.82,38,55,26,37.33,0
+monkey-tail-cactus,terra,Plant studio,7,Lower studio shelf,0.75,38,55,23.67,34.33,0
+monkey-tail-cactus,terra,Plant studio,8,Studio cabinet,0.77,38,55,24.33,35,0
+monkey-tail-cactus,terra,Plant studio,9,Studio windowsill,0.85,38,55,26.67,38.67,0
+monkey-tail-cactus,terra,Plant studio,10,Drawing desk,0.86,38,55,27.33,39,0
+monkey-tail-cactus,terra,Plant studio,11,Beside the easel,1.07,38,55,33.67,48.67,0
+monkey-tail-cactus,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,55,28.67,41.33,0
+monkey-tail-cactus,terra,Plant studio,1/front-left,Front left studio floor,1.1,38,55,34.33,50,0
+monkey-tail-cactus,terra,Plant studio,1/front-right,Front right studio floor,1.12,38,55,35,51,0
+monkey-tail-cactus,wave,Living room,0,Upper bookcase shelf,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,wave,Living room,1,Middle bookcase shelf,0.72,38,55,22.67,32.67,0
+monkey-tail-cactus,wave,Living room,2,Lower bookcase shelf,0.73,38,55,23,33.33,0
+monkey-tail-cactus,wave,Living room,3,Living room windowsill,0.86,38,55,27.33,39,0
+monkey-tail-cactus,wave,Living room,4,Coffee table,0.94,38,55,29.67,42.67,0
+monkey-tail-cactus,wave,Living room,5,Beside the sofa,1.06,38,55,33.33,48.33,0
+monkey-tail-cactus,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,wave,Living room,0/table-end,Center of the coffee table,0.7,38,55,22,32,0
+monkey-tail-cactus,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,55,28.67,41.33,0
+monkey-tail-cactus,wave,Living room,0/front-left,Front left floor,1.1,38,55,34.33,50,0
+monkey-tail-cactus,wave,Living room,0/front-right,Front right floor,1.12,38,55,35,51,0
+monkey-tail-cactus,wave,Plant studio,6,Upper studio shelf,0.82,38,55,26,37.33,0
+monkey-tail-cactus,wave,Plant studio,7,Lower studio shelf,0.75,38,55,23.67,34.33,0
+monkey-tail-cactus,wave,Plant studio,8,Studio cabinet,0.77,38,55,24.33,35,0
+monkey-tail-cactus,wave,Plant studio,9,Studio windowsill,0.85,38,55,26.67,38.67,0
+monkey-tail-cactus,wave,Plant studio,10,Drawing desk,0.86,38,55,27.33,39,0
+monkey-tail-cactus,wave,Plant studio,11,Beside the easel,1.07,38,55,33.67,48.67,0
+monkey-tail-cactus,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,55,28.67,41.33,0
+monkey-tail-cactus,wave,Plant studio,1/front-left,Front left studio floor,1.1,38,55,34.33,50,0
+monkey-tail-cactus,wave,Plant studio,1/front-right,Front right studio floor,1.12,38,55,35,51,0
+monkey-tail-cactus,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,38,55,22.67,33.33,0
+monkey-tail-cactus,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,38,55,23,33.67,0
+monkey-tail-cactus,bog-frog-pot,Living room,3,Living room windowsill,0.86,38,55,27.33,39.67,0
+monkey-tail-cactus,bog-frog-pot,Living room,4,Coffee table,0.94,38,55,29.67,43.33,0
+monkey-tail-cactus,bog-frog-pot,Living room,5,Beside the sofa,1.06,38,55,33.33,48.67,0
+monkey-tail-cactus,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,38,55,22,32,0
+monkey-tail-cactus,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,55,28.67,42,0
+monkey-tail-cactus,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,38,55,34.33,50.67,0
+monkey-tail-cactus,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,38,55,35,51.67,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,38,55,26,37.67,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,38,55,23.67,34.67,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,38,55,24.33,35.33,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,38,55,26.67,39,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,10,Drawing desk,0.86,38,55,27.33,39.67,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,11,Beside the easel,1.07,38,55,33.67,49.33,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,55,28.67,42,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,38,55,34.33,50.67,0
+monkey-tail-cactus,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,38,55,35,51.67,0
+monkey-tail-cactus,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,38,55,22.67,33.33,0
+monkey-tail-cactus,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,38,55,23,33.67,0
+monkey-tail-cactus,lava-pop-pot,Living room,3,Living room windowsill,0.86,38,55,27.33,39.67,0
+monkey-tail-cactus,lava-pop-pot,Living room,4,Coffee table,0.94,38,55,29.67,43.33,0
+monkey-tail-cactus,lava-pop-pot,Living room,5,Beside the sofa,1.06,38,55,33.33,48.67,0
+monkey-tail-cactus,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,38,55,22,32,0
+monkey-tail-cactus,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,55,28.67,42,0
+monkey-tail-cactus,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,38,55,34.33,50.67,0
+monkey-tail-cactus,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,38,55,35,51.67,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,38,55,26,37.67,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,38,55,23.67,34.67,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,38,55,24.33,35.33,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,38,55,26.67,39,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,10,Drawing desk,0.86,38,55,27.33,39.67,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,11,Beside the easel,1.07,38,55,33.67,49.33,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,55,24.67,35.67,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,55,28.67,42,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,38,55,34.33,50.67,0
+monkey-tail-cactus,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,38,55,35,51.67,0
+bird-of-paradise,original,Living room,0,Upper bookcase shelf,0.78,38,52,29.33,40.33,0
+bird-of-paradise,original,Living room,1,Middle bookcase shelf,0.72,38,52,27.33,37.33,0
+bird-of-paradise,original,Living room,2,Lower bookcase shelf,0.73,38,52,28,37.67,0.2
+bird-of-paradise,original,Living room,3,Living room windowsill,0.86,38,52,32.67,45,0
+bird-of-paradise,original,Living room,4,Coffee table,0.94,38,52,36,49,0
+bird-of-paradise,original,Living room,5,Beside the sofa,1.06,38,52,40,55,0
+bird-of-paradise,original,Living room,0/window-left,Left end of the living room windowsill,0.78,38,52,29.33,40.33,0
+bird-of-paradise,original,Living room,0/window-middle,Center of the living room windowsill,0.78,38,52,29.33,40.33,0
+bird-of-paradise,original,Living room,0/table-end,Center of the coffee table,0.7,38,52,26.67,36.33,0
+bird-of-paradise,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,52,34.67,47.33,0
+bird-of-paradise,original,Living room,0/front-left,Front left floor,1.1,38,52,42,57,0
+bird-of-paradise,original,Living room,0/front-right,Front right floor,1.12,38,52,42.67,58,0
+bird-of-paradise,original,Plant studio,6,Upper studio shelf,0.82,38,52,31.33,42.33,0
+bird-of-paradise,original,Plant studio,7,Lower studio shelf,0.75,38,52,28.67,39,0
+bird-of-paradise,original,Plant studio,8,Studio cabinet,0.77,38,52,29.33,40,0
+bird-of-paradise,original,Plant studio,9,Studio windowsill,0.85,38,52,32,44.33,0
+bird-of-paradise,original,Plant studio,10,Drawing desk,0.86,38,52,32.67,45,0
+bird-of-paradise,original,Plant studio,11,Beside the easel,1.07,38,52,40.67,55.67,0
+bird-of-paradise,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,52,29.33,40.33,0
+bird-of-paradise,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,52,29.33,40.33,0
+bird-of-paradise,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,52,29.33,40.33,0
+bird-of-paradise,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,52,34.67,47.33,0
+bird-of-paradise,original,Plant studio,1/front-left,Front left studio floor,1.1,38,52,42,57,0
+bird-of-paradise,original,Plant studio,1/front-right,Front right studio floor,1.12,38,52,42.67,58,0
+bird-of-paradise,terra,Living room,0,Upper bookcase shelf,0.78,38,52,29.33,41.33,0
+bird-of-paradise,terra,Living room,1,Middle bookcase shelf,0.72,38,52,27.33,37,0.7
+bird-of-paradise,terra,Living room,2,Lower bookcase shelf,0.73,38,52,28,37,1.4
+bird-of-paradise,terra,Living room,3,Living room windowsill,0.86,38,52,32.67,45.67,0
+bird-of-paradise,terra,Living room,4,Coffee table,0.94,38,52,36,49.67,0
+bird-of-paradise,terra,Living room,5,Beside the sofa,1.06,38,52,40,56.33,0
+bird-of-paradise,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,38,52,29.33,41.33,0
+bird-of-paradise,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,38,52,29.33,41.33,0
+bird-of-paradise,terra,Living room,0/table-end,Center of the coffee table,0.7,38,52,26.67,37,0
+bird-of-paradise,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,52,34.67,48.33,0
+bird-of-paradise,terra,Living room,0/front-left,Front left floor,1.1,38,52,42,58.33,0
+bird-of-paradise,terra,Living room,0/front-right,Front right floor,1.12,38,52,42.67,59.33,0
+bird-of-paradise,terra,Plant studio,6,Upper studio shelf,0.82,38,52,31.33,43.33,0
+bird-of-paradise,terra,Plant studio,7,Lower studio shelf,0.75,38,52,28.67,39.67,0
+bird-of-paradise,terra,Plant studio,8,Studio cabinet,0.77,38,52,29.33,40.67,0
+bird-of-paradise,terra,Plant studio,9,Studio windowsill,0.85,38,52,32,45,0
+bird-of-paradise,terra,Plant studio,10,Drawing desk,0.86,38,52,32.67,45.67,0
+bird-of-paradise,terra,Plant studio,11,Beside the easel,1.07,38,52,40.67,56.67,0
+bird-of-paradise,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,52,29.33,41.33,0
+bird-of-paradise,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,52,29.33,41.33,0
+bird-of-paradise,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,52,29.33,41.33,0
+bird-of-paradise,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,52,34.67,48.33,0
+bird-of-paradise,terra,Plant studio,1/front-left,Front left studio floor,1.1,38,52,42,58.33,0
+bird-of-paradise,terra,Plant studio,1/front-right,Front right studio floor,1.12,38,52,42.67,59.33,0
+bird-of-paradise,wave,Living room,0,Upper bookcase shelf,0.78,38,52,29.33,41.33,0
+bird-of-paradise,wave,Living room,1,Middle bookcase shelf,0.72,38,52,27.33,37,0.7
+bird-of-paradise,wave,Living room,2,Lower bookcase shelf,0.73,38,52,28,37,1.4
+bird-of-paradise,wave,Living room,3,Living room windowsill,0.86,38,52,32.67,45.67,0
+bird-of-paradise,wave,Living room,4,Coffee table,0.94,38,52,36,49.67,0
+bird-of-paradise,wave,Living room,5,Beside the sofa,1.06,38,52,40,56.33,0
+bird-of-paradise,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,38,52,29.33,41.33,0
+bird-of-paradise,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,38,52,29.33,41.33,0
+bird-of-paradise,wave,Living room,0/table-end,Center of the coffee table,0.7,38,52,26.67,37,0
+bird-of-paradise,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,52,34.67,48.33,0
+bird-of-paradise,wave,Living room,0/front-left,Front left floor,1.1,38,52,42,58.33,0
+bird-of-paradise,wave,Living room,0/front-right,Front right floor,1.12,38,52,42.67,59.33,0
+bird-of-paradise,wave,Plant studio,6,Upper studio shelf,0.82,38,52,31.33,43.33,0
+bird-of-paradise,wave,Plant studio,7,Lower studio shelf,0.75,38,52,28.67,39.67,0
+bird-of-paradise,wave,Plant studio,8,Studio cabinet,0.77,38,52,29.33,40.67,0
+bird-of-paradise,wave,Plant studio,9,Studio windowsill,0.85,38,52,32,45,0
+bird-of-paradise,wave,Plant studio,10,Drawing desk,0.86,38,52,32.67,45.67,0
+bird-of-paradise,wave,Plant studio,11,Beside the easel,1.07,38,52,40.67,56.67,0
+bird-of-paradise,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,52,29.33,41.33,0
+bird-of-paradise,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,52,29.33,41.33,0
+bird-of-paradise,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,52,29.33,41.33,0
+bird-of-paradise,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,52,34.67,48.33,0
+bird-of-paradise,wave,Plant studio,1/front-left,Front left studio floor,1.1,38,52,42,58.33,0
+bird-of-paradise,wave,Plant studio,1/front-right,Front right studio floor,1.12,38,52,42.67,59.33,0
+bird-of-paradise,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,38,52,29.33,42,1.8
+bird-of-paradise,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,38,52,27.33,37,5.2
+bird-of-paradise,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,38,52,28,37,6.2
+bird-of-paradise,bog-frog-pot,Living room,3,Living room windowsill,0.86,38,52,32.67,49,0
+bird-of-paradise,bog-frog-pot,Living room,4,Coffee table,0.94,38,52,36,53.67,0
+bird-of-paradise,bog-frog-pot,Living room,5,Beside the sofa,1.06,38,52,40,60.33,0
+bird-of-paradise,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,38,52,29.33,44.33,0
+bird-of-paradise,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,38,52,29.33,44.33,0
+bird-of-paradise,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,38,52,26.67,40,0
+bird-of-paradise,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,52,34.67,52,0
+bird-of-paradise,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,38,52,42,62.67,0
+bird-of-paradise,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,38,52,42.67,64,0
+bird-of-paradise,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,38,52,31.33,46.67,0
+bird-of-paradise,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,38,52,28.67,41,1.1
+bird-of-paradise,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,38,52,29.33,43,0.5
+bird-of-paradise,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,38,52,32,48.33,0
+bird-of-paradise,bog-frog-pot,Plant studio,10,Drawing desk,0.86,38,52,32.67,48,0.5
+bird-of-paradise,bog-frog-pot,Plant studio,11,Beside the easel,1.07,38,52,40.67,61,0
+bird-of-paradise,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,52,29.33,44.33,0
+bird-of-paradise,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,52,29.33,44.33,0
+bird-of-paradise,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,52,29.33,44.33,0
+bird-of-paradise,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,52,34.67,52,0
+bird-of-paradise,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,38,52,42,62.67,0
+bird-of-paradise,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,38,52,42.67,64,0
+bird-of-paradise,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,38,52,29.33,42,1.9
+bird-of-paradise,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,38,52,27.33,37,5.2
+bird-of-paradise,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,38,52,28,37,6.3
+bird-of-paradise,lava-pop-pot,Living room,3,Living room windowsill,0.86,38,52,32.67,49,0
+bird-of-paradise,lava-pop-pot,Living room,4,Coffee table,0.94,38,52,36,53.67,0
+bird-of-paradise,lava-pop-pot,Living room,5,Beside the sofa,1.06,38,52,40,60.33,0
+bird-of-paradise,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,38,52,29.33,44.33,0
+bird-of-paradise,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,38,52,29.33,44.33,0
+bird-of-paradise,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,38,52,26.67,40,0
+bird-of-paradise,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,38,52,34.67,52,0
+bird-of-paradise,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,38,52,42,62.67,0
+bird-of-paradise,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,38,52,42.67,64,0
+bird-of-paradise,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,38,52,31.33,46.67,0
+bird-of-paradise,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,38,52,28.67,41,1.1
+bird-of-paradise,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,38,52,29.33,43,0.5
+bird-of-paradise,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,38,52,32,48.33,0
+bird-of-paradise,lava-pop-pot,Plant studio,10,Drawing desk,0.86,38,52,32.67,48,0.5
+bird-of-paradise,lava-pop-pot,Plant studio,11,Beside the easel,1.07,38,52,40.67,61,0
+bird-of-paradise,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,38,52,29.33,44.33,0
+bird-of-paradise,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,38,52,29.33,44.33,0
+bird-of-paradise,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,38,52,29.33,44.33,0
+bird-of-paradise,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,38,52,34.67,52,0
+bird-of-paradise,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,38,52,42,62.67,0
+bird-of-paradise,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,38,52,42.67,64,0
+moth-orchid,original,Living room,0,Upper bookcase shelf,0.78,33,52,26.33,40.33,0
+moth-orchid,original,Living room,1,Middle bookcase shelf,0.72,33,52,24.33,37.33,0
+moth-orchid,original,Living room,2,Lower bookcase shelf,0.73,33,52,24.33,37.67,0.1
+moth-orchid,original,Living room,3,Living room windowsill,0.86,33,52,29,45,0
+moth-orchid,original,Living room,4,Coffee table,0.94,33,52,31.67,49,0
+moth-orchid,original,Living room,5,Beside the sofa,1.06,33,52,35.33,55,0
+moth-orchid,original,Living room,0/window-left,Left end of the living room windowsill,0.78,33,52,26.33,40.33,0
+moth-orchid,original,Living room,0/window-middle,Center of the living room windowsill,0.78,33,52,26.33,40.33,0
+moth-orchid,original,Living room,0/table-end,Center of the coffee table,0.7,33,52,23.67,36.33,0
+moth-orchid,original,Living room,0/bookcase-floor,Floor by the bookcase,0.91,33,52,30.33,47.33,0
+moth-orchid,original,Living room,0/front-left,Front left floor,1.1,33,52,36.67,57,0
+moth-orchid,original,Living room,0/front-right,Front right floor,1.12,33,52,37.33,58,0
+moth-orchid,original,Plant studio,6,Upper studio shelf,0.82,33,52,27.67,42.33,0
+moth-orchid,original,Plant studio,7,Lower studio shelf,0.75,33,52,25,39,0
+moth-orchid,original,Plant studio,8,Studio cabinet,0.77,33,52,25.67,40,0
+moth-orchid,original,Plant studio,9,Studio windowsill,0.85,33,52,28.33,44.33,0
+moth-orchid,original,Plant studio,10,Drawing desk,0.86,33,52,29,45,0
+moth-orchid,original,Plant studio,11,Beside the easel,1.07,33,52,36,55.67,0
+moth-orchid,original,Plant studio,1/window-left,Left end of the studio windowsill,0.78,33,52,26.33,40.33,0
+moth-orchid,original,Plant studio,1/window-middle,Center of the studio windowsill,0.78,33,52,26.33,40.33,0
+moth-orchid,original,Plant studio,1/desk-end,Center of the drawing desk,0.78,33,52,26.33,40.33,0
+moth-orchid,original,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,33,52,30.33,47.33,0
+moth-orchid,original,Plant studio,1/front-left,Front left studio floor,1.1,33,52,36.67,57,0
+moth-orchid,original,Plant studio,1/front-right,Front right studio floor,1.12,33,52,37.33,58,0
+moth-orchid,terra,Living room,0,Upper bookcase shelf,0.78,33,52,26.33,41.33,0
+moth-orchid,terra,Living room,1,Middle bookcase shelf,0.72,33,52,24.33,37,0.7
+moth-orchid,terra,Living room,2,Lower bookcase shelf,0.73,33,52,24.33,37,1.9
+moth-orchid,terra,Living room,3,Living room windowsill,0.86,33,52,29,45.67,0
+moth-orchid,terra,Living room,4,Coffee table,0.94,33,52,31.67,49.67,0
+moth-orchid,terra,Living room,5,Beside the sofa,1.06,33,52,35.33,56.33,0
+moth-orchid,terra,Living room,0/window-left,Left end of the living room windowsill,0.78,33,52,26.33,41.33,0
+moth-orchid,terra,Living room,0/window-middle,Center of the living room windowsill,0.78,33,52,26.33,41.33,0
+moth-orchid,terra,Living room,0/table-end,Center of the coffee table,0.7,33,52,23.67,37,0
+moth-orchid,terra,Living room,0/bookcase-floor,Floor by the bookcase,0.91,33,52,30.33,48.33,0
+moth-orchid,terra,Living room,0/front-left,Front left floor,1.1,33,52,36.67,58.33,0
+moth-orchid,terra,Living room,0/front-right,Front right floor,1.12,33,52,37.33,59.33,0
+moth-orchid,terra,Plant studio,6,Upper studio shelf,0.82,33,52,27.67,43.33,0
+moth-orchid,terra,Plant studio,7,Lower studio shelf,0.75,33,52,25,39.67,0
+moth-orchid,terra,Plant studio,8,Studio cabinet,0.77,33,52,25.67,40.67,0
+moth-orchid,terra,Plant studio,9,Studio windowsill,0.85,33,52,28.33,45,0
+moth-orchid,terra,Plant studio,10,Drawing desk,0.86,33,52,29,45.67,0
+moth-orchid,terra,Plant studio,11,Beside the easel,1.07,33,52,36,56.67,0
+moth-orchid,terra,Plant studio,1/window-left,Left end of the studio windowsill,0.78,33,52,26.33,41.33,0
+moth-orchid,terra,Plant studio,1/window-middle,Center of the studio windowsill,0.78,33,52,26.33,41.33,0
+moth-orchid,terra,Plant studio,1/desk-end,Center of the drawing desk,0.78,33,52,26.33,41.33,0
+moth-orchid,terra,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,33,52,30.33,48.33,0
+moth-orchid,terra,Plant studio,1/front-left,Front left studio floor,1.1,33,52,36.67,58.33,0
+moth-orchid,terra,Plant studio,1/front-right,Front right studio floor,1.12,33,52,37.33,59.33,0
+moth-orchid,wave,Living room,0,Upper bookcase shelf,0.78,33,52,26.33,41.33,0
+moth-orchid,wave,Living room,1,Middle bookcase shelf,0.72,33,52,24.33,37,0.7
+moth-orchid,wave,Living room,2,Lower bookcase shelf,0.73,33,52,24.33,37,1.9
+moth-orchid,wave,Living room,3,Living room windowsill,0.86,33,52,29,45.67,0
+moth-orchid,wave,Living room,4,Coffee table,0.94,33,52,31.67,49.67,0
+moth-orchid,wave,Living room,5,Beside the sofa,1.06,33,52,35.33,56.33,0
+moth-orchid,wave,Living room,0/window-left,Left end of the living room windowsill,0.78,33,52,26.33,41.33,0
+moth-orchid,wave,Living room,0/window-middle,Center of the living room windowsill,0.78,33,52,26.33,41.33,0
+moth-orchid,wave,Living room,0/table-end,Center of the coffee table,0.7,33,52,23.67,37,0
+moth-orchid,wave,Living room,0/bookcase-floor,Floor by the bookcase,0.91,33,52,30.33,48.33,0
+moth-orchid,wave,Living room,0/front-left,Front left floor,1.1,33,52,36.67,58.33,0
+moth-orchid,wave,Living room,0/front-right,Front right floor,1.12,33,52,37.33,59.33,0
+moth-orchid,wave,Plant studio,6,Upper studio shelf,0.82,33,52,27.67,43.33,0
+moth-orchid,wave,Plant studio,7,Lower studio shelf,0.75,33,52,25,39.67,0
+moth-orchid,wave,Plant studio,8,Studio cabinet,0.77,33,52,25.67,40.67,0
+moth-orchid,wave,Plant studio,9,Studio windowsill,0.85,33,52,28.33,45,0
+moth-orchid,wave,Plant studio,10,Drawing desk,0.86,33,52,29,45.67,0
+moth-orchid,wave,Plant studio,11,Beside the easel,1.07,33,52,36,56.67,0
+moth-orchid,wave,Plant studio,1/window-left,Left end of the studio windowsill,0.78,33,52,26.33,41.33,0
+moth-orchid,wave,Plant studio,1/window-middle,Center of the studio windowsill,0.78,33,52,26.33,41.33,0
+moth-orchid,wave,Plant studio,1/desk-end,Center of the drawing desk,0.78,33,52,26.33,41.33,0
+moth-orchid,wave,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,33,52,30.33,48.33,0
+moth-orchid,wave,Plant studio,1/front-left,Front left studio floor,1.1,33,52,36.67,58.33,0
+moth-orchid,wave,Plant studio,1/front-right,Front right studio floor,1.12,33,52,37.33,59.33,0
+moth-orchid,bog-frog-pot,Living room,0,Upper bookcase shelf,0.78,33,52,26,42,2.8
+moth-orchid,bog-frog-pot,Living room,1,Middle bookcase shelf,0.72,33,52,22.67,37,7.3
+moth-orchid,bog-frog-pot,Living room,2,Lower bookcase shelf,0.73,33,52,23,37,8.1
+moth-orchid,bog-frog-pot,Living room,3,Living room windowsill,0.86,33,52,29,49,0
+moth-orchid,bog-frog-pot,Living room,4,Coffee table,0.94,33,52,31.67,53.67,0
+moth-orchid,bog-frog-pot,Living room,5,Beside the sofa,1.06,33,52,35.33,60.33,0
+moth-orchid,bog-frog-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,33,52,26.33,44.33,0
+moth-orchid,bog-frog-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,33,52,26.33,44.33,0
+moth-orchid,bog-frog-pot,Living room,0/table-end,Center of the coffee table,0.7,33,52,23.67,40,0
+moth-orchid,bog-frog-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,33,52,30.33,52,0
+moth-orchid,bog-frog-pot,Living room,0/front-left,Front left floor,1.1,33,52,36.67,62.67,0
+moth-orchid,bog-frog-pot,Living room,0/front-right,Front right floor,1.12,33,52,37.33,64,0
+moth-orchid,bog-frog-pot,Plant studio,6,Upper studio shelf,0.82,33,52,27.67,46.67,0
+moth-orchid,bog-frog-pot,Plant studio,7,Lower studio shelf,0.75,33,52,25,41,1.6
+moth-orchid,bog-frog-pot,Plant studio,8,Studio cabinet,0.77,33,52,25.67,43,0.4
+moth-orchid,bog-frog-pot,Plant studio,9,Studio windowsill,0.85,33,52,28.33,48.33,0
+moth-orchid,bog-frog-pot,Plant studio,10,Drawing desk,0.86,33,52,29,48,0.4
+moth-orchid,bog-frog-pot,Plant studio,11,Beside the easel,1.07,33,52,36,61,0
+moth-orchid,bog-frog-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,33,52,26.33,44.33,0
+moth-orchid,bog-frog-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,33,52,26.33,44.33,0
+moth-orchid,bog-frog-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,33,52,26.33,44.33,0
+moth-orchid,bog-frog-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,33,52,30.33,52,0
+moth-orchid,bog-frog-pot,Plant studio,1/front-left,Front left studio floor,1.1,33,52,36.67,62.67,0
+moth-orchid,bog-frog-pot,Plant studio,1/front-right,Front right studio floor,1.12,33,52,37.33,64,0
+moth-orchid,lava-pop-pot,Living room,0,Upper bookcase shelf,0.78,33,52,26,42,2.9
+moth-orchid,lava-pop-pot,Living room,1,Middle bookcase shelf,0.72,33,52,22.67,37,7.4
+moth-orchid,lava-pop-pot,Living room,2,Lower bookcase shelf,0.73,33,52,23,37,8.1
+moth-orchid,lava-pop-pot,Living room,3,Living room windowsill,0.86,33,52,29,49,0
+moth-orchid,lava-pop-pot,Living room,4,Coffee table,0.94,33,52,31.67,53.67,0
+moth-orchid,lava-pop-pot,Living room,5,Beside the sofa,1.06,33,52,35.33,60.33,0
+moth-orchid,lava-pop-pot,Living room,0/window-left,Left end of the living room windowsill,0.78,33,52,26.33,44.33,0
+moth-orchid,lava-pop-pot,Living room,0/window-middle,Center of the living room windowsill,0.78,33,52,26.33,44.33,0
+moth-orchid,lava-pop-pot,Living room,0/table-end,Center of the coffee table,0.7,33,52,23.67,40,0
+moth-orchid,lava-pop-pot,Living room,0/bookcase-floor,Floor by the bookcase,0.91,33,52,30.33,52,0
+moth-orchid,lava-pop-pot,Living room,0/front-left,Front left floor,1.1,33,52,36.67,62.67,0
+moth-orchid,lava-pop-pot,Living room,0/front-right,Front right floor,1.12,33,52,37.33,64,0
+moth-orchid,lava-pop-pot,Plant studio,6,Upper studio shelf,0.82,33,52,27.67,46.67,0
+moth-orchid,lava-pop-pot,Plant studio,7,Lower studio shelf,0.75,33,52,25,41,1.6
+moth-orchid,lava-pop-pot,Plant studio,8,Studio cabinet,0.77,33,52,25.67,43,0.4
+moth-orchid,lava-pop-pot,Plant studio,9,Studio windowsill,0.85,33,52,28.33,48.33,0
+moth-orchid,lava-pop-pot,Plant studio,10,Drawing desk,0.86,33,52,29,48,0.4
+moth-orchid,lava-pop-pot,Plant studio,11,Beside the easel,1.07,33,52,36,61,0
+moth-orchid,lava-pop-pot,Plant studio,1/window-left,Left end of the studio windowsill,0.78,33,52,26.33,44.33,0
+moth-orchid,lava-pop-pot,Plant studio,1/window-middle,Center of the studio windowsill,0.78,33,52,26.33,44.33,0
+moth-orchid,lava-pop-pot,Plant studio,1/desk-end,Center of the drawing desk,0.78,33,52,26.33,44.33,0
+moth-orchid,lava-pop-pot,Plant studio,1/cabinet-floor,Floor by the studio cabinet,0.91,33,52,30.33,52,0
+moth-orchid,lava-pop-pot,Plant studio,1/front-left,Front left studio floor,1.1,33,52,36.67,62.67,0
+moth-orchid,lava-pop-pot,Plant studio,1/front-right,Front right studio floor,1.12,33,52,37.33,64,0
