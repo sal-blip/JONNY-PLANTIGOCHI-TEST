@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v76 · Garden camera and swipe continuity · November 23, 2026
+
+Plantigochi 0.1.16 keeps the visible room painted during toy and iSEED transitions. Its resting camera is 8% closer. Tapping or briefly holding open scenery uses the room’s existing focus and ease-out. The room retains native touch targets for objects, placement and HUD controls.
+
+Mobile Chromium reproduced the previous blank actor canvas mid-swipe. The regression check passed with held, cancelled and repeated swipes, open-space focus and horizontal panning. Other browser checks covered portrait and landscape controls, item placement and reload at two display densities. All 162 unit tests passed. Six production resources matched the build and the live welcome loaded. Physical phone gestures remain a device check. [Touch walkthrough](../../tests/browser/garden_passage.py)
+
+Sites source `09b912cb72401bb275874f8b7e1b41ab3eaf2c5c` · saved version 76 · deployment `appgdep_6b04dbd91ee481918568690ad8e538c3` · [GitHub release commit a4c5332](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/a4c5332)
+
 ## v75 · Returning browser gardens skip the welcome tour · November 23, 2026
 
 Plantigochi 0.1.15 gives first-time browser visitors the installation tour. An existing browser save opens a welcome-back page with Home Screen guidance. Backup and installation help sit behind a disclosure that opens automatically for a direct install link. Installed games continue through their saved checkpoint.
