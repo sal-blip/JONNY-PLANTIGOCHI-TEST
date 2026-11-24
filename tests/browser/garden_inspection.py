@@ -38,6 +38,7 @@ with sync_playwright() as pw:
         assert saved['graduates'][0]['slot'] == 3 and saved['gardenLife']['items'] == plant['gardenLife']['items']
         page.locator('[data-item-id="frog"]').tap()
         taps(page,'Move to another spot','Swap with Terracotta pot at Living room windowsill','Swap here')
+        expect(page.get_by_role('status').filter(has_text='Bog Frog Pot placed')).to_be_visible()
         page.reload()
         taps(page,'Open garden')
         expect(page.locator('[data-item-id="frog"]')).to_have_attribute('data-pot-slot','3')
