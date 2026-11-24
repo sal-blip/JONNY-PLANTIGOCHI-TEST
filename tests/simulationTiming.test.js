@@ -112,12 +112,12 @@ test('Dew and Echo award coins using the level or attempt actually played across
   assert.equal(dew.startedAt,started);
   assert.ok(dew.finishedAt>midnight);
   const crossed=earnWin(wallet,'dew-midnight',dew.startedAt,dew.finishedAt);
-  assert.equal(lifeOf(crossed).balance,20);
+  assert.equal(lifeOf(crossed).balance,10);
   let at=dew.finishedAt+100;
   dew=key(dew,'heart',at);
   assert.equal(dew.startedAt,at);
   for(let i=0;dew.phase==='fall' && i<1000;i++)dew=tick(dew,at+=50);
-  assert.equal(lifeOf(earnWin(crossed,'dew-next',dew.startedAt,dew.finishedAt)).balance,23);
+  assert.equal(lifeOf(earnWin(crossed,'dew-next',dew.startedAt,dew.finishedAt)).balance,13);
 
   let echo=key(enter('echo'),'heart',started);
   at=started;
@@ -126,7 +126,7 @@ test('Dew and Echo award coins using the level or attempt actually played across
   assert.equal(echo.phase,'won');
   assert.equal(echo.startedAt,started);
   assert.equal(echo.finishedAt,at);
-  assert.equal(lifeOf(earnWin(wallet,'echo-midnight',echo.startedAt,echo.finishedAt)).balance,20);
+  assert.equal(lifeOf(earnWin(wallet,'echo-midnight',echo.startedAt,echo.finishedAt)).balance,10);
   echo=key(echo,'heart',++at);
   while(echo.phase==='watch')echo=tick(echo,at+=300);
   echo=key(echo,'right',++at);
@@ -135,5 +135,5 @@ test('Dew and Echo award coins using the level or attempt actually played across
   assert.equal(echo.startedAt,at);
   while(echo.phase==='watch')echo=tick(echo,at+=300);
   for(const button of ['left','right','heart'])echo=key(echo,button,++at);
-  assert.equal(lifeOf(earnWin(wallet,'echo-retry',echo.startedAt,echo.finishedAt)).balance,23);
+  assert.equal(lifeOf(earnWin(wallet,'echo-retry',echo.startedAt,echo.finishedAt)).balance,13);
 });

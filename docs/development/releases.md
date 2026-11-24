@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.39 · Daily rewards and Garden spin
+
+The first regular visit each local day opens a seven-day reward card with a coin claim and one free three-reel spin. The iSEED header badge clears as each action is completed. Existing same-day credits remain paid. The introductory pot retains its original funding, and new players can use their first spin after the tutorial. Prize inventory, growth vouchers and the daily receipt travel with garden backups. All 184 tests passed, including concurrent IndexedDB claims and spins. A component walkthrough covered browsing, claiming, spinning, closing and reopening. The managed browser preview relay timed out, so the visual transition on a physical phone still needs a check.
+
 ## Plantigochi 0.1.38 · Weekly check-ins and garden camera
 
 Daily rewards shows the repeating seven-day calendar and collected coins. Journal now includes the Care library. Share opens a garden viewfinder with room selection, tap-to-focus, drag, zoom and PNG capture. This release follows the production navigation from 0.1.37. All 177 unit tests passed. Component checks exercised reward browsing, switching Journal tabs, choosing camera rooms, zooming, capturing a 1200 × 960 PNG and retaking it. Physical pinch gestures and the native file share sheet await device testing.

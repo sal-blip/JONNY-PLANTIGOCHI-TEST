@@ -1,5 +1,5 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
-import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay,lastVisit,weeklyRewards} from './gardenEconomy.js';
+import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay,lastVisit,weeklyRewards,spinTable} from './gardenEconomy.js';
 import {toyVarietyName,canHomePlant} from './game.js';
 import {drawSizeComparison,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
@@ -42,8 +42,9 @@ function SizeComparison({sku}){
 }
 export function CoinBalance({plant}){
   const life=lifeOf(plant),today=localDay(Date.now()),visit=lastVisit(life);
-  const visitCoins=visit?.date===today?weeklyRewards[(visit.streak-1)%weeklyRewards.length]:0;
-  const earned=visitCoins+(life.day===today?life.waters*2+life.wins.length*3:0);
+  const visitCoins=visit?.date===today && visit.claimed!==false?weeklyRewards[(visit.streak-1)%weeklyRewards.length]:0;
+  const spinCoins=visit?.date===today?(spinTable.find(row=>row.id===visit.spin?.id)?.coins || 0):0;
+  const earned=visitCoins+spinCoins+(life.day===today?life.waters*2+life.wins.length*3:0);
   return <div className="wallet"><img src="/art/iseed-coin.png" width="20" height="20" alt="" style={{imageRendering:"pixelated"}}/><strong>{life.balance} Garden Coins</strong>
     <small>Today +{earned}</small></div>;
 }
@@ -143,7 +144,7 @@ export default function GardenShop({plant,homePlant,onPlace,inspect,initialTab='
       <b><img src="/art/iseed-coin.png" width="13" height="13" alt="" style={{imageRendering:"pixelated"}}/>{itemPrice(plant,sku)}</b></button>)}</div>:
       <div className="shop-list">{plant.waitingPlants?.map(item=><button key={item.id} disabled={!canHomePlant(plant,item.id)}
         onClick={()=>homePlant(item.id)}><ItemArt sku={item.species}/><span>{item.id===plant.id?plant.name:item.name}
-          <small>{toyVarietyName(item.species)} · {canHomePlant(plant,item.id)?'Choose a garden spot':'Treat fungus first'}</small></span><ChevronRight size={16}/></button>)}
+          <small>{item.source==='shop'?'Daily spin prize':toyVarietyName(item.species)} · {canHomePlant(plant,item.id)?'Choose a garden spot':'Treat fungus first'}</small></span><ChevronRight size={16}/></button>)}
         {g.items.map(item=><button key={item.id} onClick={()=>inspect(item)}><ItemArt sku={item.sku} photo={item.photo}/>
         <span>{catalog[item.sku].name}<small>{item.slot===null?'In inventory':'In the room'}</small></span><ChevronRight size={16}/></button>)}
         {!g.items.length && !plant.waitingPlants?.length && <p><ShoppingBag size={16}/> Your pots and decorations will appear here.</p>}

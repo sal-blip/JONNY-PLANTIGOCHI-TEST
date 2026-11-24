@@ -529,3 +529,18 @@ test('mixer settings migrate on disk, merge across tabs and survive backup, rest
   assert.deepEqual(audioLevels(imported.plant),mixed);
   assert.deepEqual(audioLevels((await store().read()).plant),mixed);
 });
+
+test('two windows can claim and spin concurrently without duplicating either reward',async t=>{
+  const {store,storage}=installation(t);
+  const {localDay,openDailyVisit,claimDaily,settleDailySpin}=await import('../src/gardenEconomy.js');
+  const now=Date.now(),date=localDay(now);
+  storage.setItem(KEY,JSON.stringify(openDailyVisit(newPlant(now),now)));
+  const db=store(),save=await db.read();
+  const claim=p=>claimDaily(p,now,date);
+  const spin=p=>settleDailySpin(p,now,date,{id:'pot',sku:'terra'});
+  await Promise.all([db.update(save,spin),store().update(save,claim),store().update(save,spin),db.update(save,claim)]);
+  const fresh=await store().read();
+  assert.equal(fresh.plant.gardenLife.balance,10);
+  assert.equal(fresh.plant.gardenLife.items.length,1);
+  assert.equal(fresh.plant.gardenLife.visit.spin.sku,'terra');
+});

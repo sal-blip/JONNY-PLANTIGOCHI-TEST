@@ -47,24 +47,80 @@ export const weeklyRewards=Object.freeze([10,10,15,15,20,20,30]);
 export function lastVisit(life){
   return life.visit ?? (life.day?{date:life.day,streak:1}:null);
 }
-export function checkIn(plant,time) {
+export function openDailyVisit(plant,time) {
   const life=lifeOf(plant), day=localDay(time);
-  if((plant.tutorial && life.day) || day<=life.day)return plant;
   const previous=lastVisit(life);
+  if((plant.tutorial && life.day) || day<life.day || (previous && day<=previous.date))return plant;
   // Compare calendar labels at UTC midnight so local DST never breaks a streak.
-  const consecutive=previous && Date.parse(day)-Date.parse(previous.date)===86400000;
+  const consecutive=previous && previous.claimed!==false && Date.parse(day)-Date.parse(previous.date)===86400000;
   const streak=consecutive?previous.streak+1:1;
-  const reward=weeklyRewards[(streak-1)%weeklyRewards.length];
-  return update(plant,{day,visit:{date:day,streak},balance:life.balance+reward,waters:0,wins:[]});
+  return update(plant,{day,visit:{date:day,streak,claimed:false},waters:0,wins:[]});
+}
+
+export function dailyActions(life,date){
+  const visit=lastVisit(life);
+  if(visit?.date!==date || life.day!==date)return 0;
+  return Number(visit.claimed===false)+Number(!visit.spin);
+}
+export function claimDaily(plant,time,expected){
+  const life=lifeOf(plant),visit=lastVisit(life);
+  if(expected!==localDay(time) || visit?.date!==expected || life.day!==expected || visit.claimed!==false)return plant;
+  return update(plant,{visit:{...visit,claimed:true},balance:life.balance+weeklyRewards[(visit.streak-1)%7]});
+}
+// The starter visit is paid by setup so the first pot is affordable during the lesson.
+export function checkIn(plant,time){
+  return claimDaily(openDailyVisit(plant,time),time,localDay(time));
+}
+export function presentDaily(plant,time,expected){
+  const life=lifeOf(plant),visit=lastVisit(life);
+  if(expected!==localDay(time) || !dailyActions(life,expected) || visit.shown)return plant;
+  return update(plant,{visit:{...visit,shown:true}});
+}
+export const spinTable=Object.freeze([
+  {id:'coins10',label:'10 coins',weight:35,coins:10,symbol:'coin'},
+  {id:'coins25',label:'25 coins',weight:25,coins:25,symbol:'coin'},
+  {id:'coins50',label:'50 coins',weight:15,coins:50,symbol:'coin'},
+  {id:'coins100',label:'100 coins',weight:5,coins:100,symbol:'coin'},
+  {id:'growth',label:'1 growth day',weight:10,symbol:'growth'},
+  {id:'pot',label:'Garden pot',weight:7,symbol:'pot'},
+  {id:'plant',label:'Grown shop plant',weight:3,symbol:'plant'},
+]);
+export function rollDailyPrize(roll,itemRoll){
+  if(![roll,itemRoll].every(value=>Number.isFinite(value) && value>=0 && value<1))throw new RangeError('Invalid spin draw');
+  let ticket=Math.floor(roll*100);
+  const prize=spinTable.find(row=>{ticket-=row.weight;return ticket<0;});
+  if(prize.id!=='plant' && prize.id!=='pot')return {id:prize.id};
+  const pool=Object.keys(catalog).filter(sku=>catalog[sku].kind===prize.id && !catalog[sku].retired);
+  return {id:prize.id,sku:pool[Math.floor(itemRoll*pool.length)]};
+}
+function validPrize(prize){
+  if(!prize || !spinTable.some(row=>row.id===prize.id))return false;
+  return ['plant','pot'].includes(prize.id)?Object.hasOwn(catalog,prize.sku) && catalog[prize.sku].kind===prize.id:prize.sku===undefined;
+}
+export function settleDailySpin(plant,time,expected,prize){
+  const life=lifeOf(plant),visit=lastVisit(life);
+  if(plant.tutorial || expected!==localDay(time) || visit?.date!==expected || life.day!==expected ||
+    visit.spin || !validPrize(prize) || catalog[prize.sku]?.retired)return plant;
+  const row=spinTable.find(row=>row.id===prize.id);
+  const fields={visit:{...visit,spin:prize}};
+  const id='daily-spin-'+expected;
+  if(row.coins)fields.balance=life.balance+row.coins;
+  if(prize.id==='growth')fields.growthDays=(life.growthDays || 0)+1;
+  if(prize.id==='pot')fields.items=[...life.items,{id,sku:prize.sku,slot:null}];
+  if(prize.id==='plant'){
+    const gift={id,source:'shop',species:prize.sku,name:catalog[prize.sku].name,generation:1,plantedAt:time};
+    plant={...plant,waitingPlants:[...(plant.waitingPlants || []),gift]};
+  }
+  return update(plant,fields);
 }
 export function earnWater(plant,time) {
-  plant=checkIn(plant,time);
+  plant=openDailyVisit(plant,time);
   const life=lifeOf(plant);
   if((!plant.tutorial && life.day!==localDay(time)) || life.waters>=3 || (plant.tutorial && life.waters>0))return plant;
   return update(plant,{waters:life.waters+1,balance:life.balance+2});
 }
 export function earnWin(plant,id,started,time) {
-  plant=checkIn(plant,time);
+  plant=openDailyVisit(plant,time);
   const life=lifeOf(plant);
   if(plant.tutorial || !id || localDay(time)!==life.day || life.wins.length>=5 || life.wins.includes(id) || localDay(started)!==life.day || started>time)return plant;
   return update(plant,{wins:[...life.wins,id],balance:life.balance+3});
@@ -95,6 +151,10 @@ export function validGardenLife(plant) {
     !g.wins.every(validId) || new Set(g.wins).size!==g.wins.length)return false;
   if(g.visit!==undefined && (!g.visit || typeof g.visit.date!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(g.visit.date) ||
     !Number.isFinite(Date.parse(g.visit.date)) || g.visit.date>g.day || !integer(g.visit.streak) || g.visit.streak<1))return false;
+  if(g.visit && ((g.visit.claimed!==undefined && typeof g.visit.claimed!=='boolean') ||
+    (g.visit.shown!==undefined && typeof g.visit.shown!=='boolean') ||
+    (g.visit.spin!==undefined && !validPrize(g.visit.spin))))return false;
+  if(g.growthDays!==undefined && !integer(g.growthDays))return false;
   if(![g.items,g.events,g.plants,g.notes].every(list=>Array.isArray(list) && list.every(i=>i && validId(i.id)) && unique(list)))return false;
   const placed=new Set();
   for(const item of g.items){

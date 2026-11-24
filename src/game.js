@@ -192,6 +192,17 @@ export function buyGrowth(p,expected,now){
   if(p.stage==='seed')return wake({...advanced,seedBonus:(p.seedBonus || 0)+offer.amount},now);
   return wake({...advanced,anchor:now,earned:offer.target},now);
 }
+export function canUseGrowthDay(p,now){
+  return (p.gardenLife?.growthDays || 0)>0 && !p.tutorial && !p.seedOffers &&
+    ['sprout','young','split'].includes(p.stage) && p.deadAt===null &&
+    now>=latestCareAt(p) && earnedAt(p,now)<WEEK && !growthHolds(p,now).length;
+}
+export function useGrowthDay(saved,id,expectedCount,now){
+  const p=wake(saved,now);
+  if(p.id!==id || p.gardenLife?.growthDays!==expectedCount || !canUseGrowthDay(p,now))return p;
+  return wake({...p,anchor:now,earned:Math.min(WEEK,earnedAt(p,now)+DAY),
+    gardenLife:{...p.gardenLife,growthDays:expectedCount-1}},now);
+}
 function settle(p, now) {
   return {...p, earned:earnedAt(p,now), anchor:Math.max(now,p.anchor)};
 }
@@ -301,7 +312,7 @@ export function readPlant(text, now = Date.now(), visible = true) {
     if(p.waitingPlants!==undefined){
       const placed=new Set(p.graduates.map(g=>g.id));
       if(!Array.isArray(p.waitingPlants) || !p.waitingPlants.every(g=>{
-        if(!g || !validId(g.id) || placed.has(g.id) || !isToySpecies(g.species) ||
+        if(!g || !validId(g.id) || placed.has(g.id) || (g.source==='shop'?g.id===p.id || catalog[g.species]?.kind!=='plant':!isToySpecies(g.species)) ||
           !generation(g.generation) || !stamp(g.plantedAt) || typeof g.name!=='string' ||
           (g.id===p.id && (p.stage!=='grown' || g.species!==(p.species ?? growthOrder[0]))))return false;
         placed.add(g.id);return true;
@@ -372,6 +383,10 @@ export function graduate(saved, id, slot, now = Date.now()) {
   const earned=active?p:p.waitingPlants.find(item=>item.id===id);
   const species=earned.species ?? growthOrder[0];
   const resident={id,name:plantName(earned.name),species,generation:earned.generation,plantedAt:earned.plantedAt,movedAt:now,slot};
+  if(earned.source==='shop'){
+    resident.source='shop';
+    resident.name=catalog[species].name;
+  }
   const collection={graduates:[...p.graduates,resident],waitingPlants:(p.waitingPlants || []).filter(item=>item.id!==id)};
   let next={...p,...collection};
   if(active){
@@ -379,6 +394,7 @@ export function graduate(saved, id, slot, now = Date.now()) {
     next={...p,...newPlant(now,undefined,offers[0]),version:4,seedOffers:offers,...audioLevels(p),...collection,generation:p.generation+1,sound:p.sound,jar:p.jar,book:p.book,dewCleared:p.dewCleared};
   }
   if(active)delete next.seedNamePending;
+  if(earned.source==='shop')return milestone(next,'prize-placed',resident.name+' came home from the daily spin.',now,id);
   return milestone(next,'graduated',resident.name+' graduated to the garden.',now,id);
 }
 

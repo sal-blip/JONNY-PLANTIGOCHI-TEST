@@ -32,7 +32,7 @@ test('a copied seed grows through seven days of care and graduates without chang
   }
   const mature=lab.snapshot().plant;
   assert.equal(mature.stage,'grown');assert.ok(seen.has('fungus'));
-  assert.equal(lifeOf(mature).day,localDay(start));assert.equal(lifeOf(mature).balance,16);
+  assert.equal(lifeOf(mature).day,localDay(start));assert.equal(lifeOf(mature).balance,6);assert.equal(lifeOf(mature).visit.claimed,false);
   lab.change(p=>graduate(p,p.id,0,lab.clock()));
   assert.equal(lab.stop(),null);
   lab.change(p=>chooseSeed(p,p.id,'prayer-plant',lab.clock()));

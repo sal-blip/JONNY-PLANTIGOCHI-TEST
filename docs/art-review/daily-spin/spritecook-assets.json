@@ -1,0 +1,69 @@
+{
+  "assets": [
+    {
+      "label": "Botanical slot cabinet",
+      "asset_id": "c4c65932-4dca-4b26-bc4b-ada45381ffb9",
+      "file": "public/assets/daily-spin/cabinet.png",
+      "sha12": "ea2de674c644"
+    },
+    {
+      "label": "Prize reel – coin",
+      "asset_id": "ae5effd7-d9f2-4a24-9420-323ef52358d0",
+      "file": "public/assets/daily-spin/coin.png",
+      "sha12": "9b265a0a5d51"
+    },
+    {
+      "label": "Prize reel – plant",
+      "asset_id": "ae5effd7-d9f2-4a24-9420-323ef52358d0",
+      "file": "public/assets/daily-spin/plant.png",
+      "sha12": "5498c49a431a"
+    },
+    {
+      "label": "Prize reel – pot",
+      "asset_id": "ae5effd7-d9f2-4a24-9420-323ef52358d0",
+      "file": "public/assets/daily-spin/pot.png",
+      "sha12": "7dfbab5abad9"
+    },
+    {
+      "label": "Prize reel – growth",
+      "asset_id": "ae5effd7-d9f2-4a24-9420-323ef52358d0",
+      "file": "public/assets/daily-spin/growth.png",
+      "sha12": "7ac24ba116ec"
+    },
+    {
+      "label": "Spiral reveal",
+      "asset_id": "8bb1e4cc-c2ff-4cd7-8363-c12fb24f6ead",
+      "file": "public/assets/daily-spin/spiral.png",
+      "sha12": "5ffc9bf98821"
+    }
+  ],
+  "cabinet": {
+    "native_size": [
+      171,
+      133
+    ],
+    "reel_aperture": [
+      30,
+      41,
+      96,
+      48
+    ],
+    "alignment": "x, y, width, height from cropped top left"
+  },
+  "reels": {
+    "native_size": [
+      86,
+      86
+    ],
+    "sheet_grid": [
+      2,
+      2
+    ],
+    "order": [
+      "coin",
+      "plant",
+      "pot",
+      "growth"
+    ]
+  }
+}

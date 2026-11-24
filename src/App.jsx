@@ -26,7 +26,9 @@ import OnboardingTransition,{transitionOnboarding} from './OnboardingTransition.
 import {SetupWelcome,NameEditor} from './PlantSetup.jsx';
 import ResetGarden from './ResetGarden.jsx';
 import Recovery from './Recovery.jsx';
-import {checkIn,fitsBackupChange,lifeOf,localDay,milestone} from './gardenEconomy.js';
+import {dailyActions,lastVisit,openDailyVisit,presentDaily,fitsBackupChange,lifeOf,localDay,milestone} from './gardenEconomy.js';
+import DailyRewards from './DailyRewards.jsx';
+import rewardIcon from './art/iseed-daily-rewards.png';
 import {watchDailyVisit} from './dailyVisit.js';
 import Collector from './Collector.jsx';
 import SwipeCue from './SwipeCue.jsx';
@@ -229,17 +231,13 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   useEffect(()=>{
     if(!recordActive || !gardenLife.items.some(i=>i.id===playingRecordId && i.sku==='record' && i.slot!==null))setPlayingRecordId(null);
   },[recordActive,gardenLife.items,playingRecordId]);
-  const [coinsMessage,setCoinsMessage]=useState('');
   const day=localDay(wallNow);
+  const visit=lastVisit(gardenLife);
+  const pendingRewards=dailyActions(gardenLife,day);
   useEffect(()=>{
     if(!plant || tutorial)return;
-    return watchDailyVisit(gardenLife.day,time=>{
-      let reward=0;
-      void commit(p=>{const next=checkIn(p,time);reward=lifeOf(next).balance-lifeOf(p).balance;return next;})
-        .then(saved=>{if(saved && reward && !lesson)setCoinsMessage('Daily check-in · +'+reward+' Garden Coins');});
-    });
-  },[day,gardenLife.day,plant?.id,Boolean(tutorial),lesson,commit]);
-  useEffect(()=>{if(coinsMessage){const timer=setTimeout(()=>setCoinsMessage(''),6500);return ()=>clearTimeout(timer);}},[coinsMessage]);
+    return watchDailyVisit(visit?.date || '',time=>{void commit(p=>openDailyVisit(p,time));});
+  },[day,visit?.date,plant?.id,Boolean(tutorial),commit]);
   const { play, unlock, running } = useGardenSound({enabled:Boolean(plant), effectsVolume:intro && revealMuted ? 0 : fxVolume, ambienceVolume, gardenActive:roomActive, instrumental:false, recordPlaying:Boolean(playingRecordId), sleeping:plant?.stage === 'seed', intro, leafReady});
   const [draftPhoto, setDraftPhoto] = useState(null);
   const originalPhoto=useRef(null);
@@ -402,6 +400,23 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const freePlay=!lesson && !guide && !tutorial && !sproutInvitation && !plant?.dewLesson;
   const showCorners=freePlay && !namingSeed && (surface!=='garden' || !roomOverlayOpen);
   const showGlobalMenu=Boolean(plant) && showCorners && !setupScreen && !intro && !page && !sharing;
+  const presentedHere=useRef('');
+  const safeToReveal=showGlobalMenu && !plant?.tutorialReminder && !transitioning && !roomOverlayOpen &&
+    !routePending && !apps.busy && !careMessage && (surface!=='phone' || app==='phone');
+  useEffect(()=>{
+    if(!safeToReveal || !pendingRewards || visit?.shown || presentedHere.current===day)return;
+    function show(){
+      if(document.hidden || presentedHere.current===day || localDay(Date.now())!==day)return;
+      presentedHere.current=day;
+      setPage('daily');
+    }
+    show();
+    document.addEventListener('visibilitychange',show);
+    return ()=>document.removeEventListener('visibilitychange',show);
+  },[safeToReveal,pendingRewards,visit?.shown,day]);
+  useEffect(()=>{
+    if(page==='daily' && pendingRewards && !visit?.shown)void commit(p=>presentDaily(p,Date.now(),day));
+  },[page,pendingRewards,day,visit?.shown,commit]);
   const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
     hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
   const introAudible = fxVolume > 0 && !revealMuted && running;
@@ -476,7 +491,9 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
       inert={!phoneVisible?'':undefined} aria-hidden={!phoneVisible || undefined}>
       {plant && <ISeedPhone page={app} title={app==='phone'?'iSEED':apps.title}
         home={()=>setApp('phone')} back={apps.back} lower={e=>go('garden',e)} locked={navigationLocked || apps.busy}
-        corner={surface==='phone'?menuTrigger:null}>
+        corner={surface==='phone'?<><button hidden={!showGlobalMenu} className="iseed-reward-key" disabled={apps.busy} aria-haspopup="dialog"
+          aria-label={'Daily rewards, '+pendingRewards+' available actions'} onClick={e=>{restoreFocus.current=e.currentTarget;setPage('daily');}}>
+          <img src={rewardIcon} alt=""/>{pendingRewards>0 && <b aria-hidden="true">{pendingRewards}</b>}</button>{menuTrigger}</>:null}>
         {app==='phone'?<ISeedHome plant={plant} guide={guide} open={async id=>{
           if(guide && !tutorial && id==='shop' && !await storage.setup('game'))return;
           apps.openApp(id);
@@ -500,7 +517,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         <img src="/art/iseed-coin.png" alt="" width="18" height="18"/>
         <span key={gardenLife.balance}>{gardenLife.balance.toLocaleString()}</span><span className="purse-unit"> Garden Coins</span>
       </output>
-      {showCorners && !transitioning && coinsMessage && <div className="coin-toast" role="status">{coinsMessage}</div>}
+
     </div>}
     {lab && !page && <button className="growth-lab-badge" onClick={()=>open('lab')} aria-label="Open Growth Lab">
       Growth Lab · {labBadge}</button>}
@@ -522,7 +539,8 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
       onSave={nameNewSeed} onCancel={()=>nameNewSeed(plant.name)} issue={issue}/>}
     {page === 'rename' && <NameEditor rename original={plant.name} onCancel={closeOnboarding} issue={issue}
       onSave={async name=>{if(await commit(p=>p.name===name?p:milestone({...p,name},'rename-'+now,'Renamed '+p.name+' to '+name+'.',now)))closeOnboarding();}}/>}
-    {page && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} onDebug={page==='settings'?openDebug:undefined} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
+    {page==='daily' && plant && <DailyRewards key={visit?.date} plant={plant} commit={commit} plantClock={plantClock} close={()=>setPage(null)}/>}
+    {page && page !== 'daily' && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} onDebug={page==='settings'?openDebug:undefined} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
       {page === 'menu' && <MenuItems items={lab?['lab','purse']:phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}
       {page === 'phone' && <MenuItems items={phoneItems} open={open}/>}

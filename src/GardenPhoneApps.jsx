@@ -5,13 +5,12 @@ import GardenJournal from './GardenJournal.jsx';
 import {leaveEditor,newJournalSession} from './journalDrafts.js';
 import {RecordControls} from './GardenRecord.jsx';
 import GardenCamera from './GardenCamera.jsx';
-import DailyRewards from './DailyRewards.jsx';
 import {catalog,itemPrice,canSetItem,fitsBackupChange,framePhoto,lifeOf,storeItem} from './gardenEconomy.js';
 import {gardenViews,placesFor,slotFor,speciesName} from './gardenLayout.js';
 import {decorPlaces} from './roomShopArt.js';
 import './gardenMarket.css';
 
-const titles={plantigotchi:'Plantigotchi',shop:'Garden shop',inventory:'Inventory',journal:'Journal',rewards:'Daily rewards',postcard:'Share'};
+const titles={plantigotchi:'Plantigotchi',shop:'Garden shop',inventory:'Inventory',journal:'Journal',postcard:'Share'};
 
 function phonePlacementError(plant,request){
   const product=catalog[request.sku],garden=lifeOf(plant);
@@ -104,8 +103,6 @@ export function useGardenPhoneApps({page,open,plant,now,musicVolume,commit,begin
     app=<GardenShop busy={busy} raised={raised} notice={notice?.page===page?notice.text:null} clearNotice={()=>setNotice(null)} plant={plant} homePlant={homePlant} initialTab={page==='inventory'?'bag':'shop'} onTabChange={tab=>navigate(tab==='bag'?'inventory':'shop')} onPlace={place} inspect={inspect}/>;
   }else if(plant && page==='journal'){
     app=<GardenJournal plant={plant} tab={journal.tab} session={journal} setSession={setJournal} onTabChange={journalPage} change={operation=>change(operation,false)} busy={busy}/>;
-  }else if(plant && page==='rewards'){
-    app=<DailyRewards plant={plant}/>;
   }else if(plant && page==='plantigotchi'){
     app=<PlantigotchiApp plant={plant} now={now}/>;
   }else if(page==='item'){

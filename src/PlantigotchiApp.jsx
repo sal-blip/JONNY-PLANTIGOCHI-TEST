@@ -92,7 +92,7 @@ function Collection({plant}){
   const grown=new Set();
   function record(p){grown.add(p.species ?? 'monstera');}
   for(const p of plant.graduates)if(p.source!=='shop')record(p);
-  for(const p of plant.waitingPlants ?? [])record(p);
+  for(const p of plant.waitingPlants ?? [])if(p.source!=='shop')record(p);
   for(const p of plant.book)if(p.stage==='grown')record(p);
   if(plant.stage==='grown')record(plant);
   const count=growthOrder.filter(s=>grown.has(s)).length;

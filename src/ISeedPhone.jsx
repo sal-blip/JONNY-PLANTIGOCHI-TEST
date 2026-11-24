@@ -8,7 +8,6 @@ const apps=[
   {id:'shop',label:'Shop'},
   {id:'inventory',label:'Inventory'},
   {id:'journal',label:'Journal'},
-  {id:'rewards',label:'Daily rewards'},
   {id:'postcard',label:'Share'},
   {id:'plantigotchi',label:'Plantigotchi'},
 ];
@@ -115,11 +114,11 @@ export function ISeedHome({plant,open,guide=false,busy=false,active=false}){
       plant.tutorial?'Let’s find a pot for your room. Tap the glowing Shop. Your starter pot costs 12 coins.':
       'Tap Shop to see what your coins can buy. A terracotta pot costs 10.'
     }</p></GuideChat>:<div className="iseed-home-clock"><time dateTime={now.toISOString()}>{clockLabel.format(now)}</time><span>{dateLabel.format(now)}</span></div>}
-    <nav className="iseed-launcher" aria-label="iSEED apps" style={{'--app-count':apps.length}}>
+    <nav className="iseed-launcher" aria-label="iSEED apps" style={{'--app-count':6}}>
       {apps.map((app,index)=><button type="button" key={app.id} className={'iseed-app app-'+app.id} data-handset-no-pull=""
         data-guide-target={active && plant.tutorial?.step==='pot' && app.id==='shop'?'':undefined}
         disabled={busy || (plant.tutorial?.step==='pot' && app.id!=='shop')} onClick={()=>open(app.id)}>
-        <span className="iseed-icon-tile" aria-hidden="true" style={{backgroundPositionX:(index*100/(apps.length-1))+'%'}}/><span>{app.label}</span>
+        <span className="iseed-icon-tile" aria-hidden="true" style={{backgroundPositionX:((index<3?index:index+1)*20)+'%'}}/><span>{app.label}</span>
       </button>)}
     </nav>
     <div className="iseed-dock"><CoinBalance plant={plant}/></div>

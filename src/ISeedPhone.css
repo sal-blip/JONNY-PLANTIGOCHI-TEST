@@ -136,20 +136,11 @@
   .iseed-home .phone-guide {max-width:calc(100% - 68px);font-size:12px;line-height:1.22}
 }
 
-.reward-book,.garden-camera {max-width:520px;margin:auto;color:var(--iseed-ink)}
-.reward-heading {display:flex;align-items:center;gap:12px;margin:16px 0 20px}
-.reward-heading img {width:40px;image-rendering:pixelated}
-.reward-heading h2,.camera-room-nav h2 {margin:0;font-size:1.35rem}
-.reward-week {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:0;list-style:none}
-.reward-week button {position:relative;width:100%;display:grid;place-items:center;gap:4px;padding:10px 2px;border:1px solid #91a68c;border-radius:9px;background:#f6f5dd;color:#344b3b}
-.reward-week button[aria-pressed=true] {outline:2px solid #486c4c;outline-offset:1px;background:#d4e5bb}
-.reward-week button b {font:20px var(--iseed-pixel);color:#70501b}
-.reward-week button svg {position:absolute;bottom:4px;right:4px}
-.reward-detail,.camera-room-nav {display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:center}
-.reward-detail {border-block:1px solid #9bae92;padding:12px 0;margin:16px 0}
-.reward-detail strong,.reward-detail small {display:block}
-.reward-detail button,.camera-room-nav button,.camera-actions button,.camera-shutter {display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:44px;border-radius:10px;border:1px solid #8da287;background:#edf1dc;color:#2c4937}
-.reward-detail button:disabled,.garden-camera button:disabled {opacity:.45}
+.garden-camera {max-width:520px;margin:auto;color:var(--iseed-ink)}
+.camera-room-nav h2 {margin:0;font-size:1.35rem}
+.camera-room-nav {display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:center}
+.camera-room-nav button,.camera-actions button,.camera-shutter {display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:44px;border-radius:10px;border:1px solid #8da287;background:#edf1dc;color:#2c4937}
+.garden-camera button:disabled {opacity:.45}
 .camera-room-nav {margin:4px 0 12px}
 .camera-finder,.camera-print {position:relative;display:block;width:100%;aspect-ratio:5/4;border-radius:10px;overflow:hidden;background:#30453b}
 .camera-finder canvas {display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
@@ -161,5 +152,4 @@
 .camera-actions svg,.camera-shutter svg {width:18px}
 .camera-shutter {width:100%;background:#34583e;color:#fffbea;font-weight:650}
 .camera-link {margin-top:20px}
-.app-rewards .iseed-icon-tile {background-image:url('./art/iseed-daily-rewards.png');background-size:100% 100%}
 .app-postcard .iseed-icon-tile {background-image:url('./art/iseed-share-camera.png');background-size:100% 100%}
