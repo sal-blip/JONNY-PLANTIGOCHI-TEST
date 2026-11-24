@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v75 · Returning browser gardens skip the welcome tour · November 23, 2026
+
+Plantigochi 0.1.15 gives first-time browser visitors the installation tour. An existing browser save opens a welcome-back page with Home Screen guidance. Backup and installation help sit behind a disclosure that opens automatically for a direct install link. Installed games continue through their saved checkpoint.
+
+All 162 unit tests passed. Chromium exercised the first-time install flow with Android, iPhone and Facebook browser profiles, both IndexedDB and legacy browser saves, and a backup restored into a fresh installation. Relaunch resumed the restored tutorial with the same plant ID. Six live resources matched the build and the signed-out welcome loaded. Physical devices were outside these checks. [Browser recovery walkthrough](../../tests/browser/browser_tutorial.py)
+
+Sites source `57b6379af2d6c060ee732750b4ca23e47a4189d8` · saved version 75 · deployment `appgdep_6b04d81e8e98819198e025775b93c177` · [GitHub release commit 5946f41](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/5946f41)
+
 ## v74 · Install-only welcome and tutorial care reminders · November 23, 2026
 
 Plantigochi 0.1.14 offers **Install app** on the last welcome card. A former browser player can export their existing garden and restore it during installed setup. After the final tutorial reward, supported devices offer **Turn on reminders** or **Maybe later** in a chat bubble. Deferring opens a final water-meter message. Its **Got it** acknowledgment survives reload.
