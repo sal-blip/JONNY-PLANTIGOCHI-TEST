@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v82 · Garden placement pulse · November 24, 2026
+
+Plantigochi 0.1.22 adds a soft radial wave inside each placement marker every 2.8 seconds. The center dot and swap arrows stay legible. Reduced motion keeps the marker still. Mobile Chromium compared all 11 destination buttons in a furnished living room with v81 and confirmed matching rim and hit dimensions, checked both pulse types and completed a swap. All 165 unit tests passed. Six published resources matched the local release and the public welcome loaded.
+
+Sites source `4f013ab38460c69acd9a8be495b03af6d4a4159f` · saved version 82 · deployment `appgdep_6b04f71ef944819186055c397b155a61` · [GitHub source f2f4781](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/f2f4781)
+
 ## v81 · Softer light and natural sprite colors · November 24, 2026
 
 Plantigochi 0.1.21 broadens the radial falloff around a focused room asset and removes its selection outline and shine while inspecting it. Text retains its own shadow in both lighting modes. All 165 unit tests passed. Mobile Chromium checked day and night inspection, independent plant and pot moves, and persistence after reload. Six production resources matched the release and the public welcome loaded. Physical phone testing remains open.
