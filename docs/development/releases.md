@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v77 · Continuous garden animation under iSEED · November 23, 2026
+
+Plantigochi 0.1.17 keeps the garden animation running as the handset opens, while players use its apps, and throughout the swipe back. A visible room can animate while the handset owns input.
+
+The previous release showed zero changes in sampled room artwork while iSEED was raised. The mobile Chromium regression passed on the launcher, in Journal and during a held swipe. It also checked cancelled and completed swipes and reduced motion. All 162 unit tests passed. Six production resources matched the release and the public welcome loaded. Physical devices were outside these checks. [Touch walkthrough](../../tests/browser/garden_passage.py)
+
+Sites source `b8dcd230c5c26616cc878ba0ba4ab4ee4fa4536c` · saved version 77 · deployment `appgdep_6b04dda399a88191af0790ee7fcc2f11` · [GitHub release commit 133133c](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/133133c)
+
 ## v76 · Garden camera and swipe continuity · November 23, 2026
 
 Plantigochi 0.1.16 keeps the visible room painted during toy and iSEED transitions. Its resting camera is 8% closer. Tapping or briefly holding open scenery uses the room’s existing focus and ease-out. The room retains native touch targets for objects, placement and HUD controls.
