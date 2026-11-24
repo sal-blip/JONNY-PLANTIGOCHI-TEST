@@ -2,9 +2,11 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
-## 0.1.38-preview.1 · Garden-first iSEED
+## Archived playtest · Garden-first iSEED · 0.1.38-preview.1
 
-Branch `preview/iseed-toy-home` starts at production revision `e854d57`. It has its own Sites project, install name and browser storage. Use the [browser playtest](https://plantigochi-iseed-playtest.salbasilone.chatgpt.site/?playtest) or install from the preview root. Production remains on its original origin. When promoting any navigation changes, retain the production hosting manifest and canonical URL.
+Shelved on November 24, 2026 for possible future testing. The production game keeps its existing navigation. The playable snapshot is commit `f13f1b7` on `preview/iseed-toy-home`, based on production commit `e854d57`. The preview has its own installation and garden save. [Open the private playtest](https://plantigochi-iseed-playtest.salbasilone.chatgpt.site/?playtest)
+
+For a future phone test, open the garden, tap iSEED, swipe up from the toy to the app tray, then swipe up again to return. Check the attention badge when care is due. All 176 automated tests and the production build passed for the archived snapshot. Physical phone swipe testing is still open.
 
 ## Plantigochi 0.1.37 · Snake Plant and nursery pots
 
