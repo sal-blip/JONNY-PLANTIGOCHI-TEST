@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.35 · iSEED launcher icons
+
+All six iSEED apps use the reviewed high-resolution icons. The Inventory handhold is centered on its front plank. The Plantigotchi tile depicts the leaf case, four buttons and upper-left keyring of the in-game toy.
+
 ## Plantigochi 0.1.34 · Higher-resolution pots and plants
 
 iSEED portraits and garden specimens render at 3×. The six pots with larger approved source artwork show their original ceramic details in both places. Physical-phone testing is pending. [Rendering details](research/garden-item-resolution.md)

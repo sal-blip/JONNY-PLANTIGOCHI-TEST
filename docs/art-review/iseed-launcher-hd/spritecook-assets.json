@@ -1,0 +1,78 @@
+{
+  "kits": [
+    "f3891041-da30-43cb-b053-1271a309da0e",
+    "a268959b-c947-4e9e-aae3-988c944a87e0"
+  ],
+  "sheets": [
+    "4088f283-2994-406a-95af-25144924f4c0",
+    "74dbbada-edb5-4237-a226-c1d10d82221e"
+  ],
+  "cells": [
+    [
+      {
+        "name": "Shop",
+        "box": [
+          32,
+          649,
+          687,
+          1348
+        ],
+        "asset_id": "5e431511-79d4-4434-bcfe-97753d8834be"
+      },
+      {
+        "name": "Inventory",
+        "box": [
+          706,
+          649,
+          1343,
+          1348
+        ],
+        "asset_id": "59067b8f-8d5b-4eff-9cf0-32fc902015d8",
+        "edit": "Centered the handhold on the upper front plank, following its perspective."
+      },
+      {
+        "name": "Journal",
+        "box": [
+          1361,
+          649,
+          2016,
+          1348
+        ],
+        "asset_id": "00b2670d-5de4-4b37-99cf-fbeb88d6146d"
+      }
+    ],
+    [
+      {
+        "name": "Care library",
+        "box": [
+          33,
+          671,
+          683,
+          1355
+        ],
+        "asset_id": "43d07cd7-5fd7-40c9-b059-c870bdc554e7"
+      },
+      {
+        "name": "Postcard",
+        "box": [
+          707,
+          671,
+          1342,
+          1355
+        ],
+        "asset_id": "d4701910-2cc7-4283-acc8-095ba6be1eaf"
+      },
+      {
+        "name": "Plantigotchi",
+        "box": [
+          1366,
+          671,
+          2016,
+          1355
+        ],
+        "asset_id": "e2b1313f-4e7c-4a24-9e5d-4973b8fbb861"
+      }
+    ]
+  ],
+  "sha12": "c6abd00e18c3"
+}

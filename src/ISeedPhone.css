@@ -68,7 +68,7 @@
 }
 .iseed-icon-tile {
   display:block;width:clamp(47px,16.5vmin,78px);aspect-ratio:1;
-  background-image:url('/art/iseed-launcher.png');background-size:calc(var(--app-count) * 100%) 100%;
+  background-image:url('./art/iseed-launcher-hd.png');background-size:calc(var(--app-count) * 100%) 100%;
   background-repeat:no-repeat;image-rendering:pixelated;
   filter:drop-shadow(0 2px 1px #3147355e);
 }
