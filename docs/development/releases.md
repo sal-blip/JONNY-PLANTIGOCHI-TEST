@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v81 · Softer light and natural sprite colors · November 24, 2026
+
+Plantigochi 0.1.21 broadens the radial falloff around a focused room asset and removes its selection outline and shine while inspecting it. Text retains its own shadow in both lighting modes. All 165 unit tests passed. Mobile Chromium checked day and night inspection, independent plant and pot moves, and persistence after reload. Six production resources matched the release and the public welcome loaded. Physical phone testing remains open.
+
+Sites source `b8c3255e6b925f70e827fbbace6bf5f9fbc187ee` · saved version 81 · deployment `appgdep_6b04f66a6e748191b0bf84fe3d8223b9` · [GitHub source 65f78dc](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/65f78dc)
+
 ## v80 · Radial garden inspection light · November 24, 2026
 
 Plantigochi 0.1.20 centers a radial gradient on the selected artwork. All 165 unit tests passed. Mobile Chromium checked day and night framing, repotting, pot swaps and reload. Six public resources matched the local build.
