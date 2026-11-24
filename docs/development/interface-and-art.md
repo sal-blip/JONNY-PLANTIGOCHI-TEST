@@ -154,3 +154,9 @@ To replay the first visit on a local dev server, run `python tests/browser/first
 Run `python tests/browser/dew_lesson.py http://localhost:5173` to play the optional practice round through a win and a three-miss finish. It checks reopening a round, collecting the farewell gift once and returning to the normal game from the Play menu.
 
 Run `python tests/browser/pot_purchase.py http://localhost:5173` to test buying the center windowsill pot while storage is busy or the purchase confirmation is delayed. The same test accepts a downloaded playtest HTML file and checks the saved placement and wallet independently of the on-screen receipt.
+
+## Garden-first iSEED playtest
+
+The garden owns room panning and placement. Its lower-right phone button raises iSEED to the playable leaf keychain. Both the toy and the six-app tray use the same handset. Keep the chevrons tappable and keyboard accessible. Reserve app content for scrolling, and toy keys and the chain for play. Stats opens the existing growth dashboard. The attention badge derives from the saved plant and current care clock and works without push permission.
+
+Resume tutorial checkpoints from the phone. Placement still takes place in the room. The pot receipt returns the player to the toy for the growth lesson. Test from a new garden and an existing save.

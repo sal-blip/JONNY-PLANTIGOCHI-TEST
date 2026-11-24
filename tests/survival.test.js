@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {HOUR as H,DAY,ROOT_TIME,care,careStatus,condition,criticalReminder,deathDeadline,newPlant,readPlant,replant,takeCutting,wake} from '../src/game.js';
-import {careIndicators, foodReadout,waterReadout} from '../src/plantReadout.js';
+import {hasPlantNotice,careIndicators, foodReadout,waterReadout} from '../src/plantReadout.js';
 import {stepGame,canPlay,dewRules,dewCheckpoint,saveDewCheckpoint,LEVELS} from '../src/pocketPlay.js';
 
 const sprout=()=>wake(care(newPlant(0),'water',0),H);
@@ -227,4 +227,13 @@ test('LCD requests a safe first drink and shows all overlapping care needs in a 
   for(const field of ['deadAt','fungusAt','rotAt']){
     assert.deepEqual(careIndicators({...waiting,[field]:now},now),{light:false,icons:[]});
   }
+});
+
+test('garden phone badge reflects saved needs and clears after the first drink',()=>{
+  const seed=newPlant(0), watered=care(seed,'water',0);
+  assert.equal(hasPlantNotice(null,0),false);
+  assert.equal(hasPlantNotice(seed,0),true);
+  assert.equal(hasPlantNotice(watered,0),false);
+  assert.equal(hasPlantNotice({...watered,seedNamePending:seed.id},0),true);
+  assert.equal(hasPlantNotice({...watered,fungusAt:0},0),true);
 });

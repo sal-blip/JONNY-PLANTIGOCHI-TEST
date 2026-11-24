@@ -1,10 +1,5 @@
 /* Only four layers consume toy visibility. Their children keep a stable style
    while a finger scrubs the passage, including the individual chain links. */
-@property --toy-visibility {
-  syntax: "<number>";
-  inherits: false;
-  initial-value: 1;
-}
 .garden[data-surface] {
   --phone-offset: 100%;
   --hud-side-left: max(20px, 3.5vw, env(safe-area-inset-left));
@@ -12,33 +7,12 @@
   --hud-bottom: max(18px, env(safe-area-inset-bottom));
 }
 
-.garden[data-surface] .standalone-toy-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  isolation: isolate;
-  opacity: var(--toy-visibility, 0);
-}
-
 .garden[data-surface] .handset-layer {
   z-index: 2;
   transform: translate3d(0, var(--phone-offset, 100%), 0);
 }
 
-.garden[data-surface] :is(.standalone-toy-layer, .handset-layer)[inert] {
-  pointer-events: none;
-}
-
-.standalone-toy-layer .camera {
-  /* Size the toy within the safe area, including when the phone is sideways. */
-  container-type: size;
-}
-
-.standalone-toy-layer .inspect-view {
-  width: min(103cqw, 90cqh, 748px);
-  /* The moulded leaf sits slightly below the centre of its chain's viewBox. */
-  translate: 0 -4%;
-}
+.garden[data-surface] .handset-layer[inert] {pointer-events:none}
 
 @media (max-height:420px) {
   .garden[data-surface] { --hud-bottom: max(9px, env(safe-area-inset-bottom)); }
@@ -89,57 +63,6 @@
   }
 }
 
-.garden[data-toy-background="garden"]:not([data-toy-photo-preview]) .standalone-toy-layer .scenery {
-  display: none;
-}
-
-.garden[data-toy-background="garden"] .garden-room-layer .room-lens {
-  /* The room keeps its own camera and furniture positions as the focus changes. */
-  filter: blur(calc(var(--toy-visibility, 0) * clamp(3px, 1.05vmin, 5px)));
-}
-
-/* Once focus has settled in the room, let its canvases paint without a filter. */
-.garden[data-toy-background="garden"]:is([data-surface="garden"], [data-surface="phone"]):not([data-transitioning]) .room-lens {
-  filter: none;
-}
-
-.garden[data-surface] .garden-room-layer .room-controls {
-  opacity: calc(1 - var(--toy-visibility, 0));
-}
-
-.garden[data-toy-background="garden"]:not([data-toy-photo-preview]) .standalone-toy-layer .pocket-floor::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 50% 47%, rgb(251 238 207 / .22), transparent 70%);
-}
-
-.garden[data-toy-background="garden"] .standalone-toy-layer .garden-edges {
-  background: linear-gradient(180deg, #20392f6b, transparent 18%, transparent 78%, #162a236e),
-    radial-gradient(ellipse at 50% 46%, transparent 45%, #21322b29 100%);
-}
-
-/* Move the furnished room as a single plane behind the toy. The slight overscan
-   covers its edges during tilt and eases back to the saved camera on entry. */
-@media (prefers-reduced-motion: no-preference) {
-  .garden[data-toy-background="garden"]:is([data-surface="toy"],[data-transitioning]) .garden-room-layer {
-    scale: calc(1 + .032 * var(--toy-visibility));
-    translate: calc(-4px * var(--tilt-x, 0) * var(--toy-visibility)) calc(-4px * var(--tilt-y, 0) * var(--toy-visibility));
-    transition: translate 160ms ease-out;
-  }
-}
-
-/* The photo editor is a transient preview above whichever surface opened it. */
-.garden[data-toy-photo-preview] .standalone-toy-layer {
-  opacity: 1;
-  pointer-events: none;
-}
-
-.garden[data-toy-photo-preview] .handset-layer {
-  visibility: hidden;
-}
-
 .swatch.garden-swatch {
   background: #b8c8a1 url('/art/welcome-apartment.webp') center / cover no-repeat;
   image-rendering: pixelated;
@@ -164,19 +87,7 @@
 /* Drag positions follow touch directly; on release the browser interpolates
    the visual layers without writing inherited styles on every frame. */
 @media (prefers-reduced-motion: no-preference) {
-  .garden[data-surface] :is(.standalone-toy-layer,.garden-corners,.room-controls) {
-    transition:opacity var(--passage-duration,0ms) cubic-bezier(.33333,1,.66667,1);
-  }
   .garden[data-surface] .handset-layer {
     transition:transform var(--passage-duration,0ms) cubic-bezier(.33333,1,.66667,1);
-  }
-  .garden[data-toy-background="garden"] .room-lens {
-    transition:transform 2.2s cubic-bezier(.25,.65,.28,1),filter var(--passage-duration,0ms) cubic-bezier(.33333,1,.66667,1);
-  }
-  .garden[data-toy-background="garden"] .room-lens.inspecting {
-    transition-duration:.72s,var(--passage-duration,0ms);
-  }
-  .garden[data-toy-background="garden"]:is([data-surface="toy"],[data-transitioning]) .garden-room-layer {
-    transition:translate var(--passage-duration,160ms) ease-out,scale var(--passage-duration,0ms) cubic-bezier(.33333,1,.66667,1);
   }
 }

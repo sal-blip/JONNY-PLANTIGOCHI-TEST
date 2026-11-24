@@ -17,6 +17,14 @@ export function careIndicators(plant,now){
   return {light,icons};
 }
 
+export function hasPlantNotice(plant,now){
+  if(!plant)return false;
+  if(plant.seedOffers || plant.seedNamePending || plant.fungusAt!=null || plant.rotAt!=null ||
+    plant.growthFlares?.length || (plant.stage==='grown' && plant.homeIntroSeen!==plant.id))return true;
+  const {icons,light}=careIndicators(plant,now);
+  return icons.some(icon=>icon!=='sun' || light==='due');
+}
+
 export function growthReadout(plant, now) {
   const next = nextMilestone(plant);
   if (!next) {

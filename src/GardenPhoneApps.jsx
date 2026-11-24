@@ -11,7 +11,7 @@ import {gardenViews,placesFor,slotFor,speciesName} from './gardenLayout.js';
 import {decorPlaces} from './roomShopArt.js';
 import './gardenMarket.css';
 
-const titles={plantigotchi:'Plantigotchi',shop:'Garden shop',inventory:'Inventory',journal:'Journal',library:'Care library',postcard:'Garden postcard'};
+const titles={plantigotchi:'Stats',shop:'Garden shop',inventory:'Inventory',journal:'Journal',library:'Care library',postcard:'Garden postcard'};
 
 function phonePlacementError(plant,request){
   const product=catalog[request.sku],garden=lifeOf(plant);

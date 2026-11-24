@@ -1,3 +1,4 @@
+import SwipeCue from './SwipeCue.jsx';
 import GuideChat from './GuideChat.jsx';
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {ChevronLeft,Flower2} from 'lucide-react';
@@ -10,7 +11,7 @@ const apps=[
   {id:'journal',label:'Journal'},
   {id:'library',label:'Care library'},
   {id:'postcard',label:'Postcard'},
-  {id:'plantigotchi',label:'Plantigotchi'},
+  {id:'plantigotchi',label:'Stats'},
 ];
 
 const dateLabel=new Intl.DateTimeFormat(undefined,{weekday:'long',month:'short',day:'numeric'});
@@ -91,7 +92,7 @@ function paintLandscape(canvas,night){
   ridge([[0,169],[24,164],[46,169],[69,160],[91,158],[112,164],[142,152]],grass);
   for(const [x,y,w] of [[9,172,13],[25,174,4],[57,177,19],[85,169,9],[116,164,11],[103,177,4]])fill(lawn,x,y,w,1);
 }
-function ScreenLandscape({night}){
+export function ScreenLandscape({night}){
   const ref=useRef(null);
   useLayoutEffect(()=>{
     const canvas=ref.current;
@@ -111,7 +112,7 @@ export function ISeedHome({plant,open,guide=false,busy=false,active=false}){
   return <div className={'iseed-home'+(night?' is-night':'')} data-phone-wallpaper="" data-handset-pull="">
     <ScreenLandscape night={night}/>
     {guide?<GuideChat className="phone-guide" cue={active?'launcher-'+(plant.tutorial?.step || 'shop'):null}><p>{
-      plant.tutorial?.step==='return'?'Your pot is in place! Tap Garden, then swipe back to check on your seed.':
+      plant.tutorial?.step==='return'?'Your pot is in place! Tap Garden, then open iSEED to check on your seed.':
       plant.tutorial?'Let’s find a pot for your room. Tap the glowing Shop. Your starter pot costs 12 coins.':
       'Tap Shop to see what your coins can buy. A terracotta pot costs 10.'
     }</p></GuideChat>:<div className="iseed-home-clock"><time dateTime={now.toISOString()}>{clockLabel.format(now)}</time><span>{dateLabel.format(now)}</span></div>}
@@ -131,8 +132,22 @@ function SmallClock(){
   return <time className="iseed-small-time" dateTime={now.toISOString()}>{clockLabel.format(now)}</time>;
 }
 
-export default function ISeedPhone({page,title,back,home,lower,locked=false,corner,children}){
-  const atHome=page==='phone' || page==='home';
+export default function ISeedPhone({page,title,back,home,lower,locked=false,corner,children,toggleTray}){
+  const atHome=page==='phone' || page==='toy';
+  const start=useRef(null),skipClick=useRef(false);
+  function pointerDown(event){
+    skipClick.current=false;
+    start.current=null;
+    if(!toggleTray || !event.isPrimary || event.button!==0 || event.target.closest('button:not(.swipe-cue),input,a,dialog,.chat-copy,.device,[data-grab],.chain-grab'))return;
+    start.current={id:event.pointerId,x:event.clientX,y:event.clientY};
+  }
+  function pointerUp(event){
+    const from=start.current;
+    start.current=null;
+    if(!from || from.id!==event.pointerId || !toggleTray)return;
+    const dy=from.y-event.clientY;
+    if(dy>=40 && dy>Math.abs(event.clientX-from.x)*1.25){skipClick.current=true;toggleTray();}
+  }
   const pane=useRef(null),heading=useRef(null),lastPage=useRef(page);
   useLayoutEffect(()=>{
     if(lastPage.current===page)return;
@@ -154,7 +169,11 @@ export default function ISeedPhone({page,title,back,home,lower,locked=false,corn
         {!atHome && <SmallClock/>}
       </header>
       <div ref={pane} className={'iseed-contents'+(atHome?' is-launcher':'')} data-phone-page={page}
-        data-phone-scroll={atHome?undefined:''} data-handset-scroll={atHome?undefined:''}>{children}</div>
+        onPointerDownCapture={pointerDown} onPointerUpCapture={pointerUp}
+        onPointerCancel={()=>{start.current=null;}} onClickCapture={event=>{if(skipClick.current && event.detail){skipClick.current=false;event.preventDefault();event.stopPropagation();}}}
+        data-phone-scroll={atHome?undefined:''} data-handset-scroll={atHome?undefined:''}>{children}
+        {toggleTray && <SwipeCue data-tray-cue="" aria-label={page==='toy'?'Open app tray':'Return to Plantigochi'} hint={page==='toy'?'Swipe up for apps':'Swipe up for Plantigochi'} onClick={toggleTray}/>}
+      </div>
       <div className="iseed-pixels" aria-hidden="true"/>
       {corner && <div className="iseed-corner" data-handset-no-pull="">{corner}</div>}
     </div>

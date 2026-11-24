@@ -105,7 +105,7 @@ function Collection({plant}){
 function Guide(){
   return <section className="toy-handbook"><h2>Toy guide</h2>
     <details open><summary>Using the keychain</summary><p>Press Heart to open the menu or choose an action. Use the arrows to browse and Back to return to your plant. On a keyboard, use the arrows, Enter and Escape.</p>
-    <p>Swipe up from the toy to visit your garden. In the garden, tap the phone for iSEED, or swipe to return to the toy.</p></details>
+    <p>In the garden, tap iSEED to open your toy. Swipe up for apps, then swipe up again to return to your plant. Tap Garden to put your phone away.</p></details>
     <details><summary>Water, light, food and company</summary><p>Water your seed once. After sprouting, it needs a drink every four hours. The water meter lets you top up 30 minutes early. Extra pours can soak the soil. Use Drain if root rot appears. At 12 hours without water a plant becomes critically thirsty, and at 24 hours it dies. You can turn on reminders under App &amp; data → Plant alerts.</p>
     <p>Give sunlight daily and food every two days. Both become available eight hours early. Kind words and games improve mood. The badges above the meters tell you which needs are ready.</p></details>
     <details><summary>Growth and First Aid</summary><p>A watered seed normally sprouts after one hour. With steady care it becomes young at three days, changes again at five, and matures at seven days of earned growth. Critical thirst, overdue food or light, root rot and fungus gnats pause growth.</p>

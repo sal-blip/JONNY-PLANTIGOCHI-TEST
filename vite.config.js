@@ -10,8 +10,8 @@ export default defineConfig({
       filename: 'sw.js',
       manifest: {
         id: '/',
-        name: 'Plantigochi · Pocket Garden',
-        short_name: 'Plantigochi',
+        name: 'Plantigochi · iSEED Playtest',
+        short_name: 'iSEED Playtest',
         description: 'Grow a pocket Monstera from a sleeping seed.',
         lang: 'en',
         start_url: '/',

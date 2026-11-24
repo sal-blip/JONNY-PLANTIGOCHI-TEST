@@ -135,3 +135,22 @@
 @container (max-height:415px) and (min-width:480px) {
   .iseed-home .phone-guide {max-width:calc(100% - 68px);font-size:12px;line-height:1.22}
 }
+
+.iseed-toy-page {position:absolute;inset:0;isolation:isolate}
+.iseed-toy-page[hidden] {display:none}
+.iseed-toy-page .camera {container-type:size}
+.iseed-toy-page .inspect-view {width:min(101cqw,86cqh,748px);translate:0 -4%}
+.iseed-toy-page .seed-setup,.iseed-toy-page .tour-sheet {position:absolute;height:100%;overflow-y:auto}
+.iseed-toy-page .garden-purse {left:12px;bottom:12px}
+.iseed-contents:has(>[data-tray-cue]) .iseed-home {padding-bottom:48px}
+.iseed-contents>[data-tray-cue] {z-index:5;bottom:0;color:#ffffe9}
+.handset-tray-guide {position:absolute;top:12%;width:min(82%,340px);left:50%;transform:translateX(-50%);z-index:4}
+.room-open-phone .iseed-care-badge {position:absolute;top:-3px;right:-3px;display:grid;place-items:center;min-width:18px;height:18px;border:2px solid #fff3cf;border-radius:50%;background:#963e35;color:white;font:bold 12px/1 sans-serif}
+@media (prefers-reduced-motion:no-preference){
+  .iseed-contents[data-phone-page="phone"]>.iseed-home {animation:tray-rise .24s ease-out}
+  @keyframes tray-rise {from{opacity:.65;translate:0 12%}to{opacity:1;translate:0 0}}
+}
+@media(orientation:portrait){
+  .iseed-toy-page .camera:has(.toy-guide) .inspect-view {translate:0 9cqh}
+  .iseed-toy-page .toy-guide {bottom:calc(42% + min(30cqw,23cqh));margin-bottom:0;max-height:calc(58cqh - min(30cqw,23cqh) - 8px)}
+}

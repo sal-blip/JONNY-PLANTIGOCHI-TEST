@@ -525,7 +525,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     {lesson && !revealing && <GuideChat className="toy-guide" cue={resting?(lesson==='water'?firstDrinkHint:lesson):null} focusRef={lesson==='watered'?lessonDone:null}>
       {lesson==='watered'?<>
         <p>{routeError || (tutorial?'That was a lovely first drink!':plant.stage==='seed'?'Ahh, thank you! Look for my first sprout '+sproutHint+'.':'Look, '+plant.name+' has sprouted!')}</p>
-        <p>{firstDay?.drinkCoins!=null?'You earned '+firstDay.visitCoins+' coins for visiting and '+firstDay.drinkCoins+' for watering.':'You have '+lifeOf(plant).balance+' coins.'} {tutorial?'See your purse at the bottom left? Let’s use those coins for my first pot.':'Swipe up to visit our garden.'}</p>
+        <p>{firstDay?.drinkCoins!=null?'You earned '+firstDay.visitCoins+' coins for visiting and '+firstDay.drinkCoins+' for watering.':'You have '+lifeOf(plant).balance+' coins.'} {tutorial?'See your purse at the bottom left? Let’s use those coins for my first pot.':'Tap below to visit our garden.'}</p>
         <div className="chat-actions"><button ref={lessonDone} onClick={finishLesson} disabled={routePending}>{routePending?'Opening garden…':'Visit my garden'}</button>
         {reminder && plant.stage==='seed' && <button disabled={reminder.busy || !reminder.canEnable}
           onClick={()=>reminder.enable()}>Turn on plant alerts</button>}</div>

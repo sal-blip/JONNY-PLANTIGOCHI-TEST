@@ -1,7 +1,6 @@
 import GuideChat from './GuideChat.jsx';
 import React,{forwardRef,useEffect,useImperativeHandle,useLayoutEffect,useMemo,useRef,useState} from 'react';
 import {ChevronLeft,ChevronRight,X} from 'lucide-react';
-import SwipeCue from './SwipeCue.jsx';
 import {ShopItemDetail} from './GardenShop.jsx';
 import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces} from './roomShopArt.js';
@@ -38,7 +37,7 @@ function firstVacantRoom(plants){
   return 0;
 }
 
-const Collector=forwardRef(function Collector({active,backdropVisible=false,recordActive=active,musicVolume,plant,commit,now,wallNow=now,plantClock=Date.now,move,relocate,raisePhone,returnToToy,purr,
+const Collector=forwardRef(function Collector({active,backdropVisible=false,recordActive=active,musicVolume,plant,commit,now,wallNow=now,plantClock=Date.now,move,relocate,roomReady=true,attention,raisePhone,returnToToy,purr,
   playingRecordId,onSelectRecord,onOverlayChange,globalMenuOpen,onPlacementCancel,onPlacementDone},ref) {
   const graduates=plant.graduates;
   const count=gardenViews(graduates);
@@ -608,14 +607,14 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     }}
     onKeyDown={e=>{
     if(!available || panel || busy || e.altKey || e.metaKey || e.ctrlKey)return;
-    if(e.key==='Escape'){e.preventDefault();if(placing)cancelPlacement();else returnToToy?.();}
+    if(e.key==='Escape'){e.preventDefault();if(placing)cancelPlacement();}
     if(['ArrowLeft','ArrowRight'].includes(e.key)){
       e.preventDefault();
       stage.current.scrollBy({left:(e.key==='ArrowLeft'?-1:1)*stage.current.clientWidth*.7,
         behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
     }
   }}>
-    <div className="room-lens" ref={lens} onTransitionEnd={e=>{if(e.target===lens.current && e.propertyName==='transform')sampleZoom();}}><div className="room-picture" ref={stage} onScroll={()=>{
+    <div className="room-lens" inert={!roomReady?'':undefined} ref={lens} onTransitionEnd={e=>{if(e.target===lens.current && e.propertyName==='transform')sampleZoom();}}><div className="room-picture" ref={stage} onScroll={()=>{
       cameraCenter.current=(stage.current.scrollLeft+stage.current.clientWidth/2)/camera.current;
       readCamera();
       if(focusCrops)sampleZoom();
@@ -637,10 +636,10 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       {placing
         ? <button type="button" ref={roomReturn} className="room-corner room-return" data-room-focus=""
             aria-label="Cancel move" title="Cancel move" disabled={!available || busy} onClick={cancelPlacement}><X aria-hidden="true"/></button>
-        : plant.tutorial?.step!=='pot' && <SwipeCue ref={roomReturn} data-room-focus="" data-room-return="" aria-label="Return to Plantigochi"
-            hint="Swipe up or down to return to Plantigochi" disabled={!available || busy} onClick={event=>leaveRoom(event,returnToToy)}/>}
-      {!placing && (!plant.tutorial || plant.tutorial.step==='pot') && <button type="button" className="room-corner room-open-phone" data-room-open-phone=""
-        aria-label="Open iSEED" title="Open iSEED" disabled={!available || busy} onClick={event=>leaveRoom(event,raisePhone)}>
+        : null}
+      {!placing && <button type="button" ref={roomReturn} className="room-corner room-open-phone" data-room-focus="" data-room-open-phone=""
+        aria-label={attention?'Open iSEED, plant needs attention':'Open iSEED'} title="Open iSEED" disabled={!available || busy} onClick={event=>leaveRoom(event,raisePhone)}>
+        {attention && <span className="iseed-care-badge" aria-hidden="true">!</span>}
         <img src="/art/iseed-pocket.png" alt="" width="22" height="25" style={{imageRendering:"pixelated"}}/>
       </button>}
       {!placing && !panel && !message && <nav className="room-hint room-navigation" aria-label="Garden rooms">

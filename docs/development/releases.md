@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## 0.1.38-preview.1 · Garden-first iSEED
+
+Branch `preview/iseed-toy-home` starts at production revision `e854d57`. It has its own Sites project, install name and browser storage. Use the [browser playtest](https://plantigochi-iseed-playtest.salbasilone.chatgpt.site/?playtest) or install from the preview root. Production remains on its original origin. When promoting any navigation changes, retain the production hosting manifest and canonical URL.
+
 ## Plantigochi 0.1.37 · Snake Plant and nursery pots
 
 Snake Plant, Golden Pothos, Hoya Splash, Queen Anthurium and Monkey Tail Cactus now use their mounted foliage with the approved Terracotta pot by default. Their portraits frame the complete plant. Garden placements use the owned pot at the slot when one is present. Magnified iSEED portraits sample the native layers directly when they exceed the room stamp’s resolution.

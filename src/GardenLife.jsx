@@ -18,7 +18,7 @@ const guide = [
   ['Leaf Echo','Watch three beats. Copy them with the keys.'],
   ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
   ['Fungus','Gnats? First Aid cures fungus. Treat within 12h.'],
-  ['Garden keepsakes','Swipe up to visit the garden’s Cutting Jar and Leaf Book.'],
+  ['Garden keepsakes','Visit the garden’s Cutting Jar and Leaf Book.'],
 ];
 export const toyBranches = {care:'Care', play:'Play', growth:'Growth', aid:'First Aid', guide:'Field guide'};
 export const toyTitles = {home:'Plant menu', ...toyBranches, boost:'Growth Spurt',spurtReceipt:'Growth Spurt',spurtChanged:'Growth Spurt',pour:'Still wet?', pause:'Paused',pastAid:'Past alert'};
