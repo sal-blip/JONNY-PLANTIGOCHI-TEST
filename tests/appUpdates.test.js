@@ -185,3 +185,86 @@ test('a late registration after cleanup cannot publish status or watch workers',
   assert.deepEqual(availability, ['preparing']);
   assert.deepEqual(statuses, []);
 });
+
+test('a silent update request times out, retries, and a late original completion cannot overwrite ready', async t => {
+  t.mock.timers.enable({apis:['setTimeout']});
+  const {reg, monitor, messages, activate} = mockWindow(t, {});
+  let finishOriginal, calls = 0;
+  reg.update = () => ++calls === 1 ? new Promise(resolve => { finishOriginal = resolve; }) : Promise.resolve();
+  const stalled = monitor.check();
+  assert.equal(monitor.check(true), stalled);
+  assert.equal(messages.at(-1), 'checking');
+  await Promise.resolve();
+  t.mock.timers.tick(12000);
+  await stalled;
+  assert.equal(messages.at(-1), 'slow');
+  await monitor.check(true);
+  assert.equal(calls, 2);
+  assert.equal(messages.at(-1), 'current');
+  activate(makeWorker('activated'));
+  finishOriginal();
+  await Promise.resolve();
+  assert.equal(messages.at(-1), 'ready');
+});
+
+test('a registration that never answers releases Settings and a retry owns its monitor', async t => {
+  t.mock.timers.enable({apis:['setTimeout']});
+  const {reg, sw, connection, statuses} = workerConnection(t);
+  let finishOriginal;
+  sw.register = () => new Promise(resolve => { finishOriginal = resolve; });
+  const pending = connection.check(true);
+  t.mock.timers.tick(12000);
+  await pending;
+  assert.equal(statuses.at(-1), 'slow');
+  reg.active = makeWorker('activated');
+  sw.register = async () => reg;
+  await connection.check(true);
+  assert.equal(statuses.at(-1), 'current');
+  const count = statuses.length;
+  finishOriginal(reg);
+  await Promise.resolve();
+  assert.equal(statuses.length, count);
+});
+
+test('a stalled download enables retry while a later controller change still offers restart', async t => {
+  t.mock.timers.enable({apis:['setTimeout']});
+  const {reg, monitor, messages, activate, calls} = mockWindow(t, {});
+  const worker = makeWorker('installing');
+  reg.installing = worker;
+  reg.dispatchEvent(new Event('updatefound'));
+  t.mock.timers.tick(30000);
+  worker.state = 'installed';
+  worker.dispatchEvent(new Event('statechange'));
+  t.mock.timers.tick(30000);
+  assert.equal(messages.at(-1), 'downloading');
+  t.mock.timers.tick(15000);
+  assert.equal(messages.at(-1), 'slow');
+  await monitor.check(true);
+  assert.equal(calls(), 1);
+  activate(worker);
+  t.mock.timers.tick(60000);
+  assert.equal(messages.at(-1), 'ready');
+});
+
+test('an installed window checks its existing worker and releases the button when connectivity drops', async t => {
+  const {reg, sw, connection, statuses} = workerConnection(t);
+  reg.active = sw.controller = makeWorker('activated');
+  let registrations = 0, finish;
+  sw.register = async () => { registrations++; return reg; };
+  sw.getRegistration = async () => reg;
+  await connection.check(true);
+  assert.equal(registrations, 0);
+  reg.update = () => new Promise(resolve => { finish = resolve; });
+  const pending = connection.check(true);
+  await Promise.resolve();
+  navigator.onLine = false;
+  connection.check();
+  assert.equal(statuses.at(-1), 'offline');
+  finish();
+  await pending;
+  assert.equal(statuses.at(-1), 'offline');
+  navigator.onLine = true;
+  reg.update = async () => {};
+  await connection.check();
+  assert.equal(statuses.at(-1), 'current');
+});

@@ -24,6 +24,7 @@ export function usePhoneApp() {
     document.addEventListener('visibilitychange', resume);
     window.addEventListener('pageshow', resume);
     window.addEventListener('online', resume);
+    window.addEventListener('offline', resume);
     return () => {
       connection.close();
       worker.current = null;
@@ -31,6 +32,7 @@ export function usePhoneApp() {
       document.removeEventListener('visibilitychange', resume);
       window.removeEventListener('pageshow', resume);
       window.removeEventListener('online', resume);
+      window.removeEventListener('offline', resume);
     };
   }, []);
 

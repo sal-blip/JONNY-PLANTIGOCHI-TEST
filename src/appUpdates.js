@@ -1,3 +1,21 @@
+const CHECK_TIMEOUT = 12000;
+const DOWNLOAD_TIMEOUT = 45000;
+
+class UpdateTimeout extends Error {}
+
+function bounded(request) {
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new UpdateTimeout()), CHECK_TIMEOUT);
+  });
+  return Promise.race([request, deadline]).finally(() => clearTimeout(timer));
+}
+
+function failureStatus(error) {
+  if (!navigator.onLine) return 'offline';
+  return error instanceof UpdateTimeout ? 'slow' : 'failed';
+}
+
 function hasWorker(registration) {
   return registration && [registration.installing, registration.waiting, registration.active]
     .some(worker => worker && worker.state !== 'redundant');
@@ -13,11 +31,26 @@ export function watchAppUpdates(registration, serviceWorker, initialController, 
   let controller = initialController, changed = false, tracked = null, checking = null;
   let disposed = false, lastSuccess = 0, failures = 0;
 
+  let downloadTimer, stalled = false;
+
+  function trackDownload() {
+    clearTimeout(downloadTimer);
+    stalled = false;
+    onStatus('downloading');
+    downloadTimer = setTimeout(() => {
+      if (disposed || changed || !isPending(tracked)) return;
+      stalled = true;
+      lastSuccess = 0;
+      onStatus(navigator.onLine ? 'slow' : 'offline');
+    }, DOWNLOAD_TIMEOUT);
+  }
+
   function controllerChanged() {
     const next = serviceWorker.controller;
     if (!next || next === controller || disposed) return;
     if (controller) changed = true;
     controller = next;
+    if (changed || !isPending(tracked)) clearTimeout(downloadTimer);
     onStatus(changed ? 'ready' : 'current');
   }
 
@@ -26,6 +59,7 @@ export function watchAppUpdates(registration, serviceWorker, initialController, 
     controllerChanged();
     if (registration.active?.state === 'activated') onAvailability('ready');
     if (!tracked || changed) return;
+    clearTimeout(downloadTimer);
     if (tracked.state === 'redundant') {
       failures++;
       lastSuccess = 0;
@@ -37,7 +71,7 @@ export function watchAppUpdates(registration, serviceWorker, initialController, 
       onStatus('current');
     } else {
       if (controller && tracked.state === 'installed') tracked.postMessage({type:'SKIP_WAITING'});
-      onStatus('downloading');
+      trackDownload();
     }
   }
 
@@ -56,31 +90,36 @@ export function watchAppUpdates(registration, serviceWorker, initialController, 
     controllerChanged();
     if (changed) return;
     observe();
-    if (isPending(tracked)) {
+    if (!navigator.onLine) {
+      lastSuccess = 0;
+      onStatus('offline');
+      return;
+    }
+    if (isPending(tracked) && !stalled) {
       onStatus('downloading');
       return checking;
     }
-    if (!navigator.onLine) {
-      lastSuccess = 0;
-      if (manual) onStatus('offline');
-      return;
+    if (checking) {
+      if (manual) onStatus('checking');
+      return checking;
     }
-    if (checking) return checking;
     if (!manual && Date.now() - lastSuccess < 60000) return;
     if (manual) onStatus('checking');
     const failuresBefore = failures;
-    checking = Promise.resolve().then(() => registration.update()).then(() => {
+    checking = Promise.resolve().then(() => bounded(registration.update())).then(() => {
       if (disposed) return;
       observe();
       controllerChanged();
       if (changed || failures !== failuresBefore) return;
-      lastSuccess = Date.now();
-      if (isPending(tracked)) onStatus('downloading');
-      else onStatus('current');
-    }).catch(() => {
-      if (!disposed && !changed) {
+      lastSuccess = navigator.onLine ? Date.now() : 0;
+      if (isPending(tracked)) {
+        if (stalled) trackDownload();
+        else onStatus('downloading');
+      } else onStatus(navigator.onLine ? 'current' : 'offline');
+    }).catch(error => {
+      if (!disposed && !changed && failures === failuresBefore) {
         lastSuccess = 0;
-        onStatus(navigator.onLine ? 'failed' : 'offline');
+        onStatus(failureStatus(error));
       }
     }).finally(() => { checking = null; });
     return checking;
@@ -93,6 +132,7 @@ export function watchAppUpdates(registration, serviceWorker, initialController, 
   if (registration.active?.state === 'activated') onAvailability('ready');
   return {check, close() {
     disposed = true;
+    clearTimeout(downloadTimer);
     tracked?.removeEventListener('statechange', workerChanged);
     registration.removeEventListener('updatefound', observe);
     serviceWorker.removeEventListener('controllerchange', controllerChanged);
@@ -105,25 +145,33 @@ export function connectAppWorker(serviceWorker, onAvailability, onStatus) {
   const initialController = serviceWorker?.controller;
   let registration, monitor, pending, manualRequested = false, closed = false;
 
+  async function findRegistration() {
+    // A controlled window already has a registration. Attaching to it first
+    // lets an installed garden observe a replacement even on a slow network.
+    if (serviceWorker.controller || !navigator.onLine) {
+      const existing = await serviceWorker.getRegistration('/');
+      if (closed || hasWorker(existing) || !navigator.onLine) return existing;
+    }
+    try {
+      return await serviceWorker.register('/sw.js', {scope:'/', updateViaCache:'none'});
+    } catch (error) {
+      if (closed) throw error;
+      return serviceWorker.getRegistration('/');
+    }
+  }
+
   async function register() {
     try {
-      let next;
-      if (navigator.onLine) {
-        try { next = await serviceWorker.register('/sw.js', {scope:'/', updateViaCache:'none'}); }
-        catch { /* An installed worker can still serve a garden while the server is unavailable. */ }
-      }
-      next ??= await serviceWorker.getRegistration('/');
+      const next = await bounded(findRegistration());
       if (closed) return;
-      if (!hasWorker(next)) {
-        throw new Error('No installed or installing game worker');
-      }
+      if (!hasWorker(next)) throw new Error('No installed or installing game worker');
       registration = next;
       monitor = watchAppUpdates(next, serviceWorker, initialController, onStatus, onAvailability);
       await monitor.check(manualRequested);
-    } catch {
+    } catch (error) {
       if (!closed) {
-        onAvailability('unavailable');
-        onStatus(navigator.onLine ? 'failed' : 'offline');
+        onAvailability(serviceWorker.controller ? 'ready' : 'unavailable');
+        onStatus(failureStatus(error));
       }
     } finally {
       pending = null;

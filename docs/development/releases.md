@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.42 · Update check recovery
+
+Settings offers a retry when the browser leaves a service-worker request unresolved or a download stops progressing. Existing installs attach to their active registration before checking for new code. Replacement activation still offers Restart to update. Regression tests cover stalled registration, updates and downloads, late responses, offline fallback and reconnect. All 191 unit tests passed. A [Chromium Settings walkthrough](../../tests/browser/update_recovery.py) exercised timeout and retry against a deliberately stalled browser API and verified the saved plant ID.
+
 ## Plantigochi 0.1.41 · Numbered slot coins
 
 The Garden spin reels and prize card share four stamped coin faces showing 10, 25, 50 and 100. The numerals occupy the center of the SpriteCook gold coin. [Art record](../art-review/daily-spin/spritecook-assets.json)

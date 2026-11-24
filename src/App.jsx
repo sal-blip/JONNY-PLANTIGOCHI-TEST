@@ -44,6 +44,7 @@ const phonePanels = ['install','saves','alerts'];
 const phoneItems = [...phonePanels,'about','bug'];
 const updateMessages={
   checking:'Checking for an update…',downloading:'Downloading the update…',current:'You have the latest version.',
+  slow:'The update is taking longer than expected. You can keep playing or try again.',
   offline:'Connect to the internet to check for updates.',failed:'Could not check for updates. Try again when online.',
 };
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
@@ -556,7 +557,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
         <button disabled={['checking','downloading'].includes(phone.updateStatus)}
           onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
-          {phone.updateStatus==='ready'?'Restart to update':'Check for updates'}</button>
+          {phone.updateStatus==='ready'?'Restart to update':phone.updateStatus==='slow'?'Retry update check':'Check for updates'}</button>
         {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
         <button onClick={()=>open('uninstall')}>How to uninstall<ChevronRight className="row-end"/></button>
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
