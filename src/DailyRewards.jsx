@@ -5,7 +5,7 @@ import {canUseGrowthDay,useGrowthDay} from './game.js';
 import './dailyRewards.css';
 
 const art='/assets/daily-spin/';
-const symbols=['coin','plant','pot','growth'];
+const symbols=['coin-10','plant','pot','coin-25','growth','coin-50','coin-100'];
 // All reels start together. Each has a longer strip and more time to coast to its prize.
 const reels=[
   {stopMs:1550,steps:12},
@@ -27,7 +27,7 @@ function PrizeReels({prize,rolling=false,atRest=false}){
         <div className={rolling?'reel-strip in-motion':'reel-strip'}
           style={{'--reel-time':stopMs+'ms','--landing':(-steps*100)+'%'}}>
           {rolling && Array.from({length:steps},(_,i)=><span key={i}><img src={art+symbols[(i+index)%symbols.length]+'.png'} alt=""/></span>)}
-          <span><img src={art+symbol+'.png'} alt=""/>{row?.coins && <b>{row.coins}</b>}</span>
+          <span><img src={art+symbol+'.png'} alt=""/></span>
         </div></div>;
     })}</div>
   </div>;

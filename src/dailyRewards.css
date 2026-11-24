@@ -48,7 +48,7 @@
 .reel-strip {position:absolute;inset:0}
 .reel-strip span {width:100%;height:100%;display:grid;position:relative;place-items:center}
 .reel-strip img {width:78%;height:70%;object-fit:contain;image-rendering:pixelated}
-.reel-strip b {position:absolute;bottom:0;right:1px;background:#ffedaa;color:#4e391c;border-radius:2px;font:bold 11px/1 system-ui}
+.reel-strip img[src*="/coin-"] {width:96%;height:90%}
 .reel-strip.in-motion {animation:daily-reel var(--reel-time) cubic-bezier(.16,.44,.46,1) both}
 .daily-result {min-height:1.5em;margin:5px 0 7px;font-size:.94rem}
 .spin-action {background:#f7cb69;color:#433419;border-color:#a17b37}

@@ -7,9 +7,9 @@
       "sha12": "ea2de674c644"
     },
     {
-      "label": "Prize reel – coin",
+      "label": "Original leaf coin reference",
       "asset_id": "ae5effd7-d9f2-4a24-9420-323ef52358d0",
-      "file": "public/assets/daily-spin/coin.png",
+      "file": "docs/art-review/daily-spin/coin-leaf-original.png",
       "sha12": "9b265a0a5d51"
     },
     {
@@ -35,6 +35,30 @@
       "asset_id": "8bb1e4cc-c2ff-4cd7-8363-c12fb24f6ead",
       "file": "public/assets/daily-spin/spiral.png",
       "sha12": "5ffc9bf98821"
+    },
+    {
+      "label": "10-coin reel and prize sprite",
+      "asset_id": "a3c91451-6a4c-44cc-9469-fb1ce0307803",
+      "file": "public/assets/daily-spin/coin-10.png",
+      "sha12": "37210972601b"
+    },
+    {
+      "label": "25-coin reel and prize sprite",
+      "asset_id": "a3c91451-6a4c-44cc-9469-fb1ce0307803",
+      "file": "public/assets/daily-spin/coin-25.png",
+      "sha12": "4afc2ace8a09"
+    },
+    {
+      "label": "50-coin reel and prize sprite",
+      "asset_id": "a3c91451-6a4c-44cc-9469-fb1ce0307803",
+      "file": "public/assets/daily-spin/coin-50.png",
+      "sha12": "df836967a3cf"
+    },
+    {
+      "label": "100-coin reel and prize sprite",
+      "asset_id": "a3c91451-6a4c-44cc-9469-fb1ce0307803",
+      "file": "public/assets/daily-spin/coin-100.png",
+      "sha12": "7916f001748a"
     }
   ],
   "cabinet": {
@@ -65,5 +89,12 @@
       "pot",
       "growth"
     ]
+  },
+  "coin_faces": {
+    "native_size": [
+      72,
+      72
+    ],
+    "finish": "The SpriteCook blank gold face carries dark bronze pixel numerals with a one-pixel gold highlight. The stamped PNG is shared by moving reels, landed reels and the prize card."
   }
 }

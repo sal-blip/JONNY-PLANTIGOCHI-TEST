@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.41 · Numbered slot coins
+
+The Garden spin reels and prize card share four stamped coin faces showing 10, 25, 50 and 100. The numerals occupy the center of the SpriteCook gold coin. [Art record](../art-review/daily-spin/spritecook-assets.json)
+
 ## Plantigochi 0.1.40 · Garden spin reveal
 
 The cabinet now takes center stage. All three reels start together and coast to a stop at 1.55, 2.90 and 4.65 seconds. After the first stop the camera eases closer. The sprout celebration’s feathered rays and stars shine behind the cabinet, with a single burst on the last landing. A prize card names the saved award and where to find it. Reduced motion opens the prize card immediately. Closing mid-spin preserves the award. After the daily free spin, players can spend a token on another spin with the same odds. The token balance replaces the coin counter in Rewards. Buying a token costs 100 Garden Coins. All 187 automated tests passed. Component checks covered the timed reveal, reduced motion, interrupted spins, purchase confirmation, and free and token spins. The managed preview relay timed out before a phone viewport could be inspected.

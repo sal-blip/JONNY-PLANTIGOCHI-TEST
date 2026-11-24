@@ -77,10 +77,10 @@ export function presentDaily(plant,time,expected){
   return update(plant,{visit:{...visit,shown:true}});
 }
 export const spinTable=Object.freeze([
-  {id:'coins10',label:'10 coins',weight:35,coins:10,symbol:'coin'},
-  {id:'coins25',label:'25 coins',weight:25,coins:25,symbol:'coin'},
-  {id:'coins50',label:'50 coins',weight:15,coins:50,symbol:'coin'},
-  {id:'coins100',label:'100 coins',weight:5,coins:100,symbol:'coin'},
+  {id:'coins10',label:'10 coins',weight:35,coins:10,symbol:'coin-10'},
+  {id:'coins25',label:'25 coins',weight:25,coins:25,symbol:'coin-25'},
+  {id:'coins50',label:'50 coins',weight:15,coins:50,symbol:'coin-50'},
+  {id:'coins100',label:'100 coins',weight:5,coins:100,symbol:'coin-100'},
   {id:'growth',label:'1 growth day',weight:10,symbol:'growth'},
   {id:'pot',label:'Garden pot',weight:7,symbol:'pot'},
   {id:'plant',label:'Grown shop plant',weight:3,symbol:'plant'},
