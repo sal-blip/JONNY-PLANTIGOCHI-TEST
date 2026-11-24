@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## v85 · Garden inspection selection · November 24, 2026
+
+Plantigochi 0.1.25 gives a shared plant and pot one inspection view. Either touch target opens the same explicit Plant only, Pot only and Plant + pot choices. Actions appear after selection. The title, artwork, scrolling actions and Done footer occupy separate rows. The pot instruction previously inherited absolute positioning from the tutorial bubble and could overlap the inventory action.
+
+The browser walkthrough used a Moth Orchid in a Bog Frog Pot on the center windowsill at noon and night. It checked enlarged text in narrow portrait and short landscape, repotting, swapping pots, moving both together, storing the pot and reopening the garden. All 165 unit tests passed. Six public resources matched the build. A Chromium test of the live Settings update from 0.1.24 reopened the same garden offline. Physical phone layout feedback is pending.
+
+Sites source `f0bb038ae36d3b704c54e5df0b4b3026ec1175eb` · saved version 85 · deployment `appgdep_6b050472e3c88191b25e84f383d727d0` · [GitHub source 60e1df8](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/60e1df8)
+
 ## v84 · Garden swipe performance · November 24, 2026
 
 Players noticed stutter when swiping between the toy and the garden. The swipe handler updated styles across the game on each animation frame, even after the player lifted their finger. Plantigochi 0.1.24 lets the browser animate the transition after a player releases a swipe. During a drag, toy visibility updates only the layers that use it. The room retains its measured pixel dimensions and animation throughout. Across ten touch swipes with a populated garden in 4× CPU-throttled Chromium, the repeat comparison reduced time spent recalculating styles from 2,594 ms to 940 ms and the share of sampled frame intervals above 25 ms from 144/193 to 97/226. After updating the installed app, one player described swiping as “definitely better.”
