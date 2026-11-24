@@ -58,7 +58,7 @@ The regular terracotta pot costs **10 coins** after the tutorial. Six more garde
 
 ## Saves, settings and reminders
 
-Progress saves on this device. To move a garden or keep a copy before uninstalling, open the three-wave menu and choose **App & data → Saved plant → Back up**. On a fresh installation choose **Restore a garden** during setup. The backup includes the plant, purse, room placements, journal and saved frame photos. A garden postcard is a shareable picture. Use the backup file to restore playable progress.
+Progress saves on this device. To move a garden or keep a copy before uninstalling, open the three-wave menu and choose **App & data → Saved plant → Back up**. On a fresh installation choose **Restore a garden** during setup. The backup includes the plant, purse, room placements, journal and saved frame photos. In iSEED → Share, drag to frame your garden and use the right-hand slider to zoom. Tap the center shutter to add a photo to this device’s camera roll. Open the lower-left thumbnail to browse or save photos. The lower-right button shares the selected or latest photo. Save photos separately to keep them when moving your garden. Use the backup file to restore playable progress.
 
 Once the game finishes caching, you can reopen it offline. Care reminders require permission and a server-confirmed schedule. Water reminders are due at four and twelve hours after a drink. Delivery also depends on the dispatch queue, connectivity and the phone’s notification settings. On iPhone and iPad, Web Push requires a Home Screen installation on iOS or iPadOS 16.4 or later.
 

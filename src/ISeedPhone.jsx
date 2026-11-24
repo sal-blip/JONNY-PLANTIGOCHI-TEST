@@ -144,7 +144,7 @@ export default function ISeedPhone({page,title,back,home,lower,locked=false,corn
     <button type="button" className="iseed-bezel" data-phone-bezel="" data-handset-pull="" aria-label="Put down iSEED" onClick={lower} disabled={locked}>
       <span className="iseed-earpiece" aria-hidden="true"><i/><b/><i/></span>
     </button>
-    <div className={'iseed-screen'+(atHome?' is-home':'')}>
+    <div className={'iseed-screen'+(atHome?' is-home':page==='postcard'?' is-camera':'')}>
       <header className="iseed-header">
         {atHome?<button type="button" className="iseed-open-garden" onClick={lower} disabled={locked}
           aria-label="Open garden" title="Open garden" data-handset-no-pull=""><Flower2 aria-hidden="true"/><span>Garden</span></button>:

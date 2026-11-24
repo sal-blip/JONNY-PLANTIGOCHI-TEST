@@ -136,20 +136,40 @@
   .iseed-home .phone-guide {max-width:calc(100% - 68px);font-size:12px;line-height:1.22}
 }
 
-.garden-camera {max-width:520px;margin:auto;color:var(--iseed-ink)}
-.camera-room-nav h2 {margin:0;font-size:1.35rem}
-.camera-room-nav {display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:center}
-.camera-room-nav button,.camera-actions button,.camera-shutter {display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:44px;border-radius:10px;border:1px solid #8da287;background:#edf1dc;color:#2c4937}
-.garden-camera button:disabled {opacity:.45}
-.camera-room-nav {margin:4px 0 12px}
-.camera-finder,.camera-print {position:relative;display:block;width:100%;aspect-ratio:5/4;border-radius:10px;overflow:hidden;background:#30453b}
-.camera-finder canvas {display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
-.camera-finder span {position:absolute;inset:0;display:grid;place-items:center;color:white}
-.camera-zoom {display:flex;align-items:center;gap:10px;margin-top:12px;font-weight:650}
-.camera-zoom input {flex:1;min-width:0;min-height:44px;accent-color:#406248}
-.camera-zoom output {min-width:3ch;text-align:end}
-.camera-actions {display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:16px 0}
-.camera-actions svg,.camera-shutter svg {width:18px}
-.camera-shutter {width:100%;background:#34583e;color:#fffbea;font-weight:650}
-.camera-link {margin-top:20px}
 .app-postcard .iseed-icon-tile {background-image:url('./art/iseed-share-camera.png');background-size:100% 100%}
+
+.iseed-screen.is-camera {background:#18251f}
+.is-camera .iseed-contents {position:absolute;inset:0;padding:0;overflow:hidden;touch-action:none}
+.is-camera .iseed-contents>.garden-camera {position:absolute;inset:0;max-width:none}
+.is-camera .iseed-header {position:absolute;inset:0 0 auto;min-height:48px;background:linear-gradient(#11231dd4,transparent);border:0;box-shadow:none;pointer-events:none}
+.is-camera .iseed-header button {pointer-events:auto}
+.is-camera .iseed-header h1 {color:white;font-size:1rem;text-shadow:0 1px 3px #132119}
+.is-camera .iseed-small-time,.is-camera .iseed-pixels {display:none}
+.is-camera :is(.iseed-header,.iseed-corner) button {color:white;background:#18281fd9;border-radius:50%}
+.is-camera .iseed-contents>.app-guide {position:absolute;z-index:2;top:100px;left:8px;width:min(76%,340px);pointer-events:none}
+.garden-camera {color:white;isolation:isolate;overflow:hidden}
+.camera-finder,.camera-review {position:absolute;inset:0;background:#18251f}
+.camera-finder canvas,.camera-review img {display:block;width:100%;height:100%;touch-action:none}
+.camera-review img {object-fit:contain}
+.garden-camera button {display:grid;place-items:center;width:44px;height:44px;padding:0;color:#fff;background:#17261fce;border:0;border-radius:50%;cursor:pointer}
+.garden-camera button:disabled {opacity:.5;cursor:default}
+.camera-room-nav {position:absolute;top:50px;left:50%;transform:translateX(-50%);display:flex;align-items:center;border-radius:24px;background:#17261fd9}
+.camera-room-nav h2 {margin:0;color:white;font:650 .94rem/1.15 var(--display);white-space:nowrap}
+.camera-room-nav button {background:none}
+.camera-zoom {position:absolute;right:6px;top:50%;transform:translateY(-50%);display:grid;justify-items:center;gap:4px;padding:8px 0;border-radius:24px;background:#17261fd9;color:#fff}
+.camera-zoom output {font:650 .86rem/1.2 var(--display);font-variant-numeric:tabular-nums}
+.camera-zoom input {appearance:auto;writing-mode:vertical-lr;direction:rtl;width:44px;height:clamp(60px,19cqh,132px);margin:0;accent-color:#def2c4;touch-action:none}
+.camera-actions {position:absolute;inset:auto 0 0;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;justify-items:center;padding:14px clamp(16px,6cqw,40px) 12px;background:linear-gradient(transparent,#102119a3)}
+.camera-actions button:first-child {justify-self:start}
+.camera-actions button:last-child {justify-self:end}
+.camera-actions .camera-thumb {overflow:hidden;border:2px solid #fff;border-radius:10px}
+.camera-thumb img {width:100%;height:100%;object-fit:cover}
+.camera-actions .camera-shutter {width:58px;height:58px;border:3px solid #fff;background:#faf9eb;box-shadow:inset 0 0 0 3px #304237,0 2px 7px #17261f99}
+.camera-shutter:active:enabled {transform:scale(.95)}
+.camera-status {position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);margin:0;padding:10px 16px;background:#17261fea;color:white;border-radius:12px;text-align:center}
+.camera-status button {width:auto;margin:4px auto 0;padding:0 10px;text-decoration:underline}
+.camera-sr {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.camera-flash {position:absolute;inset:0;pointer-events:none;animation:camera-exposure .24s ease-out both}
+@keyframes camera-exposure {from{background:#fff8}to{background:transparent}}
+@media(prefers-reduced-motion:reduce){.camera-flash{display:none}}
+@container (max-height:300px){.camera-room-nav{top:3px}.camera-actions{padding-block:3px}.camera-actions .camera-shutter{width:48px;height:48px}}

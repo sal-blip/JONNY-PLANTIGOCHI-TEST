@@ -500,7 +500,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
           apps.openApp(id);
         }} busy={apps.busy} active={phoneVisible}/>:<>
           {app==='shop' && tutorial?.step==='pot' && <GuideChat className="app-guide" cue={phoneVisible?app:null}><p>Open the terracotta pot and tap Buy. Then pick a glowing spot to place it.</p></GuideChat>}
-          {phoneVisible && Object.hasOwn(appHints,app) && <FirstHint key={app} id={app} plant={plant} commit={commit} className="app-guide">{appHints[app]}</FirstHint>}
+          {phoneVisible && (app!=='postcard' || tutorial) && Object.hasOwn(appHints,app) && <FirstHint key={app} id={app} plant={plant} commit={commit} className="app-guide">{appHints[app]}</FirstHint>}
           {apps.content}</>}
       </ISeedPhone>}
     </div>

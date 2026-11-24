@@ -203,6 +203,21 @@ export function gardenStore(legacyStorage,visible){
       });
       return packGardenBackup(snapshot.raw,snapshot.originals);
     },
+    async cameraPhotoKeys(){
+      const keys=await transaction('readonly',records=>records.getAllKeys(IDBKeyRange.bound('camera/', 'camera/\uffff')));
+      return keys.result.reverse();
+    },
+    async readCameraPhoto(key){
+      if(!key.startsWith('camera/'))return null;
+      const request=await transaction('readonly',records=>records.get(key));
+      return request.result ?? null;
+    },
+    saveCameraPhoto(key,file){
+      return transaction('readwrite',(records,raw,setup)=>{
+        if(!raw || setup.resetCleanup || !key.startsWith('camera/'))throw stale();
+        records.add(file,key);
+      });
+    },
     async readFrameOriginal(id){
       if(!validOriginalId(id))return null;
       const db=await connection();

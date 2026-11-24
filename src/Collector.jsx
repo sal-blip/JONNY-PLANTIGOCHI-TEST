@@ -571,7 +571,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const plants=placesFor(index).map(spot=>collection.get(slotFor(index,spot)));
     const [photos]=await Promise.all([prepareRoomPhotos(items,index),prepareNativeArt()]);
     return (canvas,region)=>drawRoom(canvas,{region,hour,shopItems:items,photos,plants,jarProgress,
-      leafCount:plant.book.length,roomIndex:index,playingItemId,time:0,reducedMotion:true});
+      leafCount:plant.book.length,roomIndex:index,playingItemId:playingRecordId,time:0,reducedMotion:true});
   }
   const message=notice || (shopMove ? (preview?placeName(preview.slot)+' · '+catalog[shopMove.sku].name:'Choose a spot for '+catalog[shopMove.sku].name.toLowerCase()+'.') : inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):
     carry.repot?'Choose an empty pot for '+(inHand.name || speciesName(inHand))+'.':'Choose a spot for '+(inHand.name || speciesName(inHand))+(sourcePot?' and '+catalog[sourcePot.sku].name:'')+'.'):
