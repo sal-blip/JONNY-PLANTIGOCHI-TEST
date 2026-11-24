@@ -98,11 +98,15 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   useEffect(()=>{
     if(!ghostCanvas.current || !inHand)return;
     const ctx=ghostCanvas.current.getContext('2d');
+    ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
     const pot=items.find(i=>i.slot===carry.from && catalog[i.sku]?.kind==='pot');
     ctx.setTransform(detailScale,0,0,detailScale,0,0);
-    drawPottedPlant(ctx,{x:44,y:74,size:1.28,rasterScale:detailScale,plant:inHand,potSku:pot?.sku,night:1-roomLight(hour).day,reducedMotion:true,selected:true});
-  },[Boolean(ghost),inHand,hour,items,detailScale]);
+    const slot=dropOver ?? carry.from,view=viewForSlot(slot);
+    const extra=worldHeight-ROOM_HEIGHT;
+    const spot=placesFor(view,extra-Math.round(extra*.39)).find(p=>slotFor(view,p)===slot);
+    drawPottedPlant(ctx,{x:44,y:74,size:spot.size,rasterScale:detailScale,plant:inHand,potSku:pot?.sku,night:1-roomLight(hour).day,reducedMotion:true,selected:true});
+  },[Boolean(ghost),inHand,hour,items,detailScale,worldHeight,dropOver,carry?.from]);
 
   function readCamera(){
     const el=stage.current,frame=camera.current;
@@ -563,7 +567,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         {picking && slot!==null && !chosen && <button onClick={()=>putDown(slot,null)} disabled={busy}>Move in</button>}
         {!placing && <button aria-label="Dismiss garden message" onClick={()=>{setSlot(null);setNotice('');}}>×</button>}
       </div>}
-      {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width={88*detailScale} height={116*detailScale} aria-hidden="true" style={{left:ghost.x,top:ghost.y}}/>}
+      {ghost && inHand && <canvas className="carried-plant" ref={ghostCanvas} width={88*detailScale} height={116*detailScale} aria-hidden="true" style={{left:ghost.x,top:ghost.y,'--carry-scale':camera.current/ROOM_WIDTH}}/>}
     </div>
     <GardenRecord active={recordActive} musicVolume={musicVolume} playing={Boolean(playingRecordId)} onPlayingChange={()=>onSelectRecord(null)}/>
     {available && panel==='move' && source && <GardenDialog page="garden-move" title={'Move '+(source.name || speciesName(source))+'?'} close={cancelCarry}>

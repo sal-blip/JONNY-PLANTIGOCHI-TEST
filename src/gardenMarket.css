@@ -43,3 +43,7 @@
 
 .room-frame .decor-target:not(.open-destination){transform:translate(-50%,-50%);width:8%;height:9%;min-width:26px;min-height:25px;z-index:1}
 @media(max-height:520px){.collector .menu-card:has([class*="page-garden-"]){max-height:82dvh}}
+
+.shop-compare label{display:inline-flex;align-items:center;gap:8px;min-height:40px;cursor:pointer}
+.shop-compare p{margin:0 0 8px;font-size:14px}
+.shop-scale-art{display:block;width:100%;max-width:72px;height:auto;image-rendering:pixelated}

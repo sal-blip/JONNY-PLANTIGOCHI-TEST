@@ -57,6 +57,25 @@ The two 128 kbps MP3s live in `public/music`. One player spans the public tour, 
 
 For shop portraits, placed sizes, shelf clearance and foreground-to-background depth, see the [illustrated pot and plant scale audit](research/garden-scale-audit.md).
 
+### Placement depth and shop size
+
+A movable item keeps its authored proportions. Its supporting surface determines apparent size. Every pot, plant, frame, record player and Maneki-neko on a given piece of furniture uses the same multiplier. The original comparison images and measurements document version 0.1.17. The following fixed-camera crops show the two Bog Frog Pots before and after the surface rule.
+
+![The two Bog Frog Pots on the coffee table now match in size](research/coffee-table-scale.png)
+
+| Support | Scale applied to room art |
+| --- | ---: |
+| Wall shelves, cabinet and bookcase top | 0.72× |
+| Both windowsills, including the decorative frame spots | 0.80× |
+| Drawing desk | 0.86× |
+| Coffee table | 0.94× |
+| Freestanding display tables | 1.00× |
+| Floor | 0.91× to 1.12× by projected contact point |
+
+Add plant and pot addresses to the room layout. Keep saved numeric and named addresses stable. For a decorative spot, select its supporting surface from the same scale table. For floor art and hit targets use the places projected with the current extra floor height; portrait can reverse the depth order of the two front spots. Paint farther floor objects first. A carried plant takes the destination’s scale over a valid spot and its source scale between destinations. Postcards use their own wide room projection. [Placement geometry](../../src/gardenLayout.js) · [Decor and frame geometry](../../src/roomShopArt.js)
+
+Shop portraits retain individual framing for readability. **Compare garden sizes** draws every catalog item beside the same terracotta pot at windowsill scale. Use the real room renderer for comparison so nursery proportions, pot and foliage stay together. Review a new SKU in its portrait, comparison view, actual placement preview and saved room. For tall or trailing plants check shelf clearance in every pot and inspect the postcard. Shelf boards can obscure tall leaves. Open tables and desks allow foliage to rise above their surface. [Geometry tests](../../tests/gardenScale.test.js) · [Shop comparison walkthrough](../../tests/browser/shop_scale.py) · [Garden walkthrough](../../tests/browser/garden_resolution.py)
+
 The garden rests 8% closer than the original wide view. A stationary press on open scenery uses the same temporary 1.32× focus as a scene tap. Swiping still changes surfaces or pans across rooms. Keep a visible room’s backing canvas at the same resolution throughout a gesture. Resizing it clears its pixels, including while input belongs to the handset or the toy. The visible room keeps its animation clock while iSEED is raised or moving, including during a held or cancelled swipe. Garden input stays with the active surface. The room animation timer pauses when the document is hidden or reduced motion is requested. [Touch transition regression](../../tests/browser/garden_passage.py)
 
 The room uses Canvas 2D in a 400 × 320 logical space. Portrait extends the ceiling and floor. `RoomView` uses the same vertical offset for pixels, framed photos and DOM hit targets. `roomArt.js` draws plants at their pot baselines in the order supplied by the scenery. Floor plants can overlap a framed photo through a separate foreground canvas. Keep those layers inside the same camera transform so pan and zoom agree. [Room layout](../../src/gardenLayout.js) · [Paint order](../../src/roomArt.js) · [Scenery](../../src/roomScenery.js) · [Photo layers](../../src/FramePhoto.jsx) · [Garden sprite resolution and verification](research/garden-item-resolution.md)

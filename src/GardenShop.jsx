@@ -1,7 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay} from './gardenEconomy.js';
 import {isToySpecies,toyVarietyName,canHomePlant} from './game.js';
-import {drawShopPreview,framePhotoBounds} from './roomShopArt.js';
+import {drawShopPreview,drawSizeComparison,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
 import {readFrameUpload} from './frameUpload.js';
 import {ChevronRight,ShoppingBag} from 'lucide-react';
@@ -30,6 +30,17 @@ function ItemArt({sku,photo,large=false}){
       }}/>}
     </span>
   </span>;
+}
+function SizeComparison({sku}){
+  const canvas=useRef(null);
+  useEffect(()=>{
+    const ctx=canvas.current.getContext('2d');
+    if(!ctx)return;
+    ctx.setTransform(3,0,0,3,0,0);
+    ctx.clearRect(0,0,72,80);
+    drawSizeComparison(ctx,sku);
+  },[sku]);
+  return <span className="shop-specimen" aria-hidden="true"><canvas className="shop-scale-art" ref={canvas} width={216} height={240}/></span>;
 }
 export function CoinBalance({plant}){
   const life=lifeOf(plant);
@@ -80,6 +91,7 @@ export function ShopItemDetail({item,move,store,savePhoto,busy,children}){
 export default function GardenShop({plant,homePlant,onPlace,inspect,initialTab='shop',onTabChange}){
   const startTab=initialTab==='bag'?'bag':'shop';
   const [tab,setTab]=useState(startTab);
+  const [compare,setCompare]=useState(false);
   useEffect(()=>{setTab(startTab);},[startTab]);
   function openTab(id){setTab(id);onTabChange?.(id);}
   const g=lifeOf(plant);
@@ -89,10 +101,14 @@ export default function GardenShop({plant,homePlant,onPlace,inspect,initialTab='
       <button aria-pressed={tab==='shop'} onClick={()=>openTab('shop')}>Shop</button>
       <button disabled={plant.tutorial?.step==='pot'} aria-pressed={tab==='bag'} onClick={()=>openTab('bag')}>My items</button>
     </div>
+    {tab==='shop' && <div className="shop-compare">
+      <label><input type="checkbox" checked={compare} onChange={e=>setCompare(e.target.checked)}/> Compare garden sizes</label>
+      {compare && <p>Each item is shown beside a terracotta pot at windowsill depth.</p>}
+    </div>}
     {tab==='shop'?<div className="shop-list">{Object.entries(catalog).map(([sku,p])=><button key={sku}
       aria-label={p.name+' · '+itemPrice(plant,sku)+' coins'} disabled={g.balance<itemPrice(plant,sku) || Boolean(plant.tutorial && (plant.tutorial.step!=='pot' || sku!=='terra'))}
       onClick={()=>onPlace({sku,id:crypto.randomUUID(),buy:true})}>
-      <ItemArt sku={sku}/><span>{p.name}<small>{isToySpecies(sku)?'Buy grown or grow free on Plantigotchi':({pot:'Individual pot',frame:'Personal photo',plant:'Grown garden plant',decor:'Room decoration'})[p.kind]}</small></span>
+      {compare?<SizeComparison sku={sku}/>:<ItemArt sku={sku}/>}<span>{p.name}<small>{isToySpecies(sku)?'Buy grown or grow free on Plantigotchi':({pot:'Individual pot',frame:'Personal photo',plant:'Grown garden plant',decor:'Room decoration'})[p.kind]}</small></span>
       <b><img src="/art/iseed-coin.png" width="13" height="13" alt="" style={{imageRendering:"pixelated"}}/>{itemPrice(plant,sku)}</b></button>)}</div>:
       <div className="shop-list">{plant.waitingPlants?.map(item=><button key={item.id} disabled={!canHomePlant(plant,item.id)}
         onClick={()=>homePlant(item.id)}><ItemArt sku={item.species}/><span>{item.id===plant.id?plant.name:item.name}

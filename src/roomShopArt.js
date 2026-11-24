@@ -1,10 +1,11 @@
+import {surfaceScale} from './gardenLayout.js';
 import {approvedArt} from './shopSprites/approved.js';
 import {drawPottedPlant,isShopPlant,isShopPot} from './roomPlant.js';
 import {drawSelectionContour} from './roomContour.js';
 
 const locations=[
-  [['bookcase','Bookcase top',77,46,.83],['sill','Right windowsill',295,138,.83],['stand','Sofa-side display table',317,240,1]],
-  [['cabinet','Left end of studio cabinet',23,180,.8],['sill','Right studio windowsill',264,143,.84],['stand','Studio display table',104,234,1]],
+  [['bookcase','Bookcase top',77,46,surfaceScale.shelf],['sill','Right windowsill',295,138,surfaceScale.window],['stand','Sofa-side display table',317,240,surfaceScale.displayStand]],
+  [['cabinet','Left end of studio cabinet',23,180,surfaceScale.shelf],['sill','Right studio windowsill',264,143,surfaceScale.window],['stand','Studio display table',104,234,surfaceScale.displayStand]],
 ];
 export function decorPlaces(view=0){
   return locations[view%2].map(([key,name,baseX,baseY,size])=>({
@@ -133,6 +134,18 @@ export function drawRoomDecor(ctx,view,items,{night=0,highlighted,photos,playing
       selected:highlighted===spot.slot || highlighted===item.id,
       spinTime:playingItemId!=null && item.id===playingItemId && !reducedMotion ? Math.max(0,time) : null});
   }
+}
+
+// Use the same physical windowsill and nursery rendering as a placed item.
+export function drawSizeComparison(ctx,sku){
+  const size=surfaceScale.window, y=51;
+  if(isShopPlant(sku) || isShopPot(sku)){
+    const plant=isShopPlant(sku)?{id:'nursery-'+sku,species:sku}:null;
+    drawPottedPlant(ctx,{x:24,y,size,plant,potSku:plant?null:sku,rasterScale:3,reducedMotion:true});
+  }else{
+    drawDecor(ctx,{sku,x:24,y,size,rasterScale:3});
+  }
+  drawPottedPlant(ctx,{x:60,y,size,potSku:'terra',rasterScale:3,reducedMotion:true});
 }
 
 /** Native pixel preview centered horizontally; y is the baseline of the item. */

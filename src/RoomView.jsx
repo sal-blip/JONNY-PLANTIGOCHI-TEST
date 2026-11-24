@@ -37,7 +37,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
   const scene=useRef(null);
   const [focused,setFocused]=useState(null);
-  const spots=placesFor(index%2),below=worldHeight-above-ROOM_HEIGHT;
+  const spots=placesFor(index,worldHeight-above-ROOM_HEIGHT);
   const object=keepsakeFor(index);
   const blocked=busy || panelOpen || !onScreen || !running;
   const selectedFixture=!placing && object?.id===selectedKeepsake?selectedKeepsake:null;
@@ -124,7 +124,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   }
   spots.forEach((spot,i)=>{
     const slot=slotFor(index,spot),plant=plants[i],pot=shopItems.find(item=>item.slot===slot && catalog[item.sku]?.kind==='pot');
-    const x=spot.x*ROOM_WIDTH,y=spot.y*ROOM_HEIGHT+spot.front*below,size=spot.size;
+    const x=spot.x*ROOM_WIDTH,y=spot.baseY,size=spot.size;
     const open=placing && (shopMove?slot!==shopMove.from && canSetItem(garden,shopMove.sku,slot,shopMove.from):!plant);
     const isSource=placing && !shopMove && carry?.from===slot;
     if(placing && !open && !isSource)return;

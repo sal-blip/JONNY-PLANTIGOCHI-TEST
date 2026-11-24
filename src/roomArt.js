@@ -24,7 +24,7 @@ export function drawRoom(canvas,{
   if(!ctx)return;
   const view=roomIndex%2;
   const light=roomLight(hour);
-  const places=placesFor(view);
+  const places=placesFor(view,worldHeight-above-BASE_HEIGHT);
   function startLayer(ctx){
     ctx.save();
     ctx.setTransform(ctx.canvas.width/BASE_WIDTH,0,0,ctx.canvas.height/worldHeight,0,0);
@@ -45,7 +45,7 @@ export function drawRoom(canvas,{
     if(preview && (placing || !selected))return;
     ctx.save();
     if(preview)ctx.globalAlpha=selected ? .9 : .45;
-    drawPottedPlant(ctx,{x:place.x*BASE_WIDTH,y:place.y*BASE_HEIGHT+place.front*(worldHeight-above-BASE_HEIGHT),size:place.size,
+    drawPottedPlant(ctx,{x:place.x*BASE_WIDTH,y:place.baseY,size:place.size,
       rasterScale:ctx.canvas.width/BASE_WIDTH,plant,potSku:shopPot?.sku,styleIndex:slot+roomIndex*places.length,night:1-light.day,time,reducedMotion,selected});
     ctx.restore();
   }
@@ -62,7 +62,9 @@ export function drawRoom(canvas,{
   // In the live room they also sit in front of the native-resolution photo apertures.
   const front=foregroundCanvas?.getContext('2d');
   if(front)startLayer(front);
-  places.forEach((spot,i)=>{if(spot.layer==='floor')drawOccupant(front || ctx,i);});
+  const floorSlots=places.map((_,i)=>i).filter(i=>places[i].layer==='floor');
+  floorSlots.sort((a,b)=>places[a].baseY-places[b].baseY);
+  for(const i of floorSlots)drawOccupant(front || ctx,i);
   if(front)front.restore();
   ctx.restore();
 }
