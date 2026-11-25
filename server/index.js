@@ -10,9 +10,8 @@ export default {
     if (path.startsWith('/api/')) return reminderAPI(request,env,fetch,ctx);
     if (!['GET','HEAD'].includes(request.method)) return new Response(null,{status:405});
     if(path==='/update'){
-      const entry=atob(assets['/index.html']).match(/<script[^>]+src="(\/assets\/[^"]+\.js)"/)?.[1];
-      if(!entry)return new Response('Game build unavailable',{status:503});
-      return new Response(request.method==='HEAD'?null:updatePage(entry),{headers:{'Content-Type':mime.html,'Cache-Control':'no-store'}});
+      const release=JSON.parse(atob(assets['/game-release.json']));
+      return new Response(request.method==='HEAD'?null:updatePage(release),{headers:{'Content-Type':mime.html,'Cache-Control':'no-store'}});
     }
     const key = path === '/' ? '/index.html' : path;
     const value = Object.hasOwn(assets,key) ? assets[key] : null;

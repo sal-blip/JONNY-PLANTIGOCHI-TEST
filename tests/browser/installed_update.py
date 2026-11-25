@@ -1,10 +1,11 @@
 """Exercise the update menu and a real service worker from a previous dist to a new dist."""
 import argparse
 import json
+import re
 import subprocess
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from threading import Thread
 from urllib.parse import urlsplit
 
@@ -40,8 +41,12 @@ class ReleaseHandler(SimpleHTTPRequestHandler):
 
     def translate_path(self, path):
         url = urlsplit(path)
+        is_shell = PurePosixPath(url.path).match("/assets/game-shell-*.bin")
+        if is_shell and stale_entry:
+            # Simulate a stale response even on the fingerprinted update URL.
+            return str((args.previous / "index.html").resolve())
         stale = (stale_entry and url.path == "/index.html") or (
-            stale_unversioned and not url.query and url.path in ("/sw.js","/index.html"))
+            stale_unversioned and (url.path == "/index.html" or (url.path == "/sw.js" and not url.query)))
         directory = args.previous if stale else release
         return str(directory.resolve() / Path(super().translate_path(path)).relative_to(Path(self.directory)))
 
@@ -86,15 +91,16 @@ with ThreadingHTTPServer(("127.0.0.1", 0), partial(ReleaseHandler, directory=str
     if verified_checker:
         expect(page.get_by_text("You have the latest version.")).to_be_visible(timeout=60000)
     taps(page, "Check for updates")
-    error = "Could not verify the latest game." if verified_checker else "Could not check for updates."
-    expect(page.get_by_text(error, exact=False)).to_be_visible(timeout=60000)
+    failure = re.compile(r"The download did not finish|The downloaded files could not be verified|Could not verify the latest game")
+    expect(page.get_by_text(failure if verified_checker else "Could not check for updates.", exact=False)).to_be_visible(timeout=60000)
     assert entry.get_attribute("src") == old
     stale_entry = False
     if args.repair:
         page.goto(f"http://127.0.0.1:{server.server_port}/update")
         page.get_by_role("button", name="Repair update").click()
         expect(page.get_by_role("status")).to_contain_text("verified.", timeout=60000)
-        page.goto(f"http://127.0.0.1:{server.server_port}/")
+        with page.expect_navigation():
+            page.get_by_role("button", name="Restart to update").click()
     else:
         stale_unversioned = verified_checker
         taps(page, "Retry update check" if verified_checker else "Check for updates")

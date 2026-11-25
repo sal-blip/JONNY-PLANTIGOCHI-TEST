@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -33,8 +33,12 @@ export default defineConfig({
         // response can otherwise point a newly installed app to an older bundle.
         manifestTransforms: [async entries => {
           const html=await readFile(new URL('./dist/index.html',import.meta.url));
-          const integrity='sha256-'+createHash('sha256').update(html).digest('base64');
-          return {manifest:entries.map(entry=>entry.url==='index.html'?{...entry,integrity}:entry)};
+          const digest=createHash('sha256').update(html).digest();
+          const shellPath='/assets/game-shell-'+digest.toString('hex')+'.bin';
+          await writeFile(new URL('./dist'+shellPath,import.meta.url),html);
+          return {manifest:entries.map(entry=>entry.url==='index.html'
+            ? {...entry,integrity:'sha256-'+digest.toString('base64'),shellPath}
+            : entry)};
         }],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         globIgnores: ['social/**'],

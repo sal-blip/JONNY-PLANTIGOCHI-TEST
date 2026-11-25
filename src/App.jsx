@@ -44,9 +44,12 @@ const homeItems = ['scenes','settings','phone'];
 const phonePanels = ['install','saves','alerts'];
 const phoneItems = ['saves','alerts','about','bug'];
 const updateMessages={
-  checking:'Checking for an update…',downloading:'Downloading the update…',current:'You have the latest version.',
+  checking:'Checking for an update…',downloading:'Downloading the game files…',verifying:'Checking the downloaded game…',
+  ready:'Update downloaded. Restart to play the new version.',current:'You have the latest version.',
   slow:'The update is taking longer than expected. You can keep playing or try again.',
-  offline:'Connect to the internet to check for updates.',failed:'Could not verify the latest game. Your garden is safe. Try checking again.',
+  offline:'Connect to the internet to check for updates.',failed:'Could not check the published release. Try again.',
+  downloadFailed:'The download did not finish. Tap Retry update check to try again.',
+  verificationFailed:'The downloaded files could not be verified. Tap Retry update check to fetch them again.',
 };
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
 const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -416,6 +419,9 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   },[page,pendingRewards,day,visit?.shown,commit]);
   const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
     hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
+  const updateBusy=['checking','downloading','verifying'].includes(phone.updateStatus);
+  const fileProgress=phone.updateStatus==='downloading' ? phone.updateProgress : null;
+  const updateRetry=['failed','slow','downloadFailed','verificationFailed'].includes(phone.updateStatus);
   const introAudible = fxVolume > 0 && !revealMuted && running;
   const parent = ['install','uninstall','reset'].includes(page) ? 'saves'
     : ['test','restart','lab','purse'].includes(page) ? 'debug'
@@ -519,6 +525,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     {lab && !page && <button className="growth-lab-badge" onClick={()=>open('lab')} aria-label="Open Growth Lab">
       Growth Lab · {labBadge}</button>}
     {routeError && guide && <div className="coin-toast" role="status">{routeError}</div>}
+    {safeToReveal && saveOK && phone.updateStatus==='ready' && <button className="update-ready" onClick={()=>open('saves')}>Update ready · View restart option</button>}
     {!saveOK && plant && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>
       <div className="intro-shade" aria-hidden="true"/>
@@ -569,13 +576,15 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
       </section>}
       {(phonePanels.includes(page) || page==='test' || page==='uninstall') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} saveIssue={issue} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
       {page === 'saves' && <div className="menu-items">
-        <button disabled={['checking','downloading'].includes(phone.updateStatus)}
+        <button disabled={updateBusy}
           onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
-          {phone.updateStatus==='ready'?'Restart to update':['failed','slow'].includes(phone.updateStatus)?'Retry update check':'Check for updates'}</button>
+          {phone.updateStatus==='ready'?'Restart to update':updateRetry?'Retry update check':'Check for updates'}</button>
+        {updateBusy && <progress className="update-progress" aria-label={updateMessages[phone.updateStatus]} value={fileProgress?.completed} max={fileProgress?.total}/>}
+        {fileProgress && <small>{fileProgress.completed} of {fileProgress.total} game files ready</small>}
         <small>Running version {appVersion}</small>
         {phone.publishedVersion && phone.publishedVersion!==appVersion && <small>Published version {phone.publishedVersion}</small>}
         {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
-        {['failed','slow'].includes(phone.updateStatus) && <a href="/update">Repair update</a>}
+        {updateRetry && <a href="/update">Repair update</a>}
         <button onClick={()=>open('install')}>How to install<ChevronRight className="row-end"/></button>
         <button onClick={()=>open('uninstall')}>How to uninstall<ChevronRight className="row-end"/></button>
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}

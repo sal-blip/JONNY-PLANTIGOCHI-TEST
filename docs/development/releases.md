@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.63 · Download progress and restart
+
+A mobile Chromium test reproduced the reported 0.1.61 screen by returning stale HTML after the release descriptor advertised 0.1.62. The installed app knew the published version but could not verify the downloaded game. The specific failure on the reporting phone remains unconfirmed.
+
+The new worker fetches the exact game page from a content-addressed URL and verifies its integrity before activation. The updated client joins an existing download for the same release, counts files as they become available offline, and keeps waiting while the download advances. The menu distinguishes download failures from verification failures, and a verified update can offer a restart during play. The repair page also offers Restart in standalone mode.
+
+The build and 201 unit tests passed. Chromium walkthroughs upgraded unmodified 0.1.61 and 0.1.62 installations after a failed attempt, with stale public HTML on retry. Both reached Restart and retained the plant ID. A separate test exercised repair and restart from an installed 0.1.61 garden. [Upgrade walkthrough](../../tests/browser/installed_update.py) · [Timeout and progress tests](../../tests/appUpdates.test.js)
+
 ## Plantigochi 0.1.62 · Save, Updates & More
 
 Open **App & data → Save, Updates & More** for garden backups, restore, update checks, install and uninstall help, and the three-step garden reset. Back from either help screen and Cancel from reset return to this menu. Players on 0.1.61 can use Settings to install this release.

@@ -10,13 +10,14 @@ const old='/assets/index-old.js';
 function worker(scriptURL,state='activated'){
   return Object.assign(new EventTarget(),{scriptURL,state,postMessage(){}});
 }
-function fixture(t,{runningEntry=old,initial=worker(origin+'/sw.js'),shell=old}={}){
+function fixture(t,{runningEntry=old,initial=worker(origin+'/sw.js'),shell=old,onProgress}={}){
   const previous=Object.getOwnPropertyDescriptor(navigator,'onLine');
   Object.defineProperty(navigator,'onLine',{configurable:true,writable:true,value:true});
   t.after(()=>{if(previous)Object.defineProperty(navigator,'onLine',previous);else delete navigator.onLine;});
   const sw=Object.assign(new EventTarget(),{controller:initial});
   const statuses=[],availability=[],scripts=[];
   const env={shell,lookup:async()=>latest,read:async()=>env.shell};
+  sw.getRegistration=async()=>undefined;
   sw.register=async(url,opts)=>{
     assert.deepEqual(opts,{scope:'/',updateViaCache:'none'});
     scripts.push(url);
@@ -25,7 +26,7 @@ function fixture(t,{runningEntry=old,initial=worker(origin+'/sw.js'),shell=old}=
     return {active:sw.controller};
   };
   const conn=connectAppWorker(sw,s=>availability.push(s),s=>statuses.push(s),{
-    origin,runningEntry,releaseInfo:s=>env.lookup(s),readShell:s=>env.read(s)
+    origin,runningEntry,onProgress,releaseInfo:s=>env.lookup(s),readShell:s=>env.read(s)
   });
   t.after(()=>conn.close());
   return {conn,sw,env,statuses,availability,scripts};
@@ -72,7 +73,7 @@ test('a mismatched shell after both attempts cannot offer restart; manual retry 
   const {conn,env,statuses}=fixture(t);
   env.read=async()=>old;
   await conn.check(true);
-  assert.equal(statuses.at(-1),'failed');
+  assert.equal(statuses.at(-1),'verificationFailed');
   assert.ok(!statuses.includes('ready'));
   env.read=async()=>latest.entry;
   await conn.check(true);
@@ -201,5 +202,54 @@ test('an already-active worker that never claims the page gets replaced automati
   await new Promise(setImmediate);
   t.mock.timers.tick(2500);
   await request;
+  assert.equal(statuses.at(-1),'ready');
+});
+
+test('retry joins the pending download for the same build started by another tab',async t=>{
+  const {conn,sw,env,statuses,scripts}=fixture(t);
+  const installing=worker(target+'&retry=other-window','installing');
+  sw.getRegistration=async()=>({installing});
+  const check=conn.check(true);
+  await new Promise(setImmediate);
+  assert.deepEqual(statuses,['checking','downloading']);
+  installing.state='activated';sw.controller=installing;env.shell=latest.entry;
+  sw.dispatchEvent(new Event('controllerchange'));
+  await check;
+  assert.deepEqual(scripts,[]);
+  assert.deepEqual(statuses,['checking','downloading','verifying','ready']);
+});
+test('an unsuccessful download exposes a different retry status than a stale shell',async t=>{
+  const {conn,sw,statuses}=fixture(t);
+  sw.register=async()=>{throw Error('Unable to download service worker')};
+  await conn.check(true);
+  assert.equal(statuses.at(-1),'downloadFailed');
+  assert.ok(!statuses.includes('verifying'));
+});
+
+test('only forward progress from the installing worker extends its idle deadline',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const progress=[];
+  const {conn,sw,statuses,env}=fixture(t,{onProgress:p=>progress.push(p)});
+  const installing=worker(target,'installing');
+  sw.register=async()=>({installing});
+  const check=conn.check();
+  await new Promise(setImmediate);
+  const report=(source,completed,total)=>sw.dispatchEvent(Object.assign(new Event('message'),{
+    source,data:{type:'GAME_CACHE_PROGRESS',completed,total}
+  }));
+  t.mock.timers.tick(80000);
+  report(sw.controller,1,115);
+  report(installing,116,115);
+  report(installing,4,115);
+  report(installing,3,115);
+  t.mock.timers.tick(80000);
+  await new Promise(setImmediate);
+  assert.equal(statuses.at(-1),'downloading');
+  assert.deepEqual(progress,[null,{completed:4,total:115}]);
+  sw.controller=installing;installing.state='activated';env.shell=latest.entry;
+  sw.dispatchEvent(new Event('controllerchange'));
+  await check;
+  report(installing,10,115);
+  assert.equal(progress.length,2);
   assert.equal(statuses.at(-1),'ready');
 });
