@@ -62,7 +62,7 @@
 .iseed-corner {display:flex;align-items:center;gap:3px}
 .iseed-screen .iseed-header {padding-right:103px}
 .iseed-corner .iseed-reward-key {position:relative;width:44px;height:44px;padding:2px;border-radius:10px}
-.iseed-reward-key img {width:35px;height:35px;object-fit:contain;image-rendering:pixelated}
+.iseed-reward-key img {width:35px;height:35px;object-fit:contain;image-rendering:auto}
 .iseed-reward-key b {position:absolute;top:0;right:-1px;min-width:17px;padding:1px 3px;border-radius:12px;border:1px solid #ffedbf;background:#9d3e2c;color:white;font:700 12px/1.1 system-ui}
 .spin-theater {text-align:center;color:#fff4c9;background:radial-gradient(ellipse at 50% 58%,#456746,#203e31 72%);padding:clamp(16px,4vmin,28px)}
 .spin-theater .daily-close {z-index:1}

@@ -74,7 +74,7 @@
       }
     ]
   ],
-  "sha12": "c6abd00e18c3",
+  "sha12": "90ac19476ae0",
   "replacement_icons": [
     {
       "name": "Daily rewards",
@@ -86,5 +86,15 @@
       "asset_id": "42a77aec-94eb-4dd4-b53d-2b0196898d97",
       "file": "src/art/iseed-share-camera.png"
     }
-  ]
+  ],
+  "frame_correction": {
+    "source_asset_id": "ed9a691b-282d-41dc-89ac-a73bdf756bac",
+    "edit_asset_id": "108ee284-b278-4d91-ae09-c99f278ce681",
+    "edit": "Only the SpriteCook-edited outer rim is used. Match the rim to the original tile palette, mirror the outer coverage, then composite the untouched original illustration over it.",
+    "files": {
+      "iseed-launcher-hd.png": "90ac19476ae0",
+      "iseed-share-camera.png": "f49c0aac49df",
+      "iseed-daily-rewards.png": "cfd3e711553c"
+    }
+  }
 }

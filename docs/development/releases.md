@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.45 · iSEED icon frames
+
+The five launcher icons and the Rewards calendar use a level, symmetric outer frame. The rim comes from a SpriteCook edit of the original calendar. The original illustrations and launcher positions are preserved. [SpriteCook asset record](../art-review/iseed-launcher-hd/spritecook-assets.json)
+
 ## Plantigochi 0.1.44 · Garden audio
 
 Removed the synthesized garden breeze, sleeping-seed breathing loop and their volume control. Older gardens retain their music and effects settings on upgrade.
