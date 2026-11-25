@@ -170,7 +170,7 @@ def web_tour(browser, source):
         page.goto(url)
         taps(page, "Take a peek")
         first = audible(page, "cotton")
-        taps(page, "Next", "Continue", "Next game", "Next game", "Continue", "Install app", "Back")
+        taps(page, "Next", "Continue", "Continue", "Install app", "Back")
         assert audible(page, "cotton")["id"] == first["id"]
         assert len(tracks(page)) == 1
     finally:
@@ -189,7 +189,7 @@ def first_visit(browser, source):
         page.goto(url)
         taps(page, "Take a peek")
         cotton = audible(page, "cotton")
-        taps(page, "Next", "Continue", "Next game", "Next game", "Continue", "Begin setup", "Name your seed", "Keep Monstera",
+        taps(page, "Next", "Continue", "Continue", "Begin setup", "Name your seed", "Keep Monstera",
              "Open toy menu", "Next toy item", "Back on toy", "Open toy menu", "Choose Care",
              "Choose Water", "Visit my garden", "Open iSEED", "Shop", "Terracotta pot · 12 coins", "Buy",
              "Place at Center of the living room windowsill", "Buy for 12 coins", "Return to my seed",

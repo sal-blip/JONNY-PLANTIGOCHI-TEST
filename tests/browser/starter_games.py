@@ -37,7 +37,13 @@ def play(browser, source):
     page.goto(blank)
     page.evaluate(SEED_SETUP, None)
     page.goto(url)
-    taps(page, "Take a peek", "Next", "Continue", "Next game", "Next game", "Continue", "Begin setup", "Name your seed", "Keep Monstera", "Play a game")
+    taps(page, "Take a peek", "Next", "Continue", "Continue", "Begin setup", "Name your seed", "Keep Monstera")
+    expect(page.get_by_text("Press my heart button to open the menu.", exact=False)).to_be_visible()
+    expect(button(page, "Play a game")).to_have_count(0)
+    taps(page, "Open toy menu", "Next toy item", "Back on toy")
+    def open_play():
+        taps(page, "Open toy menu", "Next toy item", "Choose Play")
+    open_play()
     taps(page, "Choose Vine Trail", "Play heart", "Back on toy")
     expect(button(page, "Choose Resume")).to_be_visible()
     page.emulate_media(reduced_motion="no-preference")
@@ -78,12 +84,14 @@ def play(browser, source):
     assert line.evaluate("el => el.points.length >= 9"), "The three-cell vine should grow past five suns"
     def leave():
         taps(page, "Back on toy", "Next toy item", "Choose Leave game")
-        expect(button(page, "Play a game")).to_be_visible()
+        expect(button(page, "Open toy menu")).to_be_visible()
     leave()
-    taps(page, "Play a game", "Next toy item", "Choose Dew Catch", "Play heart")
+    open_play()
+    taps(page, "Next toy item", "Choose Dew Catch", "Play heart")
     expect(page.locator(".lcd-status")).to_contain_text("Clear!", timeout=13000)
     leave()
-    taps(page, "Play a game", "Previous toy item", "Choose Leaf Pairs", "Play heart")
+    open_play()
+    taps(page, "Previous toy item", "Choose Leaf Pairs", "Play heart")
     # context_for fixes Math.random at .5. Reproduce the 18-packet shuffle.
     packets = page.locator(".lcd-art .leaf-packet")
     expect(packets).to_have_count(18)
@@ -130,7 +138,7 @@ def play(browser, source):
     assert len({outline for _, outline in portraits}) == 9
     assert all(portraits.count(pair) == 2 for pair in portraits)
     leave()
-    taps(page, "Open toy menu", "Next toy item", "Back on toy", "Open toy menu", "Choose Care", "Choose Water")
+    taps(page, "Open toy menu", "Choose Care", "Choose Water")
     expect(button(page, "Visit my garden")).to_be_visible()
     assert not errors, errors
     ctx.close()

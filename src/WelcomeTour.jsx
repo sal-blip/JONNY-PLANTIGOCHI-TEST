@@ -13,9 +13,7 @@ const cards=[
   {lead:'Meet your',name:'Plantigochi',next:'Take a peek',copy:'A tiny Monstera to raise, right on your phone.'},
   {lead:'Watch it',name:'grow',next:'Next',copy:'Water it, play together, and watch new leaves unfold over a week of good care.'},
   {lead:'Give it',name:'a home',copy:'Move grown plants into your garden, arrange them your way, and start again with a new seed.'},
-  {lead:'Play games',name:gameNames.vine,game:'vine',next:'Next game',copy:'Turn left or right to collect suns. Each sun makes your vine longer, so leave yourself room to turn.'},
-  {lead:'Play games',name:gameNames.dew,game:'dew',next:'Next game',copy:'Slide your pot left or right to catch falling drops. Catch three to clear the first level.'},
-  {lead:'Play games',name:gameNames.pairs,game:'pairs',copy:'Move between seed packets with the arrows. Press the heart to flip two and find matching leaves.'},
+  {lead:'Play',name:'games',copy:'Steer a vine toward the sun, catch falling drops, or flip cards to find matching leaves.'},
   {lead:'Your seed is',name:'ready',copy:'Install Plantigochi to start your garden and save your progress on this phone.'},
 ];
 const last=cards.length-1;
@@ -45,18 +43,25 @@ function RoomPreview(){
     role="img" aria-label="Your garden living room, with open shelves and a cat resting on the sofa"/>;
 }
 
-function TourArt({step,game}){
-  if(game)return <div className="tour-game-preview" role="img" aria-label={gameNames[game]+' on the Plantigochi display'}>
-    {game==='vine'?<VineArt game={{body:[73,72,71,70,86,102,101,100,99],direction:0,sun:75}}/>:
-      game==='dew'?<DewArt lane={1} drops={[{id:1,lane:1,progress:.7},{id:2,lane:2,progress:.22}]}/>:
-      <PairsArt game={{deck:[0,2,4,1,3,5,6,7,1,2,8,5,6,0,3,8,4,7],cursor:8,matched:[3,8],open:[1]}}/>}
-  </div>;
+function GamePreview({game,children}){
+  return <figure>
+    <div className="tour-game-preview" role="img" aria-label={gameNames[game]+' on the Plantigochi display'}>{children}</div>
+    <figcaption>{gameNames[game]}</figcaption>
+  </figure>;
+}
+
+function TourArt({step}){
   switch(step){
     case 0:return <img className="tour-device" src="/art/welcome-device.webp" alt="Leaf-shaped keychain with a sleeping amber seed on its color screen"/>;
     case 1:return <div className="tour-life-art">
       <img className="tour-stages" src="/art/welcome-growth.webp" alt="Sleeping seed, green sprout and mature split-leaf Monstera"/>
     </div>;
     case 2:return <RoomPreview/>;
+    case 3:return <div className="tour-games">
+      <GamePreview game="vine"><VineArt game={{body:[73,72,71,70,86,102,101,100,99],direction:0,sun:75}}/></GamePreview>
+      <GamePreview game="dew"><DewArt lane={1} drops={[{id:1,lane:1,progress:.7},{id:2,lane:2,progress:.22}]}/></GamePreview>
+      <GamePreview game="pairs"><PairsArt game={{deck:[0,2,4,1,3,5,6,7,1,2,8,5,6,0,3,8,4,7],cursor:8,matched:[3,8],open:[1]}}/></GamePreview>
+    </div>;
     default:return <div className="tour-phone-picture" aria-label="Plantigochi on a phone Home Screen" role="img">
       <img src="/icons/icon-192.png" alt=""/><span>Plantigochi</span><i aria-hidden="true"/>
     </div>;
@@ -116,7 +121,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
       e.preventDefault();if(splash)setSplash(false);else onClose?.();
     }
   }
-  const content=<div className={'tour-sheet tour-page-'+(card.game?'games':step>=last?'install':step)} onKeyDown={keys}
+  const content=<div className={'tour-sheet tour-page-'+(step>=last?'install':step)} onKeyDown={keys}
     onTouchStart={e=>{const t=e.touches[0];touch.current=e.touches.length===1 && !e.target.closest('button,input,a')?[t.clientX,t.clientY]:null;}}
     onTouchCancel={()=>{touch.current=null;}}
     onTouchEnd={e=>{if(!touch.current)return;const [x,y]=touch.current;touch.current=null;
@@ -128,7 +133,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
     </header>
     <div className="tour-story">
       <div className="tour-art" key={'art'+step}>
-        <TourArt step={step} game={card.game}/>
+        <TourArt step={step}/>
         {splash && step===0 && <LeafReveal title="Plantigochi"/>}
       </div>
       <div className="tour-words">

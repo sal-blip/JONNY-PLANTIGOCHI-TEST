@@ -329,7 +329,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   const heartDisabled=Boolean(toyDisabled || (training && section) || choice && (
     choice.locked || !choice.command ||
     (boosting && !['growth','boost','buy-boost','back'].includes(choice.command)) ||
-    (waterGuide && !['care','give:water','back'].includes(choice.command))
+    (waterGuide && !['care','give:water','back','play'].includes(choice.command))
   ));
   async function purchaseGrowth(expected){
     if(!expected || purchasePending.current)return;
@@ -469,7 +469,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   const findBoost=boosting && cards.length>1 && choice?.command!==boostTarget;
   const guideArrow=findBoost || Boolean(section && (
     (training && practice==='browse') ||
-    (waterGuide && !training && heartDisabled)
+    (waterGuide && !training && (heartDisabled || choice?.command==='play'))
   ));
   function wateringInstruction(){
     if(!section)return tutorial?.controlsLearned || training && practice==='back'
@@ -540,9 +540,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         {reminder && plant.stage==='seed' && <button disabled={reminder.busy || !reminder.canEnable}
           onClick={()=>reminder.enable()}>Turn on plant alerts</button>}</div>
         {reminder?.notice && <p role="status">{reminder.notice}</p>}
-      </>:<><p>{firstDrinkHint}</p>{!section && <div className="chat-actions">
-        <button onClick={()=>go('play')}>Play a game</button>
-      </div>}</>}
+      </>:<p>{firstDrinkHint}</p>}
     </GuideChat>}
     {resting && !game && !sick && plant.deadAt===null && plant.stage==='grown' && !plant.growthFlares?.length &&
       plant.waitingPlants?.some(p=>p.id===plant.id) && plant.homeIntroSeen!==plant.id &&
@@ -608,7 +606,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         }}>
         <button className={'toy-back'+(training && section && practice==='back'?' teaching-heart':'')} data-audio="toy" aria-label="Back on toy" title="Back · Hold to return to plant" aria-description="Hold to return to your plant." onContextMenu={e=>e.preventDefault()} onClick={()=>press('back')}><CornerUpLeft/></button>
         <button data-audio="toy" className={guideArrow?'teaching-heart':''} aria-label={playing?'Play left':'Previous toy item'} title="Previous" onClick={()=>press('left')}><ChevronLeft/></button>
-        <button ref={heart} data-audio="toy" className={'accept toy-heart'+((waterGuide || boosting && !findBoost) && !heartDisabled?' teaching-heart':'')} aria-label={summary?'Claim tutorial gift with heart':playing?'Play heart':choice?'Choose '+choice.label:plant.deadAt!==null?'Start again':sick?'Open First Aid':'Open toy menu'} title="Choose" aria-disabled={heartDisabled} onClick={()=>press('heart')}><Heart/></button>
+        <button ref={heart} data-audio="toy" className={'accept toy-heart'+((waterGuide && choice?.command!=='play' || boosting && !findBoost) && !heartDisabled?' teaching-heart':'')} aria-label={summary?'Claim tutorial gift with heart':playing?'Play heart':choice?'Choose '+choice.label:plant.deadAt!==null?'Start again':sick?'Open First Aid':'Open toy menu'} title="Choose" aria-disabled={heartDisabled} onClick={()=>press('heart')}><Heart/></button>
         <button data-audio="toy" className={guideArrow?'teaching-heart':''} aria-label={playing?'Play right':'Next toy item'} title="Next" onClick={()=>press('right')}><ChevronRight/></button>
       </div>
       <span className="sr-only" role="status">{description}</span>

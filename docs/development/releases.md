@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.57 · One games card and a focused first drink
+
+The welcome tour shows all three games on one card with individually labeled previews. The first seed greeting points to the toy’s heart button. After learning the controls, players can find Play in the regular menu. The sprout still offers Play Vine Trail or Maybe later before the tutorial gift.
+
+All 196 unit tests passed. Browser checks covered the three previews on one screen, the installation handoff, the first drink, the sprout invitation, the gift, and the reminder choice. The three previews fit inside the illustration at 320 × 568, 375 × 667, 844 × 390, and 1280 × 720.
+
 ## Plantigochi 0.1.56 · Welcome tour games
 
 The welcome tour previews Vine Trail, Dew Catch, and Leaf Pairs with the toy’s own artwork. When the first Monstera sprouts, players choose **Play Vine Trail** or **Maybe later**. A run uses the regular board, speed, and fifth-sun reward. Finishing or leaving the run introduces the other games. Both choices lead to the existing 20-coin gift and care reminder flow. A saved Dew Catch tutorial round from an earlier release still resumes with its original progress.
