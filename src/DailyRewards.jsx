@@ -33,7 +33,7 @@ function PrizeReels({prize,rolling=false,atRest=false}){
   </div>;
 }
 
-export default function DailyRewards({plant,commit,close,viewPlant,plantClock=Date.now}){
+export default function DailyRewards({plant,commit,close,finishTour,viewPlant,plantClock=Date.now}){
   const modal=useRef(null),pending=useRef(false);
   const [busy,setBusy]=useState(''),[error,setError]=useState('');
   const [selection,select]=useState(null),[spinScene,setSpinScene]=useState('');
@@ -74,6 +74,20 @@ export default function DailyRewards({plant,commit,close,viewPlant,plantClock=Da
       returnToSlot.current=false;
     }
   },[spinScene]);
+  const tourComplete=Boolean(finishTour && current && visit.claimed!==false && visit.spin);
+  async function leaveRewards(){
+    if(pending.current)return;
+    if(!tourComplete){close();return;}
+    pending.current=true;setBusy('finish');setError('');
+    try{
+      if(!await finishTour())setError('Couldn’t finish this visit. Check your reward and try again.');
+    }catch{setError('Couldn’t save this visit. Please try again.');}
+    finally{pending.current=false;setBusy('');}
+  }
+  function finishPrize(){
+    if(tourComplete)void leaveRewards();
+    else setSpinScene('');
+  }
   async function save(action){
     if(pending.current)return;
     pending.current=true;setBusy(action);setError('');
@@ -115,15 +129,18 @@ export default function DailyRewards({plant,commit,close,viewPlant,plantClock=Da
     finally{pending.current=false;setBusy('');}
   }
   return <dialog ref={modal} className={'daily-dialog'+(spinScene?' in-spin':'')} aria-labelledby="daily-title"
-    onCancel={e=>{e.preventDefault();close();}} onClick={e=>{if(e.target===e.currentTarget)close();}}>
+    onCancel={e=>{e.preventDefault();void leaveRewards();}} onClick={e=>{if(e.target===e.currentTarget)void leaveRewards();}}>
     {spinScene?<article className="daily-card spin-theater">
-      <button type="button" className="daily-close" aria-label="Close daily rewards" onClick={close}><X/></button>
+      <button type="button" className="daily-close" aria-label="Close daily rewards" disabled={Boolean(busy)} onClick={leaveRewards}><X/></button>
       {spinScene==='growth-used'?<div className="spin-win">
         <img className="spin-award" src={art+'growth.png'} alt=""/>
         <h1 id="daily-title" tabIndex="-1" ref={sceneHeading}>Growth day applied</h1>
         <p>{grownName} grew! One growth day used.</p>
-        <button className="daily-action spin-action" onClick={viewPlant}>See my plant</button>
-        <button className="spin-later" onClick={()=>setSpinScene('')}>Back to rewards</button>
+        {error && <p role="alert">{error}</p>}
+        {finishTour?<button className="daily-action spin-action" disabled={Boolean(busy)} onClick={finishPrize}>{tourComplete?'Return to garden':'Back to rewards'}</button>:<>
+          <button className="daily-action spin-action" onClick={viewPlant}>See my plant</button>
+          <button className="spin-later" onClick={()=>setSpinScene('')}>Back to rewards</button>
+        </>}
       </div>:spinScene==='prize' && prize?<div className="spin-win">
         <img className="spin-award" src={art+spinTable.find(row=>row.id===prize.id).symbol+'.png'} alt=""/>
         <p>You won</p>
@@ -132,7 +149,7 @@ export default function DailyRewards({plant,commit,close,viewPlant,plantClock=Da
         {prize.id==='growth' && !growthWait && <button className="daily-action spin-action" disabled={Boolean(busy)} onClick={()=>save('grow')}>Use on {plant.name}</button>}
         {prize.id==='growth' && growthWait && wallet.growthDays>0 && <p>Your growth day is saved in Daily rewards.</p>}
         {error && <p role="alert">{error}</p>}
-        <button className={prize.id==='growth' && !growthWait?'spin-later':'daily-action spin-action'} disabled={Boolean(busy)} onClick={()=>setSpinScene('')}>{prize.id==='growth' && !growthWait?'Save for later':'Back to rewards'}</button>
+        <button className={prize.id==='growth' && !growthWait?'spin-later':'daily-action spin-action'} disabled={Boolean(busy)} onClick={finishPrize}>{tourComplete?'Return to garden':prize.id==='growth' && !growthWait?'Save for later':'Back to rewards'}</button>
       </div>:<>
         <h1 id="daily-title" tabIndex="-1" ref={sceneHeading}>Garden spin</h1>
         <div className={'spin-camera'+(spinning?' lit':'')} style={{'--last-stop':lastStop+'ms'}}>
@@ -147,7 +164,7 @@ export default function DailyRewards({plant,commit,close,viewPlant,plantClock=Da
     </article>:<article className="daily-card">
       <header className="daily-banner"><div className="daily-light" aria-hidden="true"/>
         <div className="daily-headline"><small>Day {day+1} of 7</small><h1 id="daily-title">Daily rewards</h1></div>
-        <button type="button" className="daily-close" aria-label="Close daily rewards" onClick={close}><X/></button>
+        <button type="button" className="daily-close" aria-label="Close daily rewards" disabled={Boolean(busy)} onClick={leaveRewards}><X/></button>
       </header>
       <div className="daily-body">
         <div className="daily-heading"><h2>{visit?.streak || 0}-day streak</h2>
@@ -167,6 +184,7 @@ export default function DailyRewards({plant,commit,close,viewPlant,plantClock=Da
           <small>Day {i+1}</small><strong>{amount}</strong><span className="daily-stamp">{collected(i)?<Check className={i===day?'today-check':''}/>:<i/>}</span>
         </button></li>)}</ol>
         <div className="daily-browse"><button aria-label="Previous day" disabled={!focus} onClick={()=>select(focus-1)}><ChevronLeft/></button><span aria-live="polite">{selectedDate.toLocaleDateString(undefined,{month:'short',day:'numeric'})} · {weeklyRewards[focus]} coins · {collected(focus)?'Collected':focus===day?'Today':'Upcoming'}</span><button aria-label="Next day" disabled={focus===6} onClick={()=>select(focus+1)}><ChevronRight/></button></div>
+        {finishTour && !tourComplete && <p>{claimable?(visit.spin?'Collect today’s coins to finish your visit.':'Collect today’s coins, then try your free spin.'):'Your check-in coins are collected. Take your free spin below.'}</p>}
         {claimable && <button className="daily-action" disabled={Boolean(busy)} onClick={()=>save('claim')}>Claim {weeklyRewards[day]} coins</button>}
         {wallet.growthDays>0 && <section className="daily-voucher"><strong>Growth days · {wallet.growthDays}</strong>
           <p>{growthWait || 'Add up to 24 hours of growth to your plant.'}</p>
@@ -177,6 +195,7 @@ export default function DailyRewards({plant,commit,close,viewPlant,plantClock=Da
           {(!visit?.spin || tokens>0) && <button className="daily-action spin-action" disabled={!current || Boolean(busy)} onClick={()=>save('spin')}>{busy==='spin'?'Saving spin…':visit?.spin?'Spin for 1 token':'Spin for free'}</button>}
         </section>
 
+        {tourComplete && <button className="daily-action" disabled={Boolean(busy)} onClick={leaveRewards}>Return to garden</button>}
         {error && <p role="alert">{error}</p>}
         <details className="daily-odds"><summary>Prizes &amp; odds</summary><table><caption>One prize per spin</caption><thead><tr><th>Prize</th><th>Chance</th></tr></thead><tbody>
           {spinTable.map(row=><tr key={row.id}><td>{row.label}</td><td>{row.weight}%</td></tr>)}</tbody></table>

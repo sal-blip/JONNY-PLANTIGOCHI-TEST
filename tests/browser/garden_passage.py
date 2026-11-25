@@ -62,6 +62,7 @@ with sync_playwright() as pw:
     plant = sprout_fixture()['plant']
     for key in ('tutorial', 'sproutDebut', 'sproutBurstPending', 'dewLesson'):
         plant.pop(key, None)
+    plant['gardenLife']['visit'] = dict(date=plant['gardenLife']['day'], streak=1, claimed=True, shown=True)
     plant['scene'] = 'garden'
     page.goto(blank)
     page.evaluate(SEED_SETUP, plant)
@@ -90,8 +91,10 @@ with sync_playwright() as pw:
     expect(lens).to_have_class('room-lens inspecting')
     page.wait_for_function("!document.querySelector('.room-lens').classList.contains('inspecting')")
     touch(cdp, 'touchStart', x, y)
-    expect(lens).to_have_class('room-lens inspecting')
+    page.wait_for_timeout(300)
+    expect(lens).to_have_class('room-lens')
     touch(cdp, 'touchEnd')
+    expect(lens).to_have_class('room-lens inspecting')
     for _ in range(2):
         swipe(page, cdp, x, y, 175, painted)
         surface(page, 'toy')

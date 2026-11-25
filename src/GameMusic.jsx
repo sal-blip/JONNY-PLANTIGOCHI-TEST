@@ -1,5 +1,5 @@
-import React, {createContext, useCallback, useContext, useEffect, useLayoutEffect, useState} from 'react';
-import {clearScoreHandoff, useScorePlayback} from './scorePlayback.js';
+import React, {createContext, useContext, useEffect, useLayoutEffect, useState} from 'react';
+import {useScorePlayback} from './scorePlayback.js';
 import {audioLevels} from './audioLevels.js';
 
 const silent = {enabled:false};
@@ -23,7 +23,7 @@ export function PublicTourMusic({raw}) {
   const mix = React.useMemo(() => {
     try {
       const saved = JSON.parse(raw);
-      const cotton = !saved || Boolean(saved.tutorial || saved.dewLesson?.status === 'round' ||
+      const cotton = !saved || Boolean(saved.tutorial || saved.dewLesson || saved.gardenTour ||
         (saved.sproutDebut && saved.sproutDebut === saved.id));
       return {cotton, enabled:true, volume:audioLevels(saved).musicVolume,
         cottonSession:cotton ? saved?.id ?? 'intro' : null};
@@ -36,35 +36,18 @@ export function PublicTourMusic({raw}) {
 }
 
 export function useGameplayMusic({plant, phase, sproutInvitation, roomActive, recordPlaying, musicVolume=audioLevels(plant).musicVolume}) {
-  const firstVisit = phase !== 'game' || Boolean(plant?.tutorial || plant?.dewLesson || sproutInvitation);
-  // Only the visit on which onboarding finishes waits for the garden. A completed
-  // save opened on a later visit gets its theme as soon as the toy appears.
+  const firstVisit = phase !== 'game' || Boolean(plant?.tutorial || plant?.dewLesson || sproutInvitation || plant?.gardenTour);
+  // Keep the same loop during the reward receipt and the transition back to
+  // the room. A completed garden starts directly on Mystic on its next launch.
   const [waitingForGarden, setWaitingForGarden] = useState(firstVisit);
-  const [farewellVisible, setFarewellVisible] = useState(() =>
-    Boolean(plant?.dewLesson && plant.dewLesson.status !== 'round'));
-  const cotton = firstVisit && !farewellVisible;
   useEffect(() => {
-    if (firstVisit || !waitingForGarden) return;
-    if (roomActive) {
-      setWaitingForGarden(false);
-      return;
-    }
-    const resume = () => { if (!document.hidden) setWaitingForGarden(false); };
-    const restorePage = event => { if (event.persisted) resume(); };
-    document.addEventListener('visibilitychange', resume);
-    window.addEventListener('pageshow', restorePage);
-    return () => {
-      document.removeEventListener('visibilitychange', resume);
-      window.removeEventListener('pageshow', restorePage);
-    };
-  }, [firstVisit, waitingForGarden, roomActive]);
+    if(firstVisit)setWaitingForGarden(true);
+    else if(roomActive)setWaitingForGarden(false);
+  }, [firstVisit, roomActive]);
+  const cotton = firstVisit || (waitingForGarden && !roomActive);
   useMusicRoute({
     cotton, cottonSession:cotton ? plant?.id ?? 'intro' : null,
-    mystic:!firstVisit && (!waitingForGarden || roomActive),
+    mystic:!cotton,
     enabled:!recordPlaying, volume:musicVolume,
   });
-  return useCallback(() => {
-    clearScoreHandoff();
-    setFarewellVisible(true);
-  }, []);
 }

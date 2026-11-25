@@ -70,5 +70,18 @@ export function settleDewLesson(plant,status,coins=0){
 export function claimDewGift(plant,reminder=null){
   if(!plant.dewLesson || plant.dewLesson.status==='round')return plant;
   const {dewLesson,...finished}=plant,life=lifeOf(plant);
-  return {...finished,...(reminder?{tutorialReminder:reminder}:{}),gardenLife:{...life,balance:life.balance+GOOD_LUCK_COINS}};
+  return {...finished,gardenTour:'garden',...(reminder?{tutorialReminder:reminder}:{}),gardenLife:{...life,balance:life.balance+GOOD_LUCK_COINS}};
+}
+
+export const gardenTourSteps=['garden','studio','living','rewards'];
+
+export function advanceGardenTour(plant,expected,time=Date.now()){
+  if(plant.gardenTour!==expected || !gardenTourSteps.includes(expected))return plant;
+  if(expected==='rewards'){
+    const visit=lastVisit(lifeOf(plant));
+    if(visit?.date!==localDay(time) || visit.claimed===false || !visit.spin)return plant;
+    const {gardenTour,...finished}=plant;
+    return finished;
+  }
+  return {...plant,gardenTour:gardenTourSteps[gardenTourSteps.indexOf(expected)+1]};
 }

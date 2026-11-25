@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.64 · Explore the garden before the first rewards
+
+After collecting the sprout gift and answering any care reminder, the player swipes the toy away, visits the Plant Studio and comes back to the living room. The garden calendar then shows an alert. Opening it leads to the existing daily check-in and free spin. A player who already received the check-in coins during setup can go straight to the spin. Returning from the first rewards visit fades Cotton Candy Skies into Mystic Oasis. The saved tour step lets a player resume after closing the game. Gardens that finished the previous tutorial keep their usual daily rewards.
+
+A quick horizontal swipe eases the garden camera to the adjacent room. A slower or held drag leaves the camera at the release point. Room chevrons also advance the tour, and reduced-motion settings skip the camera easing. [Garden tour](../../tests/browser/garden_tour.py) · [Camera gestures](../../tests/browser/garden_hud.py) · [Music handoff](../../tests/browser/scene_music.py)
+
+The production build and 202 unit tests passed. Mobile Chromium walkthroughs covered the first visit, both room swipes, holding a manual camera position, reopening mid-tour, and collecting each reward once. The audio walkthrough measured continuous Cotton Candy Skies through the spin and the transition to Mystic Oasis after leaving rewards. An installed 0.1.63 test garden restarted into 0.1.64 and kept its plant.
+
 ## Plantigochi 0.1.63 · Download progress and restart
 
 A mobile Chromium test reproduced the reported 0.1.61 screen by returning stale HTML after the release descriptor advertised 0.1.62. The installed app knew the published version but could not verify the downloaded game. The specific failure on the reporting phone remains unconfirmed.

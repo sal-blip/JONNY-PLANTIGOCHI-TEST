@@ -285,16 +285,18 @@ def play(browser, url):
     page.reload()
     balance(20)
     assert not button(claim).count()
-    button("Open Plantigochi menu").wait_for()
-    button("Share Plantigochi").wait_for()
-    tap("Open garden")
+    # Permission and guide visibility settle after local storage loads.
+    swipe_guide = page.get_by_text("Swipe up from the chevrons", exact=False)
+    button("Turn on reminders").or_(button("Got it")).or_(swipe_guide).first.wait_for()
+    if button("Turn on reminders").is_visible():
+        tap("Maybe later")
+        tap("Got it")
+    elif button("Got it").is_visible():
+        tap("Got it")
+    from garden_tour import finish_garden_tour
+    finish_garden_tour(page)
     tap("Return to Plantigochi")
     button("Open toy menu").wait_for()
-    if button("Turn on reminders").count():
-        tap("Maybe later")
-    if button("Got it").count():
-        tap("Got it")
-    page.locator(".toy-guide").wait_for(state="detached")
     close_rewards = button("Close daily rewards")
     page.add_locator_handler(close_rewards, lambda: close_rewards.tap())
     expect_plain_tap("Open Plantigochi menu")

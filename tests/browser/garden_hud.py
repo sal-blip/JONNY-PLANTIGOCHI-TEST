@@ -3,6 +3,7 @@ import argparse
 import itertools
 import json
 import re
+from time import time
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -137,10 +138,32 @@ def play(browser, source, screenshots=None):
             expect(button(page, "Previous room")).to_be_hidden()
             if width == 393:
                 page.emulate_media(reduced_motion="no-preference")
-                page.mouse.move(245, 100)
-                page.mouse.down()
-                page.mouse.move(153, 100, steps=8)
-                page.mouse.up()
+                room = page.locator(".room-picture")
+                start = room.evaluate("e => e.scrollLeft")
+                frame = room.evaluate("e => parseFloat(getComputedStyle(e).getPropertyValue('--room-width'))")
+                touch = context.new_cdp_session(page)
+                def pan(x, end, held=False):
+                    stamp = time()
+                    move_delay = .32 if held else .06
+                    touch.send("Input.dispatchTouchEvent", {"type": "touchStart",
+                               "touchPoints": [{"x": x, "y": 105}], "timestamp": stamp})
+                    touch.send("Input.dispatchTouchEvent", {"type": "touchMove",
+                               "touchPoints": [{"x": end, "y": 105}], "timestamp": stamp + move_delay})
+                    touch.send("Input.dispatchTouchEvent", {"type": "touchEnd",
+                               "touchPoints": [], "timestamp": stamp + move_delay + .025})
+
+                def centered(position):
+                    page.wait_for_function("x => Math.abs(document.querySelector('.room-picture').scrollLeft - x) <= 1",
+                                           arg=position)
+                pan(245, 153)
+                centered(start + frame)
+                pan(153, 245)
+                centered(start)
+                pan(245, 153, held=True)
+                centered(start + 92)
+                page.wait_for_timeout(500)
+                assert abs(room.evaluate("e => e.scrollLeft") - start - 92) <= 1
+                touch.detach()
                 expect(button(page, "Previous room")).to_be_visible()
                 expect(button(page, "Next room")).to_be_visible()
                 page.wait_for_function("""() => [...document.querySelectorAll('.room-controls .swipe-cue')]

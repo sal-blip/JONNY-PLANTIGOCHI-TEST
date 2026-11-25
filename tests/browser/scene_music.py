@@ -88,12 +88,13 @@ PROBE = """(() => {
     position:track.offset + track.source.context.currentTime - track.started,
     ramps:automation.get(track.bus.gain) || [],
   }));
-  window.farewellShown = null;
+  window.firstRewards = {opened:null, closed:null};
   new MutationObserver(() => {
-    if (window.farewellShown === null &&
-        document.querySelector('.farewell:not([inert]):not([aria-hidden="true"])'))
-      window.farewellShown = performance.now();
-  }).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['inert','aria-hidden']});
+    const visit = window.firstRewards;
+    const open = !!document.querySelector('.daily-dialog[open]');
+    if (open && visit.opened === null) visit.opened = performance.now();
+    if (!open && visit.opened !== null && visit.closed === null) visit.closed = performance.now();
+  }).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['open']});
 })()"""
 
 
@@ -181,8 +182,6 @@ def first_visit(browser, source):
     ctx, url, blank = context_for(browser, source)
     try:
         page = ctx.new_page()
-        close_rewards = button(page, "Close daily rewards")
-        page.add_locator_handler(close_rewards, lambda: close_rewards.tap())
         page.goto(blank)
         # This is the installed tour checkpoint a reset saves.
         page.evaluate(SEED_SETUP, None)
@@ -204,18 +203,20 @@ def first_visit(browser, source):
         expect(page.get_by_text('Find Dew Catch and Leaf Pairs', exact=False)).to_be_visible()
         claim.tap()
         page.wait_for_function("document.querySelector('.garden-purse span')?.textContent === '20'")
+        from garden_tour import finish_garden_tour
+        assert audible(page, "cotton")["id"] == cotton["id"]
+        finish_garden_tour(page)
         completed = page.evaluate(READ_PLANT)
-        fading = tracks(page)[0]
-        assert not fading["ended"] and fading["gain"] > .1, ("Quick claim cut the music", fading)
-        fade = next(r for r in fading["ramps"] if r["value"] == 0)
-        visible = page.evaluate("window.farewellShown")
-        assert abs(fade["at"] - visible) < 100, ("Fade should start on the visible farewell", fade, visible)
-        assert abs(fade["seconds"] - 5) < .03, fade
-        page.wait_for_function("score()[0].ended", timeout=7000)
-        assert [t["role"] for t in tracks(page)] == ["cotton"], tracks(page)
-        taps(page, "Open garden")
         gameplay = audible(page, "mystic")
+        assert [t["role"] for t in tracks(page)] == ["cotton", "mystic"], tracks(page)
+        visit = page.evaluate("window.firstRewards")
+        assert visit["opened"] and visit["closed"] > visit["opened"], visit
+        fades = [r for r in tracks(page)[cotton["id"]]["ramps"] if r["value"] == 0]
+        assert len(fades) == 1, ("Tutorial music must loop through the gift and spin", fades)
+        assert fades[0]["at"] >= visit["closed"] - 50, ("Music faded inside rewards", visit, fades)
+        assert abs(fades[0]["seconds"] - 5) < .03, fades
         fade_in = next(r for r in gameplay["ramps"] if r["value"] == MAX_SCORE_GAIN)
+        assert fade_in["at"] >= visit["closed"] - 50, ("Mystic started inside rewards", visit, fade_in)
         assert abs(fade_in["seconds"] - .75) < .03, fade_in
         taps(page, "Open iSEED", "Journal", "Put down iSEED", "Return to Plantigochi")
         taps(page, "Open toy menu", "Next toy item", "Choose Play", "Next toy item", "Choose Dew Catch", "Play heart")
@@ -245,7 +246,7 @@ def saved_record(browser, source, completed):
         page.add_locator_handler(close_rewards, lambda: close_rewards.tap())
         page.goto(blank)
         # An already purchased record on the side table; start straight from
-        # the completed save captured before its first free garden visit.
+        # the completed save captured after the first rewards visit.
         completed["gardenLife"]["items"].append(
             {"id": "music-test-record", "sku": "record", "slot": "0/decor-stand"}
         )
@@ -297,7 +298,7 @@ if __name__ == "__main__":
                 web_tour(browser, args.source)
                 print("Passed the browser installation tour", flush=True)
             completed = first_visit(browser, args.source)
-            print("Passed tour, tutorial fade, quick claim, main theme, and mute", flush=True)
+            print("Passed continuous tutorial and rewards music, garden crossfade, main theme, and mute", flush=True)
             saved_record(browser, args.source, completed)
             print("Passed returning toy music and record override")
         finally:

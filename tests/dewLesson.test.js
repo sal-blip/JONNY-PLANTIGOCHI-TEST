@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newPlant,care,wake,HOUR} from '../src/game.js';
-import {checkIn} from '../src/gardenEconomy.js';
-import {startDewLesson,checkpointDewLesson,claimDewGift} from '../src/firstVisit.js';
+import {checkIn,claimDaily,localDay,openDailyVisit,settleDailySpin} from '../src/gardenEconomy.js';
+import {advanceGardenTour,startDewLesson,checkpointDewLesson,claimDewGift} from '../src/firstVisit.js';
 import {savePlayedRound,stepGame,LEVELS} from '../src/pocketPlay.js';
 
 function sprout(time) {
@@ -74,4 +74,25 @@ test('the optional Vine Trail run keeps going after its reward and returns to th
   assert.equal(done.dewLesson.game,'vine');
   assert.equal(done.dewLesson.status,'lost');
   assert.equal(claimDewGift(claimDewGift(done)).gardenLife.balance,paid.gardenLife.balance+20);
+});
+
+test('first rewards require a saved spin and check-in on the same day, even across midnight',()=>{
+  const time=new Date(2026,5,15,12).getTime(), tomorrow=time+24*HOUR;
+  const seed=claimDewGift(startDewLesson(sprout(time),false));
+  assert.equal(seed.gardenTour,'garden');
+  assert.equal(advanceGardenTour(seed,'studio',time),seed);
+  let p=seed;
+  for(const step of ['garden','studio','living'])p=advanceGardenTour(p,step,time);
+  assert.equal(p.gardenTour,'rewards');
+  assert.equal(advanceGardenTour(p,'rewards',time),p);
+  const spun=settleDailySpin(p,time,localDay(time),{id:'coins10',coins:10});
+  assert.equal(advanceGardenTour(spun,'rewards',tomorrow),spun);
+  const next=openDailyVisit(spun,tomorrow);
+  const nextSpin=settleDailySpin(next,tomorrow,localDay(tomorrow),{id:'coins10',coins:10});
+  assert.equal(advanceGardenTour(nextSpin,'rewards',tomorrow),nextSpin);
+  const claimed=claimDaily(nextSpin,tomorrow,localDay(tomorrow));
+  const done=advanceGardenTour(claimed,'rewards',tomorrow);
+  assert.equal(done.gardenTour,undefined);
+  assert.equal(done.gardenLife,claimed.gardenLife);
+  assert.equal(advanceGardenTour(done,'rewards',tomorrow),done);
 });

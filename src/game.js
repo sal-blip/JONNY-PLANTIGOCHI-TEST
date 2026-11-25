@@ -1,4 +1,4 @@
-import {validTutorial,validDewLesson,finishSprouting,rememberHint} from './firstVisit.js';
+import {gardenTourSteps,validTutorial,validDewLesson,finishSprouting,rememberHint} from './firstVisit.js';
 import {canPlaceAt,viewForSlot} from './gardenLayout.js';
 import {canRepotAt,destinationKey,catalog,earnWater,milestone,relocateFurnishings,validGardenLife} from './gardenEconomy.js';
 import { validPhoto } from './gardenScenes.js';
@@ -299,6 +299,7 @@ export function readPlant(text, now = Date.now(), visible = true) {
     if(p.seedBonus!==undefined && (!stamp(p.seedBonus) || p.seedBonus>HOUR))return null;
     if(p.boostCount!==undefined && !stamp(p.boostCount))return null;
     if(p.tutorial && !validTutorial(p.tutorial,p.stage))return null;
+    if(p.gardenTour!==undefined && !gardenTourSteps.includes(p.gardenTour))return null;
     if(p.dewLesson!==undefined && !validDewLesson(p.dewLesson))return null;
     if (!Object.hasOwn(p,'fungusAt')) p.fungusAt=null;
     if (!Object.hasOwn(p,'outbreakDue')) p.outbreakDue=p.deadAt===null && p.stage!=='seed' ? nextOutbreak(now) : null;

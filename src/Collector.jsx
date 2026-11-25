@@ -39,7 +39,7 @@ function firstVacantRoom(plants){
 }
 
 const Collector=forwardRef(function Collector({active,backdropVisible=false,recordActive=active,musicVolume,plant,commit,now,wallNow=now,plantClock=Date.now,move,relocate,raisePhone,returnToToy,purr,
-  playingRecordId,onSelectRecord,onOverlayChange,globalMenuOpen,onPlacementCancel,onPlacementDone},ref) {
+  playingRecordId,onSelectRecord,onOverlayChange,globalMenuOpen,onPlacementCancel,onPlacementDone,gardenTour,onRoomVisit},ref) {
   const graduates=plant.graduates;
   const count=gardenViews(graduates);
   const [room,setRoom]=useState(0);
@@ -60,11 +60,11 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const [dropOver,setDropOver]=useState(null);
   const gesture=useRef(null),ignoreClick=useRef(false),edge=useRef(null),catTimer=useRef(null);
   const stage=useRef(null),roomReturn=useRef(null),ghostCanvas=useRef(null);
-  const camera=useRef(null),cameraCenter=useRef(page+.5);
+  const camera=useRef(null),cameraCenter=useRef(page+.5),pendingArrival=useRef(null);
   const [detailScale,setDetailScale]=useState(0);
   const [focusCrops,setFocusCrops]=useState(null);
   const [worldHeight,setWorldHeight]=useState(ROOM_HEIGHT);
-  const lens=useRef(null),zoomTimer=useRef(null),pressTimer=useRef(null),petNumber=useRef(0);
+  const lens=useRef(null),zoomTimer=useRef(null),petNumber=useRef(0);
   const [visible,setVisible]=useState([page,page]);
   const mounted=useRef(false),pending=useRef(false),canFocus=useRef(false);
   const collection=useMemo(()=>new Map(graduates.map(p=>[p.slot,p])),[graduates]);
@@ -100,7 +100,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   },[collection,count,page,shopMove,plantPreview]);
   useEffect(()=>{
     mounted.current=true;
-    return ()=>{mounted.current=false;clearInterval(edge.current);clearTimeout(catTimer.current);clearTimeout(zoomTimer.current);clearTimeout(pressTimer.current);};
+    return ()=>{mounted.current=false;clearInterval(edge.current);clearTimeout(catTimer.current);clearTimeout(zoomTimer.current);};
   },[]);
   useEffect(()=>{
     if(carry && (!source || destinationKey(plant,carry.from)!==carry.sourceKey) && !pending.current){
@@ -136,6 +136,11 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const next=offset< -1?nearest:nearest+1;
     const back=previous>=0 && el.scrollLeft>1?previous:null;
     const forward=next<count && el.scrollWidth-el.clientWidth-el.scrollLeft>1?next:null;
+    const arrival=pendingArrival.current;
+    if(arrival!==null && Math.abs(el.scrollLeft-roomLeft(arrival))<=1){
+      pendingArrival.current=null;
+      onRoomVisit?.(arrival);
+    }
     setRoomLinks(old=>old.previous===back && old.next===forward?old:{previous:back,next:forward});
   }
   useLayoutEffect(()=>{
@@ -177,7 +182,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   },[]);
   useEffect(()=>{
     if(!active || globalMenuOpen){
-      gesture.current=null;clearEdge();setGhost(null);setDropOver(null);relax();
+      gesture.current=null;pendingArrival.current=null;clearEdge();setGhost(null);setDropOver(null);relax();
     }
   },[active,globalMenuOpen]);
   useEffect(()=>{
@@ -212,7 +217,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   }
   function relax(){
     setFocusCrops(null);
-    clearTimeout(pressTimer.current);clearTimeout(zoomTimer.current);
+    clearTimeout(zoomTimer.current);
     const el=lens.current;
     if(el){el.classList.remove('inspecting','asset-focus');el.style.transform='';}
   }
@@ -256,7 +261,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       overlay.setProperty('--light-height',Math.max(54,gap)+'px');
       overlay.setProperty('--inspect-top',Math.max(h*.19,centerY-gap)+'px');
       overlay.setProperty('--inspect-bottom',Math.min(h*.69,centerY+gap)+'px');
-      clearTimeout(zoomTimer.current);clearTimeout(pressTimer.current);
+      clearTimeout(zoomTimer.current);
       setFocusCrops(null);
       el.classList.add('inspecting','asset-focus');
       el.style.transform='translate3d('+dx+'px,'+dy+'px,0) scale('+scale+')';
@@ -269,13 +274,20 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     observer.observe(el);observer.observe(target);
     return ()=>{observer.disconnect();relax();};
   },[panel,active,globalMenuOpen,itemId,worldHeight]);
-  function travel(n){
+  function roomLeft(n){
+    const el=stage.current;
+    return clamp((n+.5)*camera.current-el.clientWidth/2,el.scrollWidth-el.clientWidth);
+  }
+  function travel(n,instant=false){
+    if(n===null || !camera.current)return;
     relax();
     const target=clamp(n,count-1),el=stage.current;
     setCat(false);setSlot(null);setPreview(null);setNotice('');setDropOver(null);
     setRoom(target);
-    el.scrollTo({left:(target+.5)*camera.current-el.clientWidth/2,
-      behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+    pendingArrival.current=instant || placing?null:target;
+    el.scrollTo({left:roomLeft(target),
+      behavior:instant || matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+    readCamera();
   }
   const jarProgress=plant.jar?Math.max(0,Math.min(1,(now-plant.jar.cutAt)/ROOT_TIME)):null;
   function openKeepsake(kind,index){
@@ -375,7 +387,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   useImperativeHandle(ref,()=>({
     beginPlacement:request=>startPlacement(request,true),beginGraduation,
     showBook:()=>{if(pending.current || placing)return false;openKeepsake('book');return true;},
-    cameraRoom:page,prepareCameraRoom,reset,
+    cameraRoom:page,centerRoom:index=>travel(index,true),prepareCameraRoom,reset,
   }));
   // Replace the placement UI before painting the committed lesson and regular shop prices.
   useLayoutEffect(()=>{
@@ -516,17 +528,12 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     if(!active || globalMenuOpen || !e.isPrimary || e.button!==0 || busy || panel)return;
     const target=e.target.closest('[data-slot]'),slot=target?buttonSlot(target):null;
     const button=e.target.closest('button');
-    gesture.current={pointer:e.pointerId,pointerType:e.pointerType,x:e.clientX,y:e.clientY,button,plant:collection.get(slot),mode:null,edge:0,left:stage.current.scrollLeft,top:stage.current.scrollTop};
-    if(!button && !placing){
-      const press=gesture.current;
-      stage.current.setPointerCapture(e.pointerId);
-      clearTimeout(pressTimer.current);
-      pressTimer.current=setTimeout(()=>{
-        if(gesture.current!==press || press.mode)return;
-        press.inspected=true;
-        inspect(press.x,press.y);
-      },180);
-    }
+    const el=stage.current;
+    // Stop an in-flight room transition at the position the player touched.
+    pendingArrival.current=null;
+    el.scrollTo({left:el.scrollLeft,behavior:'instant'});
+    gesture.current={started:e.timeStamp,pointer:e.pointerId,pointerType:e.pointerType,x:e.clientX,y:e.clientY,button,plant:collection.get(slot),mode:null,edge:0,left:stage.current.scrollLeft,top:stage.current.scrollTop};
+    if(!button)stage.current.setPointerCapture(e.pointerId);
   }
   function clearEdge(){clearInterval(edge.current);edge.current=null;}
   function onMotion(e){
@@ -534,6 +541,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const dx=e.clientX-g.x,dy=e.clientY-g.y,bounds=stage.current.getBoundingClientRect();
     if(!g.mode){
       if(Math.max(Math.abs(dx),Math.abs(dy))<7)return;
+      g.firstMotion=e.timeStamp;
       g.mode=inHand && g.plant?.id===inHand.id?'plant':Math.abs(dx)>Math.abs(dy)?'pan':'vertical';
       stage.current.setPointerCapture(e.pointerId);ignoreClick.current=true;
       relax();
@@ -549,14 +557,17 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
           setDropOver(hit(g.lastX,g.lastY));
         },20);
       }
-    }else if(g.mode==='pan')stage.current.scrollLeft=g.left-dx;
+    }else if(g.mode==='pan'){
+      g.lastMotion=e.timeStamp;
+      stage.current.scrollLeft=g.left-dx;
+    }
     else if(stage.current.scrollHeight>stage.current.clientHeight+1)stage.current.scrollTop=g.top-dy;
   }
   function end(e,cancelled=false){
     const g=gesture.current;if(!g || g.pointer!==e.pointerId)return;
-    gesture.current=null;clearTimeout(pressTimer.current);clearEdge();
+    gesture.current=null;clearEdge();
     if(!g.mode){
-      if(!cancelled && !placing && !g.button && !g.inspected && Math.hypot(e.clientX-g.x,e.clientY-g.y)<8){
+      if(!cancelled && !gardenTour && !placing && !g.button && Math.hypot(e.clientX-g.x,e.clientY-g.y)<8){
         inspect(e.clientX,e.clientY);
       }
       // Mobile browsers may suppress the native click just after a swipe.
@@ -570,7 +581,21 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     }
     setGhost(null);setDropOver(null);
     if(stage.current.hasPointerCapture(e.pointerId))stage.current.releasePointerCapture(e.pointerId);
-    if(g.mode==='plant'){
+    if(g.mode==='pan' && !cancelled){
+      const el=stage.current,dx=e.clientX-g.x,duration=e.timeStamp-g.started;
+      const quickSwipe=!placing && Math.abs(dx)>=36 && Math.abs(dx)>1.35*Math.abs(e.clientY-g.y)
+        && g.firstMotion-g.started<=160 && duration<=350 && e.timeStamp-g.lastMotion<=110
+        && Math.abs(dx)>=duration*.32;
+      if(quickSwipe){
+        // Use the actual camera position at touch-down, even between scroll renders.
+        const frame=camera.current,origin=(g.left+el.clientWidth/2)/frame-.5;
+        const rounding=2/frame;
+        travel(dx<0?Math.floor(origin+rounding)+1:Math.ceil(origin-rounding)-1);
+      }else{
+        el.scrollLeft=g.left-dx;
+        if(!placing)onRoomVisit?.(clamp(Math.floor((el.scrollLeft+el.clientWidth/2)/camera.current),count-1));
+      }
+    }else if(g.mode==='plant'){
       const dest=cancelled?null:hit(e.clientX,e.clientY);
       if(dest!==null && !collection.has(dest))void putDown(dest,carry);
       else if(!cancelled)setNotice('Choose an open circle, or drag the plant onto one.');
@@ -605,18 +630,17 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const available=active && !globalMenuOpen;
   const guidingPot=Boolean(starterPurchase.current && shopMove);
   return <section className="collector" aria-label="Collector garden" aria-hidden={!available || undefined} inert={!available?'':undefined}
-    data-guiding-pot={guidingPot?'':undefined} data-room-hud={available?'':undefined} data-room-placing={placing?'':undefined} data-room-blocked={!available || panel || busy?'':undefined}
+    data-guiding-pot={guidingPot?'':undefined} data-room-hud={available?'':undefined} data-room-placing={placing?'':undefined} data-room-blocked={!available || panel || busy || gardenTour?'':undefined}
     onPointerDownCapture={e=>{if(e.isPrimary)ignoreClick.current=false;}}
     onClickCapture={e=>{
       if(ignoreClick.current && e.detail!==0){e.preventDefault();e.stopPropagation();}
     }}
     onKeyDown={e=>{
     if(!available || panel || busy || e.altKey || e.metaKey || e.ctrlKey)return;
-    if(e.key==='Escape'){e.preventDefault();if(placing)cancelPlacement();else returnToToy?.();}
+    if(e.key==='Escape' && !gardenTour){e.preventDefault();if(placing)cancelPlacement();else returnToToy?.();}
     if(['ArrowLeft','ArrowRight'].includes(e.key)){
       e.preventDefault();
-      stage.current.scrollBy({left:(e.key==='ArrowLeft'?-1:1)*stage.current.clientWidth*.7,
-        behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+      travel(e.key==='ArrowLeft'?roomLinks.previous:roomLinks.next);
     }
   }}>
     <div className="room-lens" ref={lens} onTransitionEnd={e=>{if(e.target===lens.current && e.propertyName==='transform')sampleZoom();}}><div className="room-picture" ref={stage} onScroll={()=>{
@@ -633,7 +657,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         else inspect(e.clientX,e.clientY);
       }}>
       <div className="room-strip" style={{'--rooms':count}}>
-        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={detailScale>0 && +k>=visible[0] && +k<=visible[1]} running={active} ambient={backdropVisible || guidingPot} worldHeight={worldHeight} detailScale={detailScale} crop={focusCrops?.[k]} plants={potted[k]} hour={hour}
+        {Object.keys(potted).map(k=><RoomView stage={stage} key={k} index={+k} onScreen={detailScale>0 && +k>=visible[0] && +k<=visible[1]} running={active && !gardenTour} ambient={backdropVisible || guidingPot || Boolean(gardenTour)} worldHeight={worldHeight} detailScale={detailScale} crop={focusCrops?.[k]} plants={potted[k]} hour={hour}
           garden={plant} playingItemId={playingRecordId} shopItems={sceneItems} shopMove={shopMove} inspectItem={inspectItem} panelOpen={Boolean(panel || globalMenuOpen)} openKeepsake={openKeepsake} jarProgress={jarProgress} leafCount={plant.book.length} placing={placing} busy={busy} carry={carry} hoverPlacement={hoverPlacement} dragging={Boolean(ghost)} selected={dropOver??slot} choose={choose} cat={cat?.index===+k?cat:null} petCat={onCat}/>)}
       </div>
     </div></div>
@@ -641,9 +665,9 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
       {placing
         ? <button type="button" ref={roomReturn} className="room-corner room-return" data-room-focus=""
             aria-label="Cancel move" title="Cancel move" disabled={!available || busy} onClick={cancelPlacement}><X aria-hidden="true"/></button>
-        : plant.tutorial?.step!=='pot' && <SwipeCue ref={roomReturn} data-room-focus="" data-room-return="" aria-label="Return to Plantigochi"
+        : !gardenTour && plant.tutorial?.step!=='pot' && <SwipeCue ref={roomReturn} data-room-focus="" data-room-return="" aria-label="Return to Plantigochi"
             hint="Swipe up or down to return to Plantigochi" disabled={!available || busy} onClick={event=>leaveRoom(event,returnToToy)}/>}
-      {!placing && (!plant.tutorial || plant.tutorial.step==='pot') && <button type="button" className="room-corner room-open-phone" data-room-open-phone=""
+      {!gardenTour && !placing && (!plant.tutorial || plant.tutorial.step==='pot') && <button type="button" className="room-corner room-open-phone" data-room-open-phone=""
         aria-label="Open iSEED" title="Open iSEED" disabled={!available || busy} onClick={event=>leaveRoom(event,raisePhone)}>
         <img src="/art/iseed-pocket.png" alt="" width="22" height="25" style={{imageRendering:"pixelated"}}/>
       </button>}

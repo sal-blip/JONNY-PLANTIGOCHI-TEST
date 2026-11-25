@@ -80,8 +80,6 @@ def exercise(browser, url, win):
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(url)
         button = lambda name: page.get_by_role("button", name=name, exact=True)
-        close_rewards = button("Close daily rewards")
-        page.add_locator_handler(close_rewards, lambda: close_rewards.tap())
         lcd = page.locator(".lcd")
         purse = page.locator(".garden-purse span").first
         expected = 3 if win else 0
@@ -124,6 +122,10 @@ def exercise(browser, url, win):
         expect(button("Open toy menu")).to_be_visible()
         expect(claim).to_have_count(0)
         expect(purse).to_have_text(str(expected + 20))
+
+        from garden_tour import finish_garden_tour
+        finish_garden_tour(page)
+        button("Return to Plantigochi").tap()
 
         # The ordinary toy's Play menu must still offer the full 20-level run.
         button("Open toy menu").tap()

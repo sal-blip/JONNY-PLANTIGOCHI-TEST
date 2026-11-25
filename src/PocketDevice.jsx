@@ -74,7 +74,7 @@ function GameArt({game}) {
   return <PairsArt game={game}/>;
 }
 
-export default function PocketDevice({plant,now,plantClock=Date.now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,tutorialAlerts,onFarewellReveal}) {
+export default function PocketDevice({plant,now,plantClock=Date.now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,tutorialAlerts}) {
   const [revealing,setRevealing]=useState(()=>revealSeed && lesson==='water' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   useEffect(()=>{
     if(!revealing)return;
@@ -340,7 +340,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   const purchasePending=useRef(false);
   const boostOffer=useRef({stage:plant.stage,count:plant.boostCount || 0});
   const lastPurchase=useRef(null);
-  const toyDisabled=!resting || revealing || lesson==='watered' || Boolean(tutorial && !lesson && !boosting);
+  const toyDisabled=Boolean(plant.gardenTour) || !resting || revealing || lesson==='watered' || Boolean(tutorial && !lesson && !boosting);
   const heartDisabled=Boolean(toyDisabled || (training && section) || choice && (
     choice.locked || !choice.command ||
     (boosting && !['growth','boost','buy-boost','back'].includes(choice.command)) ||
@@ -551,7 +551,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         <button disabled={answeringSprout || tutorialAlerts.busy} onClick={()=>answerFinalReminder('later')}>Maybe later</button>
       </>:<button disabled={answeringSprout} onClick={()=>answerFinalReminder('done')}>Got it</button>}</div>
     </GuideChat>}
-    {resting && summary && <GuideChat className="toy-guide farewell" cue={'dew-finale-'+dewLesson.status} focusRef={finishButton} onReveal={onFarewellReveal}>
+    {resting && summary && <GuideChat className="toy-guide farewell" cue={'dew-finale-'+dewLesson.status} focusRef={finishButton}>
       <div className="farewell-message">
         <p><strong>Thanks for growing with me!</strong></p>
         <p>{plant.deadAt!==null ? 'Your coins carry over to your next seed.' :

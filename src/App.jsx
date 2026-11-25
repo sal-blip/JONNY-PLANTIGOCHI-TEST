@@ -2,7 +2,7 @@ import CoinPurse from './CoinPurse.jsx';
 import {createGrowthLab} from './growthLab.js';
 import {DebugPurse,LabControls,useLabSession} from './GrowthLab.jsx';
 import GuideChat,{FirstHint,GuideSound} from './GuideChat.jsx';
-import {appHints,grantSproutCoins} from './firstVisit.js';
+import {advanceGardenTour,appHints,grantSproutCoins} from './firstVisit.js';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, ChevronRight, Waves, Moon, ImagePlus, Move, Share, Trash2, Sun, Volume2, VolumeX } from 'lucide-react';
 import AudioSettings,{useAudioSettings} from './AudioSettings.jsx';
@@ -100,7 +100,7 @@ function InstalledSession({phone,storage,careMessage,consumeCareMessage,alertVis
   if(storage.firstDay?.id && storage.firstDay.id===storage.plant?.id && storage.plant.stage==='sprout')sproutVisit.current=alertVisitId;
   const debut=Boolean(storage.plant && storage.plant.sproutDebut===storage.plant.id && storage.plant.stage==='sprout' && storage.plant.deadAt===null && storage.plant.fungusAt==null);
   const fresh=!invite && phase==='watered' && !storage.plant?.tutorial;
-  const returning=!debut && !storage.plant?.dewLesson && !storage.plant?.tutorial && invite?.round===1 && invite.visit!==alertVisitId && (phase==='watered' || (phase==='game' && !storage.firstDay && sproutVisit.current!==alertVisitId));
+  const returning=!debut && !storage.plant?.gardenTour && !storage.plant?.dewLesson && !storage.plant?.tutorial && invite?.round===1 && invite.visit!==alertVisitId && (phase==='watered' || (phase==='game' && !storage.firstDay && sproutVisit.current!==alertVisitId));
   const needsVisit=alerts.capable && phase!=='tour' && (
     fresh || returning || (alerts.enrolled && invite && !invite.done)
   );
@@ -118,7 +118,7 @@ function InstalledSession({phone,storage,careMessage,consumeCareMessage,alertVis
   }else if(phase!=='watered' && !debut && needsVisit && !storage.issue && !alerts.enrolled){
     scene=null;
     screen=<main className="garden-loading" aria-busy="true" aria-label="Opening your garden"/>;
-  }else if(phase==='welcome' || (phase==='game' && offer && !debut && !storage.plant?.dewLesson)){
+  }else if(phase==='welcome' || (phase==='game' && offer && !storage.plant?.gardenTour && !debut && !storage.plant?.dewLesson)){
     scene=phase==='game'?'alert-invite':'welcome';
     screen=<SetupWelcome {...storage} alerts={alerts} offer={phase==='game'?offer:null} answer={answer}/>;
   }else if(phase==='name'){
@@ -164,17 +164,21 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const [intro, setIntro] = useState(false);
   const guide=storage.phase==='garden-guide' || storage.phase==='phone-guide';
   const tutorial=plant?.tutorial;
+  const gardenTour=plant?.gardenTour;
+  const tourSurface=gardenTour==='garden'?'toy':'garden';
+  const reminderBeforeTour=gardenTour==='garden' && Boolean(plant.tutorialReminder);
   const toyLesson=tutorial?.step==='boost';
   const initialGuideSurface=toyLesson?'toy':tutorial?.step==='return'?'garden':storage.phase==='phone-guide'?'phone':'garden';
   const savingRoute=useRef(false);
   const [routePending,setRoutePending]=useState(false);
   const [routeError,setRouteError]=useState('');
-  const navigationLocked=Boolean(routePending || toyLesson || setupScreen || lesson==='water' || intro || page || sharing);
+  const navigationLocked=Boolean(routePending || toyLesson || reminderBeforeTour || setupScreen || lesson==='water' || intro || page || sharing);
   const passage=useHandsetPassage({
     blocked:navigationLocked,
-    allowRoomReturn:tutorial?.step!=='pot',
-    initialSurface:guide?initialGuideSurface:'toy',
+    allowRoomReturn:!gardenTour && tutorial?.step!=='pot',
+    initialSurface:gardenTour?tourSurface:guide?initialGuideSurface:'toy',
     onSwipeRequest:next=>{
+      if(gardenTour==='garden' && next==='garden'){advanceTour('garden');return true;}
       if(next==='garden' && lesson==='watered'){visitGarden();return true;}
       if(next==='toy' && tutorial?.step==='return'){returnToSeed();return true;}
       return false;
@@ -190,6 +194,27 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     else if(priorLesson.current && storage.phase==='game')go('toy');
     priorLesson.current=requiredLesson;
   },[guide,requiredLesson,storage.phase,initialGuideSurface,go]);
+  const priorTour=useRef(null);
+  useEffect(()=>{
+    if(gardenTour){
+      if(!priorTour.current)roomRef.current?.centerRoom(gardenTour==='living'?1:0);
+      go(tourSurface);
+    }
+    priorTour.current=gardenTour;
+  },[gardenTour,tourSurface,go]);
+  function advanceTour(step){
+    return saveRoute(signal=>commit(p=>advanceGardenTour(p,step),{signal}));
+  }
+  function visitTourRoom(index){
+    if((index===1 && gardenTour==='studio') || (index===0 && gardenTour==='living'))void advanceTour(gardenTour);
+  }
+  async function finishRewardTour(){
+    const ok=await commit(p=>advanceGardenTour(p,'rewards'));
+    if(!ok || current.current?.gardenTour)return false;
+    setPage(null);
+    go('garden');
+    return true;
+  }
   async function saveRoute(write){
     if(savingRoute.current)return;
     const controller=new AbortController();
@@ -208,10 +233,10 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   function visitGarden(){return saveRoute(finishDrink);}
   function returnToSeed(event){
     if(tutorial?.step==='return')return saveRoute(signal=>commit(grantSproutCoins,{signal}));
-    if(!tutorial)go('toy',event);
+    if(!tutorial && !gardenTour)go('toy',event);
   }
   function raiseGardenPhone(event){
-    if(tutorial && tutorial.step!=='pot')return;
+    if(gardenTour || tutorial && tutorial.step!=='pot')return;
     if(storage.phase==='garden-guide')return saveRoute(signal=>storage.setup('phone-guide',undefined,{signal}));
     go('phone',event);
   }
@@ -228,7 +253,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const [playingRecordId,setPlayingRecordId]=useState(null);
   const sproutInvitation=Boolean(plant && storage.phase==='game' && plant.stage==='sprout' &&
     plant.deadAt===null && plant.fungusAt==null && (storage.firstDay?.id===plant.id || plant.sproutDebut===plant.id));
-  const onFarewellReveal=useGameplayMusic({plant,musicVolume,phase:storage.phase,sproutInvitation,roomActive,recordPlaying:Boolean(playingRecordId)});
+  useGameplayMusic({plant,musicVolume,phase:storage.phase,sproutInvitation,roomActive:roomActive && page!=='daily',recordPlaying:Boolean(playingRecordId)});
   const recordActive=surface!=='toy';
   const apps=useGardenPhoneApps({page:app,open:setApp,plant,now,musicVolume,commit,roomRef,raised:phoneActive,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement,homePlant:enterGraduation});
   const gardenLife=lifeOf(roomGarden);
@@ -280,15 +305,31 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
       setIntro(false);setPage(null);roomRef.current?.reset();resetToy();setCareTarget({action,stale:action==='fungus' && (p.id!==plantId || p.fungusAt!==episode || p.deadAt!==null),seq:Date.now()});
     }
     const url=new URL(location.href);
-    const action=careMessage?.action ?? url.searchParams.get('care');
-    const plantId=careMessage?.plantId ?? url.searchParams.get('plant');
-    const episode=careMessage?.episode ?? Number(url.searchParams.get('episode'));
-    const lastDrink=careMessage ? careMessage.lastDrink : url.searchParams.has('drink') ? Number(url.searchParams.get('drink')) : null;
-    if(url.searchParams.has('care')){for(const k of ['care','plant','episode','drink'])url.searchParams.delete(k);history.replaceState(null,'',url);}
+    const link=url.searchParams.has('care') && {
+      action:url.searchParams.get('care'),plantId:url.searchParams.get('plant'),
+      episode:Number(url.searchParams.get('episode')),lastDrink:url.searchParams.has('drink')?Number(url.searchParams.get('drink')):null,
+    };
+    const state={...history.state};
+    const queued=state.gardenTourCare;
+    const request=careMessage ?? (link || queued);
+    if(!request)return;
     if(careMessage)consumeCareMessage(careMessage);
-    if(action && current.current && (careMessage?.epoch===undefined || careMessage.epoch===storage.epoch))
-      rescue(action,plantId,episode,lastDrink);
-  },[current,storage.epoch,careMessage,consumeCareMessage,resetToy,lab]);
+    if(link)for(const k of ['care','plant','episode','drink'])url.searchParams.delete(k);
+    const sameGarden=request.epoch===undefined || request.epoch===(storage.epoch ?? null);
+    if(sameGarden && gardenTour){
+      // A notification click is a one-shot event. Keep it on this navigation
+      // entry through reloads until the player finishes the room tour.
+      if(link || careMessage){
+        state.gardenTourCare={...request,epoch:storage.epoch ?? null};
+        history.replaceState(state,'',url);
+      }
+      return;
+    }
+    if(sameGarden && queued && page==='daily' && !link && !careMessage)return;
+    delete state.gardenTourCare;
+    if(link || queued)history.replaceState(state,'',url);
+    if(sameGarden && current.current)rescue(request.action,request.plantId,request.episode,request.lastDrink);
+  },[current,storage.epoch,careMessage,consumeCareMessage,resetToy,lab,gardenTour,page]);
 
   useEffect(() => {
     if (!intro || leafReady) return;
@@ -397,7 +438,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   function enterBook(){
     if(roomRef.current?.showBook())go('garden');
   }
-  const freePlay=!lesson && !guide && !tutorial && !sproutInvitation && !plant?.dewLesson;
+  const freePlay=!gardenTour && !lesson && !guide && !tutorial && !sproutInvitation && !plant?.dewLesson;
   const showCorners=freePlay && !namingSeed && (surface!=='garden' || !roomOverlayOpen);
   const showGlobalMenu=Boolean(plant) && showCorners && !setupScreen && !intro && !page && !sharing;
   const presentedHere=useRef('');
@@ -439,15 +480,16 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     </div>}
     <div className="camera" inert={intro ? '' : undefined} aria-hidden={intro || undefined}>
       <PocketDevice plantClock={plantClock} revealSeed={revealSeed} lesson={lesson} finishLesson={visitGarden} routePending={routePending} routeError={routeError} firstDay={storage.firstDay}
-        sproutWelcome={toyActive && sproutInvitation} onFarewellReveal={onFarewellReveal}
+        sproutWelcome={toyActive && sproutInvitation}
         dismissSprout={dismissWelcome} tutorialAlerts={lab?null:alerts} reminder={drinkReminder && !alerts.enrolled && !alerts.denied?alerts:null} rename={()=>open('rename')} plant={plant} now={now} careTarget={careTarget} openMove={enterGraduation} openBook={enterBook} resting={toyActive} commit={commit} sound={play}/>
     </div>
     <div className="garden-edges" aria-hidden="true"/>
+    {gardenTour==='garden' && !reminderBeforeTour && onToy && !page && <GuideChat cue="garden-tour-toy" className="room-guide"><p>Swipe up from the chevrons to put me away and visit your garden.</p></GuideChat>}
     {guide && !tutorial && onToy && !page && <GuideChat cue="visit-room" className="room-guide"><p>Swipe up to visit our garden. My iSEED phone is waiting there.</p></GuideChat>}
-    {(!guide || !tutorial) && lesson!=='water' && !intro && !page && <SwipeCue data-toy-handle="" aria-label="Open garden"
-      hint="Swipe up to enter the garden" onClick={e=>lesson==='watered'?visitGarden():go('garden',e)}/>}
+    {!reminderBeforeTour && (!guide || !tutorial) && lesson!=='water' && !intro && !page && <SwipeCue data-toy-handle="" aria-label="Open garden"
+      hint="Swipe up to enter the garden" onClick={e=>gardenTour==='garden'?advanceTour('garden'):lesson==='watered'?visitGarden():go('garden',e)}/>}
   </div>;
-  return <GuideSound.Provider value={play}><main ref={passage.rootRef} data-tutorial={tutorial?.step} data-surface={surface} data-transitioning={transitioning?'':undefined}
+  return <GuideSound.Provider value={play}><main ref={passage.rootRef} data-tutorial={tutorial?.step} data-garden-tour={gardenTour} data-surface={surface} data-transitioning={transitioning?'':undefined}
     data-toy-background={background} data-toy-photo-preview={page==='photo'?'':undefined}
     className={'garden scene-' + scene + (page && page !== 'photo' ? ' menus-open' : '') + (intro ? (leafReady ? ' revealing' : ' revealing waiting-leaves') : '')}
     aria-label="Plantigochi pocket garden" onClick={event=>{
@@ -458,7 +500,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
       }
     }}>
     <div className="garden-room-layer" {...passage.roomGestureProps} inert={!roomActive?'':undefined} aria-hidden={!roomActive || undefined}>
-      <Collector ref={roomRef} playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} recordActive={recordActive} musicVolume={musicVolume}
+      <Collector ref={roomRef} gardenTour={gardenTour} onRoomVisit={visitTourRoom} playingRecordId={playingRecordId} onSelectRecord={setPlayingRecordId} recordActive={recordActive} musicVolume={musicVolume}
         onOverlayChange={setRoomOverlayOpen} globalMenuOpen={Boolean(page)} active={roomActive} backdropVisible={roomVisible} plant={roomGarden} commit={commit} now={now} wallNow={wallNow} plantClock={plantClock}
         onPlacementDone={()=>{if(current.current?.tutorial?.step==='return')setApp('phone');}}
         raisePhone={raiseGardenPhone} returnToToy={returnToSeed} onPlacementCancel={()=>go('phone')}
@@ -484,6 +526,11 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         return {ok:Boolean(ok),storedCount:ok?storedCount:0};
       }}
         purr={()=>play('purr')}/>
+      {roomActive && gardenTour && gardenTour!=='garden' && !page && <GuideChat cue={gardenTour} className="room-guide tour-room-hint"><p>{
+        gardenTour==='studio'?'Swipe left to visit the Plant Studio.':
+        gardenTour==='living'?'Swipe right to come back to the living room.':
+        'Tap the rewards calendar to collect your daily reward and take a free spin.'
+      }</p>{routeError && <div className="chat-actions"><button disabled={routePending} onClick={()=>advanceTour(gardenTour)}>Retry saving this step</button></div>}</GuideChat>}
       {guide && ((roomActive && !toyLesson) || leavingPotReceipt) && !roomOverlayOpen && !page && <GuideChat cue={leavingPotReceipt?'return':tutorial?.step || "garden"} className="room-guide">
         <p>{tutorial?.step==='return' || leavingPotReceipt?'My pot is in place! When I’m fully grown, I can live here.':'Welcome home! Grown plants live here. Tap the phone at the bottom right to open iSEED.'}</p>
         {(tutorial?.step==='return' || leavingPotReceipt) && <div className="chat-actions"><button disabled={routePending || leavingPotReceipt} onClick={returnToSeed}>{routePending || leavingPotReceipt?'Returning…':'Return to my seed'}</button></div>}</GuideChat>}
@@ -511,6 +558,9 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     </div>
     {plant && <div className="garden-corners" hidden={Boolean(setupScreen || page || intro || sharing || phoneActive)}
       inert={transitioning?'':undefined} aria-hidden={transitioning || undefined}>
+      {gardenTour==='rewards' && roomActive && !page && <div className="garden-actions"><button className="iseed-reward-key garden-reward-key" aria-label="Open daily rewards" aria-haspopup="dialog" onClick={e=>{restoreFocus.current=e.currentTarget;setPage('daily');}}>
+        <img src={rewardIcon} alt=""/><b aria-hidden="true">!</b>
+      </button></div>}
       {showCorners && <>
         <span className="garden-wordmark">Plant Garden</span>
         <div className="garden-actions">
@@ -524,7 +574,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     </div>}
     {lab && !page && <button className="growth-lab-badge" onClick={()=>open('lab')} aria-label="Open Growth Lab">
       Growth Lab · {labBadge}</button>}
-    {routeError && guide && <div className="coin-toast" role="status">{routeError}</div>}
+    {routeError && (guide || gardenTour) && <div className="coin-toast" role="status">{routeError}</div>}
     {safeToReveal && saveOK && phone.updateStatus==='ready' && <button className="update-ready" onClick={()=>open('saves')}>Update ready · View restart option</button>}
     {!saveOK && plant && !page && <button className="save-warning" onClick={()=>open('saves')}>Save issue · Open backups</button>}
     {intro && <div className="intro" onKeyDown={e => { if (e.key === 'Escape') finishIntro(); }}>
@@ -543,7 +593,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
       onSave={nameNewSeed} onCancel={()=>nameNewSeed(plant.name)} issue={issue}/>}
     {page === 'rename' && <NameEditor rename original={plant.name} onCancel={closeOnboarding} issue={issue}
       onSave={async name=>{if(await commit(p=>p.name===name?p:milestone({...p,name},'rename-'+now,'Renamed '+p.name+' to '+name+'.',now)))closeOnboarding();}}/>}
-    {page==='daily' && plant && <DailyRewards key={visit?.date} viewPlant={()=>{setPage(null);go('toy');}} plant={plant} commit={commit} plantClock={plantClock} close={()=>setPage(null)}/>}
+    {page==='daily' && plant && <DailyRewards key={visit?.date} finishTour={gardenTour==='rewards'?finishRewardTour:null} viewPlant={()=>{setPage(null);go('toy');}} plant={plant} commit={commit} plantClock={plantClock} close={()=>setPage(null)}/>}
     {page && page !== 'daily' && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} onDebug={page==='settings'?openDebug:undefined} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
       {page === 'menu' && <MenuItems items={lab?['lab','purse']:homeItems} open={open}/>}
