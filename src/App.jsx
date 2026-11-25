@@ -539,7 +539,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
       onSave={nameNewSeed} onCancel={()=>nameNewSeed(plant.name)} issue={issue}/>}
     {page === 'rename' && <NameEditor rename original={plant.name} onCancel={closeOnboarding} issue={issue}
       onSave={async name=>{if(await commit(p=>p.name===name?p:milestone({...p,name},'rename-'+now,'Renamed '+p.name+' to '+name+'.',now)))closeOnboarding();}}/>}
-    {page==='daily' && plant && <DailyRewards key={visit?.date} plant={plant} commit={commit} plantClock={plantClock} close={()=>setPage(null)}/>}
+    {page==='daily' && plant && <DailyRewards key={visit?.date} viewPlant={()=>{setPage(null);go('toy');}} plant={plant} commit={commit} plantClock={plantClock} close={()=>setPage(null)}/>}
     {page && page !== 'daily' && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} onDebug={page==='settings'?openDebug:undefined} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
       {page === 'menu' && <MenuItems items={lab?['lab','purse']:phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}

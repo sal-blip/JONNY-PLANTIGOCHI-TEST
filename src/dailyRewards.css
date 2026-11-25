@@ -40,7 +40,7 @@
 .daily-action,.daily-voucher button {min-height:44px;border-radius:12px;border:1px solid #275338;background:#356142;color:#fff9e7;font-weight:700!important;padding:8px 14px}
 .daily-action {width:100%}
 .daily-slot {border-top:1px solid #c5c5a7;text-align:center;margin-top:12px;padding-top:10px}
-.daily-machine {position:relative;isolation:isolate;width:clamp(145px,33vh,218px);max-width:100%;margin:4px auto;aspect-ratio:171 / 133}
+.daily-machine {pointer-events:none;position:relative;isolation:isolate;width:clamp(145px,33vh,218px);max-width:100%;margin:4px auto;aspect-ratio:171 / 133}
 .daily-machine .slot-rest-glow {z-index:-1;top:50%;width:135%;opacity:.65;animation:none;background-color:#e8ae4e55}
 .daily-cabinet {width:100%;display:block;image-rendering:pixelated}
 .daily-windows {position:absolute;left:17.54%;top:30.83%;width:56.14%;height:36.09%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:2px}
@@ -69,7 +69,7 @@
 .spin-theater h1 {margin:0 38px;font-size:clamp(1.35rem,5vw,1.9rem);line-height:1.12}
 .spin-theater p {margin:8px 0 0}
 .spin-camera {position:relative;isolation:isolate;display:grid;place-items:center;min-height:min(46dvh,265px);padding:12px 0}
-.spin-camera .daily-machine {width:min(66%,28dvh,218px);transform-origin:47% 50%}
+.spin-camera .daily-machine {pointer-events:none;width:min(66%,28dvh,218px);transform-origin:47% 50%}
 .spin-light-rig {position:absolute;inset:0;pointer-events:none;z-index:-1;overflow:clip}
 .spin-light-rig .sprout-rays {top:50%;width:min(115%,440px);opacity:.28;animation:none}
 .spin-camera.lit .sprout-rays {animation:spin-rays var(--last-stop) ease-out both}
@@ -86,6 +86,7 @@
 .spin-win {display:grid;justify-items:center;gap:6px;padding:12px 0 2px;animation:daily-win .32s ease-out both}
 .spin-win h1 {color:#ffdf8f;overflow-wrap:anywhere}
 .spin-award {width:clamp(54px,13dvh,86px);aspect-ratio:1;object-fit:contain;image-rendering:pixelated}
+.spin-later {border:0;background:transparent;color:inherit;min-height:44px;text-decoration:underline;text-underline-offset:3px}
 .spin-win .daily-action {margin-top:14px;width:auto}
 @keyframes daily-win {from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes daily-reel {from{transform:translateY(0)}to{transform:translateY(var(--landing))}}

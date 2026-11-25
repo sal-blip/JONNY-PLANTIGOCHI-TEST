@@ -192,10 +192,17 @@ export function buyGrowth(p,expected,now){
   if(p.stage==='seed')return wake({...advanced,seedBonus:(p.seedBonus || 0)+offer.amount},now);
   return wake({...advanced,anchor:now,earned:offer.target},now);
 }
+export function growthDayWait(p,now){
+  if(!p.gardenLife?.growthDays)return 'There are no saved growth days.';
+  if(p.deadAt!==null || p.seedOffers || p.stage==='grown')return 'Keep this for your next sprout.';
+  if(p.tutorial || p.stage==='seed')return 'You can use this after your seed sprouts and finishes the tutorial.';
+  if(now<latestCareAt(p))return 'Check back when your plant’s clock catches up.';
+  if(earnedAt(p,now)>=WEEK)return 'Keep this for your next sprout.';
+  const needs=growthHolds(p,now);
+  return needs.length?'Your plant needs care first. Open '+needs.join(', ')+' on the toy.':'';
+}
 export function canUseGrowthDay(p,now){
-  return (p.gardenLife?.growthDays || 0)>0 && !p.tutorial && !p.seedOffers &&
-    ['sprout','young','split'].includes(p.stage) && p.deadAt===null &&
-    now>=latestCareAt(p) && earnedAt(p,now)<WEEK && !growthHolds(p,now).length;
+  return !growthDayWait(p,now);
 }
 export function useGrowthDay(saved,id,expectedCount,now){
   const p=wake(saved,now);

@@ -1,7 +1,7 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Check,ChevronLeft,ChevronRight,Ticket,X} from 'lucide-react';
 import {SPIN_TOKEN_COST,buySpinToken,tokenBalance,catalog,claimDaily,lastVisit,lifeOf,localDay,rollDailyPrize,settleDailySpin,spinTable,weeklyRewards} from './gardenEconomy.js';
-import {canUseGrowthDay,useGrowthDay} from './game.js';
+import {growthDayWait,useGrowthDay} from './game.js';
 import './dailyRewards.css';
 
 const art='/assets/daily-spin/';
@@ -33,11 +33,13 @@ function PrizeReels({prize,rolling=false,atRest=false}){
   </div>;
 }
 
-export default function DailyRewards({plant,commit,close,plantClock=Date.now}){
+export default function DailyRewards({plant,commit,close,viewPlant,plantClock=Date.now}){
   const modal=useRef(null),pending=useRef(false);
   const [busy,setBusy]=useState(''),[error,setError]=useState('');
   const [selection,select]=useState(null),[spinScene,setSpinScene]=useState('');
   const [tokenOffer,setTokenOffer]=useState(null),[winningDraw,setWinningDraw]=useState(null);
+  const [grownName,setGrownName]=useState('');
+  const growthWait=growthDayWait(plant,plantClock());
   const sceneHeading=useRef(null),slotHeading=useRef(null),returnToSlot=useRef(false);
   const wallet=lifeOf(plant),visit=lastVisit(wallet);
   const date=visit?.date,day=visit?(visit.streak-1)%7:0;
@@ -66,7 +68,7 @@ export default function DailyRewards({plant,commit,close,plantClock=Date.now}){
     return ()=>{clearTimeout(timer);motion?.removeEventListener?.('change',onMotion);};
   },[spinning]);
   useLayoutEffect(()=>{
-    if(spinScene==='saving' || spinScene==='prize')sceneHeading.current?.focus({preventScroll:true});
+    if(spinScene==='saving' || spinScene==='prize' || spinScene==='growth-used')sceneHeading.current?.focus({preventScroll:true});
     else if(!spinScene && returnToSlot.current){
       slotHeading.current?.focus();
       returnToSlot.current=false;
@@ -93,7 +95,8 @@ export default function DailyRewards({plant,commit,close,plantClock=Date.now}){
       let changed=false;
       const saved=await commit(p=>{
         const next=operation(p);
-        changed=next!==p;
+        changed=action==='grow' ? p.id===plant.id && p.gardenLife?.growthDays===wallet.growthDays &&
+          next.gardenLife?.growthDays===wallet.growthDays-1 : next!==p;
         return next;
       });
       if(!saved)throw new Error();
@@ -101,21 +104,35 @@ export default function DailyRewards({plant,commit,close,plantClock=Date.now}){
         setWinningDraw(changed?drawn:null);
         setSpinScene(changed?'spinning':'');
       }
+      if(action==='grow' && changed){
+        setGrownName(plant.name);
+        returnToSlot.current=true;
+        setSpinScene('growth-used');
+      }
       if(action==='buy')setTokenOffer(null);
       if(!changed)setError('Your garden changed. Check the latest reward below.');
-    }catch{setSpinScene('');setError('Your reward could not be saved. Please try again.');}
+    }catch{if(action==='spin')setSpinScene('');setError('Your reward could not be saved. Please try again.');}
     finally{pending.current=false;setBusy('');}
   }
   return <dialog ref={modal} className={'daily-dialog'+(spinScene?' in-spin':'')} aria-labelledby="daily-title"
     onCancel={e=>{e.preventDefault();close();}} onClick={e=>{if(e.target===e.currentTarget)close();}}>
     {spinScene?<article className="daily-card spin-theater">
       <button type="button" className="daily-close" aria-label="Close daily rewards" onClick={close}><X/></button>
-      {spinScene==='prize' && prize?<div className="spin-win">
+      {spinScene==='growth-used'?<div className="spin-win">
+        <img className="spin-award" src={art+'growth.png'} alt=""/>
+        <h1 id="daily-title" tabIndex="-1" ref={sceneHeading}>Growth day applied</h1>
+        <p>{grownName} grew! One growth day used.</p>
+        <button className="daily-action spin-action" onClick={viewPlant}>See my plant</button>
+        <button className="spin-later" onClick={()=>setSpinScene('')}>Back to rewards</button>
+      </div>:spinScene==='prize' && prize?<div className="spin-win">
         <img className="spin-award" src={art+spinTable.find(row=>row.id===prize.id).symbol+'.png'} alt=""/>
         <p>You won</p>
         <h1 id="daily-title" tabIndex="-1" ref={sceneHeading} aria-label={'You won '+prizeName}>{prizeName}</h1>
-        <p>{prize.sku?'Waiting in your Inventory.':prize.id==='growth'?'Use your growth day in Daily rewards.':'Added to your purse.'}</p>
-        <button className="daily-action spin-action" onClick={()=>setSpinScene('')}>Back to rewards</button>
+        <p>{prize.sku?'Waiting in your Inventory.':prize.id==='growth'?(growthWait || 'Give '+plant.name+' up to 24 hours of growth.'):'Added to your purse.'}</p>
+        {prize.id==='growth' && !growthWait && <button className="daily-action spin-action" disabled={Boolean(busy)} onClick={()=>save('grow')}>Use on {plant.name}</button>}
+        {prize.id==='growth' && growthWait && wallet.growthDays>0 && <p>Your growth day is saved in Daily rewards.</p>}
+        {error && <p role="alert">{error}</p>}
+        <button className={prize.id==='growth' && !growthWait?'spin-later':'daily-action spin-action'} disabled={Boolean(busy)} onClick={()=>setSpinScene('')}>{prize.id==='growth' && !growthWait?'Save for later':'Back to rewards'}</button>
       </div>:<>
         <h1 id="daily-title" tabIndex="-1" ref={sceneHeading}>Garden spin</h1>
         <div className={'spin-camera'+(spinning?' lit':'')} style={{'--last-stop':lastStop+'ms'}}>
@@ -151,14 +168,15 @@ export default function DailyRewards({plant,commit,close,plantClock=Date.now}){
         </button></li>)}</ol>
         <div className="daily-browse"><button aria-label="Previous day" disabled={!focus} onClick={()=>select(focus-1)}><ChevronLeft/></button><span aria-live="polite">{selectedDate.toLocaleDateString(undefined,{month:'short',day:'numeric'})} · {weeklyRewards[focus]} coins · {collected(focus)?'Collected':focus===day?'Today':'Upcoming'}</span><button aria-label="Next day" disabled={focus===6} onClick={()=>select(focus+1)}><ChevronRight/></button></div>
         {claimable && <button className="daily-action" disabled={Boolean(busy)} onClick={()=>save('claim')}>Claim {weeklyRewards[day]} coins</button>}
+        {wallet.growthDays>0 && <section className="daily-voucher"><strong>Growth days · {wallet.growthDays}</strong>
+          <p>{growthWait || 'Add up to 24 hours of growth to your plant.'}</p>
+          <button disabled={Boolean(busy) || Boolean(growthWait)} onClick={()=>save('grow')}>Use on {plant.name}</button></section>}
         <section className="daily-slot"><h2 ref={slotHeading} tabIndex="-1">Garden spin</h2><PrizeReels prize={prize} atRest/>
           <div className="daily-result" aria-live="polite">{prize?
             <><strong>You won {prizeName}!</strong>{prize.sku?' Find it in Inventory.':prize.id==='growth'?(wallet.growthDays?' Saved for your plant.':' Redeemed.'):' Added to your purse.'}</>:'One free spin today. Every spin wins.'}</div>
           {(!visit?.spin || tokens>0) && <button className="daily-action spin-action" disabled={!current || Boolean(busy)} onClick={()=>save('spin')}>{busy==='spin'?'Saving spin…':visit?.spin?'Spin for 1 token':'Spin for free'}</button>}
         </section>
-        {wallet.growthDays>0 && <section className="daily-voucher"><strong>Growth days · {wallet.growthDays}</strong>
-          <p>Add up to 24 hours of growth to a healthy sprouted plant, up to maturity.</p>
-          <button disabled={Boolean(busy) || !canUseGrowthDay(plant,plantClock())} onClick={()=>save('grow')}>Use on {plant.name}</button></section>}
+
         {error && <p role="alert">{error}</p>}
         <details className="daily-odds"><summary>Prizes &amp; odds</summary><table><caption>One prize per spin</caption><thead><tr><th>Prize</th><th>Chance</th></tr></thead><tbody>
           {spinTable.map(row=><tr key={row.id}><td>{row.label}</td><td>{row.weight}%</td></tr>)}</tbody></table>

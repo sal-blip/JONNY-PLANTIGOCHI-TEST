@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.58 · Use a Growth Day from the prize screen
+
+The Garden Spin previously announced a Growth Day and sent players back to the rewards list. The prize now offers immediate redemption on the named plant or saving for later. After a successful save, the receipt offers to show the plant. Banked days appear above the slot machine and explain any care needed first. Decorative rays behind the machine let taps reach the spin button.
+
+All 196 unit tests passed. A mobile Chromium walkthrough exercised the first free spin, immediate use, returning to a saved voucher through iSEED after reload, and a blocked redemption for a plant with fungus. The test checks the saved growth, voucher count and watering time. [Growth Day walkthrough](../../tests/browser/growth_day_prize.py)
+
 ## Plantigochi 0.1.57 · One games card and a focused first drink
 
 The welcome tour shows all three games on one card with individually labeled previews. The first seed greeting points to the toy’s heart button. After learning the controls, players can find Play in the regular menu. The sprout still offers Play Vine Trail or Maybe later before the tutorial gift.
