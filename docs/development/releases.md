@@ -10,6 +10,8 @@ Settings and background checks now read a network-only release descriptor, insta
 
 The production build and 198 unit tests passed. Browser tests cover upgrading older installations, rejecting an incorrect cached entry, recovering in Settings with stale unversioned URLs, offline and reconnect, and preserving the plant ID after restart. [Upgrade walkthrough](../../tests/browser/installed_update.py) · [Timeout and retry](../../tests/browser/update_recovery.py)
 
+**Live rollout verification.** A Chromium installation opened on 0.1.58 before deployment upgraded through Settings and Restart to update on the public origin. It reopened on 0.1.59, verified the release again, and retained its original plant ID. The public descriptor, entry and worker fingerprint matched the built release. Published Sites version `appgver_1b6d88ade14481919a2c0e257a93c044` from Sites source `513ccbad6693c1a4b37550e52d598300b2e51e69`. [GitHub revision](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/dd3b367)
+
 ## Plantigochi 0.1.58 · Use a Growth Day from the prize screen
 
 The Garden Spin previously announced a Growth Day and sent players back to the rewards list. The prize now offers immediate redemption on the named plant or saving for later. After a successful save, the receipt offers to show the plant. Banked days appear above the slot machine and explain any care needed first. Decorative rays behind the machine let taps reach the spin button.
