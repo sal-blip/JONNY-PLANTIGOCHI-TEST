@@ -1,7 +1,8 @@
 import React, {useLayoutEffect, useRef} from "react";
 import "./ActivityArt.css";
 
-import {PAIR_COLUMNS} from './leafPairs.js';
+import {LeafPairFace} from './LeafPairFace.jsx';
+import {leafNames,PAIR_COLUMNS} from './leafPairs.js';
 import {VINE_COLS,VINE_ROWS,VINE_STEP_MS} from './vineTrail.js';
 
 export function VineArt({game}) {
@@ -141,30 +142,13 @@ export function DewArt({ lane = 1, drops, dropLane = 1, progress = 0, result = n
   );
 }
 
-// One two-tone, nine-pixel stamp per face in leafNames order. Shape carries the match at toy size.
-const leafStamps=[
-  ['.###.###.','####.####','###+###..','..#+#####','###+##...','.##+####.','..#+###..','...+##...','....#....'],
-  ['...#.....','..##...#.','..#+..##.','..#+..#+.','#.#+.##+.','#+##.#+#.','#+####+#.','.######..','..####...'],
-  ['....#....','..#.#.#..','...#+#...','.##.+.##.','...#+#...','###.+.###','..##+##..','....+....','....#....'],
-  ['.##...##.','####.####','###+.+###','.###.###.','...#+#...','.###.###.','###+.+###','###..####','.##.#.##.'],
-  ['...###...','...#+#...','.#.#+#...','##.#+#.##','##.#+#.##','.###+###.','...#+#...','...#+#...','...###...'],
-  ['....#....','...#+#...','.#.#+#.#.','###+.+###','.##+.+##.','##.#+#.##','.###+###.','..#####..','.........'],
-  ['....#....','.#..#..#.','..##+##..','####+####','.###+###.','##.#+#.##','...#+#...','....+....','....#....'],
-  ['..##.##..','.###+###.','##..+..##','#..#+#..#','..#.+.#..','....+....','....##...','.....#...','....###..'],
-  ['.....##..','....##...','..#####..','.#+##+##.','#########','.###+###.','.##+###..','..#####..','....#....'],
-].map(rows=>['#','+'].map(ink=>rows.flatMap((row,y)=>Array.from(row,(pixel,x)=>
-  pixel===ink?`M${x} ${y}h1v1h-1z`:'')).join('')));
-
 export function PairsArt({game}){
   return <Canvas viewBox="0 0 192 88">{game.deck.map((face,i)=>{
     const selected=i===game.cursor, paired=game.matched.includes(i);
     const revealed=paired || game.open.includes(i);
     return <g className="leaf-packet" key={i} transform={`translate(${3+(i%PAIR_COLUMNS)*32} ${2+Math.floor(i/PAIR_COLUMNS)*29})`}>
       <rect x="2" y="2" width="22" height="21" rx="2" fill={revealed?'#e1e9c4':'#5a7756'} stroke="#304e37" strokeWidth="2"/>
-      {revealed?<g transform="translate(4 3) scale(2)">
-        <path d={leafStamps[face][0]} fill="#2c5239"/>
-        <path d={leafStamps[face][1]} fill="#72904e"/>
-      </g>:<path d="M5 6h16v2H5z M8 17v-4h3v-2h7v4h-3v2h-5v2H8z" fill="#c6d5a2"/>}
+      {revealed?<LeafPairFace name={leafNames[face]}/>:<path d="M5 6h16v2H5z M8 17v-4h3v-2h7v4h-3v2h-5v2H8z" fill="#c6d5a2"/>}
       {paired && <path d="M17 21l2 2 5-5" fill="none" stroke="#365438" strokeWidth="2"/>}
       {selected && <path d="M0 6V0h6m14 0h6v6m0 13v6h-6M6 25H0v-6" fill="none" stroke="#48361f" strokeWidth="2"/>}
     </g>;

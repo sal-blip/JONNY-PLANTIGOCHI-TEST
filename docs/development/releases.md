@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.50 · Leaf Pairs card faces
+
+All nine faces use original 20 × 20 LCD artwork, with separate silhouettes and accent colors across the eighteen-card board.
+
 ## Plantigochi 0.1.49 · Pocket arcade
 
 The Vine Trail board expands from 12 × 6 to 16 × 10 cells. The vine moves every 300 ms with smooth travel between cells and a symmetrical leaf tip. Play continues past the fifth sun until a collision or a full board. Leaf Pairs has nine distinct matches on an eighteen-card board.

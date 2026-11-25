@@ -87,6 +87,8 @@ def play(browser, source):
     # context_for fixes Math.random at .5. Reproduce the 18-packet shuffle.
     packets = page.locator(".lcd-art .leaf-packet")
     expect(packets).to_have_count(18)
+    faces = packets.locator("[data-leaf-face]")
+    expect(faces).to_have_count(0)
     boxes = packets.evaluate_all("els => els.map(el => el.querySelector('rect').getBoundingClientRect().toJSON())")
     assert len(set(round(box["y"]) for box in boxes)) == 3
     assert len(set(round(box["x"]) for box in boxes)) == 6
@@ -105,11 +107,16 @@ def play(browser, source):
     choose(deck.index(next(leaf for leaf in deck if leaf != deck[0])))
     expect(page.locator(".lcd-status")).to_contain_text("Two different leaves")
     expect(page.locator(".lcd-status")).to_contain_text("Flip")
+    expect(faces).to_have_count(0)
     for leaf in range(9):
         for i, face in enumerate(deck):
             if face == leaf:
                 choose(i)
     expect(page.locator(".lcd-status")).to_contain_text("All paired!")
+    portraits = faces.evaluate_all("els => els.map(el => [el.dataset.leafFace, el.querySelector('path').getAttribute('d')])")
+    assert len(portraits) == 18
+    assert len({outline for _, outline in portraits}) == 9
+    assert all(portraits.count(pair) == 2 for pair in portraits)
     leave()
     taps(page, "Open toy menu", "Next toy item", "Back on toy", "Open toy menu", "Choose Care", "Choose Water")
     expect(button(page, "Visit my garden")).to_be_visible()
