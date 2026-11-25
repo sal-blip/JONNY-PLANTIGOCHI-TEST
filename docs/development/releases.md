@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.61 · Installed update test
+
+Version-only release for testing Settings → Check for updates from 0.1.60. The production build and all 198 unit tests passed. The installed-update walkthrough verified that Settings recovered from a stale entry, restarted into the new build, and kept the original plant ID. [Upgrade walkthrough](../../tests/browser/installed_update.py)
+
 ## Plantigochi 0.1.60 · Explore the toy menu before watering
 
 The first seed introduces Care, Play, Growth, First Aid, and Field Guide as players browse in either direction. The tour remembers distinct icons across reloads and asks for Back once all five have been seen. Opening the menu again highlights Care, then Water. Returning players who already finished the controls lesson go straight to watering.
