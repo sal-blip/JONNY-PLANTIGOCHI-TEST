@@ -559,6 +559,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
           {phone.updateStatus==='ready'?'Restart to update':phone.updateStatus==='slow'?'Retry update check':'Check for updates'}</button>
         <small>Running version {appVersion}</small>
         {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
+        {['failed','slow'].includes(phone.updateStatus) && <a href="/update">Repair update</a>}
         <button onClick={()=>open('uninstall')}>How to uninstall<ChevronRight className="row-end"/></button>
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
       {page === 'debug' && <MenuItems items={lab?['lab','purse']:['lab','purse','restart','test']} open={open}/>}

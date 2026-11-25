@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.55 · Update recovery
+
+The public /update page can refresh an older installation on its existing scope and verify the game entry served after activation. Settings links to it after a failed or slow update check. The repair works on cached app files and leaves garden data in place.
+
 ## Plantigochi 0.1.54 · Installed game updates
 
 The update worker verifies the entry page against the release before activating. Settings shows the running version beside the update control. This release includes the edge-to-edge camera.

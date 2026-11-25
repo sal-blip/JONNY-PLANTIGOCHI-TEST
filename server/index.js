@@ -1,5 +1,6 @@
 import { reminderAPI } from './reminders.js';
 import { audioRange } from '../src/mediaRange.js';
+import {updatePage} from './updatePage.js';
 import { assets } from './generated-assets.js';
 
 const mime = { html:'text/html; charset=utf-8', css:'text/css; charset=utf-8', js:'text/javascript; charset=utf-8', webmanifest:'application/manifest+json', svg:'image/svg+xml', png:'image/png', webp:'image/webp', woff2:'font/woff2', m4a:'audio/mp4', mp3:'audio/mpeg', txt:'text/plain; charset=utf-8' };
@@ -8,6 +9,11 @@ export default {
     const path = new URL(request.url).pathname;
     if (path.startsWith('/api/')) return reminderAPI(request,env,fetch,ctx);
     if (!['GET','HEAD'].includes(request.method)) return new Response(null,{status:405});
+    if(path==='/update'){
+      const entry=atob(assets['/index.html']).match(/<script[^>]+src="(\/assets\/[^"]+\.js)"/)?.[1];
+      if(!entry)return new Response('Game build unavailable',{status:503});
+      return new Response(request.method==='HEAD'?null:updatePage(entry),{headers:{'Content-Type':mime.html,'Cache-Control':'no-store'}});
+    }
     const key = path === '/' ? '/index.html' : path;
     const value = Object.hasOwn(assets,key) ? assets[key] : null;
     if (!value) return new Response('Not found',{status:404});

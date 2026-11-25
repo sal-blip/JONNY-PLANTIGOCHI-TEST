@@ -12,6 +12,7 @@ from playwright.sync_api import expect, sync_playwright
 from scene_music import SEED_SETUP, taps
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--repair", action="store_true", help="Recover from the failed update using the direct public repair page")
 parser.add_argument("previous", type=Path, help="Previous release's dist directory")
 parser.add_argument("current", type=Path, help="Target release's dist directory")
 args = parser.parse_args()
@@ -20,6 +21,21 @@ stale_entry = False
 
 
 class ReleaseHandler(SimpleHTTPRequestHandler):
+    def do_GET(self):
+        if urlsplit(self.path).path == "/update":
+            page = subprocess.check_output(["node", "--input-type=module", "-e", """
+                const worker=await import(process.argv[1]);
+                const response=await worker.default.fetch(new Request('https://test.local/update'));
+                if(!response.ok)throw Error(response.status);
+                process.stdout.write(await response.text());
+            """, (args.current / "server/index.js").resolve().as_uri()])
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(page)
+            return
+        super().do_GET()
+
     def translate_path(self, path):
         directory = args.previous if stale_entry and urlsplit(path).path == "/index.html" else release
         return str(directory.resolve() / Path(super().translate_path(path)).relative_to(Path(self.directory)))
@@ -57,11 +73,17 @@ with ThreadingHTTPServer(("127.0.0.1", 0), partial(ReleaseHandler, directory=str
     expect(page.get_by_text("Could not check for updates.", exact=False)).to_be_visible(timeout=60000)
     assert entry.get_attribute("src") == old
     stale_entry = False
-    taps(page, "Check for updates")
-    restart = page.get_by_role("button", name="Restart to update")
-    expect(restart).to_be_visible(timeout=60000)
-    with page.expect_navigation():
-        restart.click()
+    if args.repair:
+        page.goto(f"http://127.0.0.1:{server.server_port}/update")
+        page.get_by_role("button", name="Repair update").click()
+        expect(page.get_by_role("status")).to_contain_text("verified.", timeout=60000)
+        page.goto(f"http://127.0.0.1:{server.server_port}/")
+    else:
+        taps(page, "Check for updates")
+        restart = page.get_by_role("button", name="Restart to update")
+        expect(restart).to_be_visible(timeout=60000)
+        with page.expect_navigation():
+            restart.click()
     new = entry.get_attribute("src")
     assert new != old and (args.current / new.lstrip("/")).exists()
     taps(page, "Open garden", "Open iSEED", "Share")
