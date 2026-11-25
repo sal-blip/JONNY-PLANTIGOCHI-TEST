@@ -1,5 +1,7 @@
 # Interface and art
 
+[Garden interior asset audit and SpriteCook pass list](research/garden-interior/README.md)
+
 ## Launch and first play
 
 The browser link opens the four-card welcome tour and installation instructions. Gameplay starts when the player opens the installed app. `usePhoneApp` reads the display mode. Accepting a browser install prompt leaves the current tab on the tour. [App entry](../../src/App.jsx) · [Install prompt](../../src/installPrompt.js) · [Welcome tour](../../src/WelcomeTour.jsx)
