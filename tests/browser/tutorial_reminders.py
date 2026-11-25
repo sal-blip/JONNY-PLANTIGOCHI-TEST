@@ -1,10 +1,11 @@
 """Exercise tutorial consent with emulated notification, push and worker APIs."""
+import json
 from pathlib import Path
 from playwright.sync_api import expect, sync_playwright
 from dew_lesson import READ_PLANT, sprout_fixture
 from scene_music import context_for, SEED_SETUP, taps
 
-APIS = """() => {
+APIS = """build => {
   let permission='default', subscription=null;
   window.activations=[];
   Object.defineProperty(window,'PushManager',{value:class {},configurable:false});
@@ -12,7 +13,7 @@ APIS = """() => {
     get permission(){return permission;},
     async requestPermission(){activations.push(['permission',navigator.userActivation.isActive]);return permission='granted';}
   }});
-  const worker=Object.assign(new EventTarget(),{state:'activated',postMessage(message,ports){
+  const worker=Object.assign(new EventTarget(),{state:'activated',scriptURL:location.origin+'/sw.js?build='+build,postMessage(message,ports){
     ports?.[0]?.postMessage({status:'pending'});
   }});
   const registration=Object.assign(new EventTarget(),{active:worker,update:async()=>{},pushManager:{
@@ -29,7 +30,7 @@ with sync_playwright() as pw:
     browser=pw.chromium.launch(executable_path='/usr/bin/chromium')
     for choice in ('later','android','apple'):
         ctx,url,blank=context_for(browser,str(Path('dist').resolve()))
-        ctx.add_init_script('('+APIS+')()')
+        ctx.add_init_script('('+APIS+')('+json.dumps(json.loads(Path('dist/game-release.json').read_text())['worker'])+')')
         if choice=='apple':
             ctx.add_init_script("Object.defineProperty(navigator,'vendor',{value:'Apple Computer, Inc.'})")
         ctx.route('**/api/alerts/key',lambda r:r.fulfill(json={'publicKey':'emulated-key'}))

@@ -16,15 +16,16 @@ console.log(JSON.stringify(plant));
 with sync_playwright() as pw:
     browser = pw.chromium.launch(executable_path='/usr/bin/chromium')
     ctx, url, blank = context_for(browser, str(Path('dist').resolve()))
+    release=json.loads(Path('dist/game-release.json').read_text())
     ctx.add_init_script("""(() => {
-        const worker=Object.assign(new EventTarget(), {state:'activated',postMessage(){}});
-        const reg=Object.assign(new EventTarget(), {active:worker,update(){
-            return window.stallCheck ? new Promise(resolve=>{window.releaseCheck=resolve}) : Promise.resolve();
-        }});
-        const sw=Object.assign(new EventTarget(), {controller:worker,ready:Promise.resolve(reg),
-            register:async()=>reg,getRegistration:async()=>reg});
-        Object.defineProperty(navigator,'serviceWorker',{value:sw});
+        const get=window.fetch.bind(window);
+        window.fetch=(url,options)=>String(url).startsWith('/game-release.json') && window.stallCheck
+          ? new Promise(resolve=>{window.releaseCheck=()=>resolve(new Response('{}'))})
+          : get(url,options);
     })()""")
+    ctx.add_init_script("""const w=Object.assign(new EventTarget(),{state:'activated',
+        scriptURL:location.origin+'/sw.js?build='+%s});
+        Object.defineProperty(navigator,'serviceWorker',{value:Object.assign(new EventTarget(),{controller:w})});""" % json.dumps(release['worker']))
     page = ctx.new_page()
     page.goto(blank)
     page.evaluate(SEED_SETUP, garden)

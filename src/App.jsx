@@ -46,7 +46,7 @@ const phoneItems = [...phonePanels,'about','bug'];
 const updateMessages={
   checking:'Checking for an update…',downloading:'Downloading the update…',current:'You have the latest version.',
   slow:'The update is taking longer than expected. You can keep playing or try again.',
-  offline:'Connect to the internet to check for updates.',failed:'Could not check for updates. Try again when online.',
+  offline:'Connect to the internet to check for updates.',failed:'Could not verify the latest game. Your garden is safe. Try checking again.',
 };
 const clock = new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit'});
 const reducedMotion = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -556,8 +556,9 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
         <button disabled={['checking','downloading'].includes(phone.updateStatus)}
           onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
-          {phone.updateStatus==='ready'?'Restart to update':phone.updateStatus==='slow'?'Retry update check':'Check for updates'}</button>
+          {phone.updateStatus==='ready'?'Restart to update':['failed','slow'].includes(phone.updateStatus)?'Retry update check':'Check for updates'}</button>
         <small>Running version {appVersion}</small>
+        {phone.publishedVersion && phone.publishedVersion!==appVersion && <small>Published version {phone.publishedVersion}</small>}
         {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
         {['failed','slow'].includes(phone.updateStatus) && <a href="/update">Repair update</a>}
         <button onClick={()=>open('uninstall')}>How to uninstall<ChevronRight className="row-end"/></button>

@@ -1,270 +1,205 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {connectAppWorker,watchAppUpdates} from '../src/appUpdates.js';
+import {connectAppWorker} from '../src/appUpdates.js';
 
-function mockWindow(t,controller){
-  const original=Object.getOwnPropertyDescriptor(navigator,'onLine');
-  Object.defineProperty(navigator,'onLine',{configurable:true,value:true,writable:true});
-  t.after(()=>{if(original)Object.defineProperty(navigator,'onLine',original);else delete navigator.onLine;});
-  const sw=Object.assign(new EventTarget(),{controller});
-  let calls=0;
-  const reg=Object.assign(new EventTarget(),{async update(){calls++;},installing:null,waiting:null});
-  const messages=[];
-  const monitor=watchAppUpdates(reg,sw,controller,m=>messages.push(m));
-  t.after(()=>monitor.close());
-  function activate(next){
-    sw.controller=next;sw.dispatchEvent(new Event('controllerchange'));
-  }
-  return {sw,reg,monitor,messages,activate,calls:()=>calls};
+const origin='https://plant.test', hash='a'.repeat(64);
+const latest={entry:'/assets/index-new.js',worker:hash};
+const target=origin+'/sw.js?build='+hash;
+const old='/assets/index-old.js';
+
+function worker(scriptURL,state='activated'){
+  return Object.assign(new EventTarget(),{scriptURL,state,postMessage(){}});
 }
-test('the first install does not offer a restart; a replacement offers one and leaves navigation to the player',async t=>{
-  const {reg,monitor,messages,activate}=mockWindow(t,null);
-  const first={}, next=Object.assign(new EventTarget(),{state:'installing',postMessage(){}});
-  activate(first);
-  await monitor.check(true);
-  assert.equal(messages.at(-1),'current');
-  reg.installing=next;reg.dispatchEvent(new Event('updatefound'));
-  assert.equal(messages.at(-1),'downloading');
-  reg.installing=null;activate(next);
-  assert.equal(messages.at(-1),'ready');
-  await monitor.check(true);
-  assert.equal(messages.at(-1),'ready');
-});
-test('resuming throttles successful checks; manual checks bypass the delay and handle loss of network',async t=>{
-  const {reg,monitor,messages,calls}=mockWindow(t,{});
-  await monitor.check();await monitor.check();
-  assert.equal(calls(),1);
-  navigator.onLine=false;
-  await monitor.check(true);
-  assert.equal(messages.at(-1),'offline');
-  assert.equal(calls(),1);
-  navigator.onLine=true;reg.update=async()=>{throw new Error('connection lost');};
-  await monitor.check(true);
-  assert.equal(messages.at(-1),'failed');
-  reg.update=async()=>{};await monitor.check(true);
-  assert.equal(messages.at(-1),'current');
-});
-test('detects a controller replaced while registration resolves and releases listeners on close',t=>{
-  const original={}, sw=Object.assign(new EventTarget(),{controller:{}});
-  const reg=new EventTarget(), messages=[];
-  const monitor=watchAppUpdates(reg,sw,original,s=>messages.push(s));
-  assert.deepEqual(messages,['ready']);
-  monitor.close();
-  sw.controller={};sw.dispatchEvent(new Event('controllerchange'));
-  assert.deepEqual(messages,['ready']);
-});
-
-function makeWorker(state) {
-  return Object.assign(new EventTarget(), {state, postMessage() {}});
-}
-
-function workerConnection(t) {
-  const previous = Object.getOwnPropertyDescriptor(navigator, 'onLine');
-  Object.defineProperty(navigator, 'onLine', {configurable:true, value:true, writable:true});
-  t.after(() => {
-    if (previous) Object.defineProperty(navigator, 'onLine', previous);
-    else delete navigator.onLine;
-  });
-  const reg = Object.assign(new EventTarget(), {installing:null, waiting:null, active:null, async update() {}});
-  const sw = Object.assign(new EventTarget(), {controller:null, async register() { return reg; }, async getRegistration() {}});
-  const statuses = [], availability = [];
-  const connection = connectAppWorker(sw, value => availability.push(value), value => statuses.push(value));
-  t.after(() => connection.close());
-  return {reg, sw, connection, statuses, availability};
-}
-
-test('a background replacement that goes redundant enables a retry, even if its update check resolves later', async t => {
-  const {reg, monitor, messages, activate} = mockWindow(t, {});
-  let finish;
-  reg.update = () => new Promise(resolve => { finish = resolve; });
-  const checking = monitor.check();
-  await Promise.resolve();
-  const worker = makeWorker('installing');
-  reg.installing = worker;
-  reg.dispatchEvent(new Event('updatefound'));
-  assert.equal(messages.at(-1), 'downloading');
-  reg.installing = null;
-  worker.state = 'redundant';
-  worker.dispatchEvent(new Event('statechange'));
-  finish();
-  await checking;
-  assert.equal(messages.at(-1), 'failed');
-
-  let retries = 0;
-  reg.update = async () => { retries++; };
-  await monitor.check();
-  assert.equal(retries, 1);
-  assert.equal(messages.at(-1), 'current');
-  activate(makeWorker('activated'));
-  assert.equal(messages.at(-1), 'ready');
-});
-
-test('reconnect and a manual check share a new registration after the initial script fetch failed', async t => {
-  const {reg, sw, connection, statuses, availability} = workerConnection(t);
-  let calls = 0, finish;
-  sw.register = async () => {
-    if (++calls === 1) throw new Error('503');
-    return new Promise(resolve => { finish = resolve; });
+function fixture(t,{runningEntry=old,initial=worker(origin+'/sw.js'),shell=old}={}){
+  const previous=Object.getOwnPropertyDescriptor(navigator,'onLine');
+  Object.defineProperty(navigator,'onLine',{configurable:true,writable:true,value:true});
+  t.after(()=>{if(previous)Object.defineProperty(navigator,'onLine',previous);else delete navigator.onLine;});
+  const sw=Object.assign(new EventTarget(),{controller:initial});
+  const statuses=[],availability=[],scripts=[];
+  const env={shell,lookup:async()=>latest,read:async()=>env.shell};
+  sw.register=async(url,opts)=>{
+    assert.deepEqual(opts,{scope:'/',updateViaCache:'none'});
+    scripts.push(url);
+    sw.controller=worker(url);env.shell=latest.entry;
+    sw.dispatchEvent(new Event('controllerchange'));
+    return {active:sw.controller};
   };
-  await connection.check();
-  assert.equal(availability.at(-1), 'unavailable');
-  assert.equal(statuses.at(-1), 'failed');
-  const resumed = connection.check();
-  assert.equal(connection.check(true), resumed);
-  assert.equal(statuses.at(-1), 'checking');
-  const first = makeWorker('installing');
-  reg.installing = first;
-  finish(reg);
-  await resumed;
-  assert.equal(calls, 2);
-  assert.equal(statuses.at(-1), 'downloading');
-  reg.active = first;
-  reg.installing = null;
-  first.state = 'activated';
-  first.dispatchEvent(new Event('statechange'));
-  sw.controller = first;
-  sw.dispatchEvent(new Event('controllerchange'));
-  assert.equal(statuses.at(-1), 'current');
-  assert.equal(availability.at(-1), 'ready');
+  const conn=connectAppWorker(sw,s=>availability.push(s),s=>statuses.push(s),{
+    origin,runningEntry,releaseInfo:s=>env.lookup(s),readShell:s=>env.read(s)
+  });
+  t.after(()=>conn.close());
+  return {conn,sw,env,statuses,availability,scripts};
+}
+test('a stale registered URL cannot hide a newer release and a verified old tab offers restart',async t=>{
+  const {conn,sw,statuses,scripts}=fixture(t);
+  await conn.check(true);
+  assert.deepEqual(scripts,[target]);
+  assert.equal(statuses.at(-1),'ready');
+  await conn.check(true);
+  assert.equal(sw.controller.scriptURL,target);
+  assert.equal(scripts.length,1);
+  assert.equal(statuses.at(-1),'ready');
 });
-
-test('a failed first precache can register again from Settings without reloading', async t => {
-  const {reg, sw, connection, statuses, availability} = workerConnection(t);
-  let calls = 0;
-  sw.register = async () => { calls++; return reg; };
-  const first = makeWorker('installing');
-  reg.installing = first;
-  await connection.check();
-  reg.installing = null;
-  first.state = 'redundant';
-  first.dispatchEvent(new Event('statechange'));
-  assert.equal(availability.at(-1), 'unavailable');
-  assert.equal(statuses.at(-1), 'failed');
-  sw.register = async () => {
-    calls++;
-    reg.active = makeWorker('activated');
+test('first install waits for activation and claim before calling the current shell ready',async t=>{
+  const {conn,sw,env,statuses,availability}=fixture(t,{runningEntry:latest.entry,initial:null});
+  const pending=worker(target,'installing');
+  sw.register=async()=>({installing:pending});
+  const request=conn.check(true);
+  await new Promise(setImmediate);
+  assert.equal(statuses.at(-1),'downloading');
+  pending.state='activated';pending.dispatchEvent(new Event('statechange'));
+  assert.equal(statuses.at(-1),'downloading');
+  env.shell=latest.entry;
+  sw.controller=pending;sw.dispatchEvent(new Event('controllerchange'));
+  await request;
+  assert.equal(statuses.at(-1),'current');
+  assert.equal(availability.at(-1),'ready');
+});
+test('same worker with a stale cached entry gets a fresh worker URL and verifies again',async t=>{
+  const {conn,sw,env,scripts,statuses}=fixture(t,{initial:worker(target)});
+  const register=sw.register;
+  sw.register=async(...args)=>{
+    const reg=await register(...args);
+    if(scripts.length===1)env.shell=old;
     return reg;
   };
-  await connection.check(true);
-  assert.equal(calls, 2);
-  assert.equal(availability.at(-1), 'ready');
-  assert.equal(statuses.at(-1), 'current');
+  await conn.check(true);
+  assert.equal(scripts.length,2);
+  assert.match(scripts[1],/&retry=/);
+  assert.equal(statuses.at(-1),'ready');
 });
-
-test('offline startup uses the existing registration and checks again when online', async t => {
-  const {reg, sw, connection, statuses, availability} = workerConnection(t);
-  reg.active = makeWorker('activated');
-  sw.controller = reg.active;
-  let registered = 0, updated = 0;
-  sw.register = async () => { registered++; throw new Error('Offline'); };
-  sw.getRegistration = async () => reg;
-  reg.update = async () => { updated++; };
-  navigator.onLine = false;
-  await connection.check(true);
-  assert.equal(registered, 0);
-  assert.equal(updated, 0);
-  assert.equal(availability.at(-1), 'ready');
-  assert.equal(statuses.at(-1), 'offline');
-  navigator.onLine = true;
-  await connection.check();
-  assert.equal(updated, 1);
-  assert.equal(statuses.at(-1), 'current');
+test('a mismatched shell after both attempts cannot offer restart; manual retry is available',async t=>{
+  const {conn,env,statuses}=fixture(t);
+  env.read=async()=>old;
+  await conn.check(true);
+  assert.equal(statuses.at(-1),'failed');
+  assert.ok(!statuses.includes('ready'));
+  env.read=async()=>latest.entry;
+  await conn.check(true);
+  assert.equal(statuses.at(-1),'ready');
 });
-
-test('a late registration after cleanup cannot publish status or watch workers', async t => {
-  const {reg, sw, connection, statuses, availability} = workerConnection(t);
+test('checks share a request; background successes are throttled and manual checks bypass throttling',async t=>{
+  const {conn,env,scripts}=fixture(t,{initial:worker(target),runningEntry:latest.entry,shell:latest.entry});
+  let count=0;
+  env.lookup=async()=>{count++;return latest;};
+  const first=conn.check();
+  assert.equal(conn.check(true),first);
+  await first;await conn.check();
+  assert.equal(count,1);
+  await conn.check(true);
+  assert.equal(count,2);
+  assert.deepEqual(scripts,[]);
+});
+test('a stalled release lookup releases the button and its late response cannot overwrite a retry',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const {conn,env,statuses}=fixture(t);
   let finish;
-  sw.register = () => new Promise(resolve => { finish = resolve; });
-  const pending = connection.check();
-  connection.close();
-  reg.active = makeWorker('activated');
-  finish(reg);
-  await pending;
-  sw.controller = reg.active;
+  env.lookup=()=>new Promise(r=>{finish=r;});
+  const p=conn.check(true);
+  t.mock.timers.tick(12000);await p;
+  assert.equal(statuses.at(-1),'slow');
+  env.lookup=async()=>latest;await conn.check(true);
+  finish(latest);await Promise.resolve();
+  assert.equal(statuses.at(-1),'ready');
+});
+test('a stalled installation times out and a later controller claim triggers fresh verification',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const {conn,sw,env,statuses}=fixture(t);
+  const waiting=worker(target,'installing');
+  sw.register=async()=>({installing:waiting});
+  const p=conn.check(true);
+  await new Promise(setImmediate);
+  t.mock.timers.tick(90000);await p;
+  assert.equal(statuses.at(-1),'slow');
+  sw.controller=waiting;waiting.state='activated';env.shell=latest.entry;
   sw.dispatchEvent(new Event('controllerchange'));
-  assert.deepEqual(availability, ['preparing']);
-  assert.deepEqual(statuses, []);
+  await new Promise(setImmediate);
+  assert.equal(statuses.at(-1),'ready');
+});
+test('offline cancellation preserves offline availability; reconnect retries, cleanup ignores late events',async t=>{
+  const {conn,sw,env,availability,statuses}=fixture(t);
+  let finish;
+  env.lookup=()=>new Promise(r=>{finish=r;});
+  const pending=conn.check();
+  navigator.onLine=false;conn.check();
+  finish(latest);await pending;
+  assert.equal(statuses.at(-1),'offline');
+  assert.equal(availability.at(-1),'ready');
+  navigator.onLine=true;env.lookup=async()=>latest;await conn.check();
+  assert.equal(statuses.at(-1),'ready');
+  conn.close();
+  const count=statuses.length;
+  sw.dispatchEvent(new Event('controllerchange'));
+  await conn.check(true);
+  assert.equal(statuses.length,count);
 });
 
-test('a silent update request times out, retries, and a late original completion cannot overwrite ready', async t => {
+test('a redundant precache retries with a different URL before offering a restart',async t=>{
+  const {conn,sw,statuses}=fixture(t);
+  const register=sw.register;
+  let count=0;
+  sw.register=async(url,opts)=>{
+    if(!count++)return {installing:worker(url,'redundant')};
+    assert.match(url,/retry=/);
+    return register(url,opts);
+  };
+  await conn.check(true);
+  assert.equal(count,2);
+  assert.equal(statuses.at(-1),'ready');
+});
+test('recovers when the existing controller cannot read its cached entry',async t=>{
+  const {conn,env,statuses,scripts}=fixture(t,{initial:worker(target)});
+  let reads=0;
+  env.read=async()=>{if(!reads++)throw Error('Cache read failed');return latest.entry;};
+  await conn.check(true);
+  assert.deepEqual(scripts,[target]);
+  assert.equal(statuses.at(-1),'ready');
+});
+test('lookup failure never labels an unknown release current',async t=>{
+  const {conn,env,statuses,availability}=fixture(t);
+  env.lookup=async()=>{throw Error('Unavailable');};
+  await conn.check(true);
+  assert.equal(statuses.at(-1),'failed');
+  assert.equal(availability.at(-1),'ready');
+  env.lookup=async()=>latest;await conn.check(true);
+  assert.equal(statuses.at(-1),'ready');
+});
+test('closing during registration suppresses late activation and notifications',async t=>{
+  const {conn,sw,statuses}=fixture(t);
+  let finish;
+  sw.register=()=>new Promise(resolve=>{finish=resolve;});
+  const request=conn.check(true);
+  await new Promise(setImmediate);
+  conn.close();
+  const count=statuses.length;
+  sw.controller=worker(target);
+  finish({active:sw.controller});
+  sw.dispatchEvent(new Event('controllerchange'));
+  await request;
+  assert.equal(statuses.length,count);
+});
+test('retry after a stuck registration uses a new script URL on the same scope',async t=>{
   t.mock.timers.enable({apis:['setTimeout']});
-  const {reg, monitor, messages, activate} = mockWindow(t, {});
-  let finishOriginal, calls = 0;
-  reg.update = () => ++calls === 1 ? new Promise(resolve => { finishOriginal = resolve; }) : Promise.resolve();
-  const stalled = monitor.check();
-  assert.equal(monitor.check(true), stalled);
-  assert.equal(messages.at(-1), 'checking');
-  await Promise.resolve();
-  t.mock.timers.tick(12000);
-  await stalled;
-  assert.equal(messages.at(-1), 'slow');
-  await monitor.check(true);
-  assert.equal(calls, 2);
-  assert.equal(messages.at(-1), 'current');
-  activate(makeWorker('activated'));
-  finishOriginal();
-  await Promise.resolve();
-  assert.equal(messages.at(-1), 'ready');
+  const {conn,sw,scripts,statuses}=fixture(t);
+  const register=sw.register;
+  sw.register=()=>new Promise(()=>{});
+  const stalled=conn.check(true);
+  await new Promise(setImmediate);
+  t.mock.timers.tick(12000);await stalled;
+  assert.equal(statuses.at(-1),'slow');
+  sw.register=register;
+  await conn.check(true);
+  assert.match(scripts[0],/&retry=/);
+  assert.equal(statuses.at(-1),'ready');
 });
-
-test('a registration that never answers releases Settings and a retry owns its monitor', async t => {
+test('an already-active worker that never claims the page gets replaced automatically',async t=>{
   t.mock.timers.enable({apis:['setTimeout']});
-  const {reg, sw, connection, statuses} = workerConnection(t);
-  let finishOriginal;
-  sw.register = () => new Promise(resolve => { finishOriginal = resolve; });
-  const pending = connection.check(true);
-  t.mock.timers.tick(12000);
-  await pending;
-  assert.equal(statuses.at(-1), 'slow');
-  reg.active = makeWorker('activated');
-  sw.register = async () => reg;
-  await connection.check(true);
-  assert.equal(statuses.at(-1), 'current');
-  const count = statuses.length;
-  finishOriginal(reg);
-  await Promise.resolve();
-  assert.equal(statuses.length, count);
-});
-
-test('a stalled download enables retry while a later controller change still offers restart', async t => {
-  t.mock.timers.enable({apis:['setTimeout']});
-  const {reg, monitor, messages, activate, calls} = mockWindow(t, {});
-  const worker = makeWorker('installing');
-  reg.installing = worker;
-  reg.dispatchEvent(new Event('updatefound'));
-  t.mock.timers.tick(30000);
-  worker.state = 'installed';
-  worker.dispatchEvent(new Event('statechange'));
-  t.mock.timers.tick(30000);
-  assert.equal(messages.at(-1), 'downloading');
-  t.mock.timers.tick(15000);
-  assert.equal(messages.at(-1), 'slow');
-  await monitor.check(true);
-  assert.equal(calls(), 1);
-  activate(worker);
-  t.mock.timers.tick(60000);
-  assert.equal(messages.at(-1), 'ready');
-});
-
-test('an installed window checks its existing worker and releases the button when connectivity drops', async t => {
-  const {reg, sw, connection, statuses} = workerConnection(t);
-  reg.active = sw.controller = makeWorker('activated');
-  let registrations = 0, finish;
-  sw.register = async () => { registrations++; return reg; };
-  sw.getRegistration = async () => reg;
-  await connection.check(true);
-  assert.equal(registrations, 0);
-  reg.update = () => new Promise(resolve => { finish = resolve; });
-  const pending = connection.check(true);
-  await Promise.resolve();
-  navigator.onLine = false;
-  connection.check();
-  assert.equal(statuses.at(-1), 'offline');
-  finish();
-  await pending;
-  assert.equal(statuses.at(-1), 'offline');
-  navigator.onLine = true;
-  reg.update = async () => {};
-  await connection.check();
-  assert.equal(statuses.at(-1), 'current');
+  const {conn,sw,statuses}=fixture(t);
+  const register=sw.register;
+  sw.register=(url,opts)=>url===target?Promise.resolve({active:worker(url)}):register(url,opts);
+  const request=conn.check(true);
+  await new Promise(setImmediate);
+  t.mock.timers.tick(2500);
+  await request;
+  assert.equal(statuses.at(-1),'ready');
 });

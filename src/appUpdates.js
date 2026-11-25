@@ -1,205 +1,148 @@
-const CHECK_TIMEOUT = 12000;
-const DOWNLOAD_TIMEOUT = 45000;
+// Neither the installed worker nor its HTTP cache is the authority on the live release.
+const CHECK_MS=12000, INSTALL_MS=90000, RECHECK_MS=60000;
+class Timeout extends Error {}
 
-class UpdateTimeout extends Error {}
-
-function bounded(request) {
-  let timer;
-  const deadline = new Promise((_, reject) => {
-    timer = setTimeout(() => reject(new UpdateTimeout()), CHECK_TIMEOUT);
+function bounded(work,ms,signal){
+  signal.throwIfAborted();
+  let timer,abort;
+  const limit=new Promise((_,reject)=>{
+    timer=setTimeout(()=>reject(new Timeout()),ms);
+    abort=()=>reject(signal.reason);
+    signal.addEventListener('abort',abort,{once:true});
   });
-  return Promise.race([request, deadline]).finally(() => clearTimeout(timer));
+  return Promise.race([work,limit]).finally(()=>{
+    clearTimeout(timer);
+    signal.removeEventListener('abort',abort);
+  });
 }
 
-function failureStatus(error) {
-  if (!navigator.onLine) return 'offline';
-  return error instanceof UpdateTimeout ? 'slow' : 'failed';
+function pageEntry(doc){
+  return doc.querySelector('script[type="module"][src]')?.getAttribute('src');
 }
 
-function hasWorker(registration) {
-  return registration && [registration.installing, registration.waiting, registration.active]
-    .some(worker => worker && worker.state !== 'redundant');
+async function publishedRelease(signal){
+  const response=await fetch('/game-release.json?check='+Date.now(),{cache:'no-store',signal});
+  if(!response.ok)throw Error('Release lookup failed');
+  const release=await response.json();
+  if(!/^\/assets\/[\w.-]+\.js$/.test(release.entry) || !/^[\da-f]{64}$/.test(release.worker))throw Error('Invalid release');
+  return release;
 }
 
-function isPending(worker) {
-  return worker && worker.state !== 'redundant' && worker.state !== 'activated';
+async function controlledEntry(signal){
+  const response=await fetch('/index.html',{cache:'no-store',signal});
+  if(!response.ok)throw Error('Offline game unavailable');
+  return pageEntry(new DOMParser().parseFromString(await response.text(),'text/html'));
 }
 
-// The first controller claims a new installation. A replacement controller can
-// serve a newer app on the next navigation while the current game stays open.
-export function watchAppUpdates(registration, serviceWorker, initialController, onStatus, onAvailability = () => {}) {
-  let controller = initialController, changed = false, tracked = null, checking = null;
-  let disposed = false, lastSuccess = 0, failures = 0;
-
-  let downloadTimer, stalled = false;
-
-  function trackDownload() {
-    clearTimeout(downloadTimer);
-    stalled = false;
-    onStatus('downloading');
-    downloadTimer = setTimeout(() => {
-      if (disposed || changed || !isPending(tracked)) return;
-      stalled = true;
-      lastSuccess = 0;
-      onStatus(navigator.onLine ? 'slow' : 'offline');
-    }, DOWNLOAD_TIMEOUT);
-  }
-
-  function controllerChanged() {
-    const next = serviceWorker.controller;
-    if (!next || next === controller || disposed) return;
-    if (controller) changed = true;
-    controller = next;
-    if (changed || !isPending(tracked)) clearTimeout(downloadTimer);
-    onStatus(changed ? 'ready' : 'current');
-  }
-
-  function workerChanged() {
-    if (disposed) return;
-    controllerChanged();
-    if (registration.active?.state === 'activated') onAvailability('ready');
-    if (!tracked || changed) return;
-    clearTimeout(downloadTimer);
-    if (tracked.state === 'redundant') {
-      failures++;
-      lastSuccess = 0;
-      if (!registration.active) onAvailability('unavailable');
-      onStatus(navigator.onLine ? 'failed' : 'offline');
-    } else if (tracked.state === 'activated') {
-      onAvailability('ready');
-      // clients.claim() can arrive just after activation. Its 'ready' takes precedence.
-      onStatus('current');
-    } else {
-      if (controller && tracked.state === 'installed') tracked.postMessage({type:'SKIP_WAITING'});
-      trackDownload();
+async function installRelease(sw,script,signal){
+  const reg=await bounded(sw.register(script,{scope:'/',updateViaCache:'none'}),CHECK_MS,signal);
+  signal.throwIfAborted();
+  const candidate=[reg.installing,reg.waiting,reg.active].find(worker=>worker?.scriptURL===script);
+  if(!candidate)throw Error('Worker unavailable');
+  let changed;
+  try{
+    const activated=new Promise((resolve,reject)=>{
+      changed=()=>{
+        if(candidate.state==='redundant')reject(Error('Installation failed'));
+        else if(candidate.state==='activated' && sw.controller===candidate)resolve();
+        else if(candidate.state==='installed')candidate.postMessage({type:'SKIP_WAITING'});
+      };
+      candidate.addEventListener('statechange',changed);
+      sw.addEventListener('controllerchange',changed);
+      changed();
+    });
+    // Re-registering an already-active script may never claim a previously
+    // uncontrolled tab. Give clients.claim() a moment, then try a fresh URL.
+    try{await bounded(activated,candidate.state==='activated'?2500:INSTALL_MS,signal);}
+    catch(error){
+      if(error instanceof Timeout && candidate.state==='activated')throw Error('Worker did not claim this window');
+      throw error;
     }
+  }finally{
+    candidate.removeEventListener('statechange',changed);
+    sw.removeEventListener('controllerchange',changed);
   }
+}
 
-  function observe() {
-    const worker = registration.installing || registration.waiting ||
-      (registration.active?.state === 'activating' ? registration.active : null);
-    if (!worker || worker === tracked) return;
-    tracked?.removeEventListener('statechange', workerChanged);
-    tracked = worker;
-    tracked.addEventListener('statechange', workerChanged);
-    workerChanged();
-  }
-
-  function check(manual = false) {
-    if (disposed) return;
-    controllerChanged();
-    if (changed) return;
-    observe();
-    if (!navigator.onLine) {
-      lastSuccess = 0;
-      onStatus('offline');
-      return;
+export function connectAppWorker(sw,onAvailability,onStatus,{
+  runningEntry=pageEntry(document),releaseInfo=publishedRelease,readShell=controlledEntry,
+  origin=location.origin,onRelease=()=>{},
+}={}){
+  let active=null,lastSuccess=0,closed=false,retryBuild=null;
+  // Only an activated controller can serve the verified offline entry.
+  const available=()=>onAvailability(sw?.controller?'ready':'unavailable');
+  async function run(signal){
+    const release=await bounded(releaseInfo(signal),CHECK_MS,signal);
+    signal.throwIfAborted();
+    onRelease(release.version);
+    const shell=()=>bounded(readShell(signal),CHECK_MS,signal);
+    const target=new URL('/sw.js',origin);
+    target.searchParams.set('build',release.worker);
+    const controller=sw.controller;
+    const script=controller && new URL(controller.scriptURL);
+    let verified=false;
+    if(script?.origin===origin && script.pathname===target.pathname && script.searchParams.get('build')===release.worker){
+      try{verified=await shell()===release.entry && sw.controller===controller;}
+      catch(error){if(signal.aborted || !navigator.onLine || error instanceof Timeout)throw error;}
     }
-    if (isPending(tracked) && !stalled) {
+    signal.throwIfAborted();
+    if(!verified){
       onStatus('downloading');
-      return checking;
-    }
-    if (checking) {
-      if (manual) onStatus('checking');
-      return checking;
-    }
-    if (!manual && Date.now() - lastSuccess < 60000) return;
-    if (manual) onStatus('checking');
-    const failuresBefore = failures;
-    checking = Promise.resolve().then(() => bounded(registration.update())).then(() => {
-      if (disposed) return;
-      observe();
-      controllerChanged();
-      if (changed || failures !== failuresBefore) return;
-      lastSuccess = navigator.onLine ? Date.now() : 0;
-      if (isPending(tracked)) {
-        if (stalled) trackDownload();
-        else onStatus('downloading');
-      } else onStatus(navigator.onLine ? 'current' : 'offline');
-    }).catch(error => {
-      if (!disposed && !changed && failures === failuresBefore) {
-        lastSuccess = 0;
-        onStatus(failureStatus(error));
+      // A stale script or a rejected precache can survive a normal update().
+      // Retry once on a fresh script URL, retaining the same scope and garden.
+      for(let attempt=0;attempt<2;attempt++){
+        if(attempt || retryBuild===release.worker)target.searchParams.set('retry',crypto.randomUUID());
+        retryBuild=release.worker;
+        try{
+          await installRelease(sw,target.href,signal);
+          verified=await shell()===release.entry;
+          if(verified)break;
+        }catch(error){
+          if(signal.aborted || !navigator.onLine || error instanceof Timeout || attempt)throw error;
+        }
+        signal.throwIfAborted();
       }
-    }).finally(() => { checking = null; });
-    return checking;
-  }
-
-  registration.addEventListener('updatefound', observe);
-  serviceWorker.addEventListener('controllerchange', controllerChanged);
-  controllerChanged();
-  observe();
-  if (registration.active?.state === 'activated') onAvailability('ready');
-  return {check, close() {
-    disposed = true;
-    clearTimeout(downloadTimer);
-    tracked?.removeEventListener('statechange', workerChanged);
-    registration.removeEventListener('updatefound', observe);
-    serviceWorker.removeEventListener('controllerchange', controllerChanged);
-  }};
-}
-
-// Registration can fail before an update monitor exists. A failed first install
-// can also leave a registration with no workers. Both need a fresh register().
-export function connectAppWorker(serviceWorker, onAvailability, onStatus) {
-  const initialController = serviceWorker?.controller;
-  let registration, monitor, pending, manualRequested = false, closed = false;
-
-  async function findRegistration() {
-    // A controlled window already has a registration. Attaching to it first
-    // lets an installed garden observe a replacement even on a slow network.
-    if (serviceWorker.controller || !navigator.onLine) {
-      const existing = await serviceWorker.getRegistration('/');
-      if (closed || hasWorker(existing) || !navigator.onLine) return existing;
     }
-    try {
-      return await serviceWorker.register('/sw.js', {scope:'/', updateViaCache:'none'});
-    } catch (error) {
-      if (closed) throw error;
-      return serviceWorker.getRegistration('/');
-    }
+    if(!verified)throw Error('Wrong offline game');
+    signal.throwIfAborted();
+    retryBuild=null;
+    lastSuccess=Date.now();
+    onAvailability('ready');
+    onStatus(release.entry===runningEntry?'current':'ready');
   }
-
-  async function register() {
-    try {
-      const next = await bounded(findRegistration());
-      if (closed) return;
-      if (!hasWorker(next)) throw new Error('No installed or installing game worker');
-      registration = next;
-      monitor = watchAppUpdates(next, serviceWorker, initialController, onStatus, onAvailability);
-      await monitor.check(manualRequested);
-    } catch (error) {
-      if (!closed) {
-        onAvailability(serviceWorker.controller ? 'ready' : 'unavailable');
-        onStatus(failureStatus(error));
-      }
-    } finally {
-      pending = null;
-      manualRequested = false;
-    }
-  }
-
-  function check(manual = false) {
-    if (closed) return;
-    if (!serviceWorker) {
-      onAvailability('unavailable');
-      if (manual) onStatus(navigator.onLine ? 'failed' : 'offline');
+  function check(manual=false){
+    if(closed)return;
+    if(!navigator.onLine || !sw){
+      active?.controller.abort();
+      active=null;
+      lastSuccess=0;
+      available();
+      onStatus(!navigator.onLine?'offline':'failed');
       return;
     }
-    if (monitor && hasWorker(registration)) {
-      return monitor.check(manual);
-    }
-    if (manual) { manualRequested = true; onStatus(navigator.onLine ? 'checking' : 'offline'); }
-    if (pending) return pending;
-    monitor?.close();
-    monitor = null;
-    onAvailability('preparing');
-    pending = register();
-    return pending;
+    if(active)return active.promise;
+    if(!manual && lastSuccess && Date.now()-lastSuccess<RECHECK_MS)return;
+    const controller=new AbortController();
+    const task={controller};
+    active=task;
+    onAvailability(sw.controller?'ready':'preparing');
+    onStatus('checking');
+    task.promise=run(controller.signal).catch(error=>{
+      if(controller.signal.aborted)return;
+      lastSuccess=0;
+      available();
+      onStatus(!navigator.onLine?'offline':error instanceof Timeout?'slow':'failed');
+    }).finally(()=>{
+      controller.abort();
+      if(active===task)active=null;
+    });
+    return task.promise;
   }
-
-  return {check, close() {
-    closed = true;
-    monitor?.close();
+  const changed=()=>{lastSuccess=0;void check();};
+  sw?.addEventListener('controllerchange',changed);
+  return {check,close(){
+    closed=true;
+    active?.controller.abort();
+    sw?.removeEventListener('controllerchange',changed);
   }};
 }

@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 
 from playwright.sync_api import expect, sync_playwright
 from scene_music import SEED_SETUP, taps
+from dew_lesson import READ_PLANT
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--repair", action="store_true", help="Recover from the failed update using the direct public repair page")
@@ -18,6 +19,7 @@ parser.add_argument("current", type=Path, help="Target release's dist directory"
 args = parser.parse_args()
 release = args.previous
 stale_entry = False
+stale_unversioned = False
 
 
 class ReleaseHandler(SimpleHTTPRequestHandler):
@@ -37,7 +39,10 @@ class ReleaseHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def translate_path(self, path):
-        directory = args.previous if stale_entry and urlsplit(path).path == "/index.html" else release
+        url = urlsplit(path)
+        stale = (stale_entry and url.path == "/index.html") or (
+            stale_unversioned and not url.query and url.path in ("/sw.js","/index.html"))
+        directory = args.previous if stale else release
         return str(directory.resolve() / Path(super().translate_path(path)).relative_to(Path(self.directory)))
 
     def end_headers(self):
@@ -69,8 +74,12 @@ with ThreadingHTTPServer(("127.0.0.1", 0), partial(ReleaseHandler, directory=str
     taps(page, "Open Plantigochi menu", "Settings")
     release = args.current
     stale_entry = True
+    verified_checker = (args.previous / "game-release.json").exists()
+    if verified_checker:
+        expect(page.get_by_text("You have the latest version.")).to_be_visible(timeout=60000)
     taps(page, "Check for updates")
-    expect(page.get_by_text("Could not check for updates.", exact=False)).to_be_visible(timeout=60000)
+    error = "Could not verify the latest game." if verified_checker else "Could not check for updates."
+    expect(page.get_by_text(error, exact=False)).to_be_visible(timeout=60000)
     assert entry.get_attribute("src") == old
     stale_entry = False
     if args.repair:
@@ -79,13 +88,23 @@ with ThreadingHTTPServer(("127.0.0.1", 0), partial(ReleaseHandler, directory=str
         expect(page.get_by_role("status")).to_contain_text("verified.", timeout=60000)
         page.goto(f"http://127.0.0.1:{server.server_port}/")
     else:
-        taps(page, "Check for updates")
+        stale_unversioned = verified_checker
+        taps(page, "Retry update check" if verified_checker else "Check for updates")
         restart = page.get_by_role("button", name="Restart to update")
         expect(restart).to_be_visible(timeout=60000)
         with page.expect_navigation():
             restart.click()
     new = entry.get_attribute("src")
     assert new != old and (args.current / new.lstrip("/")).exists()
+    assert page.evaluate(READ_PLANT)["id"] == fixture["id"]
+    if verified_checker:
+        taps(page, "Open Plantigochi menu", "Settings")
+        expect(page.get_by_text("You have the latest version.")).to_be_visible(timeout=60000)
+        page.context.set_offline(True)
+        expect(page.get_by_text("Connect to the internet to check for updates.")).to_be_visible()
+        page.context.set_offline(False)
+        expect(page.get_by_text("You have the latest version.")).to_be_visible(timeout=20000)
+        taps(page, "Close menu")
     taps(page, "Open garden", "Open iSEED", "Share")
     expect(page.get_by_role("button", name="Take photo")).to_be_enabled()
     finder = page.locator(".camera-finder")

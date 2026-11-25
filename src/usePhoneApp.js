@@ -9,11 +9,12 @@ export function usePhoneApp() {
   const standalone = useSyncExternalStore(install.subscribe, install.isStandalone);
   const [offline, setOffline] = useState('preparing');
   const [updateStatus, setUpdateStatus] = useState('idle');
+  const [publishedVersion,setPublishedVersion]=useState(null);
   const worker = useRef(null);
 
   useEffect(() => {
     const sw = navigator.serviceWorker;
-    const connection = connectAppWorker(import.meta.env.PROD && window.isSecureContext ? sw : null, setOffline, setUpdateStatus);
+    const connection = connectAppWorker(import.meta.env.PROD && window.isSecureContext ? sw : null, setOffline, setUpdateStatus, {onRelease:setPublishedVersion});
     worker.current = connection;
     void connection.check();
     function identifyWindow(event) {
@@ -36,6 +37,6 @@ export function usePhoneApp() {
     };
   }, []);
 
-  return {standalone, updateStatus, checkForUpdates:() => worker.current?.check(true),
+  return {standalone, updateStatus, publishedVersion, checkForUpdates:() => worker.current?.check(true),
     installState, installed:installState === 'installed', promptInstall:install.prompt, offline};
 }

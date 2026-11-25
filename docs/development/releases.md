@@ -2,6 +2,14 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.59 · Verify updates against the published game
+
+Reproduced in Chromium with 0.1.57 installed and 0.1.58 available. When the registered worker URL returned its previous script, Settings reported “You have the latest version.” The old check observed worker changes without comparing the open game with the published release. The separate repair page used a fresh worker URL and checked the cached entry.
+
+Settings and background checks now read a network-only release descriptor, install the published worker on the existing scope, verify the controlled HTML, and compare it with the running game. Settings shows the published version when it differs. Stale files, stalled requests and interrupted downloads leave a retry available. No garden or notification data is cleared.
+
+The production build and 198 unit tests passed. Browser tests cover upgrading older installations, rejecting an incorrect cached entry, recovering in Settings with stale unversioned URLs, offline and reconnect, and preserving the plant ID after restart. [Upgrade walkthrough](../../tests/browser/installed_update.py) · [Timeout and retry](../../tests/browser/update_recovery.py)
+
 ## Plantigochi 0.1.58 · Use a Growth Day from the prize screen
 
 The Garden Spin previously announced a Growth Day and sent players back to the rewards list. The prize now offers immediate redemption on the named plant or saving for later. After a successful save, the receipt offers to show the plant. Banked days appear above the slot machine and explain any care needed first. Decorative rays behind the machine let taps reach the spin button.
