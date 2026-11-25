@@ -1,8 +1,6 @@
 import GuideChat from './GuideChat.jsx';
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {ChevronLeft,Flower2} from 'lucide-react';
-import CoinPurse from './CoinPurse.jsx';
-import {lifeOf} from './gardenEconomy.js';
 import './ISeedPhone.css';
 
 const apps=[
@@ -122,7 +120,6 @@ export function ISeedHome({plant,open,guide=false,busy=false,active=false}){
         <span className="iseed-icon-tile" aria-hidden="true" style={{backgroundPositionX:((index<3?index:index+1)*20)+'%'}}/><span>{app.label}</span>
       </button>)}
     </nav>
-    <CoinPurse className="iseed-purse" balance={lifeOf(plant).balance}/>
   </div>;
 }
 

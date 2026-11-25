@@ -73,7 +73,7 @@
   filter:drop-shadow(0 2px 1px #3147355e);
 }
 .iseed-app:active .iseed-icon-tile {transform:translateY(2px);filter:drop-shadow(0 1px #3147355e)}
-.iseed-purse {grid-row:4;justify-self:end;align-self:end}
+.iseed-corner .iseed-purse {margin-right:3px}
 .iseed-home.is-night .iseed-home-clock {color:#f3efd2;text-shadow:0 1px 2px #2a5147}
 .iseed-home.is-night .iseed-home-clock span {color:#fff5dd}
 .iseed-home.is-night .iseed-home-clock time {text-shadow:1px 2px #4c625c}
@@ -92,7 +92,6 @@
   .iseed-app {min-height:55px;gap:2px}
   .iseed-icon-tile {width:44px}
   .iseed-app>span:last-child {font-size:13px;padding:1px 3px}
-  .iseed-purse {margin-right:-60px}
 }
 @container (max-height:440px) and (max-width:479px) {
   .iseed-home {grid-template-rows:minmax(48px,1fr) auto minmax(1px,.14fr) auto;padding-top:44px;gap:3px}

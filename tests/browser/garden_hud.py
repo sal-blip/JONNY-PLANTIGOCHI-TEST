@@ -31,7 +31,7 @@ def hud_boxes(page, garden):
         name:'.garden-wordmark',clock:'.garden-clock',share:'.garden-share',
         menu:'[data-global-menu]',purse:'.garden-purse',cue:garden?'[data-room-return]':'[data-toy-handle]'
       };
-      if (garden) Object.assign(selectors,{phone:'[data-room-open-phone]',rooms:'.room-navigation'});
+      if (garden) Object.assign(selectors,{phone:'[data-room-open-phone]',rooms:'[data-room-direction="right"]:enabled'});
       return Object.fromEntries(Object.entries(selectors).map(([name,selector])=>{
         const nodes=active(selector);
         if (nodes.length!==1) throw Error(name+' active instances: '+nodes.length);
@@ -52,9 +52,8 @@ def hud_boxes(page, garden):
         assert min(overlap_x, overlap_y) <= 1, (one, two, width, height, a, b)
     if garden:
         p = controls["phone"]
-        purse = controls["purse"]
-        assert abs(p["x"] - (purse["x"] + purse["w"]) - 10) <= 1
-        assert abs((p["y"] + p["h"]/2) - (purse["y"] + purse["h"]/2)) <= 1
+        arrow = controls["rooms"]
+        assert arrow["hit"] and arrow["x"] >= width/2 and arrow["y"] + arrow["h"] <= p["y"]
         # These are the original room button's measured bounds with zero safe-area insets.
         assert [p["x"], p["y"], p["w"], p["h"]] == [width - 56, height - 56, 44, 44], p
     assert not page.get_by_text(re.compile("Waz Lab", re.I)).filter(visible=True).count()
@@ -129,13 +128,32 @@ def play(browser, source, screenshots=None):
             taps(page, "Open garden")
             surface(page, "garden")
             garden = hud_boxes(page, True)
-            for name in ("name", "clock", "menu", "share"):
+            for name in ("name", "clock", "menu", "share", "purse"):
                 for key in ("x", "y", "w", "h"):
                     assert abs(toy[name][key] - garden[name][key]) <= 1, (name, key, toy[name], garden[name])
             if screenshots:
                 screenshots.mkdir(exist_ok=True, parents=True)
                 page.screenshot(path=screenshots / f"garden-hud-{width}x{height}.png")
-            taps(page, "Next room", "Previous room", "Return to Plantigochi")
+            expect(button(page, "Previous room")).to_be_hidden()
+            if width == 393:
+                page.emulate_media(reduced_motion="no-preference")
+                page.mouse.move(245, 100)
+                page.mouse.down()
+                page.mouse.move(153, 100, steps=8)
+                page.mouse.up()
+                expect(button(page, "Previous room")).to_be_visible()
+                expect(button(page, "Next room")).to_be_visible()
+                page.wait_for_function("""() => [...document.querySelectorAll('.room-controls .swipe-cue')]
+                  .every(cue => [...cue.querySelectorAll('path')].every(path =>
+                    path.getAnimations().some(a => a.startTime === 0)))""", timeout=5000)
+                taps(page, "Previous room")
+                expect(button(page, "Previous room")).to_be_hidden()
+                page.emulate_media(reduced_motion="reduce")
+            taps(page, "Next room")
+            expect(button(page, "Next room")).to_be_hidden()
+            taps(page, "Previous room")
+            expect(button(page, "Previous room")).to_be_hidden()
+            taps(page, "Return to Plantigochi")
             surface(page, "toy")
         for where in ("toy", "garden"):
             if where == "garden":
@@ -175,6 +193,10 @@ def play(browser, source, screenshots=None):
         expect(page.locator(".garden-purse")).to_be_hidden()
         phone_purse = page.locator(".iseed-purse")
         expect(phone_purse).to_be_visible()
+        purse = phone_purse.bounding_box()
+        rewards = page.locator(".iseed-reward-key").bounding_box()
+        assert 0 <= rewards["x"] - purse["x"] - purse["width"] <= 12
+        assert abs(purse["y"] + purse["height"]/2 - rewards["y"] - rewards["height"]/2) <= 1
         expect(phone_purse).to_have_text(page.locator(".garden-purse").text_content())
         expect(page.get_by_text(re.compile(r"^Today [+]"))).to_have_count(0)
         taps(page, "Journal", MENU, "Settings", "Close menu")

@@ -44,6 +44,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   const count=gardenViews(graduates);
   const [room,setRoom]=useState(0);
   const page=clamp(room,count-1);
+  const [roomLinks,setRoomLinks]=useState({previous:null,next:1});
   const [slot,setSlot]=useState(null),[notice,setNotice]=useState('');
   const [carry,setCarry]=useState(null),[busy,setBusy]=useState(false),[graduating,setGraduating]=useState(null);
   const [panel,setPanel]=useState(null),[ghost,setGhost]=useState(null),[cat,setCat]=useState(false);
@@ -126,7 +127,16 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const first=clamp(Math.floor(el.scrollLeft/frame),count-1);
     const last=clamp(Math.floor((el.scrollLeft+el.clientWidth-1)/frame),count-1);
     setVisible(old=>old[0]===first && old[1]===last?old:[first,last]);
-    if(el.scrollWidth>el.clientWidth)setRoom(clamp(Math.floor((el.scrollLeft+el.clientWidth/2)/frame),count-1));
+    const center=el.scrollLeft+el.clientWidth/2;
+    const nearest=clamp(Math.floor(center/frame),count-1);
+    if(el.scrollWidth>el.clientWidth)setRoom(nearest);
+    // During a partial swipe the nearest room can itself be the return destination.
+    const offset=center-(nearest+.5)*frame;
+    const previous=offset>1?nearest:nearest-1;
+    const next=offset< -1?nearest:nearest+1;
+    const back=previous>=0 && el.scrollLeft>1?previous:null;
+    const forward=next<count && el.scrollWidth-el.clientWidth-el.scrollLeft>1?next:null;
+    setRoomLinks(old=>old.previous===back && old.next===forward?old:{previous:back,next:forward});
   }
   useLayoutEffect(()=>{
     const el=stage.current;
@@ -637,10 +647,11 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
         aria-label="Open iSEED" title="Open iSEED" disabled={!available || busy} onClick={event=>leaveRoom(event,raisePhone)}>
         <img src="/art/iseed-pocket.png" alt="" width="22" height="25" style={{imageRendering:"pixelated"}}/>
       </button>}
-      {!placing && !panel && !message && <nav className="room-hint room-navigation" aria-label="Garden rooms">
-        <button aria-label="Previous room" disabled={page===0} onClick={()=>travel(page-1)}><ChevronLeft aria-hidden="true"/></button>
-        <span>{viewName(page)}</span>
-        <button aria-label="Next room" disabled={page===count-1} onClick={()=>travel(page+1)}><ChevronRight aria-hidden="true"/></button>
+      {!placing && !panel && !message && <nav className="room-navigation" aria-label="Garden rooms">
+        <SwipeCue data-room-direction="left" aria-label="Previous room" disabled={roomLinks.previous===null}
+          hint={roomLinks.previous===null?undefined:viewName(roomLinks.previous)} onClick={()=>travel(roomLinks.previous)}/>
+        <SwipeCue data-room-direction="right" aria-label="Next room" disabled={roomLinks.next===null}
+          hint={roomLinks.next===null?undefined:viewName(roomLinks.next)} onClick={()=>travel(roomLinks.next)}/>
       </nav>}
       {message && <div className={placing?"room-hint room-placement":"room-hint"}>
         {guidingPot?<GuideChat className="placement-guide" cue={available?(preview?'confirm-pot-'+preview.slot:'place-pot'):null}>

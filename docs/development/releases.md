@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.47 · Garden navigation
+
+The garden purse is above the clock, matching the toy. On iSEED home the purse sits next to Rewards. The living room and studio use pulsing directional chevrons. Dragging toward another room reveals the chevron for the return trip.
+
 ## Plantigochi 0.1.46 · Garden and iSEED purse
 
 The garden purse sits beside the phone button. The iSEED home screen shows the same coin badge in its lower-right corner. The daily earnings tally has been removed from the wallet display. The [garden HUD walkthrough](../../tests/browser/garden_hud.py) checks the balance and placement. The [interior asset audit](research/garden-interior/README.md) records the artwork for future review.

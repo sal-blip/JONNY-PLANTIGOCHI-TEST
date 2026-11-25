@@ -85,7 +85,6 @@
   .swipe-cue path { animation: swipe-cue-rise 4.8s ease-in-out infinite; }
   .swipe-cue path:nth-child(2) { animation-delay: .15s; }
   .swipe-cue path:nth-child(3) { animation-delay: .3s; }
-  [inert] .swipe-cue path { animation-play-state: paused; }
   @keyframes swipe-cue-rise {
     0%, 32%, 100% { opacity: .36; transform: translateY(0); }
     13% { opacity: 1; transform: translateY(-2px); }
@@ -149,12 +148,8 @@
 }
 
 .garden-purse{position:absolute;z-index:3;left:var(--hud-side-left);bottom:calc(var(--hud-bottom) + 23px)}
-.garden[data-surface="garden"] .garden-purse{left:auto;right:calc(var(--garden-phone-right) + var(--garden-phone-size) + 10px);bottom:calc(var(--garden-phone-bottom) + var(--garden-phone-size) / 2);transform:translateY(50%)}
 .coin-purse{display:inline-flex;align-items:center;gap:5px;padding:4px 9px 4px 6px;border:1px solid #ffffdf52;border-radius:16px;
   background:#243a31de;color:#fff9dd;font:650 14px/1 var(--display);font-variant-numeric:tabular-nums;pointer-events:none}
-@media(max-width:350px){
-  .garden[data-surface="garden"] .garden-purse{padding-inline:4px;gap:3px;font-size:12px}
-}
 .coin-purse img{image-rendering:pixelated}
 .coin-purse .purse-unit{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 @media(prefers-reduced-motion:no-preference){

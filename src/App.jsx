@@ -493,7 +493,8 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
       inert={!phoneVisible?'':undefined} aria-hidden={!phoneVisible || undefined}>
       {plant && <ISeedPhone page={app} title={app==='phone'?'iSEED':apps.title}
         home={()=>setApp('phone')} back={apps.back} lower={e=>go('garden',e)} locked={navigationLocked || apps.busy}
-        corner={surface==='phone'?<><button hidden={!showGlobalMenu} className="iseed-reward-key" disabled={apps.busy} aria-haspopup="dialog"
+        corner={surface==='phone'?<>{app==='phone' && <CoinPurse className="iseed-purse" balance={gardenLife.balance}/>}
+          <button hidden={!showGlobalMenu} className="iseed-reward-key" disabled={apps.busy} aria-haspopup="dialog"
           aria-label={'Daily rewards, '+pendingRewards+' available actions'} onClick={e=>{restoreFocus.current=e.currentTarget;setPage('daily');}}>
           <img src={rewardIcon} alt=""/>{pendingRewards>0 && <b aria-hidden="true">{pendingRewards}</b>}</button>{menuTrigger}</>:null}>
         {app==='phone'?<ISeedHome plant={plant} guide={guide} open={async id=>{
