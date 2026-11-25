@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.66 · Sharper shop close-ups
+
+The Oak and Lacquer photo frames, Maneki-neko and Record player now show detail from the original 1024 × 1024 SpriteCook sheets in shop and inventory close-ups. The four transparent cutouts range from 207 to 282 pixels wide. Small garden and shop sprites retain their existing scale.
+
+All 202 unit tests and the production build passed. The mobile Chromium shop walkthrough opened all four dialogs, verified each decoded portrait's source dimensions, then bought and placed a pot and reloaded the garden. [Shop walkthrough](../../tests/browser/shop_scale.py)
+
 ## Plantigochi 0.1.65 · Mystic Oasis on the first garden swipe
 
 Cotton Candy Skies plays through the first pot purchase and the prompt to swipe the toy away. Completing that swipe starts the crossfade to Mystic Oasis. The same loop continues as the player visits the Plant Studio, returns home, and opens and closes the first rewards. Reopening a saved room lesson selects Mystic Oasis. [Music walkthrough](../../tests/browser/scene_music.py)

@@ -98,7 +98,7 @@ function framedPhoto(ctx,image,photo,sku,x,y,size,night){
   }
 }
 
-function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=false,spinTime=null,preview=false,rasterScale=1}){
+function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=false,spinTime=null,preview=false,rasterScale=1,detailImage=null}){
   const art=sku==='record' && spinTime!==null ? recordFrames[Math.floor(spinTime/255)%recordFrames.length] : sprites[sku];
   if(!art)return;
   const ink=palette(night,selected);
@@ -121,7 +121,7 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=fa
   }
   if(!preview){ctx.fillStyle='rgba(59,42,42,.22)';r(-9,0,22,1);r(-6,1,17,1);}
   if(selected)drawSelectionContour(ctx,art,{x,y,size:size/2,firstInk:1,rasterScale});
-  const master=nativeArt(sku,night,selected);
+  const master=detailImage ?? nativeArt(sku,night,selected);
   if(master){
     const {spriteOffset,spriteRows}=approvedArt[sku];
     ctx.imageSmoothingEnabled=true;
@@ -166,7 +166,7 @@ export function drawSizeComparison(ctx,sku){
 }
 
 /** Native pixel preview centered horizontally; y is the baseline of the item. */
-export function drawShopPreview(ctx,{sku,x,y,size=1}){
+export function drawShopPreview(ctx,{sku,x,y,size=1,detailImage=null}){
   if(isShopPot(sku)){
     drawPottedPlant(ctx,{x,y,size,potSku:sku,reducedMotion:true,preview:true});return;
   }
@@ -174,5 +174,5 @@ export function drawShopPreview(ctx,{sku,x,y,size=1}){
     const plant={id:'nursery-'+sku,species:sku};
     drawPottedPlant(ctx,{x,y,size,plant,reducedMotion:true,preview:true});return;
   }
-  if(Object.hasOwn(sprites,sku))drawDecor(ctx,{sku,x,y,size,preview:true});
+  if(Object.hasOwn(sprites,sku))drawDecor(ctx,{sku,x,y,size,preview:true,detailImage});
 }

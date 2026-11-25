@@ -6,12 +6,22 @@ from dew_lesson import sprout_fixture
 with sync_playwright() as p:
     b=p.chromium.launch(executable_path='/usr/bin/chromium')
     ctx,url,blank=context_for(b,str(Path('dist').resolve()))
+    ctx.add_init_script("""{
+      const draw = CanvasRenderingContext2D.prototype.drawImage;
+      CanvasRenderingContext2D.prototype.drawImage = function(image, ...args) {
+        if (image instanceof HTMLImageElement && image.currentSrc.split('?')[0].endsWith('.webp')) {
+          this.canvas.dataset.lastBitmap = image.naturalWidth + 'x' + image.naturalHeight;
+        }
+        return draw.call(this, image, ...args);
+      };
+    }""")
     page=ctx.new_page()
     page.goto(blank)
     plant=sprout_fixture()['plant']
     for key in ('tutorial','sproutDebut','sproutBurstPending','dewLesson'):
         plant.pop(key,None)
-    plant['gardenLife']['balance']=30
+    life=plant['gardenLife']
+    life.update(balance=30,visit={'date':life['day'],'streak':1,'claimed':True,'shown':True})
     page.evaluate(SEED_SETUP,plant)
     page.goto(url)
     taps(page,'Open garden','Open iSEED','Shop')
@@ -19,6 +29,14 @@ with sync_playwright() as p:
     count=thumbnails.count()
     assert count>0
     assert all(w==216 and h==192 for w,h in thumbnails.evaluate_all("tiles=>tiles.map(c=>[c.width,c.height])"))
+    for name,price,source_size in [
+        ('Oak photo frame',20,'282x274'),('Lacquer photo frame',28,'233x238'),
+        ('Maneki-neko',30,'207x284'),('Record player',65,'278x208'),
+    ]:
+        taps(page,f'{name} · {price} coins')
+        detail=page.get_by_role('dialog',name=name)
+        expect(detail.locator('canvas')).to_have_attribute('data-last-bitmap',source_size)
+        detail.get_by_role('button',name='Back').tap()
     page.get_by_label('Compare garden sizes').check()
     canvases=page.locator('.shop-scale-art')
     expect(canvases).to_have_count(count)
