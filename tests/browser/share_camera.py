@@ -46,6 +46,11 @@ with sync_playwright() as pw:
     assert slider['height']>slider['width'] and slider['x']>bounds['x']+bounds['width']*.75
     screen = page.locator('.iseed-screen').bounding_box()
     assert abs(bounds['height']-screen['height'])<6 and abs(bounds['width']-screen['width'])<6
+    wide = page.locator('.camera-finder canvas')
+    expect(zoom).to_have_value('1')
+    assert wide.evaluate('el => [el.width,el.height]') == [1200,960]
+    rect = wide.bounding_box()
+    assert abs(rect['width']/rect['height']-1.25)<.01 and rect['height']<bounds['height']
     zoom.press('End')
     expect(zoom).to_have_value('4')
     taps(page, 'Take photo', 'Open captured photos')
@@ -57,8 +62,35 @@ with sync_playwright() as pw:
     assert photo.startswith(b'\x89PNG') and len(photo)>10000
     w,h = int.from_bytes(photo[16:20],'big'),int.from_bytes(photo[20:24],'big')
     assert max(w,h)==1200 and abs(w/h-bounds['width']/bounds['height'])<.002
-    taps(page, 'Return to camera', 'Previous camera room', 'Take photo')
+    taps(page, 'Return to camera', 'Previous camera room')
+    expect(shutter).to_be_enabled()
+    expect(zoom).to_have_value('1')
+    preview = wide.evaluate('el => el.toDataURL()')
+    taps(page, 'Take photo')
     expect(page.get_by_text('Photo captured. 2 this session.')).to_be_attached()
+    taps(page, 'Open captured photos')
+    latest = page.get_by_role('img',name='Selected garden photo')
+    expect(latest).to_be_visible()
+    # At wide both renders are native 1200 × 960. Only the lower-left signature differs.
+    changes = latest.evaluate("""async (img, before) => {
+      await img.decode();
+      const plain=new Image(); plain.src=before; await plain.decode();
+      const w=img.naturalWidth,h=img.naturalHeight;
+      const c=document.createElement('canvas'); c.width=w;c.height=h;
+      const ctx=c.getContext('2d',{willReadFrequently:true});
+      const pixels=image=>{ctx.drawImage(image,0,0);return ctx.getImageData(0,0,w,h).data;};
+      const a=pixels(plain),b=pixels(img);
+      let icon=0,label=0,outside=0;
+      for(let i=0;i<a.length;i+=4){
+        if(a[i]===b[i] && a[i+1]===b[i+1] && a[i+2]===b[i+2])continue;
+        const x=(i/4)%w,y=Math.floor(i/4/w);
+        if(x>w*.32 || y<h*.88)outside++;
+        else if(x<h*.077)icon++;
+        else label++;
+      }
+      return [w,h,icon,label,outside];
+    }""",preview)
+    assert changes[:2]==[1200,960] and min(changes[2:4])>300 and changes[4]==0, changes
     page.reload()
     taps(page, 'Open garden', 'Open iSEED', 'Share', 'Open captured photos')
     expect(page.get_by_role('heading',name='Photo 2 of 2')).to_be_visible()

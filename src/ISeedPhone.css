@@ -145,6 +145,7 @@
 .garden-camera {color:white;isolation:isolate;overflow:hidden}
 .camera-finder,.camera-review {position:absolute;inset:0;background:#18251f}
 .camera-finder canvas,.camera-review img {display:block;width:100%;height:100%;touch-action:none}
+.camera-finder {display:grid;place-items:center}
 .camera-review img {object-fit:contain}
 .garden-camera button {display:grid;place-items:center;width:44px;height:44px;padding:0;color:#fff;background:#17261fce;border:0;border-radius:50%;cursor:pointer}
 .garden-camera button:disabled {opacity:.5;cursor:default}
