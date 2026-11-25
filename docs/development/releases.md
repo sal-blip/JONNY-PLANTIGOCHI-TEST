@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.48 · Three games from the first seed
+
+Play Vine Trail, Dew Catch, or Leaf Pairs immediately after naming a seed. Leaf Pairs replaces Leaf Echo. The optional first-visit game picker returns to the watering lesson when the player leaves.
+
 ## Plantigochi 0.1.47 · Garden navigation
 
 The garden purse is above the clock, matching the toy. On iSEED home the purse sits next to Rewards. The living room and studio use pulsing directional chevrons. Dragging toward another room reveals the chevron for the return trip.

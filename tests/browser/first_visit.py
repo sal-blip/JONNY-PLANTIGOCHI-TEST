@@ -295,7 +295,7 @@ def play(browser, url):
     assert effects.input_value() == "0"
     tap("Close menu")
     # Both ordinary navigation and the previously unseen Dew guide honor mute.
-    for key in ("Open toy menu", "Next toy item", "Choose Play", "Choose Dew Catch"):
+    for key in ("Open toy menu", "Next toy item", "Choose Play", "Next toy item", "Choose Dew Catch"):
         sounds = sounds_for_tap(key)
         assert not sounds, (key, "Unexpected sound after muting in Settings", sounds)
     page.get_by_text("Three misses end the run.", exact=False).wait_for()

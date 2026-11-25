@@ -51,21 +51,17 @@ test('a jar keeps rooting after death; a pot or fresh seed preserves the book an
   assert.equal(replant(legacyJar,'cutting',cutAt+ROOT_TIME).species,'monstera');
   assert.equal(readPlant(JSON.stringify({...dead,book:[...dead.book,...dead.book]})),null);
 });
-test('Dew Catch and Leaf Echo handle misses, wins, replays and stage locks',()=>{
-  const plant=sprout();assert.ok(canPlay('dew',plant));assert.ok(!canPlay('echo',plant));
+test('Dew Catch handles misses, wins and replays',()=>{
+  const plant=sprout();assert.ok(canPlay('dew',plant));
   const enter=name=>stepGame(null,{type:'enter',name});
-  const key=(g,key)=>stepGame(g,{type:'key',key,dropLane:0,sequence:['left','heart','right']});
+  const key=(g,key)=>stepGame(g,{type:'key',key,dropLane:0});
   const tick=g=>stepGame(g,{type:'tick',dropLane:0});
   let dew=key(enter('dew'),'heart');
   for(let i=0;i<40;i++) dew=tick(dew);
   assert.equal(dew.result,'miss');dew=key(dew,'left');
   for(let i=0;i<400 && dew.phase==='fall';i++) dew=tick(dew);
   assert.equal(dew.phase,'won');assert.equal(key(dew,'heart').level,2);
-  let echo=key(enter('echo'),'heart');
-  const watch=()=>{while(echo.phase==='watch') echo=tick(echo);};watch();
-  echo=key(echo,'right');assert.equal(echo.phase,'retry');echo=tick(echo);watch();
-  for(const k of ['left','heart','right']) echo=key(echo,k);
-  assert.equal(echo.phase,'won');assert.equal(stepGame(echo,{type:'exit'}),null);
+  assert.equal(stepGame(dew,{type:'exit'}),null);
 });
 
 test('twenty Dew Catch levels increase goal, speed and drop density and finish at 20',()=>{

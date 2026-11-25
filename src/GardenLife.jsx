@@ -13,9 +13,10 @@ const guide = [
   ['Company','Talk or finish a game. Quiet at 12h, lonely at 24h.'],
   ['Plant food','Food every 48h. Light every 24h.'],
   ['Growing up','New growth on days 3 and 5. Fully grown on day 7.'],
+  ['Vine Trail','Turn the moving tip with the arrows. Find five suns. Avoid the edge and your vine.'],
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Garden coins','Visits +10 daily. Helpful watering +2, up to 3/day. Game wins +3, up to 5/day.'],
-  ['Leaf Echo','Watch three beats. Copy them with the keys.'],
+  ['Leaf Pairs','Use arrows to pick a packet. Heart flips it. Match all three pairs.'],
   ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
   ['Fungus','Gnats? First Aid cures fungus. Treat within 12h.'],
   ['Garden keepsakes','Swipe up to visit the garden’s Cutting Jar and Leaf Book.'],
@@ -37,7 +38,7 @@ export function toyCards(section, plant, now) {
     case 'home': {
       const hints = {
         care: dead?'Pressed leaf':plant.stage==='seed'?'Sleeping seed':healthLabels[condition(plant,now)],
-        play: 'Dew Catch · Leaf Echo',
+        play: 'Choose a game',
         growth: stageLabel(plant),
         aid:sick?'Fungus · '+remaining+' left':'All clear',
         guide: 'Care & controls',
@@ -64,8 +65,9 @@ export function toyCards(section, plant, now) {
       let hint=cleared===LEVELS?'20 levels cleared':'Level '+(cleared+1)+' / '+LEVELS;
       if (plant.dewCleared>cleared) hint+=' · Best '+plant.dewCleared;
       return [
-        card('Dew Catch',canPlay('dew',plant)?hint:'After sprouting','game:dew',{locked:!canPlay('dew',plant)}),
-        card('Leaf Echo',canPlay('echo',plant)?'Copy three beats':'At young stage','game:echo',{locked:!canPlay('echo',plant)})];
+        card('Vine Trail','Turn toward five suns','game:vine',{locked:!canPlay('vine',plant)}),
+        card('Dew Catch',hint,'game:dew',{locked:!canPlay('dew',plant)}),
+        card('Leaf Pairs','Match three leaf pairs','game:pairs',{locked:!canPlay('pairs',plant)})];
     }
     case 'pause': return [card('Resume','Hold Back for your plant','resume'),card('Leave game','Return to your plant','leave')];
     case 'growth': {

@@ -3,10 +3,11 @@ import {company,wake} from './game.js';
 import {earnWin,lifeOf} from './gardenEconomy.js';
 import {settleDewLesson} from './firstVisit.js';
 
-const keys = ['left','heart','right'];
-export const gameNames = { dew: 'Dew Catch', echo: 'Leaf Echo' };
-export const canPlay = (name, plant) => plant.deadAt === null &&
-  (name === 'dew' ? plant.stage !== 'seed' : name === 'echo' && ['young','split','grown'].includes(plant.stage));
+import {newVine,stepVine,VINE_STEP_MS,VINE_GOAL} from './vineTrail.js';
+
+import {newPairs,stepPairs,shuffleLeaves,leafNames} from './leafPairs.js';
+export const gameNames = { vine: 'Vine Trail', dew: 'Dew Catch', pairs: 'Leaf Pairs' };
+export const canPlay = (name, plant) => plant.deadAt === null && Object.hasOwn(gameNames,name);
 export const LEVELS = 20;
 export const DEW_CHANCES = 3;
 const tickMs = 50;
@@ -71,10 +72,14 @@ function fall(g, lane, at) {
 
 export function stepGame(g, event) {
   if (event.type === 'exit') return null;
-  if (event.type === 'enter') return {name:event.name,phase:'ready',lane:1,count:0,chances:DEW_CHANCES,drops:[],
+  if (event.type==='enter' && event.name==='vine')return newVine();
+  if (event.type==='enter' && event.name==='pairs')return newPairs();
+  if (event.type === 'enter' && event.name==='dew') return {name:event.name,phase:'ready',lane:1,count:0,chances:DEW_CHANCES,drops:[],
     level:highestLevel(event.cleared),unlocked:highestLevel(event.cleared),
     ...(event.lesson?{lesson:true,level:1,unlocked:1,count:event.lesson.caught,chances:event.lesson.chances,startedAt:event.lesson.startedAt}:{})};
   if (!g) return null;
+  if(g.name==='pairs')return stepPairs(g,event);
+  if(g.name==='vine')return stepVine(g,event);
   if(g.lesson && (g.phase==='won' || g.phase==='lost'))return g;
   if (event.type === 'key') {
     if (g.phase === 'ready' || g.phase === 'won') {
@@ -82,48 +87,44 @@ export function stepGame(g, event) {
         if (g.name !== 'dew' || g.phase !== 'ready') return g;
         return {...g,level:Math.max(1,Math.min(g.unlocked,g.level+(event.key==='left'?-1:1)))};
       }
-      if (g.name === 'dew') {
-        if (g.phase === 'won' && g.level===LEVELS) return {...g,phase:'ready',unlocked:LEVELS,chances:DEW_CHANCES,count:0,result:null};
-        const level = g.phase==='won' ? g.level+1 : g.level;
-        const round=startDew({...g,unlocked:Math.max(g.unlocked,level)},event.dropLane,level,event.at);
-        return g.lesson?{...round,count:g.count,startedAt:g.startedAt ?? event.at}:round;
-      }
-      return { ...g, phase:'watch', startedAt:event.at, finishedAt:null, sequence:event.sequence, index:0, lit:true };
+      if (g.phase === 'won' && g.level===LEVELS) return {...g,phase:'ready',unlocked:LEVELS,chances:DEW_CHANCES,count:0,result:null};
+      const level = g.phase==='won' ? g.level+1 : g.level;
+      const round=startDew({...g,unlocked:Math.max(g.unlocked,level)},event.dropLane,level,event.at);
+      return g.lesson?{...round,count:g.count,startedAt:g.startedAt ?? event.at}:round;
     }
     if (g.name === 'dew' && g.phase === 'fall') {
       const dx = event.key === 'left' ? -1 : event.key === 'right' ? 1 : 0;
       return { ...g, lane:Math.max(0,Math.min(2,g.lane + dx)) };
-    }
-    if (g.name === 'echo' && g.phase === 'repeat') {
-      if (event.key !== g.sequence[g.index]) return { ...g, phase:'retry', finishedAt:event.at, lit:false };
-      if (g.index === 2) return { ...g, phase:'won', finishedAt:event.at, lit:false };
-      return { ...g, index:g.index + 1 };
     }
     return g;
   }
   if (event.type !== 'tick') return g;
   if (g.phase === 'lost') return startDew({...g,chances:DEW_CHANCES,unlocked:1},event.dropLane,1,event.at);
   if (g.phase === 'fall') return fall(g,event.dropLane,event.at);
-  if (g.phase === 'retry') return { ...g, phase:'watch', startedAt:event.at, finishedAt:null, index:0, lit:true };
-  if (g.phase === 'watch') {
-    if (g.lit) return { ...g, lit:false };
-    if (g.index === 2) return { ...g, phase:'repeat', index:0 };
-    return { ...g, index:g.index + 1, lit:true };
-  }
   return g;
 }
 
 export function playText(g) {
+  if(g.name==='vine'){
+    if(g.phase==='ready')return 'Find 5 suns · ♥ Start';
+    if(g.phase==='won')return 'In bloom! ♥ Again';
+    if(g.phase==='lost')return 'Tangled! ♥ Retry';
+    return g.count+'/'+VINE_GOAL+' suns · ◂ Turn ▸';
+  }
+  if(g.name==='pairs'){
+    if(g.phase==='ready')return 'Find 3 pairs · ♥ Start';
+    if(g.phase==='won')return 'All paired! ♥ Again';
+    if(g.phase==='peek')return 'Two different leaves';
+    const revealed=g.open.includes(g.cursor) || g.matched.includes(g.cursor);
+    return (g.matched.length/2)+'/3 · '+(revealed?leafNames[g.deck[g.cursor]]:'♥ Flip '+(g.cursor+1));
+  }
   if(g.lesson && g.phase==='won')return 'Round clear!';
   if(g.lesson && g.phase==='lost')return 'Three strikes';
   if(g.lesson && g.phase==='ready' && g.startedAt!=null)return g.count+'/3 · ♥ Resume';
   if (g.phase === 'lost') return 'Restarting at Lv 1';
   if (g.phase === 'ready') return g.name==='dew' && g.unlocked>1 ? '◂ Lv '+g.level+' ▸  ♥ Start' : '♥ to start';
-  if (g.phase === 'won') return g.name === 'dew' ? (g.level===LEVELS ? '20 cleared! ♥ Replay' : 'Clear! ♥ Next') : 'You got me! ♥ again';
-  if (g.name === 'dew') return g.count+'/'+dewRules(g.level).goal+' drops';
-  if (g.phase === 'watch') return g.lit ? 'Watch · ' + g.sequence[g.index] : 'Watch…';
-  if (g.phase === 'retry') return 'Hehe. Watch again!';
-  return 'Your turn · ' + (g.index + 1) + '/3';
+  if (g.phase === 'won') return g.level===LEVELS ? '20 cleared! ♥ Replay' : 'Clear! ♥ Next';
+  return g.count+'/'+dewRules(g.level).goal+' drops';
 }
 
 export function usePocketPlay(plant,paused,onFinish) {
@@ -134,18 +135,18 @@ export function usePocketPlay(plant,paused,onFinish) {
   useEffect(() => { if (game && !active) dispatch({type:'exit'}); },[game,active]);
   const lastResult=useRef(null);
   useEffect(() => {
-    if (!active || !['won','lost','retry'].includes(active.phase)) {lastResult.current=null;return;}
+    if (!active || !['won','lost'].includes(active.phase)) {lastResult.current=null;return;}
     if (lastResult.current===active)return;
     lastResult.current=active;
     onFinish(active.name,active.phase,active.level,crypto.randomUUID(),active.startedAt,active.finishedAt,Boolean(active.lesson));
   },[active,onFinish]);
   useEffect(() => {
-    if (!active || paused || active.lesson && active.phase==='lost') return;
-    const delay = {fall:tickMs, lost:1800, watch:active.lit ? 850 : 300, retry:1100}[active.phase];
+    if (!active || paused || (active.lesson || active.name==='vine') && active.phase==='lost') return;
+    const delay = {trail:VINE_STEP_MS, fall:tickMs, lost:1800, peek:950}[active.phase];
     if (!delay) return;
-    const timer = setInterval(() => { if (!document.hidden) dispatch({type:'tick',at:Date.now(),dropLane:randomLane()}); },delay);
+    const timer = setInterval(() => { if (!document.hidden) dispatch({type:'tick',at:Date.now(),dropLane:randomLane(),sunRoll:active.name==='vine'?Math.random():undefined}); },delay);
     return () => clearInterval(timer);
-  },[active?.name,active?.phase,active?.lit,paused]);
+  },[active?.name,active?.phase,paused]);
   return { game:active, enter:name => { if (canPlay(name,plant)) dispatch({type:'enter',name,cleared:dewCheckpoint(plant)}); },
-    exit, resumeDewLesson, key:key=>dispatch({type:'key',key,at:Date.now(),dropLane:randomLane(),sequence:Array.from({length:3},()=>keys[randomLane()])}) };
+    exit, resumeDewLesson, key:key=>dispatch({type:'key',key,at:Date.now(),dropLane:randomLane(),deck:active?.name==='pairs' && key==='heart' && ['ready','won'].includes(active.phase)?shuffleLeaves():undefined}) };
 }

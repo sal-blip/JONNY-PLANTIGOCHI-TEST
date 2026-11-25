@@ -8,7 +8,7 @@ import SproutCelebration from './SproutCelebration.jsx';
 import DeviceShell from './DeviceShell.jsx';
 import CareIndicator from './CareIndicator.jsx';
 import PlantPixel from './PlantPixel.jsx';
-import {DewArt,EchoArt} from './ActivityArt.jsx';
+import {DewArt,PairsArt,VineArt} from './ActivityArt.jsx';
 import {toyBranches,toyCards,toyTitles} from './GardenLife.jsx';
 import {DEW_CHANCES,LEVELS,gameNames,playText,savePlayedRound,usePocketPlay} from './pocketPlay.js';
 import {buyGrowth,care,careStatus,condition,moodOf,FOOD_INTERVAL,LIGHT_INTERVAL,HOUR,healthLabels,discoverFungus,treatFungus,FUNGUS_WINDOW,wake} from './game.js';
@@ -60,8 +60,9 @@ function ReadoutMeter({name, label, detail, tone, value, steps=1}) {
 }
 
 function GameArt({game}) {
+  if(game.name==='vine')return <VineArt game={game}/>;
   if (game.name==='dew') return <DewArt lane={game.lane} drops={game.drops} result={game.result}/>;
-  return <EchoArt beat={game.phase==='watch' && game.lit ? game.sequence[game.index] : game.phase==='won' ? 'heart' : null}/>;
+  return <PairsArt game={game}/>;
 }
 
 export default function PocketDevice({plant,now,plantClock=Date.now,resting,commit,sound,openMove,openBook,careTarget,rename,revealSeed,lesson,finishLesson,routePending,routeError,firstDay,sproutWelcome,dismissSprout,reminder,tutorialAlerts,onFarewellReveal}) {
@@ -201,8 +202,8 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   let title=plant.name || 'Monstera';
   if (browsing) title=parentBranch[section]?toyTitles[branch]+' · '+toyTitles[section]:toyTitles[section];
   else if(game?.lesson)title='Dew Catch · Practice';
-  else if (lost) title='Three misses';
-  else if (game) title=game.name==='dew'?'Dew Catch '+game.level+'/'+LEVELS:gameNames.echo;
+  else if (lost && game.name==='dew') title='Three misses';
+  else if (game) title=game.name==='dew'?'Dew Catch '+game.level+'/'+LEVELS:gameNames[game.name];
   const ready=playing && game.phase==='ready';
   const ageHours=Math.max(0,Math.floor((now-plant.plantedAt)/HOUR));
   const ageText=(ageHours>=24?Math.floor(ageHours/24)+'d ':'')+(ageHours%24)+'h';
@@ -315,7 +316,9 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   }
   const tutorial=plant.tutorial;
   const [practice,setPractice]=useState('browse');
-  const training=lesson==='water' && tutorial && !tutorial.controlsLearned;
+  const openingPlay=lesson==='water' && (section==='play' || Boolean(game));
+  const waterGuide=lesson==='water' && !openingPlay;
+  const training=waterGuide && tutorial && !tutorial.controlsLearned;
   const boosting=tutorial?.step==='boost';
   const purchasePending=useRef(false);
   const boostOffer=useRef({stage:plant.stage,count:plant.boostCount || 0});
@@ -324,7 +327,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   const heartDisabled=Boolean(toyDisabled || (training && section) || choice && (
     choice.locked || !choice.command ||
     (boosting && !['growth','boost','buy-boost','back'].includes(choice.command)) ||
-    (lesson==='water' && !['care','give:water','back'].includes(choice.command))
+    (waterGuide && !['care','give:water','back'].includes(choice.command))
   ));
   async function purchaseGrowth(expected){
     if(!expected || purchasePending.current)return;
@@ -461,7 +464,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   const findBoost=boosting && cards.length>1 && choice?.command!==boostTarget;
   const guideArrow=findBoost || Boolean(section && (
     (training && practice==='browse') ||
-    (lesson==='water' && !training && heartDisabled)
+    (waterGuide && !training && heartDisabled)
   ));
   function wateringInstruction(){
     if(!section)return tutorial?.controlsLearned || training && practice==='back'
@@ -477,7 +480,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       ? 'There’s Water! Press my heart to give '+plant.name+' its first drink.'
       : 'Use the arrows to find Water. My heart picks it, and Back takes you up one menu.';
   }
-  const firstDrinkHint=lesson==='water'?wateringInstruction():null;
+  const firstDrinkHint=waterGuide?wateringInstruction():null;
   const boostInstruction = boosting ? (!section?'Press my heart to open the menu.':section==='home'?
     (findBoost?'Use the arrows to find Growth, then press my heart.':'There’s Growth. Press my heart.'):section==='growth'?
     (findBoost?'Use the arrows to find Growth Spurt.':'Choose Growth Spurt with my heart.'):choice.command==='buy-boost'?
@@ -522,7 +525,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     </GuideChat>}
     {resting && ready && !game.lesson && game.name==='dew' && !plant.dewCleared && <FirstHint id="dew" plant={plant} commit={commit} className="toy-guide">Press my heart to start. Move left or right to catch the drops. Three misses end the run.</FirstHint>}
     {resting && sick && !dewLesson && !game && (!section || section==='aid') && <FirstHint id="aid" plant={plant} commit={commit} className="toy-guide">Those little gnats mean I need help. Open First Aid and choose G-NAT ASSASSIN to give me one drop.</FirstHint>}
-    {lesson && !revealing && <GuideChat className="toy-guide" cue={resting?(lesson==='water'?firstDrinkHint:lesson):null} focusRef={lesson==='watered'?lessonDone:null}>
+    {lesson && !openingPlay && !revealing && <GuideChat className="toy-guide" cue={resting?(lesson==='water'?firstDrinkHint:lesson):null} focusRef={lesson==='watered'?lessonDone:null}>
       {lesson==='watered'?<>
         <p>{routeError || (tutorial?'That was a lovely first drink!':plant.stage==='seed'?'Ahh, thank you! Look for my first sprout '+sproutHint+'.':'Look, '+plant.name+' has sprouted!')}</p>
         <p>{firstDay?.drinkCoins!=null?'You earned '+firstDay.visitCoins+' coins for visiting and '+firstDay.drinkCoins+' for watering.':'You have '+lifeOf(plant).balance+' coins.'} {tutorial?'See your purse at the bottom left? Let’s use those coins for my first pot.':'Swipe up to visit our garden.'}</p>
@@ -530,7 +533,9 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         {reminder && plant.stage==='seed' && <button disabled={reminder.busy || !reminder.canEnable}
           onClick={()=>reminder.enable()}>Turn on plant alerts</button>}</div>
         {reminder?.notice && <p role="status">{reminder.notice}</p>}
-      </>:<p>{firstDrinkHint}</p>}
+      </>:<><p>{firstDrinkHint}</p>{!section && <div className="chat-actions">
+        <button onClick={()=>go('play')}>Play a game</button>
+      </div>}</>}
     </GuideChat>}
     {resting && !game && !sick && plant.deadAt===null && plant.stage==='grown' && !plant.growthFlares?.length &&
       plant.waitingPlants?.some(p=>p.id===plant.id) && plant.homeIntroSeen!==plant.id &&
@@ -568,7 +573,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
           {boosting?<ReadoutMeter name="Sprout" label={tutorial.blocks+' / 4'} detail="Sprouting boosts purchased" value={tutorial.blocks} steps={4}/>:<ReadoutMeter name="Growth" label={ageText} detail={ageText+' old · '+(growth.next?growth.next+' · ':'')+growth.detail} value={growth.filled} steps={GROWTH_STEPS}/>}
           <ReadoutMeter name="Water" label={water.label==='Seed watered'?'Watered':water.label.replace(/^In /,'')} detail={water.detail} tone={water.tone} value={water.fraction}/>
           {sick?<span className="fungus-alarm" role="status"><Cross aria-hidden="true"/>Fungus · {minutesLabel} left</span>:<ReadoutMeter name="Mood" label={displayMood} detail={displayMood} value={({happy:4,content:3,quiet:2,lonely:1,sad:1,sleeping:0})[displayMood]} steps={4}/>}
-        </div> : <span className="lcd-status">{status}{ready && <small className="lcd-hint">Hold Back to exit</small>}</span>}
+        </div> : <span className="lcd-status">{status}{ready && <small className="lcd-hint">{game.name==='vine'?'◂ ▸ turn the tip':game.name==='pairs'?'◂ ▸ move · ♥ flip':'Hold Back to exit'}</small>}</span>}
       </div>
       <span className="shell-name" aria-hidden="true">PLANTIGOCHI</span>
       <div className="toy-keys" role="group" aria-label="Plantigochi buttons"
@@ -594,7 +599,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         }}>
         <button className={'toy-back'+(training && section && practice==='back'?' teaching-heart':'')} data-audio="toy" aria-label="Back on toy" title="Back · Hold to return to plant" aria-description="Hold to return to your plant." onContextMenu={e=>e.preventDefault()} onClick={()=>press('back')}><CornerUpLeft/></button>
         <button data-audio="toy" className={guideArrow?'teaching-heart':''} aria-label={playing?'Play left':'Previous toy item'} title="Previous" onClick={()=>press('left')}><ChevronLeft/></button>
-        <button ref={heart} data-audio="toy" className={'accept toy-heart'+((lesson==='water' || boosting && !findBoost) && !heartDisabled?' teaching-heart':'')} aria-label={summary?'Claim tutorial gift with heart':playing?'Play heart':choice?'Choose '+choice.label:plant.deadAt!==null?'Start again':sick?'Open First Aid':'Open toy menu'} title="Choose" aria-disabled={heartDisabled} onClick={()=>press('heart')}><Heart/></button>
+        <button ref={heart} data-audio="toy" className={'accept toy-heart'+((waterGuide || boosting && !findBoost) && !heartDisabled?' teaching-heart':'')} aria-label={summary?'Claim tutorial gift with heart':playing?'Play heart':choice?'Choose '+choice.label:plant.deadAt!==null?'Start again':sick?'Open First Aid':'Open toy menu'} title="Choose" aria-disabled={heartDisabled} onClick={()=>press('heart')}><Heart/></button>
         <button data-audio="toy" className={guideArrow?'teaching-heart':''} aria-label={playing?'Play right':'Next toy item'} title="Next" onClick={()=>press('right')}><ChevronRight/></button>
       </div>
       <span className="sr-only" role="status">{description}</span>

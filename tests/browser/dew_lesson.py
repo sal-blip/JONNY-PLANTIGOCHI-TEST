@@ -125,6 +125,7 @@ def exercise(browser, url, win):
         button("Open toy menu").tap()
         button("Next toy item").tap()
         button("Choose Play").tap()
+        button("Next toy item").tap()
         button("Choose Dew Catch").tap()
         regular_level = 2 if win else 20
         expect(lcd).to_have_attribute("aria-label", re.compile(f"Dew Catch {regular_level}/20"))

@@ -77,7 +77,7 @@ test('a delayed visit records the actual earned crossing for each stage, includi
 });
 
 const enter = (name,cleared=0) => stepGame(null,{type:'enter',name,cleared});
-const key = (game,input,at,dropLane=1) => stepGame(game,{type:'key',key:input,at,dropLane,sequence:['left','right','heart']});
+const key = (game,input,at,dropLane=1) => stepGame(game,{type:'key',key:input,at,dropLane,deck:[0,0,1,1,2,2]});
 const tick = (game,at,dropLane=1) => stepGame(game,{type:'tick',at,dropLane});
 
 test('finishing Dew Catch with one life starts a full three-life replay at any unlocked level',()=>{
@@ -103,7 +103,7 @@ test('finishing Dew Catch with one life starts a full three-life replay at any u
   assert.equal(game.finishedAt,null);
 });
 
-test('Dew and Echo award coins using the level or attempt actually played across midnight',()=>{
+test('Dew and Leaf Pairs award coins using the round actually played across midnight',()=>{
   const midnight=new Date(2026,10,22).getTime();
   const started=midnight-1000, wallet=checkIn(newPlant(started),started);
   let dew=key(enter('dew'),'heart',started);
@@ -119,21 +119,18 @@ test('Dew and Echo award coins using the level or attempt actually played across
   for(let i=0;dew.phase==='fall' && i<1000;i++)dew=tick(dew,at+=50);
   assert.equal(lifeOf(earnWin(crossed,'dew-next',dew.startedAt,dew.finishedAt)).balance,13);
 
-  let echo=key(enter('echo'),'heart',started);
-  at=started;
-  while(echo.phase==='watch')echo=tick(echo,at+=300);
-  for(const button of ['left','right','heart'])echo=key(echo,button,++at);
-  assert.equal(echo.phase,'won');
-  assert.equal(echo.startedAt,started);
-  assert.equal(echo.finishedAt,at);
-  assert.equal(lifeOf(earnWin(wallet,'echo-midnight',echo.startedAt,echo.finishedAt)).balance,10);
-  echo=key(echo,'heart',++at);
-  while(echo.phase==='watch')echo=tick(echo,at+=300);
-  echo=key(echo,'right',++at);
-  assert.equal(echo.phase,'retry');
-  echo=tick(echo,at+=1100);
-  assert.equal(echo.startedAt,at);
-  while(echo.phase==='watch')echo=tick(echo,at+=300);
-  for(const button of ['left','right','heart'])echo=key(echo,button,++at);
-  assert.equal(lifeOf(earnWin(wallet,'echo-retry',echo.startedAt,echo.finishedAt)).balance,13);
+  function finishPairs(game,start){
+    let at=start;
+    for(let i=0;i<6;i++){
+      if(i)game=key(game,'right',++at);
+      game=key(game,'heart',++at);
+    }
+    assert.equal(game.phase,'won');
+    assert.equal(game.finishedAt,at);
+    return game;
+  }
+  let pairs=finishPairs(key(enter('pairs'),'heart',started),midnight);
+  assert.equal(lifeOf(earnWin(wallet,'pairs-midnight',pairs.startedAt,pairs.finishedAt)).balance,10);
+  pairs=finishPairs(key(pairs,'heart',midnight+100),midnight+100);
+  assert.equal(lifeOf(earnWin(wallet,'pairs-replay',pairs.startedAt,pairs.finishedAt)).balance,13);
 });

@@ -8,7 +8,7 @@ This is a historical planning and verification record. For current behavior, act
 
 | Status at start | Feature and acceptance criteria |
 | --- | --- |
-| Built | Installable offline keychain, LCD button controls, hold Back to exit, glass menu, six scenes and own photo, tilt, chain flick, intro, synth, Dew Catch and Leaf Echo. Keep 20 Dew levels, three shared strikes and reset to level one. |
+| Built | Installable offline keychain, LCD button controls, hold Back to exit, glass menu, six scenes and own photo, tilt, chain flick, intro, synth, Vine Trail, Dew Catch and Leaf Pairs. Keep 20 Dew levels, three shared strikes and reset to level one. |
 | Planned | Migrate valid saves to transactional IndexedDB. Preserve the raw original on migration, corruption or unknown versions. Provide recovery export, confirmation on restore, an unsaved indicator, and cross-tab consistency. Backups include active plant, graduate locations, cuttings, Leaf Book, game records, preferences and photograph. |
 | Planned | A watered seed sprouts after one hour. Earn Young, First Split and Grown at 3, 5 and 7 days of eligible growing time. Water dries at 4h, becomes critical at 12h, and kills at 24h. Two confirmed extra pours spaced at least 1h in the same wet interval cause rot, with 12h to drain. Food is due every 48h and light every 24h, each available 8h early. Critical thirst, rot, and overdue nutrition/light pause growth. |
 | Planned | Kind Words or finishing either game counts as company. Happy lasts 30m, Content until 12h, Quiet until 24h, then Lonely. Mood alone changes through company. Display Growth, age, Water and Mood on the LCD with detailed timers in Care. |

@@ -1,6 +1,33 @@
 import React from "react";
 import "./ActivityArt.css";
 
+import {VINE_COLS,VINE_ROWS} from './vineTrail.js';
+
+export function VineArt({game}) {
+  const px=cell=>9+7*(cell%VINE_COLS), py=cell=>4+7*Math.floor(cell/VINE_COLS);
+  const head=game.body[0];
+  return <Canvas>
+    <rect x="5.5" y=".5" width={7*VINE_COLS} height={7*VINE_ROWS} rx="1" fill="none" stroke="#63806b"/>
+    <polyline points={game.body.map(cell=>px(cell)+','+py(cell)).join(' ')} fill="none" stroke="#365c43" strokeWidth="2"/>
+    {game.body.slice(1).map((cell,i)=><g key={cell} transform={`translate(${px(cell)} ${py(cell)}) scale(${i%2?-1:1} 1)`}>
+      <path d="M-3-3h3v1h1v2h-2v-1h-2z" fill="#436d49"/><path d="M-2-2h2v1h-2z" fill="#a4bd60"/>
+    </g>)}
+    <g transform={`translate(${px(head)} ${py(head)}) rotate(${game.direction*90})`}>
+      <path d="M-3-2h2v-1h2v1h1v1h2v2H2v1H0v1h-2V2h-1z" fill="#2f5339"/>
+      <path d="M-2-1h2v-1h1v1h1v2H0v1h-2z" fill="#c5dc83"/>
+    </g>
+    {game.phase==='won' && <g transform={`translate(${px(head)} ${py(head)})`}>
+      <path fill="#98576b" d="M-1-3h2v2h2v2H1v2h-2V1h-2v-2h2z"/>
+      <path fill="#f6c8bc" d="M-1-3h1v2h-1z M1-1h2v1H1z M0 1h1v2H0z M-3 0h2v1h-2z"/>
+      <rect x="-1" y="-1" width="2" height="2" fill="#e6bc52"/>
+    </g>}
+    {game.sun!==null && <g className="vine-sun" transform={`translate(${px(game.sun)} ${py(game.sun)})`}>
+      <path d="M-1-3h2v2h2v2H1v2h-2V1h-2v-2h2z" fill="#956423"/>
+      <rect x="-1" y="-1" width="2" height="2" fill="#ffdb75"/>
+    </g>}
+  </Canvas>;
+}
+
 const laneCenters = [20, 48, 76];
 
 function safeProgress(value) {
@@ -93,35 +120,23 @@ export function DewArt({ lane = 1, drops, dropLane = 1, progress = 0, result = n
   );
 }
 
-function EchoNote({ x, y, opposite = false }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${opposite ? -1 : 1} 1)`}>
-      <path fill="#7a4297" d="M5 0h2v1h2v2H7V2H6v6H5v1H2V8H1V6h1V5h3z" />
-    </g>
-  );
-}
-
-export function EchoArt({ beat = null }) {
-  const left = beat === "left";
-  const right = beat === "right";
-  const loved = beat === "heart";
-  const tilt = left ? -3 : right ? 3 : 0;
-  return (
-    <Canvas>
-      <path opacity=".18" d="M16 38h9v1h-9z M30 37h6v1h-6z M38 38h20v1H38z M63 36h8v1h-8z M75 38h6v1h-6z" />
-      <g transform={`translate(${tilt} 0)`}>
-        <path fill="#316c4d" d="M46 18h2v8h2v2h-3v-3h-1z M47 24h-3v-2h-3v-2h-2v-2h2v1h2v2h3v2h1z M49 22h2v-2h2v-2h2v-1h2v2h-2v2h-2v2h-4z" />
-        <g transform="translate(38 5)"><Blade split /></g>
-        <path fill="#223e38" d={loved ? "M43 13h1v-1h2v1h-1v1h-2z M50 13h1v-1h2v1h-1v1h-2z M46 15h4v1h-1v1h-2v-1h-1z" : "M44 12h2v2h-2z M50 12h2v2h-2z M46 15h1v1h2v-1h1v2h-4z"} />
-        <path fill="#469465" d="M39 19h-5v-1h-2v-2h-2v-3h3v1h3v1h2v2h1z M55 18v-2h1v-2h3v-1h4v2h-1v2h-3v1z" />
-      </g>
-      <path fill="#df9c73" d="M37 26h22v3h-2v5h-2v2H41v-2h-2v-5h-2z" />
-      <path fill="none" stroke="#683e35" d="M37 26h22v3h-2v5h-2v2H41v-2h-2v-5h-2z" />
-      <path fill="#8e503f" d="M38 29h20v1H38z M42 32h1v2h-1z M53 32h2v1h-2z" opacity=".62" />
-      {(left || right) && <g className="activity-pixel-flash"><EchoNote x={left ? 17 : 79} y={11} opposite={right} /><path opacity=".57" d={left ? "M28 9h1v3h-1z M25 7h1v2h-1z M26 23h2v1h-2z" : "M67 9h1v3h-1z M70 7h1v2h-1z M68 23h2v1h-2z"} /></g>}
-      {loved && <g className="activity-pixel-flash"><g transform="translate(66 6)"><Heart /></g><g transform="translate(28 12) scale(.7)"><Heart /></g></g>}
-    </Canvas>
-  );
+const leafShapes=[
+  'M1 1h5v1h2v2H5v1h3v2H5v1H3V6H2V5H0V2h1z',
+  'M1 8V2h1V0h1v5h1V3h1V1h1v6H5v2H1z',
+  'M4 0h1v2h2v1H5v1h3v1H5v1h2v1H5v2H4V7H2V6h2V5H1V4h3V3H2V2h2z'
+];
+export function PairsArt({game}){
+  return <Canvas>{game.deck.map((face,i)=>{
+    const selected=i===game.cursor, paired=game.matched.includes(i);
+    const revealed=paired || game.open.includes(i);
+    return <g key={i} transform={`translate(${11+(i%3)*26} ${3+Math.floor(i/3)*20})`}>
+      <rect x="1" y="1" width="21" height="16" rx="2" fill={revealed?'#dbe6b9':'#657f59'} stroke="#38533b"/>
+      {revealed?<path transform="translate(7 4)" d={leafShapes[face]} fill="#31573c"/>:
+        <path d="M4 4h15v1H4z M8 11h2v-2h2V7h4v3h-2v2h-4v2H8z" fill="#c4d3a3"/>}
+      {paired && <path d="m16 13 2 2 3-4" fill="none" stroke="#376044"/>}
+      {selected && <path d="M-1 4V-1h5m14 0h5v5m0 9v6h-5m-14 0h-5v-6" fill="none" stroke="#45391f" strokeWidth="2"/>}
+    </g>;
+  })}</Canvas>;
 }
 
 export function JarArt({ progress = 0 }) {

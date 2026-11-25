@@ -1,0 +1,33 @@
+export const leafNames=['Monstera','Snake plant','Fern'];
+const faces=[0,0,1,1,2,2];
+
+export function shuffleLeaves(random=Math.random){
+  const deck=[...faces];
+  for(let i=deck.length-1;i>0;i--){
+    const swap=Math.floor(random()*(i+1));
+    [deck[i],deck[swap]]=[deck[swap],deck[i]];
+  }
+  return deck;
+}
+
+export function newPairs(){
+  return {name:'pairs',phase:'ready',deck:faces,cursor:0,open:[],matched:[],startedAt:null};
+}
+
+export function stepPairs(g,event){
+  if(g.phase==='peek')return event.type==='tick'?{...g,phase:'pick',open:[]}:g;
+  if(event.type!=='key')return g;
+  if(g.phase==='ready' || g.phase==='won'){
+    return event.key==='heart'?{...newPairs(),phase:'pick',deck:event.deck,startedAt:event.at}:g;
+  }
+  if(event.key==='left' || event.key==='right'){
+    const n=g.deck.length;
+    return {...g,cursor:(g.cursor+(event.key==='left'?-1:1)+n)%n};
+  }
+  if(event.key!=='heart' || g.open.includes(g.cursor) || g.matched.includes(g.cursor))return g;
+  const open=[...g.open,g.cursor];
+  if(open.length===1)return {...g,open};
+  if(g.deck[open[0]]!==g.deck[open[1]])return {...g,phase:'peek',open};
+  const matched=[...g.matched,...open];
+  return matched.length===g.deck.length?{...g,open:[],matched,phase:'won',finishedAt:event.at}:{...g,open:[],matched};
+}

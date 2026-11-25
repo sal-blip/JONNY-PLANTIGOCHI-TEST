@@ -215,7 +215,7 @@ def first_visit(browser, source):
         fade_in = next(r for r in gameplay["ramps"] if r["value"] == MAX_SCORE_GAIN)
         assert abs(fade_in["seconds"] - .75) < .03, fade_in
         taps(page, "Open iSEED", "Journal", "Put down iSEED", "Return to Plantigochi")
-        taps(page, "Open toy menu", "Next toy item", "Choose Play", "Choose Dew Catch", "Play heart")
+        taps(page, "Open toy menu", "Next toy item", "Choose Play", "Next toy item", "Choose Dew Catch", "Play heart")
         assert audible(page, "mystic")["id"] == gameplay["id"]
         assert len(tracks(page)) == 2, tracks(page)
         # A completed save starts the main theme on the toy on its next launch.
