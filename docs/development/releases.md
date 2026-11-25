@@ -8,6 +8,8 @@ The welcome tour previews Vine Trail, Dew Catch, and Leaf Pairs with the toy’s
 
 The production build and 196 unit tests passed. Chromium walkthroughs covered the sprout invitation, early exit after reload, the gift and the reminder choice. [Tutorial walkthrough](../../tests/browser/scene_music.py) · [Saved game and exit checks](../../tests/browser/dew_lesson.py)
 
+Published as Sites version `appgver_2320853503188191983c6474ea2eea4b` from Sites source `e6ba0ae41ff368e29d542d722cb322abef2b104d`. The public entry page, service worker, and JavaScript bundle matched the tested build. [GitHub revision](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/37d8b4a82a85f39461e4dbd60a1a1d29de868b62)
+
 ## Plantigochi 0.1.55 · Update recovery
 
 The public /update page can refresh an older installation on its existing scope and verify the game entry served after activation. Settings links to it after a failed or slow update check. The repair works on cached app files and leaves garden data in place.

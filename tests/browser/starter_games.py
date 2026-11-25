@@ -59,7 +59,7 @@ def play(browser, source):
     taps(page, "Play heart")
     line = page.locator(".lcd-art polyline")
     for _ in range(110):
-        if "6 suns" in page.locator(".lcd-status").inner_text():
+        if line.evaluate("el => el.points.length >= 9"):
             break
         body, sun = line.evaluate("""line => {
           const body=Array.from(line.points,p=>[(p.x-4)/7,(p.y-4)/7]);
@@ -75,7 +75,7 @@ def play(browser, source):
         if turn:
             taps(page, "Play right" if turn == 1 else "Play left")
         expect(line).not_to_have_attribute("points", old, timeout=1800)
-    expect(page.locator(".lcd-status")).to_contain_text("6 suns")
+    assert line.evaluate("el => el.points.length >= 9"), "The three-cell vine should grow past five suns"
     def leave():
         taps(page, "Back on toy", "Next toy item", "Choose Leave game")
         expect(button(page, "Play a game")).to_be_visible()
