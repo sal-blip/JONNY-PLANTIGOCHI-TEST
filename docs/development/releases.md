@@ -6,6 +6,8 @@ Use this record to trace the source and verification for a player-facing release
 
 The public /update page can refresh an older installation on its existing scope and verify the game entry served after activation. Settings links to it after a failed or slow update check. The repair works on cached app files and leaves garden data in place.
 
+**Phone verification, November 25, 2026.** An older installation stayed on the previous build after a restart, and Settings showed “Could not check for updates.” The player confirmed the direct repair worked on the affected phone. To repeat the recovery, open the repair page in the browser profile used to install the game, tap **Repair update**, wait for the version confirmation, then reopen the game from its home-screen icon. [Repair page](https://plantigochi-pocket-garden-mobile.salbasilone.chatgpt.site/update) · [Fix commit](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/428b810e1f47d9d2e489864d34bca87138f16523)
+
 ## Plantigochi 0.1.54 · Installed game updates
 
 The update worker verifies the entry page against the release before activating. Settings shows the running version beside the update control. This release includes the edge-to-edge camera.
