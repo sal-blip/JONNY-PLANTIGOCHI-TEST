@@ -12,7 +12,7 @@ Open the game link on your phone. The welcome tour previews Vine Trail, Dew Catc
 2. **Find a home for it.** Visit the garden, tap the iSEED phone at the lower right, and open **Shop**. Tap the terracotta pot to see it up close, choose **Buy**, then tap a glowing spot and confirm. The tutorial pot costs exactly the 12 coins you just earned.
 3. **See it sprout.** Back at the keychain, you receive 200 coins for the lesson. Buy four 50-coin spurts under **Growth → Growth Spurt**. The fourth reveals the Monstera and starts its regular care clock.
 4. **Try a game and collect your gift.** Choose **Play Vine Trail** or **Maybe later** when your Monstera sprouts. After your run, the toy tells you where to find Dew Catch and Leaf Pairs. Either path lets you claim 20 good-luck coins. On supported devices, the plant can then offer care reminders. You can revisit that choice under **App & data → Plant alerts**.
-5. **Explore your garden.** Swipe up to put the toy away. Swipe left to visit the Plant Studio, then right to come home. Tap the marked Rewards icon and take your first free Garden spin. Return to the garden to hear Mystic Oasis.
+5. **Explore your garden.** Swipe up to put the toy away. Mystic Oasis starts as you enter the garden. Swipe left to visit the Plant Studio, then right to come home. Tap the marked Rewards icon and take your first free Garden spin.
 
 ## Care for the plant on the keychain
 

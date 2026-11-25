@@ -253,7 +253,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const [playingRecordId,setPlayingRecordId]=useState(null);
   const sproutInvitation=Boolean(plant && storage.phase==='game' && plant.stage==='sprout' &&
     plant.deadAt===null && plant.fungusAt==null && (storage.firstDay?.id===plant.id || plant.sproutDebut===plant.id));
-  useGameplayMusic({plant,musicVolume,phase:storage.phase,sproutInvitation,roomActive:roomActive && page!=='daily',recordPlaying:Boolean(playingRecordId)});
+  useGameplayMusic({plant,musicVolume,phase:storage.phase,sproutInvitation,recordPlaying:Boolean(playingRecordId)});
   const recordActive=surface!=='toy';
   const apps=useGardenPhoneApps({page:app,open:setApp,plant,now,musicVolume,commit,roomRef,raised:phoneActive,playingRecordId,onSelectRecord:setPlayingRecordId,beginPlacement,homePlant:enterGraduation});
   const gardenLife=lifeOf(roomGarden);

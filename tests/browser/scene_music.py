@@ -1,5 +1,6 @@
 """Verify decoded music, its gain envelopes, and playback through the real first visit."""
 import argparse
+import re
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -88,13 +89,6 @@ PROBE = """(() => {
     position:track.offset + track.source.context.currentTime - track.started,
     ramps:automation.get(track.bus.gain) || [],
   }));
-  window.firstRewards = {opened:null, closed:null};
-  new MutationObserver(() => {
-    const visit = window.firstRewards;
-    const open = !!document.querySelector('.daily-dialog[open]');
-    if (open && visit.opened === null) visit.opened = performance.now();
-    if (!open && visit.opened !== null && visit.closed === null) visit.closed = performance.now();
-  }).observe(document,{subtree:true,childList:true,attributes:true,attributeFilter:['open']});
 })()"""
 
 
@@ -203,21 +197,50 @@ def first_visit(browser, source):
         expect(page.get_by_text('Find Dew Catch and Leaf Pairs', exact=False)).to_be_visible()
         claim.tap()
         page.wait_for_function("document.querySelector('.garden-purse span')?.textContent === '20'")
-        from garden_tour import finish_garden_tour
+        from garden_tour import checkpoint, expect_room_centered, swipe
+
+        checkpoint(page, "garden")
         assert audible(page, "cotton")["id"] == cotton["id"]
-        finish_garden_tour(page)
-        completed = page.evaluate(READ_PLANT)
+        assert [t["role"] for t in tracks(page)] == ["cotton"]
+        width, height = (page.viewport_size[key] for key in ("width", "height"))
+        handle = button(page, "Open garden").bounding_box()
+        x = handle["x"] + handle["width"] / 2
+        y = handle["y"] + handle["height"] / 2
+        leaving_toy = page.evaluate("performance.now()")
+        swipe(page, (x, y), (x, y - height * .32))
+        checkpoint(page, "studio")
         gameplay = audible(page, "mystic")
-        assert [t["role"] for t in tracks(page)] == ["cotton", "mystic"], tracks(page)
-        visit = page.evaluate("window.firstRewards")
-        assert visit["opened"] and visit["closed"] > visit["opened"], visit
+        entered_garden = page.evaluate("performance.now()")
         fades = [r for r in tracks(page)[cotton["id"]]["ramps"] if r["value"] == 0]
-        assert len(fades) == 1, ("Tutorial music must loop through the gift and spin", fades)
-        assert fades[0]["at"] >= visit["closed"] - 50, ("Music faded inside rewards", visit, fades)
+        assert len(fades) == 1 and leaving_toy <= fades[0]["at"] <= entered_garden, fades
         assert abs(fades[0]["seconds"] - 5) < .03, fades
         fade_in = next(r for r in gameplay["ramps"] if r["value"] == MAX_SCORE_GAIN)
-        assert fade_in["at"] >= visit["closed"] - 50, ("Mystic started inside rewards", visit, fade_in)
-        assert abs(fade_in["seconds"] - .75) < .03, fade_in
+        assert leaving_toy <= fade_in["at"] <= entered_garden and abs(fade_in["seconds"] - .75) < .03
+
+        def same_theme():
+            assert audible(page, "mystic")["id"] == gameplay["id"]
+            assert [t["role"] for t in tracks(page)] == ["cotton", "mystic"]
+
+        expect(page.locator('main[data-surface="garden"]:not([data-transitioning])')).to_be_visible()
+        left, right = (.22 * width, .35 * height), (.77 * width, .35 * height)
+        swipe(page, right, left)
+        checkpoint(page, "living")
+        expect_room_centered(page, 1)
+        same_theme()
+        swipe(page, left, right)
+        checkpoint(page, "rewards")
+        expect_room_centered(page, 0)
+        taps(page, "Open daily rewards")
+        claim_daily = page.get_by_role("button", name=re.compile(r"^Claim \d+ coins$"))
+        if claim_daily.count():
+            claim_daily.tap()
+        taps(page, "Spin for free")
+        expect(page.get_by_role("heading", name=re.compile(r"^You won"))).to_be_visible(timeout=15000)
+        same_theme()
+        taps(page, "Return to garden")
+        checkpoint(page, None)
+        same_theme()
+        completed = page.evaluate(READ_PLANT)
         taps(page, "Open iSEED", "Journal", "Put down iSEED", "Return to Plantigochi")
         taps(page, "Open toy menu", "Next toy item", "Choose Play", "Next toy item", "Choose Dew Catch", "Play heart")
         assert audible(page, "mystic")["id"] == gameplay["id"]
@@ -236,6 +259,24 @@ def first_visit(browser, source):
         return completed
     finally:
         ctx.close()
+
+
+def resumed_tour(browser, source, completed):
+    expected_tracks = {"garden": "cotton", "studio": "mystic", "living": "mystic", "rewards": "mystic"}
+    for checkpoint, theme in expected_tracks.items():
+        ctx, url, blank = context_for(browser, source)
+        try:
+            page = ctx.new_page()
+            page.goto(blank)
+            page.evaluate(SEED_SETUP, {**completed, "gardenTour": checkpoint})
+            page.goto(url)
+            surface = "toy" if checkpoint == "garden" else "garden"
+            expect(page.locator(f'main[data-surface="{surface}"][data-garden-tour="{checkpoint}"]')).to_be_visible()
+            page.touchscreen.tap(10, 10)
+            audible(page, theme)
+            assert [t["role"] for t in tracks(page)] == [theme], (checkpoint, tracks(page))
+        finally:
+            ctx.close()
 
 
 def saved_record(browser, source, completed):
@@ -298,7 +339,9 @@ if __name__ == "__main__":
                 web_tour(browser, args.source)
                 print("Passed the browser installation tour", flush=True)
             completed = first_visit(browser, args.source)
-            print("Passed continuous tutorial and rewards music, garden crossfade, main theme, and mute", flush=True)
+            print("Passed first garden crossfade, continuous rewards music, main theme, and mute", flush=True)
+            resumed_tour(browser, args.source, completed)
+            print("Passed soundtrack restoration at each tour checkpoint", flush=True)
             saved_record(browser, args.source, completed)
             print("Passed returning toy music and record override")
         finally:

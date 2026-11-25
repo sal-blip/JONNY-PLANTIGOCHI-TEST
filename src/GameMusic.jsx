@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useEffect, useLayoutEffect, useState} from 'react';
+import React, {createContext, useContext, useLayoutEffect, useState} from 'react';
 import {useScorePlayback} from './scorePlayback.js';
 import {audioLevels} from './audioLevels.js';
 
@@ -19,12 +19,17 @@ function useMusicRoute({cotton=false, mystic=false, enabled=false, cottonSession
   useLayoutEffect(() => () => setMix(silent), [setMix]);
 }
 
+function playsTutorialScore(plant, sproutInvitation) {
+  // The 'garden' step asks for the upward swipe. Its saved successor starts the room lesson.
+  if (plant?.gardenTour) return plant.gardenTour === 'garden';
+  return Boolean(plant?.tutorial || plant?.dewLesson || sproutInvitation);
+}
+
 export function PublicTourMusic({raw}) {
   const mix = React.useMemo(() => {
     try {
       const saved = JSON.parse(raw);
-      const cotton = !saved || Boolean(saved.tutorial || saved.dewLesson || saved.gardenTour ||
-        (saved.sproutDebut && saved.sproutDebut === saved.id));
+      const cotton = !saved || playsTutorialScore(saved, saved.sproutDebut && saved.sproutDebut === saved.id);
       return {cotton, enabled:true, volume:audioLevels(saved).musicVolume,
         cottonSession:cotton ? saved?.id ?? 'intro' : null};
     } catch {
@@ -35,16 +40,8 @@ export function PublicTourMusic({raw}) {
   return null;
 }
 
-export function useGameplayMusic({plant, phase, sproutInvitation, roomActive, recordPlaying, musicVolume=audioLevels(plant).musicVolume}) {
-  const firstVisit = phase !== 'game' || Boolean(plant?.tutorial || plant?.dewLesson || sproutInvitation || plant?.gardenTour);
-  // Keep the same loop during the reward receipt and the transition back to
-  // the room. A completed garden starts directly on Mystic on its next launch.
-  const [waitingForGarden, setWaitingForGarden] = useState(firstVisit);
-  useEffect(() => {
-    if(firstVisit)setWaitingForGarden(true);
-    else if(roomActive)setWaitingForGarden(false);
-  }, [firstVisit, roomActive]);
-  const cotton = firstVisit || (waitingForGarden && !roomActive);
+export function useGameplayMusic({plant, phase, sproutInvitation, recordPlaying, musicVolume=audioLevels(plant).musicVolume}) {
+  const cotton = phase !== 'game' || playsTutorialScore(plant, sproutInvitation);
   useMusicRoute({
     cotton, cottonSession:cotton ? plant?.id ?? 'intro' : null,
     mystic:!cotton,

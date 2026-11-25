@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.65 · Mystic Oasis on the first garden swipe
+
+Cotton Candy Skies plays through the first pot purchase and the prompt to swipe the toy away. Completing that swipe starts the crossfade to Mystic Oasis. The same loop continues as the player visits the Plant Studio, returns home, and opens and closes the first rewards. Reopening a saved room lesson selects Mystic Oasis. [Music walkthrough](../../tests/browser/scene_music.py)
+
 ## Plantigochi 0.1.64 · Explore the garden before the first rewards
 
 After collecting the sprout gift and answering any care reminder, the player swipes the toy away, visits the Plant Studio and comes back to the living room. The garden calendar then shows an alert. Opening it leads to the existing daily check-in and free spin. A player who already received the check-in coins during setup can go straight to the spin. Returning from the first rewards visit fades Cotton Candy Skies into Mystic Oasis. The saved tour step lets a player resume after closing the game. Gardens that finished the previous tutorial keep their usual daily rewards.
