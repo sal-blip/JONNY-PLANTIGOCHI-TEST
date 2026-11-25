@@ -1,5 +1,6 @@
 import {readFrameOriginal} from './gardenStore.js';
-import {decorPlaces,framePhotoBounds} from './roomShopArt.js';
+import {viewForSlot} from './gardenLayout.js';
+import {decorPlaces} from './roomShopArt.js';
 
 // The room, inventory, and postcard can display the same original at once.
 // Revoke its URL once the last display has released it.
@@ -33,11 +34,11 @@ function loadImage(src){
   });
 }
 
-export async function prepareRoomPhotos(items,view){
+export async function prepareRoomPhotos(items,view,sharedOnly=false){
   const photos=new Map();
-  await Promise.all(decorPlaces(view).map(async spot=>{
-    const item=items.find(i=>i.slot===spot.slot);
-    if(!item?.photo || !framePhotoBounds(item.sku,spot.baseX,spot.baseY,spot.size))return;
+  const dedicated=sharedOnly?[]:decorPlaces(view).filter(p=>!p.shared).map(p=>p.slot);
+  await Promise.all(items.map(async item=>{
+    if(!item.photo || !(view%2===0 && viewForSlot(item.slot)===view || dedicated.includes(item.slot)))return;
     const photo=item.photo,original=photo.originalId?acquireFrameOriginal(photo.originalId):null;
     try{
       const image=(original && await loadImage(await original.ready)) || await loadImage(photo.src);

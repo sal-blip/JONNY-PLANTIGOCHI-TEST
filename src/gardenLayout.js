@@ -13,21 +13,46 @@ function floorScale(contactY,extraFloor){
   return 1.06+.06*Math.min(1,(contactY-287)/(nearest-287));
 }
 
-const rows=[
-  [
-    [0,'Upper bookcase shelf',55,96,'shelf',[17,54,86,98]],
-    [1,'Middle bookcase shelf',50,141,'shelf',[17,104,86,143]],
-    [2,'Lower bookcase shelf',51,186,'shelf',[17,149,86,188]],
-    [3,'Living room windowsill',258,139,'window',[117,47,311,141]],
-    [4,'Coffee table',152,245,'table',[125,0,263,252]],
-    [5,'Beside the sofa',347,287,'floor'],
-    ['window-left','Left end of the living room windowsill',145,139,'window',[117,47,311,141]],
-    ['window-middle','Center of the living room windowsill',201,139,'window',[117,47,311,141]],
-    ['table-end','Center of the coffee table',193,246,'table',[125,0,263,252]],
-    ['bookcase-floor','Floor by the bookcase',59,263,'floor'],
-    ['front-left','Front left floor',63,305,'floor',null,.57],
-    ['front-right','Front right floor',277,306,'floor',null,.39],
-  ],[
+// Each furniture row is centered on its usable surface. Keys already present
+// in saved gardens (including the two former decor-only mounts) stay stable.
+const living=[];
+function livingRow(layer,y,clip,entries,front=0){
+  for(const [key,name,x] of entries)living.push([key,name,x,y,layer,clip,front]);
+}
+livingRow('shelf',46,[10,0,99,48],[
+  ['bookcase-top-left','Bookcase top, beside the basket',56],['decor-bookcase','Bookcase top',81],
+]);
+for(const [key,tier,y,top] of [[0,'Upper',96,54],[1,'Middle',141,104],[2,'Lower',186,149]]){
+  livingRow('shelf',y,[17,top,88,y+2],[
+    [key,tier+' bookcase shelf',36],['shelf-'+key+'-right',tier+' bookcase shelf, right',73],
+  ]);
+}
+livingRow('window',139,[108,41,321,141],[
+  ['window-left','Left end of the living room windowsill',125],
+  ['window-2','Living room windowsill, second spot',150],
+  ['window-3','Living room windowsill, third spot',175],
+  ['window-middle','Center of the living room windowsill',200],
+  ['window-5','Living room windowsill, fifth spot',225],
+  [3,'Living room windowsill',250],['window-7','Living room windowsill, seventh spot',275],
+  ['decor-sill','Right windowsill',300],
+]);
+livingRow('table',245,[122,0,268,252],[
+  ['table-left','Left end of the coffee table',136],[4,'Coffee table',161],
+  ['table-end','Center of the coffee table',186],['table-4','Coffee table, right of center',211],
+  ['table-right','Coffee table, beside the teacup',236],
+]);
+livingRow('floor',226,null,[['sofa-left','Floor by the left sofa arm',105],['sofa-right','Floor by the right sofa arm',318]]);
+livingRow('floor',248,null,[['rug-left','Left edge of the rug',81],['rug-right','Right edge of the rug',326]]);
+livingRow('floor',268,null,[['bookcase-floor','Floor by the bookcase',59],[5,'Beside the sofa',347]]);
+livingRow('floor',287,null,Array.from({length:8},(_,i)=>['floor-row-'+(i+1),'Open floor, spot '+(i+1),25+50*i]),.20);
+livingRow('floor',309,null,[
+  ['front-left','Front left floor',39],['front-2','Front floor, second spot',103],
+  ['front-3','Front floor, third spot',167],['front-4','Front floor, fourth spot',231],
+  ['front-right','Front right floor',295],['front-6','Far right front floor',359],
+],.42);
+// Preserve the array positions of the six original numeric places for scenery callers.
+living.sort((a,b)=>(typeof a[0]==='number'?a[0]:6)-(typeof b[0]==='number'?b[0]:6));
+const rows=[living,[
     [0,'Upper studio shelf',43,80,'shelf',[18,32,94,82]],
     [1,'Lower studio shelf',61,129,'shelf',[23,88,96,131]],
     [2,'Studio cabinet',50,180,'shelf',[12,137,89,182]],
@@ -42,10 +67,13 @@ const rows=[
     ['front-right','Front right studio floor',253,306,'floor',null,.39],
   ]
 ];
+// All objects on a living-room floor line have the same physical scale on
+// every screen. Portrait height adds space between the two foreground rows.
+const livingFloorSize=new Map([[226,.90],[248,1.00],[268,1.12],[287,1.27],[309,1.45]]);
 const places=rows.map((room,index)=>room.map(([key,name,x,y,layer,clip,front=0])=>{
   const surface=layer==='table'?(index===0?'coffeeTable':'desk'):layer;
-  const size=layer==='floor'?floorScale(y,0):surfaceScale[surface];
-  return {key,name,x:x/400,y:y/320,baseY:y,size,layer,clip,front};
+  const size=layer==='floor'?(index===0?livingFloorSize.get(y):floorScale(y,0)):surfaceScale[surface];
+  return {key,name,x:x/400,y:y/320,baseY:y,size,layer,clip,front,behindTable:index===0 && layer==='floor' && y<238};
 }));
 export function placesFor(view,extraFloor=0){
   const room=places[view%2];
@@ -53,7 +81,7 @@ export function placesFor(view,extraFloor=0){
   return room.map(spot=>{
     if(spot.layer!=='floor')return spot;
     const baseY=spot.baseY+spot.front*extraFloor;
-    return {...spot,baseY,size:floorScale(baseY,extraFloor)};
+    return {...spot,baseY,size:view%2?floorScale(baseY,extraFloor):spot.size};
   });
 }
 export const slotFor=(view,spot)=>typeof spot.key==='number'?view*ORIGINAL_PLACES+spot.key:view+'/'+spot.key;

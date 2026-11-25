@@ -7,7 +7,7 @@ import GardenRecord,{RecordControls} from './GardenRecord.jsx';
 import {decorPlaces} from './roomShopArt.js';
 import {prepareNativeArt} from './shopSprites/nativeArt.js';
 import {prepareRoomPhotos} from './framePhotoMedia.js';
-import {catalog,itemPrice,lifeOf,canRepotAt,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackupChange} from './gardenEconomy.js';
+import {catalog,itemPrice,lifeOf,canRepotAt,canSetPlant,itemSlotsFor,canSetItem,destinationKey,placeItem,framePhoto,storeItem,fitsBackupChange} from './gardenEconomy.js';
 import './gardenMarket.css';
 import GardenKeepsakes from './GardenKeepsakes.jsx';
 import {ROOT_TIME,replant,takeCutting,canHomePlant} from './game.js';
@@ -15,7 +15,7 @@ import GardenDialog from './GardenDialog.jsx';
 import GardenInspection from './GardenInspection.jsx';
 import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,roomLight,roomCeilingHeight} from './roomArt.js';
 import {drawPottedPlant} from './roomPlant.js';
-import {gardenViews,slotFor,viewForSlot,canPlaceAt,speciesName,viewName} from './gardenLayout.js';
+import {gardenViews,slotFor,viewForSlot,speciesName,viewName} from './gardenLayout.js';
 import RoomView from './RoomView.jsx';
 
 const restingZoom=1.08;
@@ -30,10 +30,10 @@ function buttonSlot(button){
   const id=button.dataset.slot;
   return id.includes('/')?id:Number(id);
 }
-function firstVacantRoom(plants){
-  const occupied=new Set(plants.map(g=>g.slot)),count=gardenViews(plants);
+function firstVacantRoom(plant){
+  const count=gardenViews(plant.graduates);
   for(let view=0;view<count;view++){
-    if(placesFor(view).some(spot=>!occupied.has(slotFor(view,spot))))return view;
+    if(placesFor(view).some(spot=>canSetPlant(plant,slotFor(view,spot))))return view;
   }
   return 0;
 }
@@ -348,7 +348,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     const product=catalog[request?.sku];
     if(!product || (request.buy && product.retired) || pending.current || phonePlacement.current || shopMove || carry || picking)return false;
     const hasSpace=Array.from({length:count},(_,view)=>view).some(view=>{
-      const addresses=['frame','decor'].includes(product.kind)?decorPlaces(view).map(s=>s.slot):placesFor(view).map(s=>slotFor(view,s));
+      const addresses=itemSlotsFor(view,product.kind);
       return addresses.some(s=>canSetItem(plant,request.sku,s,request.from));
     });
     if(!hasSpace){setNotice('Every suitable spot is occupied. Put an item in inventory to make room.');return false;}
@@ -368,7 +368,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   }
   function beginGraduation(id){
     if(!canHomePlant(plant,id) || pending.current || shopMove || phonePlacement.current || carry)return false;
-    if(!placesFor(page).some(spot=>!collection.has(slotFor(page,spot))))travel(firstVacantRoom(graduates));
+    if(!placesFor(page).some(spot=>canSetPlant(plant,slotFor(page,spot))))travel(firstVacantRoom(plant));
     setGraduating(id);setPanel(null);setPreview(null);setSlot(null);setNotice('');relax();
     focusDestination();
     return true;
@@ -467,7 +467,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
   }
   async function putDown(target,origin){
     if(pending.current || target===null)return;
-    if(!canPlaceAt(graduates,target) || (origin?.repot && !canRepotAt(plant,target))){setNotice('Choose an open circle.');return;}
+    if(!canSetPlant(plant,target) || (origin?.repot && !canRepotAt(plant,target))){setNotice('Choose an open circle.');return;}
     pending.current=true;setBusy(true);
     try{
       const result=origin ? await relocate(origin.id,origin.from,target,origin.repot?destinationKey(plant,target):undefined,origin.sourceKey,destinationKey(plant,target)) : await move(target,graduating);

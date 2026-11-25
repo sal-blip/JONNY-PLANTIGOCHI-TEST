@@ -1,6 +1,6 @@
 import {gardenTourSteps,validTutorial,validDewLesson,finishSprouting,rememberHint} from './firstVisit.js';
-import {canPlaceAt,viewForSlot} from './gardenLayout.js';
-import {canRepotAt,destinationKey,catalog,earnWater,milestone,relocateFurnishings,validGardenLife} from './gardenEconomy.js';
+import {viewForSlot} from './gardenLayout.js';
+import {canRepotAt,canSetPlant,destinationKey,catalog,earnWater,milestone,relocateFurnishings,validGardenLife} from './gardenEconomy.js';
 import { validPhoto } from './gardenScenes.js';
 import { audioLevels } from './audioLevels.js';
 
@@ -388,7 +388,7 @@ export function chooseSeed(p, id, species, now = Date.now()) {
 
 export function graduate(saved, id, slot, now = Date.now()) {
   const p = wake(saved,now);
-  if(now<latestCareAt(p) || !canHomePlant(p,id) || !canPlaceAt(p.graduates,slot))return p;
+  if(now<latestCareAt(p) || !canHomePlant(p,id) || !canSetPlant(p,slot))return p;
   const active=id===p.id;
   const earned=active?p:p.waitingPlants.find(item=>item.id===id);
   const species=earned.species ?? growthOrder[0];
@@ -412,7 +412,7 @@ export function graduate(saved, id, slot, now = Date.now()) {
 // pointer gesture cannot move a plant someone already rearranged in another tab.
 export function relocateGraduate(p, id, from, to, repotTarget, sourceKey, targetKey) {
   const index=p.graduates.findIndex(g=>g.id===id && g.slot===from);
-  if (index < 0 || !canPlaceAt(p.graduates,to)) return p;
+  if (index < 0 || !canSetPlant(p,to)) return p;
   if(sourceKey!==undefined && sourceKey!==destinationKey(p,from))return p;
   if(targetKey!==undefined && targetKey!==destinationKey(p,to))return p;
   if(repotTarget!==undefined && (!canRepotAt(p,to) || destinationKey(p,to)!==repotTarget))return p;

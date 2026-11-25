@@ -1337,7 +1337,7 @@ function placeOccupant(ctx,draw,panel,slot,overhang=0) {
  * drawOccupant(slot,panel) callback paints in panel-local coordinates, in depth
  * order. A numeric slot identifies a plant and 'cat' identifies the sofa seat.
  */
-export function drawScenery(ctx,{view=0,outsideOffset=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,occupantOverhang,separatePlanes=false,above=0,below=0}={}){
+export function drawScenery(ctx,{view=0,outsideOffset=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,occupantOverhang,hasOccupant,separatePlanes=false,above=0,below=0}={}){
   if(!ctx)return;
   const day=clamp(Number.isFinite(light.day)?light.day:1),warmth=clamp(Number.isFinite(light.warmth)?light.warmth:0);
   const hour=Number.isFinite(light.hour)?((light.hour%24)+24)%24:12;
@@ -1364,7 +1364,7 @@ export function drawScenery(ctx,{view=0,outsideOffset=0,light={},time=0,reducedM
     if(panel)casement(ctx,b,raw,508,45,181,96,L,clock,true,drift);
     else casement(ctx,b,raw,113,41,202,96,L,clock,false,drift);
     const paintLayer=layer=>placesFor(panel).forEach((spot,i)=>{
-      if(spot.layer===layer)placeOccupant(ctx,drawOccupant,panel,i,occupantOverhang?.(i));
+      if((spot.behindTable?'back-floor':spot.layer)===layer && (!hasOccupant || hasOccupant(i)))placeOccupant(ctx,drawOccupant,panel,i,occupantOverhang?.(i));
     });
     paintLayer('window');
     if(!panel)lamp(ctx,b,raw,day);
@@ -1372,6 +1372,7 @@ export function drawScenery(ctx,{view=0,outsideOffset=0,light={},time=0,reducedM
     if(!panel)placeOccupant(ctx,drawKeepsake,panel,'jar');
     paintLayer('shelf');
     if(!panel)placeOccupant(ctx,drawOccupant,panel,'cat');
+    paintLayer('back-floor');
     furniture(ctx,b,day,warmth,panel,true);
     if(panel)placeOccupant(ctx,drawKeepsake,panel,'book');
     paintLayer('table');

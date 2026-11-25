@@ -5,9 +5,8 @@ import GardenJournal from './GardenJournal.jsx';
 import {leaveEditor,newJournalSession} from './journalDrafts.js';
 import {RecordControls} from './GardenRecord.jsx';
 import GardenCamera from './GardenCamera.jsx';
-import {catalog,itemPrice,canSetItem,fitsBackupChange,framePhoto,lifeOf,storeItem} from './gardenEconomy.js';
-import {gardenViews,placesFor,slotFor,speciesName} from './gardenLayout.js';
-import {decorPlaces} from './roomShopArt.js';
+import {catalog,itemPrice,itemSlotsFor,canSetItem,fitsBackupChange,framePhoto,lifeOf,storeItem} from './gardenEconomy.js';
+import {gardenViews,speciesName} from './gardenLayout.js';
 import './gardenMarket.css';
 
 const titles={plantigotchi:'Plantigotchi',shop:'Garden shop',inventory:'Inventory',journal:'Journal',postcard:'Share'};
@@ -20,7 +19,7 @@ function phonePlacementError(plant,request){
     return 'This item has moved. Reopen it in Inventory.';
   const count=gardenViews(plant.graduates);
   for(let view=0;view<count;view++){
-    const slots=['decor','frame'].includes(product.kind)?decorPlaces(view).map(p=>p.slot):placesFor(view).map(p=>slotFor(view,p));
+    const slots=itemSlotsFor(view,product.kind);
     if(slots.some(slot=>canSetItem(plant,request.sku,slot,request.from)))return '';
   }
   return product.kind==='plant'?'Every plant spot is occupied. Move a plant to free a spot.':

@@ -3,7 +3,7 @@ import {drawRoomCat} from './roomCat.js';
 import {drawPottedPlant,hasTrailingFoliage,isShopPot} from './roomPlant.js';
 import {drawKeepsake,keepsakeFor} from './roomKeepsakes.js';
 import {slotFor} from './gardenLayout.js';
-import {drawRoomDecor} from './roomShopArt.js';
+import {drawPlacedDecor,drawRoomDecor} from './roomShopArt.js';
 
 export {BASE_WIDTH as ROOM_WIDTH, BASE_HEIGHT as ROOM_HEIGHT, placesFor, CAT_SEAT};
 
@@ -27,6 +27,7 @@ export function drawRoom(canvas,{
   const view=roomIndex%2;
   const light=roomLight(hour);
   const places=placesFor(view,worldHeight-above-BASE_HEIGHT);
+  const occupants=new Map(shopItems.filter(item=>item.slot!=null).map(item=>[item.slot,item]));
   const scale=canvas.width/(region?.w || BASE_WIDTH);
   function startLayer(ctx){
     ctx.save();
@@ -44,7 +45,12 @@ export function drawRoom(canvas,{
     }
     const place=places[slot],address=slotFor(roomIndex,place);
     const hovering=hoverPlacement?.slot===address?hoverPlacement:null;
-    const savedPot=shopItems.find(item=>item.slot===address && isShopPot(item.sku));
+    const item=occupants.get(address);
+    if(item && !isShopPot(item.sku)){
+      drawPlacedDecor(ctx,item,{baseX:place.x*BASE_WIDTH,baseY:place.baseY,size:place.size,slot:address},decorOptions);
+      return;
+    }
+    const savedPot=item;
     if(slot===lifted && !leavePot)return;
     const shopPot=hovering?.pot ?? savedPot;
     const plant=hovering?.plant ?? (slot===lifted?null:plants[slot]),selected=slot===highlighted || Boolean(shopPot && highlighted===shopPot.id);
@@ -58,14 +64,16 @@ export function drawRoom(canvas,{
       jarProgress,leafCount,night:1-light.day,selected:highlighted===id&&!placing,time,reducedMotion,
     });
   }
+  const decorOptions={night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion,rasterScale:scale};
   drawScenery(ctx,{view,light,time,reducedMotion,outsideOffset,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,
+    hasOccupant:i=>Boolean(plants[i] || occupants.has(slotFor(roomIndex,places[i])) || hoverPlacement?.slot===slotFor(roomIndex,places[i])),
     occupantOverhang:slot=>hasTrailingFoliage(hoverPlacement?.slot===slotFor(roomIndex,places[slot])?hoverPlacement.plant.species:plants[slot]?.species)?28:0,separatePlanes,above,below:worldHeight-above-BASE_HEIGHT});
-  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion,rasterScale:scale});
+  if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{...decorOptions,standaloneOnly:true});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   // In the live room they also sit in front of the native-resolution photo apertures.
   const front=foregroundCanvas?.getContext('2d');
   if(front)startLayer(front);
-  const floorSlots=places.map((_,i)=>i).filter(i=>places[i].layer==='floor');
+  const floorSlots=places.map((_,i)=>i).filter(i=>places[i].layer==='floor' && !places[i].behindTable);
   floorSlots.sort((a,b)=>places[a].baseY-places[b].baseY);
   for(const i of floorSlots)drawOccupant(front || ctx,i);
   if(front)front.restore();

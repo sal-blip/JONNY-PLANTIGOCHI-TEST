@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.67 · More places in the living room
+
+Each living room has 41 shared spots for plants, pots, frames and decorations. The bookcase has two spots on each of its four levels, the sill has eight and the coffee table has five beside the teacup. Twenty floor spots spread across five depths. The windowsill keeps its existing scale. The closest row draws the same item about 81% larger than the sill. Saved addresses remain valid, including the older decoration mounts. [Placement and depth rules](interface-and-art.md#pot-and-plant-composition)
+
+All 203 unit tests and the production build passed. A mobile Chromium walkthrough purchased a Maneki-neko, placed it on the lower bookcase shelf, moved it to the front floor and reloaded the garden. The four spots occupied by plants stayed unavailable for decorations. The shop comparison and pot purchase walkthrough passed too. [Placement walkthrough](../../tests/browser/living_room_placement.py)
+
 ## Plantigochi 0.1.66 · Sharper shop close-ups
 
 The Oak and Lacquer photo frames, Maneki-neko and Record player now show detail from the original 1024 × 1024 SpriteCook sheets in shop and inventory close-ups. The four transparent cutouts range from 207 to 282 pixels wide. Small garden and shop sprites retain their existing scale.

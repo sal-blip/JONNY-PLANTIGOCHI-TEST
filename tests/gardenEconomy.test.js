@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {care,graduate,HOUR,newPlant,readPlant,relocateGraduate,replant,wake,WEEK} from '../src/game.js';
-import {addRealPlant,canSetItem,catalog,checkIn,destinationKey,earnWin,fitsBackupChange,framePhoto,lifeOf,placeItem,removeNote,saveNote,storeItem,validGardenLife} from '../src/gardenEconomy.js';
+import {addRealPlant,itemSlotsFor,canSetItem,catalog,checkIn,destinationKey,earnWin,fitsBackupChange,framePhoto,lifeOf,placeItem,removeNote,saveNote,storeItem,validGardenLife} from '../src/gardenEconomy.js';
 import {packGardenBackup,prepareRestoredGarden,readGardenBackup} from '../src/gardenBackup.js';
 import {backupLimit} from '../src/gardenScenes.js';
 
@@ -246,4 +246,27 @@ test('seven consecutive calendar dates pay once each, then repeat; gaps restart 
   assert.equal(lifeOf(checkIn(legacy,dates[1])).visit.streak,2);
   assert.equal(validGardenLife(legacy),true);
   assert.equal(validGardenLife({...p,gardenLife:{...lifeOf(p),visit:{date:'bad',streak:0}}}),false);
+});
+
+test('all living-room mounts accept indoor items and preserve occupancy through reloads',()=>{
+  const initial=checkIn(seed(),morning);
+  const rich={...initial,gardenLife:{...initial.gardenLife,balance:6000}};
+  const mounts=itemSlotsFor(0,'plant');
+  assert.equal(mounts.length,41);
+  for(const slot of mounts){
+    for(const sku of ['snake-plant','terra','record','oak'])assert.ok(canSetItem(rich,sku,slot),sku+'/'+slot);
+  }
+  const front='0/front-3',sill='0/decor-sill';
+  const framed=buy(rich,'oak','frame',front);
+  const potted=buy(buy(framed,'terra','pot',sill),'snake-plant','resident',sill);
+  assert.deepEqual(readPlant(JSON.stringify(potted),morning),potted);
+  assert.equal(buy(potted,'neko','figurine',sill),potted);
+  assert.equal(buy(potted,'terra','spare',front),potted);
+  assert.equal(buy(potted,'snake-plant','new',front),potted);
+  assert.equal(relocateGraduate(potted,'resident',sill,front),potted);
+  const moved=placeItem(potted,{sku:'oak',id:'frame',from:front,slot:0,expected:destinationKey(potted,0)},morning);
+  assert.equal(moved.gardenLife.items.find(i=>i.id==='frame').slot,0);
+  assert.deepEqual(readPlant(JSON.stringify(moved),morning),moved);
+  assert.ok(canSetItem(moved,'snake-plant',front));
+  assert.equal(canSetItem(moved,'record','1/front-left'),false);
 });

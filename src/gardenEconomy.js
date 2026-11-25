@@ -1,4 +1,4 @@
-import {canPlaceAt,gardenViews,viewForSlot} from './gardenLayout.js';
+import {canPlaceAt,gardenViews,viewForSlot,placesFor,slotFor} from './gardenLayout.js';
 import {backupLimit,validPhoto} from './gardenScenes.js';
 import {validOriginalId} from './frameUpload.js';
 import {decorPlaces} from './roomShopArt.js';
@@ -157,6 +157,8 @@ const integer = n=>Number.isSafeInteger(n) && n>=0;
 const textFits = (s,max)=>typeof s==='string' && s.trim().length>0 && s.length<=max;
 const unique = list=>new Set(list.map(item=>item.id)).size===list.length;
 function decorView(slot){
+  const shared=viewForSlot(slot);
+  if(shared>=0 && shared%2===0)return shared;
   if(typeof slot!=='string')return -1;
   const view=Number(slot.split('/')[0]);
   return integer(view) && decorPlaces(view).some(p=>p.slot===slot) ? view : -1;
@@ -188,6 +190,7 @@ export function validGardenLife(plant) {
     if(item.slot===null)continue;
     const view=itemView(item);
     if(view<0 || view>=gardenViews(plant.graduates) || placed.has(item.slot))return false;
+    if(kind!=='pot' && plant.graduates.some(p=>p.slot===item.slot))return false;
     placed.add(item.slot);
   }
   const subjects=new Set(g.plants.map(p=>p.id));
@@ -196,17 +199,29 @@ export function validGardenLife(plant) {
     g.notes.every(n=>integer(n.time) && validId(n.subject) && (n.group==='toy' || (n.group==='real' && subjects.has(n.subject)))
       && noteKinds.includes(n.kind) && typeof n.text==='string' && n.text.length<=2000);
 }
+export function canSetPlant(plant,slot){
+  return canPlaceAt(plant.graduates,slot) && !lifeOf(plant).items.some(i=>i.slot===slot && catalog[i.sku].kind!=='pot');
+}
+export function itemSlotsFor(view,kind){
+  const shared=placesFor(view).map(spot=>slotFor(view,spot));
+  if(kind==='plant' || kind==='pot')return shared;
+  const dedicated=decorPlaces(view).filter(spot=>!spot.shared).map(spot=>spot.slot);
+  return view%2===0 ? [...shared,...dedicated] : dedicated;
+}
 export function canSetItem(plant,sku,slot,from=null) {
   const kind=catalog[sku]?.kind;
   if(!kind || from===slot)return false;
-  if(kind==='plant')return canPlaceAt(plant.graduates,slot);
-  if(kind==='pot'){
-    const view=viewForSlot(slot);
-    return view>=0 && view<gardenViews(plant.graduates);
-  }
-  const view=decorView(slot),items=lifeOf(plant).items;
+  if(kind==='plant')return canSetPlant(plant,slot);
+  const pot=kind==='pot';
+  const view=pot?viewForSlot(slot):decorView(slot);
   if(view<0 || view>=gardenViews(plant.graduates))return false;
-  return !items.some(i=>i.slot===slot) || (decorView(from)>=0 && items.some(i=>i.slot===from && i.sku===sku));
+  if(!pot && plant.graduates.some(p=>p.slot===slot))return false;
+  const items=lifeOf(plant).items,occupant=items.find(i=>i.slot===slot);
+  if(!occupant)return true;
+  // Pots can exchange with pots. Placed decorations can trade with another decoration.
+  // Mixing these would leave the displaced object in an incompatible spot.
+  const occupiedByPot=catalog[occupant.sku].kind==='pot';
+  return pot ? occupiedByPot : !occupiedByPot && from!=null && items.some(i=>i.slot===from && i.sku===sku);
 }
 // Repotting requires an empty vessel that actually occupies the destination.
 export function canRepotAt(plant,slot) {

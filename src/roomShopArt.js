@@ -1,4 +1,4 @@
-import {surfaceScale} from './gardenLayout.js';
+import {surfaceScale,placesFor,slotFor} from './gardenLayout.js';
 import {nativeArt} from './shopSprites/nativeArt.js';
 import {approvedArt} from './shopSprites/approved.js';
 import {drawPottedPlant,isShopPlant,isShopPot} from './roomPlant.js';
@@ -9,10 +9,13 @@ const locations=[
   [['cabinet','Left end of studio cabinet',23,180,surfaceScale.shelf],['sill','Right studio windowsill',264,143,surfaceScale.window],['stand','Studio display table',104,234,surfaceScale.displayStand]],
 ];
 export function decorPlaces(view=0){
-  return locations[view%2].map(([key,name,baseX,baseY,size])=>({
-    slot:view+'/decor-'+key,name,x:baseX/400,y:(baseY-14*size)/320,baseX,baseY,size,stand:key==='stand',
-    hitWidth:40*size,hitHeight:34*size,
-  }));
+  return locations[view%2].map(([key,name,x,y,size])=>{
+    const slot=view+'/decor-'+key;
+    const spot=view%2===0 && placesFor(view).find(p=>slotFor(view,p)===slot);
+    const baseX=spot ? spot.x*400 : x,baseY=spot ? spot.baseY : y;
+    return {slot,name,x:baseX/400,y:(baseY-14*size)/320,baseX,baseY,size,stand:key==='stand',
+      shared:Boolean(spot),hitWidth:40*size,hitHeight:34*size};
+  });
 }
 
 const decorSkus=['oak','lacquer','neko','record'];
@@ -144,12 +147,16 @@ function drawDecor(ctx,{sku,x,y,size,night=0,selected=false,photo,image,stand=fa
   if(image && photo)framedPhoto(ctx,image,photo,sku,x,y,size,night);
   ctx.restore();
 }
-export function drawRoomDecor(ctx,view,items,{night=0,highlighted,photos,playingItemId=null,time=0,reducedMotion=false,rasterScale=1}={}){
+export function drawPlacedDecor(ctx,item,spot,{night=0,highlighted,photos,playingItemId,time=0,reducedMotion=false,rasterScale=1}={}){
+  drawDecor(ctx,{...item,x:spot.baseX,y:spot.baseY,size:spot.size,stand:spot.stand,night,rasterScale,image:photos?.get(item.id),
+    selected:highlighted===spot.slot || highlighted===item.id,
+    spinTime:playingItemId!=null && item.id===playingItemId && !reducedMotion ? Math.max(0,time) : null});
+}
+export function drawRoomDecor(ctx,view,items,options={}){
   for(const spot of decorPlaces(view)){
+    if(spot.shared && options.standaloneOnly)continue;
     const item=items.find(i=>i.slot===spot.slot && Object.hasOwn(sprites,i.sku));
-    if(item)drawDecor(ctx,{...item,x:spot.baseX,y:spot.baseY,size:spot.size,stand:spot.stand,night,rasterScale,image:photos?.get(item.id),
-      selected:highlighted===spot.slot || highlighted===item.id,
-      spinTime:playingItemId!=null && item.id===playingItemId && !reducedMotion ? Math.max(0,time) : null});
+    if(item)drawPlacedDecor(ctx,item,spot,options);
   }
 }
 
