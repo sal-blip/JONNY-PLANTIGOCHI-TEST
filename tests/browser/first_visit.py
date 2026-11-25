@@ -143,18 +143,22 @@ def play(browser, url):
         assert shots[1]["sound"] == bell, (name, shots)
         expect_chime_timing(shots[1], name)
 
-    for key in ("Open toy menu", "Previous toy item", "Next toy item", "Back on toy"):
-        if key == "Next toy item":
-            # Another arrow moves the item, but leaves the same Back instruction.
-            expect_plain_tap(key)
-            button("Choose Care").wait_for()
-            page.get_by_text("That’s how you browse!", exact=False).wait_for()
+    for key, instruction in (
+        ("Open toy menu", "Care is where"),
+        ("Previous toy item", "Field Guide has tips"),
+        ("Next toy item", "Care is where"),
+        ("Next toy item", "Play has Vine Trail"),
+        ("Next toy item", "Growth shows"),
+        ("Next toy item", "First Aid helps"),
+        ("Back on toy", "Time for my first drink!"),
+    ):
+        tap(key)
+        expect_arrival_bell(key)
+        page.get_by_text(instruction, exact=False).wait_for()
+        if instruction == "First Aid helps":
+            page.get_by_text("Press Back to return to your seed for water.", exact=False).wait_for()
         else:
-            tap(key)
-            expect_arrival_bell(key)
-            if key == "Previous toy item":
-                button("Choose Field guide").wait_for()
-                page.get_by_text("That’s how you browse!", exact=False).wait_for()
+            assert not page.get_by_text("Press Back to return to your seed for water.", exact=False).count()
 
     # Two real keyboard presses can advance past an instruction before it
     # rings. Each press clicks, and only the instruction left on screen rings.
@@ -286,11 +290,17 @@ def play(browser, url):
     tap("Open garden")
     tap("Return to Plantigochi")
     button("Open toy menu").wait_for()
-    assert not page.locator(".toy-guide").count()
+    if button("Turn on reminders").count():
+        tap("Maybe later")
+    if button("Got it").count():
+        tap("Got it")
+    page.locator(".toy-guide").wait_for(state="detached")
+    close_rewards = button("Close daily rewards")
+    page.add_locator_handler(close_rewards, lambda: close_rewards.tap())
     expect_plain_tap("Open Plantigochi menu")
     tap("Settings")
     effects = page.get_by_role("slider", name="Sound effects", exact=True)
-    assert effects.input_value() == "100"
+    assert effects.input_value() == "40"
     effects.press("Home")
     assert effects.input_value() == "0"
     tap("Close menu")

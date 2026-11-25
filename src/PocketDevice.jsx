@@ -22,6 +22,14 @@ const BACK_HOLD_MS=700;
 const parentBranch={boost:'growth',pour:'care',pause:'play',pastAid:'aid'};
 const branchIcons={care:Droplet,play:Gamepad2,growth:Sprout,aid:Cross,guide:Compass};
 
+const menuTourNotes={
+  care:'Care is where you water and tend to your plant.',
+  play:'Play has Vine Trail, Dew Catch, and Leaf Pairs.',
+  growth:'Growth shows how far your plant has grown.',
+  aid:'First Aid helps when fungus gnats appear.',
+  guide:'Field Guide has tips on plant care and toy controls.',
+};
+
 function BranchIcons({active}) {
   return <div className="lcd-branches" aria-hidden="true">
     {Object.keys(toyBranches).map(id=>{
@@ -251,6 +259,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     if (!section) {go('home');return;}
     const next=(index+delta+cards.length)%cards.length;
     setPath(old=>[...old.slice(0,-1),frame(section,next)]);
+    return cards[next];
   }
   function give(action,confirmed=false) {
     const time=plantClock(), live=wake(plant,time);
@@ -317,10 +326,16 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     retreat.current=setTimeout(()=>setCloseUp(false),3400);
   }
   const tutorial=plant.tutorial;
-  const [practice,setPractice]=useState('browse');
+  const [visitedIcons,setVisitedIcons]=useState([]);
+  const [finishedTour,setFinishedTour]=useState(false);
+  const seenIcons=new Set(['care',...(tutorial?.menuTourVisited || []),...visitedIcons]);
+  const [tourDirection,setTourDirection]=useState(1);
+  const nextTourCard=section==='home' && cards.map((_,offset)=>cards[(index+(offset+1)*tourDirection+cards.length)%cards.length]).find(card=>!seenIcons.has(card.command));
+  const tourComplete=section==='home' && !nextTourCard;
   const openingPlay=lesson==='water' && (section==='play' || Boolean(game));
   const waterGuide=lesson==='water' && !openingPlay;
-  const training=waterGuide && tutorial && !tutorial.controlsLearned;
+  const controlsLearned=tutorial?.controlsLearned || finishedTour;
+  const training=waterGuide && tutorial && !controlsLearned;
   const boosting=tutorial?.step==='boost';
   const purchasePending=useRef(false);
   const boostOffer=useRef({stage:plant.stage,count:plant.boostCount || 0});
@@ -367,10 +382,25 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       else if(key==='heart')choose();
     }else if(training){
       if(!section && key==='heart')go('home');
-      else if(section==='home' && (key==='right' || key==='left')){browse(key==='right'?1:-1);setPractice('back');}
+      else if(section==='home' && (key==='right' || key==='left')){
+        const direction=key==='right'?1:-1;
+        setTourDirection(direction);
+        const {command}=browse(direction);
+        if(!seenIcons.has(command)){
+          setVisitedIcons(old=>[...old,command]);
+          void commit(p=>{
+            const t=p.tutorial;
+            if(p.id!==plant.id || !t || t.controlsLearned || t.menuTourVisited?.includes(command))return p;
+            return {...p,tutorial:{...t,menuTourVisited:[...(t.menuTourVisited || []),command]}};
+          });
+        }
+      }
       else if(section==='home' && key==='back'){
         back();
-        if(practice==='back')void commit(p=>p.tutorial?{...p,tutorial:{...p.tutorial,controlsLearned:true}}:p);
+        if(tourComplete){
+          setFinishedTour(true);
+          void commit(p=>p.id===plant.id && p.tutorial?{...p,tutorial:{...p.tutorial,controlsLearned:true}}:p);
+        }
       }else return;
     }else{
       if (key==='back') back();
@@ -468,22 +498,25 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   const boostTarget={home:'growth',growth:'boost',boost:'buy-boost'}[section];
   const findBoost=boosting && cards.length>1 && choice?.command!==boostTarget;
   const guideArrow=findBoost || Boolean(section && (
-    (training && practice==='browse') ||
+    (training && !tourComplete) ||
     (waterGuide && !training && (heartDisabled || choice?.command==='play'))
   ));
   function wateringInstruction(){
-    if(!section)return tutorial?.controlsLearned || training && practice==='back'
-      ? 'Nice! Now open my menu again. Choose Care, then Water, to give your seed its first drink.'
+    if(!section)return controlsLearned
+      ? 'Time for my first drink! Press my heart to open the menu.'
       : 'Hey there! I’m your Plantigochi. Let’s help '+plant.name+' sprout. Press my heart button to open the menu.';
-    if(training)return practice==='browse'
-      ? 'Try either arrow to see another menu item.'
-      : 'That’s how you browse! Press Back to return to your seed.';
+    if(training){
+      const direction=tourComplete?'Press Back to return to your seed for water.'
+        :seenIcons.size===1?'Try either arrow to explore the menu.'
+        :'Use the arrows to find '+nextTourCard.label+'.';
+      return menuTourNotes[choice.command]+' '+direction;
+    }
     if(section==='home')return choice.command==='care'
-      ? 'Use my arrows to look around. Back takes you out. For our first drink, choose Care with the heart.'
-      : 'You found '+choice.label+'! Use the arrows to find Care, then press my heart.';
+      ? 'Press my heart to choose Care.'
+      : 'Move to Care for my first drink.';
     return choice.command==='give:water'
-      ? 'There’s Water! Press my heart to give '+plant.name+' its first drink.'
-      : 'Use the arrows to find Water. My heart picks it, and Back takes you up one menu.';
+      ? 'Press my heart to water '+plant.name+'.'
+      : 'Move to Water for my first drink.';
   }
   const firstDrinkHint=waterGuide?wateringInstruction():null;
   const boostInstruction = boosting ? (!section?'Press my heart to open the menu.':section==='home'?
@@ -604,7 +637,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
             e.stopPropagation();e.preventDefault();original.focus({preventScroll:true});original.click();
           }
         }}>
-        <button className={'toy-back'+(training && section && practice==='back'?' teaching-heart':'')} data-audio="toy" aria-label="Back on toy" title="Back · Hold to return to plant" aria-description="Hold to return to your plant." onContextMenu={e=>e.preventDefault()} onClick={()=>press('back')}><CornerUpLeft/></button>
+        <button className={'toy-back'+(training && tourComplete?' teaching-heart':'')} data-audio="toy" aria-label="Back on toy" title="Back · Hold to return to plant" aria-description="Hold to return to your plant." onContextMenu={e=>e.preventDefault()} onClick={()=>press('back')}><CornerUpLeft/></button>
         <button data-audio="toy" className={guideArrow?'teaching-heart':''} aria-label={playing?'Play left':'Previous toy item'} title="Previous" onClick={()=>press('left')}><ChevronLeft/></button>
         <button ref={heart} data-audio="toy" className={'accept toy-heart'+((waterGuide && choice?.command!=='play' || boosting && !findBoost) && !heartDisabled?' teaching-heart':'')} aria-label={summary?'Claim tutorial gift with heart':playing?'Play heart':choice?'Choose '+choice.label:plant.deadAt!==null?'Start again':sick?'Open First Aid':'Open toy menu'} title="Choose" aria-disabled={heartDisabled} onClick={()=>press('heart')}><Heart/></button>
         <button data-audio="toy" className={guideArrow?'teaching-heart':''} aria-label={playing?'Play right':'Next toy item'} title="Next" onClick={()=>press('right')}><ChevronRight/></button>

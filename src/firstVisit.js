@@ -19,6 +19,8 @@ export function grantSproutCoins(p){
 
 export function validTutorial(t,stage){
   return ['pot','apps','return','boost','tour'].includes(t.step) &&
+    (t.menuTourVisited===undefined || (Array.isArray(t.menuTourVisited) &&
+      t.menuTourVisited.every(id=>['care','play','growth','aid','guide'].includes(id)))) &&
     Array.isArray(t.visited) && t.visited.every(id=>Object.hasOwn(appHints,id)) &&
     new Set(t.visited).size===t.visited.length && Number.isInteger(t.blocks) &&
     (t.step==='tour'?stage==='sprout' && t.blocks===4:stage==='seed' && t.blocks>=0 && t.blocks<4) &&

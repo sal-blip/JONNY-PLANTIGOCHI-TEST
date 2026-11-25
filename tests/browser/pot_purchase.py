@@ -94,7 +94,7 @@ def button(page, name):
 
 def select_center(page):
     for label in (
-        "Name your seed", "Keep Monstera", "Open toy menu", "Next toy item",
+        "Name your seed", "Keep Monstera", "Open toy menu", *(["Next toy item"] * 4),
         "Back on toy", "Open toy menu", "Choose Care", "Choose Water",
         "Visit my garden", "Open iSEED", "Shop", "Terracotta pot · 12 coins", "Buy", CENTER,
     ):

@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.60 · Explore the toy menu before watering
+
+The first seed introduces Care, Play, Growth, First Aid, and Field Guide as players browse in either direction. The tour remembers distinct icons across reloads and asks for Back once all five have been seen. Opening the menu again highlights Care, then Water. Returning players who already finished the controls lesson go straight to watering.
+
+The production build and 198 unit tests passed. Mobile Chromium checks covered both arrow directions, reversing and reloading midway, the watering handoff and the rest of the first visit. An installed 0.1.59 garden also updated to 0.1.60 through Settings. [First visit](../../tests/browser/scene_music.py) · [Resume the menu tour](../../tests/browser/starter_games.py)
+
 ## Plantigochi 0.1.59 · Verify updates against the published game
 
 Reproduced in Chromium with 0.1.57 installed and 0.1.58 available. When the registered worker URL returned its previous script, Settings reported “You have the latest version.” The old check observed worker changes without comparing the open game with the published release. The separate repair page used a fresh worker URL and checked the cached entry.
