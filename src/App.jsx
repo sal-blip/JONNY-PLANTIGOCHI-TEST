@@ -557,6 +557,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         <button disabled={['checking','downloading'].includes(phone.updateStatus)}
           onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
           {phone.updateStatus==='ready'?'Restart to update':phone.updateStatus==='slow'?'Retry update check':'Check for updates'}</button>
+        <small>Running version {appVersion}</small>
         {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
         <button onClick={()=>open('uninstall')}>How to uninstall<ChevronRight className="row-end"/></button>
         <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}

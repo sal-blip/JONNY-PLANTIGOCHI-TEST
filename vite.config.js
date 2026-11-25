@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
@@ -27,6 +29,13 @@ export default defineConfig({
         ],
       },
       injectManifest: {
+        // Verify the entry page before activating a worker. A stale HTML
+        // response can otherwise point a newly installed app to an older bundle.
+        manifestTransforms: [async entries => {
+          const html=await readFile(new URL('./dist/index.html',import.meta.url));
+          const integrity='sha256-'+createHash('sha256').update(html).digest('base64');
+          return {manifest:entries.map(entry=>entry.url==='index.html'?{...entry,integrity}:entry)};
+        }],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         globIgnores: ['social/**'],
         globPatterns: ['**/*.{html,js,css,woff2,svg,png,webp,webmanifest,m4a,mp3,txt}'],

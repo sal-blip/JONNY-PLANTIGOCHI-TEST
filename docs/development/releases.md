@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.54 · Installed game updates
+
+The update worker verifies the entry page against the release before activating. Settings shows the running version beside the update control. This release includes the edge-to-edge camera.
+
 ## Plantigochi 0.1.53 · Edge-to-edge garden photos
 
 The wide camera fills the iSEED viewfinder with the garden’s ceiling and foreground floor. Captures follow the finder’s aspect ratio throughout the zoom range.
