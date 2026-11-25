@@ -10,6 +10,8 @@ A quick horizontal swipe eases the garden camera to the adjacent room. A slower 
 
 The production build and 202 unit tests passed. Mobile Chromium walkthroughs covered the first visit, both room swipes, holding a manual camera position, reopening mid-tour, and collecting each reward once. The audio walkthrough measured continuous Cotton Candy Skies through the spin and the transition to Mystic Oasis after leaving rewards. An installed 0.1.63 test garden restarted into 0.1.64 and kept its plant.
 
+On the public site, a 0.1.63 installation found the release through the regular update menu, offered Restart and reopened on 0.1.64 with its original plant ID. The public release descriptor, JavaScript entry, service worker digest and immutable game page matched the tested build. Physical phone gesture testing remains open. Published Sites version `appgver_d48bda2def608191a6a22043372a09f2` from Sites source `1dd53031815fdf6c0a1062b413a8ad18f04f4359` in deployment `appgdep_6b067ef14cdc8191a05890e852dd3d9f`. [GitHub release revision](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/08b9d9f)
+
 ## Plantigochi 0.1.63 · Download progress and restart
 
 A mobile Chromium test reproduced the reported 0.1.61 screen by returning stale HTML after the release descriptor advertised 0.1.62. The installed app knew the published version but could not verify the downloaded game. The specific failure on the reporting phone remains unconfirmed.
