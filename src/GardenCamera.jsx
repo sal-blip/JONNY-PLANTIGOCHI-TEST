@@ -6,7 +6,7 @@ import {cameraFrame,cameraRegion,wholeRoom,viewfinderShape,zoomAt,finderSpan,pin
 import {downloadFile} from './gardenBackup.js';
 import {useCameraRoll} from './useCameraRoll.js';
 
-const width=ROOM_WIDTH*3,height=ROOM_HEIGHT*3;
+const roomAspect=ROOM_WIDTH/ROOM_HEIGHT;
 
 function watermarkPhoto(image,icon){
   const ctx=image.getContext('2d');
@@ -34,11 +34,12 @@ export default function GardenCamera({roomRef,count,raised}){
   const [error,setError]=useState(''),[attempt,retry]=useState(0);
   const [saving,setSaving]=useState(false);
   const canvas=useRef(null),drag=useRef(null),capture=useRef(0);
-  const finder=useRef(null),[aspect,setAspect]=useState(width/height);
-  const shape=useMemo(()=>viewfinderShape(aspect,width/height),[aspect]);
+  const finder=useRef(null),[measuredAspect,setAspect]=useState(null);
+  const aspect=measuredAspect ?? roomAspect, measured=measuredAspect!==null;
+  const shape=useMemo(()=>viewfinderShape(aspect,roomAspect),[aspect]);
   const span=finderSpan(frame.zoom,shape);
-  const imageAspect=width*Math.min(1,span.w)/(height*Math.min(1,span.h));
-  const outW=Math.round(1200*Math.min(1,imageAspect)),outH=Math.round(1200*Math.min(1,1/imageAspect));
+  const worldHeight=Math.max(ROOM_HEIGHT,ROOM_WIDTH/aspect);
+  const outW=Math.round(1200*Math.min(1,aspect)),outH=Math.round(1200*Math.min(1,1/aspect));
   const fingers=useRef(new Map());
   const [shot,setShot]=useState(0);
   useLayoutEffect(()=>{
@@ -51,9 +52,9 @@ export default function GardenCamera({roomRef,count,raised}){
   useEffect(()=>{
     setFrame(f=>cameraFrame(f.x,f.y,f.zoom,shape));
   },[shape]);
-  const ready=scene?.room===room && raised;
+  const ready=scene?.room===room && scene.worldHeight===worldHeight && raised;
   useEffect(()=>{
-    if(!raised)return;
+    if(!raised || !measured)return;
     let active=true;
     setScene(null);setError('');
     const slow=setTimeout(()=>{if(active)setError('This room is taking longer to open.');},12000);
@@ -61,30 +62,32 @@ export default function GardenCamera({roomRef,count,raised}){
       try{
         const icon=new Image();
         icon.src='/icons/icon-192.png';
-        const [paint]=await Promise.all([roomRef.current.prepareCameraRoom(room),icon.decode()]);
+        const [paint]=await Promise.all([roomRef.current.prepareCameraRoom(room,worldHeight),icon.decode()]);
         if(!active)return;
         const overview=document.createElement('canvas');
-        overview.width=width;overview.height=height;
+        const density=1200/Math.max(ROOM_WIDTH,worldHeight);
+        overview.width=Math.round(ROOM_WIDTH*density);overview.height=Math.round(worldHeight*density);
         paint(overview);
-        setError('');setScene({room,overview,paint,icon});
+        setError('');setScene({room,worldHeight,overview,paint,icon});
       }catch{if(active)setError('Couldn’t load this room. Try again.');}
       finally{clearTimeout(slow);}
     }
     void load();
     return ()=>{active=false;clearTimeout(slow);capture.current++;drag.current=null;fingers.current.clear();};
-  },[raised,room,attempt,roomRef]);
+  },[raised,room,attempt,roomRef,worldHeight,measured]);
   useEffect(()=>{if(raised){setSaving(false);setFrame(wholeRoom);}},[raised]);
   useLayoutEffect(()=>{
     if(!ready || !canvas.current || review)return;
-    const {x,y,w,h}=cameraRegion(frame,width,height,shape);
+    const region=cameraRegion(frame,ROOM_WIDTH,worldHeight,shape);
+    if(frame.zoom===1){scene.paint(canvas.current,region);return;}
+    const {x,y,w,h}=cameraRegion(frame,scene.overview.width,scene.overview.height,shape);
     const ctx=canvas.current.getContext('2d');
     ctx.clearRect(0,0,outW,outH);
     ctx.drawImage(scene.overview,x,y,w,h,0,0,outW,outH);
-    if(frame.zoom===1)return;
     // Pan the cached room immediately, then resolve fine detail from the masters.
-    const timer=setTimeout(()=>scene.paint(canvas.current,cameraRegion(frame,ROOM_WIDTH,ROOM_HEIGHT,shape)),150);
+    const timer=setTimeout(()=>scene.paint(canvas.current,region),150);
     return ()=>clearTimeout(timer);
-  },[scene,frame,ready,review,shape,outW,outH]);
+  },[scene,frame,ready,review,shape,outW,outH,worldHeight]);
 
   function changeRoom(next){
     setIndex(next);setFrame(wholeRoom);setError('');drag.current=null;
@@ -144,7 +147,7 @@ export default function GardenCamera({roomRef,count,raised}){
     setSaving(true);setError('');
     try{
       const image=document.createElement('canvas');image.width=outW;image.height=outH;
-      scene.paint(image,cameraRegion(frame,ROOM_WIDTH,ROOM_HEIGHT,shape));
+      scene.paint(image,cameraRegion(frame,ROOM_WIDTH,worldHeight,shape));
       watermarkPhoto(image,scene.icon);
       const blob=await new Promise(resolve=>image.toBlob(resolve,'image/png'));
       if(!blob)throw Error();
@@ -168,7 +171,7 @@ export default function GardenCamera({roomRef,count,raised}){
   return <section ref={finder} className="garden-camera" data-handset-no-pull="" aria-label="Garden camera">
     {review?<div className="camera-review">{photo && <img src={photo.url} alt="Selected garden photo"/>}</div>:
       <div className="camera-finder">
-        <canvas ref={canvas} width={outW} height={outH} style={{width:Math.min(100,100/span.w)+'%',height:Math.min(100,100/span.h)+'%'}} tabIndex={0} aria-label="Garden viewfinder. Tap a plant to focus, drag to frame, or pinch to zoom."
+        <canvas ref={canvas} width={outW} height={outH} tabIndex={0} aria-label="Garden viewfinder. Tap a plant to focus, drag to frame, or pinch to zoom."
           onPointerDown={begin} onPointerMove={move} onPointerUp={end} onPointerCancel={e=>{fingers.current.delete(e.pointerId);drag.current=null;}} onKeyDown={key}/>
         {shot>0 && <i key={shot} aria-hidden="true" className="camera-flash"/>}
       </div>}

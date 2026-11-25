@@ -7,6 +7,8 @@ import {drawRoomDecor} from './roomShopArt.js';
 
 export {BASE_WIDTH as ROOM_WIDTH, BASE_HEIGHT as ROOM_HEIGHT, placesFor, CAT_SEAT};
 
+export const roomCeilingHeight=worldHeight=>Math.round((worldHeight-BASE_HEIGHT)*.39);
+
 export function roomLight(hour) {
   const h=((hour%24)+24)%24;
   const smooth=x=>{const t=Math.min(1,Math.max(0,x));return t*t*(3-2*t);};
@@ -57,7 +59,7 @@ export function drawRoom(canvas,{
     });
   }
   drawScenery(ctx,{view,light,time,reducedMotion,outsideOffset,drawOccupant:slot=>drawOccupant(ctx,slot),drawKeepsake:paintKeepsake,
-    occupantOverhang:slot=>hasTrailingFoliage(hoverPlacement?.slot===slotFor(roomIndex,places[slot])?hoverPlacement.plant.species:plants[slot]?.species)?28:0,separatePlanes});
+    occupantOverhang:slot=>hasTrailingFoliage(hoverPlacement?.slot===slotFor(roomIndex,places[slot])?hoverPlacement.plant.species:plants[slot]?.species)?28:0,separatePlanes,above,below:worldHeight-above-BASE_HEIGHT});
   if(shopItems.length)drawRoomDecor(ctx,roomIndex,shopItems,{night:1-light.day,highlighted,photos,playingItemId,time,reducedMotion,rasterScale:scale});
   // Floor pots can sit forward of the furniture and outside the old 320px frame.
   // In the live room they also sit in front of the native-resolution photo apertures.

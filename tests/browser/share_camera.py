@@ -48,9 +48,22 @@ with sync_playwright() as pw:
     assert abs(bounds['height']-screen['height'])<6 and abs(bounds['width']-screen['width'])<6
     wide = page.locator('.camera-finder canvas')
     expect(zoom).to_have_value('1')
-    assert wide.evaluate('el => [el.width,el.height]') == [1200,960]
+    dimensions = wide.evaluate('el => [el.width,el.height]')
+    assert max(dimensions)==1200 and abs(dimensions[0]/dimensions[1]-bounds['width']/bounds['height'])<.002
     rect = wide.bounding_box()
-    assert abs(rect['width']/rect['height']-1.25)<.01 and rect['height']<bounds['height']
+    assert abs(rect['width']-bounds['width'])<2 and abs(rect['height']-bounds['height'])<2
+    def check_scenery():
+        # Sample the actual top and bottom strips for opaque, textured scenery.
+        assert wide.evaluate('''el => [0, .95].every(y => {
+          const strip=el.getContext('2d').getImageData(0,Math.floor(el.height*y),el.width,Math.floor(el.height*.05));
+          const colors=new Set();
+          for(let i=0;i<strip.data.length;i+=4){
+            if(strip.data[i+3]!==255)return false;
+            colors.add((strip.data[i]<<16)+(strip.data[i+1]<<8)+strip.data[i+2]);
+          }
+          return colors.size>3;
+        })''')
+    check_scenery()
     zoom.press('End')
     expect(zoom).to_have_value('4')
     taps(page, 'Take photo', 'Open captured photos')
@@ -65,13 +78,14 @@ with sync_playwright() as pw:
     taps(page, 'Return to camera', 'Previous camera room')
     expect(shutter).to_be_enabled()
     expect(zoom).to_have_value('1')
+    check_scenery()
     preview = wide.evaluate('el => el.toDataURL()')
     taps(page, 'Take photo')
     expect(page.get_by_text('Photo captured. 2 this session.')).to_be_attached()
     taps(page, 'Open captured photos')
     latest = page.get_by_role('img',name='Selected garden photo')
     expect(latest).to_be_visible()
-    # At wide both renders are native 1200 × 960. Only the lower-left signature differs.
+    # At wide both renders fill the finder. Only the lower-left signature differs.
     changes = latest.evaluate("""async (img, before) => {
       await img.decode();
       const plain=new Image(); plain.src=before; await plain.decode();
@@ -85,12 +99,12 @@ with sync_playwright() as pw:
         if(a[i]===b[i] && a[i+1]===b[i+1] && a[i+2]===b[i+2])continue;
         const x=(i/4)%w,y=Math.floor(i/4/w);
         if(x>w*.32 || y<h*.88)outside++;
-        else if(x<h*.077)icon++;
+        else if(x<Math.min(w,h)*.077)icon++;
         else label++;
       }
       return [w,h,icon,label,outside];
     }""",preview)
-    assert changes[:2]==[1200,960] and min(changes[2:4])>300 and changes[4]==0, changes
+    assert changes[:2]==dimensions and min(changes[2:4])>300 and changes[4]==0, changes
     page.reload()
     taps(page, 'Open garden', 'Open iSEED', 'Share', 'Open captured photos')
     expect(page.get_by_role('heading',name='Photo 2 of 2')).to_be_visible()

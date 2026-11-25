@@ -13,7 +13,7 @@ import GardenKeepsakes from './GardenKeepsakes.jsx';
 import {ROOT_TIME,replant,takeCutting,canHomePlant} from './game.js';
 import GardenDialog from './GardenDialog.jsx';
 import GardenInspection from './GardenInspection.jsx';
-import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,roomLight} from './roomArt.js';
+import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,roomLight,roomCeilingHeight} from './roomArt.js';
 import {drawPottedPlant} from './roomPlant.js';
 import {gardenViews,slotFor,viewForSlot,canPlaceAt,speciesName,viewName} from './gardenLayout.js';
 import RoomView from './RoomView.jsx';
@@ -117,7 +117,7 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     ctx.setTransform(detailScale,0,0,detailScale,0,0);
     const slot=dropOver ?? carry.from,view=viewForSlot(slot);
     const extra=worldHeight-ROOM_HEIGHT;
-    const spot=placesFor(view,extra-Math.round(extra*.39)).find(p=>slotFor(view,p)===slot);
+    const spot=placesFor(view,extra-roomCeilingHeight(worldHeight)).find(p=>slotFor(view,p)===slot);
     drawPottedPlant(ctx,{x:56,y:94,size:spot.size,rasterScale:detailScale,plant:inHand,potSku:pot?.sku,bare:carry.repot,night:1-roomLight(hour).day,reducedMotion:true,selected:true});
   },[Boolean(ghost),Boolean(hoverPlacement),inHand,hour,sourcePot,detailScale,worldHeight,dropOver,carry?.from,carry?.repot]);
 
@@ -577,10 +577,10 @@ const Collector=forwardRef(function Collector({active,backdropVisible=false,reco
     }
     // A touch can synthesize its click after pointerup. The next press clears this flag.
   }
-  async function prepareCameraRoom(index){
+  async function prepareCameraRoom(index,cameraHeight){
     const plants=placesFor(index).map(spot=>collection.get(slotFor(index,spot)));
     const [photos]=await Promise.all([prepareRoomPhotos(items,index),prepareNativeArt()]);
-    return (canvas,region)=>drawRoom(canvas,{region,hour,shopItems:items,photos,plants,jarProgress,
+    return (canvas,region)=>drawRoom(canvas,{region,worldHeight:cameraHeight,above:roomCeilingHeight(cameraHeight),hour,shopItems:items,photos,plants,jarProgress,
       leafCount:plant.book.length,roomIndex:index,playingItemId:playingRecordId,time:0,reducedMotion:true});
   }
   const message=notice || (shopMove ? (preview?placeName(preview.slot)+' · '+catalog[shopMove.sku].name:'Choose a spot for '+catalog[shopMove.sku].name.toLowerCase()+'.') : inHand?(dropOver!==null&&!collection.has(dropOver)?placeName(dropOver):

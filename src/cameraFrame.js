@@ -1,11 +1,13 @@
-// Coordinates are fractions of one room. The finder can extend past the room at wide angles.
+// Coordinates are fractions of the rendered room, including its ceiling and foreground floor.
 const bound=(value,min,max)=>Math.max(min,Math.min(max,value));
 const wholeRoomShape=Object.freeze({w:1,h:1});
 export const wholeRoom=Object.freeze({x:.5,y:.5,zoom:1});
 export const MAX_CAMERA_ZOOM=4;
 
 export function viewfinderShape(aspect,roomAspect){
-  return {w:Math.min(1,aspect/roomAspect),h:Math.min(1,roomAspect/aspect)};
+  const w=Math.min(1,aspect/roomAspect);
+  // Tall screens have extra scenery above and below the base room.
+  return {w,h:Math.min(w,roomAspect/aspect)};
 }
 
 // At 1× fit the entire room. At 4× retain the original close-up field of view.
@@ -13,11 +15,11 @@ function opticalZoom(zoom,fit){
   return fit+(bound(zoom,1,MAX_CAMERA_ZOOM)-1)*(MAX_CAMERA_ZOOM-fit)/(MAX_CAMERA_ZOOM-1);
 }
 export function pinchZoom(zoom,ratio,shape){
-  const fit=Math.min(shape.w,shape.h);
+  const fit=shape.w;
   return 1+(opticalZoom(zoom,fit)*ratio-fit)*(MAX_CAMERA_ZOOM-1)/(MAX_CAMERA_ZOOM-fit);
 }
 export function finderSpan(zoom,shape=wholeRoomShape){
-  const scale=opticalZoom(zoom,Math.min(shape.w,shape.h));
+  const scale=opticalZoom(zoom,shape.w);
   return {w:shape.w/scale,h:shape.h/scale};
 }
 export function cameraFrame(x,y,scale,shape=wholeRoomShape){

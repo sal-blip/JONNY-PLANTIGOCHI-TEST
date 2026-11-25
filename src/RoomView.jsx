@@ -1,6 +1,6 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {ArrowLeftRight} from 'lucide-react';
-import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,CAT_SEAT,roomLight} from './roomArt.js';
+import {drawRoom,placesFor,ROOM_WIDTH,ROOM_HEIGHT,CAT_SEAT,roomLight,roomCeilingHeight} from './roomArt.js';
 import {decorPlaces,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
 import {catalog,canRepotAt,canSetItem,lifeOf} from './gardenEconomy.js';
@@ -47,7 +47,7 @@ export default function RoomView({stage,index,onScreen,running,ambient=false,wor
   const actorHeight=Math.round((region?.h || worldHeight)*rasterScale);
   const actorStyle=region?{left:100*region.x/ROOM_WIDTH+'%',top:100*region.y/worldHeight+'%',
     width:100*region.w/ROOM_WIDTH+'%',height:100*region.h/worldHeight+'%'}:undefined;
-  const above=Math.round((worldHeight-ROOM_HEIGHT)*.39);
+  const above=roomCeilingHeight(worldHeight);
   const scene=useRef(null);
   const [focused,setFocused]=useState(null);
   const spots=placesFor(index,worldHeight-above-ROOM_HEIGHT);

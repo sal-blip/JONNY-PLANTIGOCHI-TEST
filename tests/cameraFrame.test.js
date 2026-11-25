@@ -11,12 +11,16 @@ test('garden camera keeps the selected subject anchored during zoom and clamps t
 test('portrait and landscape finders open full wide and reach the previous maximum crop',()=>{
   for(const aspect of [.5,2]){
     const shape=viewfinderShape(aspect,1.25);
-    assert.deepEqual(cameraRegion(wholeRoom,400,320,shape),{x:0,y:0,w:400,h:320});
+    const height=Math.max(320,400/aspect);
+    const wide=cameraRegion(wholeRoom,400,height,shape);
+    assert.equal(wide.w,400);
+    assert.equal(wide.h,400/aspect);
+    assert.equal(wide.y,(height-wide.h)/2);
     const max=zoomAt(wholeRoom,4,.5,.5,shape);
-    const crop=cameraRegion(max,400,320,shape);
+    const crop=cameraRegion(max,400,height,shape);
     assert.equal(crop.w,400*shape.w/4);
-    assert.equal(crop.h,320*shape.h/4);
-    assert.deepEqual(zoomAt(max,1,.9,.1,shape),wholeRoom);
+    assert.equal(crop.h,320*Math.min(1,1.25/aspect)/4);
+    assert.deepEqual(zoomAt(max,1,.5,.5,shape),wholeRoom);
     const middle=pinchZoom(1,2,shape);
     assert.ok(Math.abs(finderSpan(1,shape).w/finderSpan(middle,shape).w-2)<1e-9);
   }

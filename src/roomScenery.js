@@ -1337,15 +1337,22 @@ function placeOccupant(ctx,draw,panel,slot,overhang=0) {
  * drawOccupant(slot,panel) callback paints in panel-local coordinates, in depth
  * order. A numeric slot identifies a plant and 'cat' identifies the sofa seat.
  */
-export function drawScenery(ctx,{view=0,outsideOffset=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,occupantOverhang,separatePlanes=false}={}){
+export function drawScenery(ctx,{view=0,outsideOffset=0,light={},time=0,reducedMotion=false,drawOccupant,drawKeepsake,occupantOverhang,separatePlanes=false,above=0,below=0}={}){
   if(!ctx)return;
   const day=clamp(Number.isFinite(light.day)?light.day:1),warmth=clamp(Number.isFinite(light.warmth)?light.warmth:0);
   const hour=Number.isFinite(light.hour)?((light.hour%24)+24)%24:12;
   const v=viewNumber(view),camera=Math.round(v*BASE_WIDTH);
   const clock=reducedMotion||!Number.isFinite(time)?0:Math.max(0,time);
   const tint=palette(day,warmth),b=tools(ctx,tint),raw=tools(ctx,c=>c),L={day,warmth,hour};
-  ctx.save();ctx.beginPath();ctx.rect(0,0,BASE_WIDTH,BASE_HEIGHT);ctx.clip();ctx.translate(-camera,0);
-  if(!separatePlanes)paintPlanes(ctx,camera,{day,warmth},0,0);
+  ctx.save();ctx.translate(-camera,0);
+  ctx.beginPath();ctx.rect(camera,-above,BASE_WIDTH,BASE_HEIGHT+above+below);ctx.clip();
+  if(!separatePlanes){
+    // An opaque backing keeps plank seams solid at fractional camera scales.
+    ctx.fillStyle=tint('#a68768');
+    ctx.fillRect(camera,-above,BASE_WIDTH,BASE_HEIGHT+above+below);
+    paintPlanes(ctx,camera,{day,warmth},above,below);
+  }
+  ctx.beginPath();ctx.rect(camera,0,BASE_WIDTH,BASE_HEIGHT);ctx.clip();
   const backdrop=getBackdrop(ctx,day,warmth,hour);
   if(backdrop){
     ctx.imageSmoothingEnabled=false;
