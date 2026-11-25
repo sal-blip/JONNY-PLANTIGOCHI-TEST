@@ -69,9 +69,10 @@
 .room-controls[hidden],.room-interior[hidden] {display:none}
 .room-corner.room-open-phone {
   top:auto;
-  bottom:max(12px,calc(env(safe-area-inset-bottom) + 6px));
+  bottom:var(--garden-phone-bottom);
+  width:var(--garden-phone-size);height:var(--garden-phone-size);
 }
-.room-open-phone {right:max(12px,calc(env(safe-area-inset-right) + 6px));touch-action:manipulation}
+.room-open-phone {right:var(--garden-phone-right);touch-action:manipulation}
 .room-hint:not(.room-placement) {
   /* Room names and messages share a row above the clock, purse and swipe handle. */
   bottom:calc(var(--hud-bottom) + 60px);

@@ -1,5 +1,5 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
-import {catalog,itemPrice,framePhotoIdentity,lifeOf,localDay,lastVisit,weeklyRewards,spinTable} from './gardenEconomy.js';
+import {catalog,itemPrice,framePhotoIdentity,lifeOf} from './gardenEconomy.js';
 import {toyVarietyName,canHomePlant} from './game.js';
 import {drawSizeComparison,framePhotoBounds} from './roomShopArt.js';
 import FramePhoto from './FramePhoto.jsx';
@@ -40,13 +40,8 @@ function SizeComparison({sku}){
   },[sku]);
   return <span className="shop-specimen" aria-hidden="true"><canvas className="shop-scale-art" ref={canvas} width={216} height={240}/></span>;
 }
-export function CoinBalance({plant}){
-  const life=lifeOf(plant),today=localDay(Date.now()),visit=lastVisit(life);
-  const visitCoins=visit?.date===today && visit.claimed!==false?weeklyRewards[(visit.streak-1)%weeklyRewards.length]:0;
-  const spinCoins=visit?.date===today?(spinTable.find(row=>row.id===visit.spin?.id)?.coins || 0):0;
-  const earned=visitCoins+spinCoins+(visit?.date===today?(visit.tokenCoins || 0):0)+(life.day===today?life.waters*2+life.wins.length*3:0);
-  return <div className="wallet"><img src="/art/iseed-coin.png" width="20" height="20" alt="" style={{imageRendering:"pixelated"}}/><strong>{life.balance} Garden Coins</strong>
-    <small>Today +{earned}</small></div>;
+function CoinBalance({plant}){
+  return <div className="wallet"><img src="/art/iseed-coin.png" width="20" height="20" alt="" style={{imageRendering:"pixelated"}}/><strong>{lifeOf(plant).balance.toLocaleString()} Garden Coins</strong></div>;
 }
 export function ShopItemDetail({item,move,store,savePhoto,busy,inRoom=false,potOnly=false,children}){
   const [error,setError]=useState(''),[loading,setLoading]=useState(false);

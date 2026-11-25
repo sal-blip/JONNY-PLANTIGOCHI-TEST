@@ -1,3 +1,4 @@
+import CoinPurse from './CoinPurse.jsx';
 import {createGrowthLab} from './growthLab.js';
 import {DebugPurse,LabControls,useLabSession} from './GrowthLab.jsx';
 import GuideChat,{FirstHint,GuideSound} from './GuideChat.jsx';
@@ -514,10 +515,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         </div>
         <span className="garden-clock"><TimeIcon aria-hidden="true"/><time dateTime={time.toISOString()}>{clock.format(time)}</time></span>
       </>}
-      <output className="garden-purse" aria-label="Purse" aria-live="polite" aria-atomic="true">
-        <img src="/art/iseed-coin.png" alt="" width="18" height="18"/>
-        <span key={gardenLife.balance}>{gardenLife.balance.toLocaleString()}</span><span className="purse-unit"> Garden Coins</span>
-      </output>
+      <CoinPurse className="garden-purse" balance={gardenLife.balance}/>
 
     </div>}
     {lab && !page && <button className="growth-lab-badge" onClick={()=>open('lab')} aria-label="Open Growth Lab">

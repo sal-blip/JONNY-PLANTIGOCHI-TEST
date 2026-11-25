@@ -52,6 +52,9 @@ def hud_boxes(page, garden):
         assert min(overlap_x, overlap_y) <= 1, (one, two, width, height, a, b)
     if garden:
         p = controls["phone"]
+        purse = controls["purse"]
+        assert abs(p["x"] - (purse["x"] + purse["w"]) - 10) <= 1
+        assert abs((p["y"] + p["h"]/2) - (purse["y"] + purse["h"]/2)) <= 1
         # These are the original room button's measured bounds with zero safe-area insets.
         assert [p["x"], p["y"], p["w"], p["h"]] == [width - 56, height - 56, 44, 44], p
     assert not page.get_by_text(re.compile("Waz Lab", re.I)).filter(visible=True).count()
@@ -112,6 +115,8 @@ def play(browser, source, screenshots=None):
         for key in ("sproutDebut", "sproutBurstPending", "dewLesson", "tutorial"):
             plant.pop(key, None)
         plant.update(sound=False, ambience=False)
+        life = plant["gardenLife"]
+        life.update(balance=1022, visit={"date": life["day"], "streak": 1, "claimed": True, "shown": True})
         plant["gardenLife"]["items"].append({"sku": "terra", "id": "hud-pot", "slot": "0/window-middle"})
         page.goto(blank)
         page.evaluate(SEED_SETUP, plant)
@@ -124,7 +129,7 @@ def play(browser, source, screenshots=None):
             taps(page, "Open garden")
             surface(page, "garden")
             garden = hud_boxes(page, True)
-            for name in ("name", "clock", "menu", "share", "purse"):
+            for name in ("name", "clock", "menu", "share"):
                 for key in ("x", "y", "w", "h"):
                     assert abs(toy[name][key] - garden[name][key]) <= 1, (name, key, toy[name], garden[name])
             if screenshots:
@@ -167,7 +172,11 @@ def play(browser, source, screenshots=None):
         taps(page, "Open iSEED")
         surface(page, "phone")
         expect(button(page, SHARE)).to_have_count(0)
-        expect(page.get_by_label("Purse", exact=True)).to_be_hidden()
+        expect(page.locator(".garden-purse")).to_be_hidden()
+        phone_purse = page.locator(".iseed-purse")
+        expect(phone_purse).to_be_visible()
+        expect(phone_purse).to_have_text(page.locator(".garden-purse").text_content())
+        expect(page.get_by_text(re.compile(r"^Today [+]"))).to_have_count(0)
         taps(page, "Journal", MENU, "Settings", "Close menu")
         surface(page, "phone")
         expect(button(page, MENU)).to_be_focused()
