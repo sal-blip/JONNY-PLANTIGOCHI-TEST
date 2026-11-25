@@ -126,9 +126,9 @@ function InstalledSession({phone,storage,careMessage,consumeCareMessage,alertVis
     const answerInvite=offer?{visit:alertVisitId,defer:!alerts.denied}:undefined;
     return storage.setup('garden-guide',undefined,{signal,answerInvite});
   }
-  async function dismissWelcome(playDew){
+  async function dismissWelcome(game){
     if(offer && !await answer(!alerts.denied && !alerts.enrolled))return false;
-    return storage.setup('game',undefined,{startDewLesson:playDew===true});
+    return storage.setup('game',undefined,{startDewLesson:game});
   }
   return <GardenApp startLab={()=>setLab(createGrowthLab(storage.current.current))} revealSeed={namedHere.current} finishDrink={finishDrink} dismissWelcome={dismissWelcome} drinkReminder={Boolean(offer)} alerts={alerts} storage={storage} phone={phone} careMessage={careMessage}
     consumeCareMessage={consumeCareMessage} setupScene={screen ? scene : 'pocket'} setupScreen={screen}/>;

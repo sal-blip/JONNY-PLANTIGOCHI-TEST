@@ -17,6 +17,10 @@ with sync_playwright() as pw:
         page.set_viewport_size({'width':320,'height':568})
         page.goto(url)
         taps(page, 'Take a peek', 'Next', 'Continue')
+        for game in ('Vine Trail', 'Dew Catch', 'Leaf Pairs'):
+            expect(page.get_by_role('heading', name='Play games '+game)).to_be_visible()
+            expect(page.get_by_role('img', name=game+' on the Plantigochi display')).to_be_in_viewport()
+            taps(page, 'Continue' if game == 'Leaf Pairs' else 'Next game')
         expect(page.locator('.tour-actions button')).to_have_count(1)
         expect(page.get_by_role('button',name='Install app',exact=True)).to_be_visible()
         if platform == 'android':

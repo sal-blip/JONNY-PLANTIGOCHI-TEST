@@ -51,3 +51,27 @@ test('practice pays through normal win limits and never erases an existing run o
   assert.deepEqual(capped.dewLesson,{status:'won',coins:0});
   assert.equal(capped.gardenLife.balance,first.gardenLife.balance);
 });
+
+test('the optional Vine Trail run keeps going after its reward and returns to the gift once',()=>{
+  const time=new Date().setHours(12,0,0,0);
+  const invited=startDewLesson(sprout(time),'vine');
+  let vine=stepGame(null,{type:'enter',name:'vine',lesson:invited.dewLesson});
+  vine=stepGame(vine,{type:'key',key:'heart',at:time});
+  assert.equal(vine.lesson,true);
+  for(let i=0;i<5;i++){
+    vine=stepGame({...vine,sun:vine.body[0]+1},{type:'tick',sunRoll:.5,at:time+i+1});
+    assert.equal(vine.phase,'trail');
+  }
+  const pay=p=>savePlayedRound(p,'vine','milestone',undefined,'fifth-sun',time,time+5,true);
+  const paid=pay(invited);
+  assert.equal(paid.dewLesson.status,'round');
+  assert.equal(paid.gardenLife.balance,invited.gardenLife.balance+3);
+  assert.equal(pay(paid).gardenLife.balance,paid.gardenLife.balance);
+  while(vine.phase==='trail')vine=stepGame(vine,{type:'tick',sunRoll:0,at:time+20});
+  assert.equal(vine.phase,'lost');
+  assert.equal(stepGame(vine,{type:'key',key:'heart',at:time+21}),vine);
+  const done=savePlayedRound(paid,'vine','lost',undefined,'collision',time,time+20,true);
+  assert.equal(done.dewLesson.game,'vine');
+  assert.equal(done.dewLesson.status,'lost');
+  assert.equal(claimDewGift(claimDewGift(done)).gardenLife.balance,paid.gardenLife.balance+20);
+});

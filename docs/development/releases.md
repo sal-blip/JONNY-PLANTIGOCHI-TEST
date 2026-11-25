@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.56 · Welcome tour games
+
+The welcome tour previews Vine Trail, Dew Catch, and Leaf Pairs with the toy’s own artwork. When the first Monstera sprouts, players choose **Play Vine Trail** or **Maybe later**. A run uses the regular board, speed, and fifth-sun reward. Finishing or leaving the run introduces the other games. Both choices lead to the existing 20-coin gift and care reminder flow. A saved Dew Catch tutorial round from an earlier release still resumes with its original progress.
+
+The production build and 196 unit tests passed. Chromium walkthroughs covered the sprout invitation, early exit after reload, the gift and the reminder choice. [Tutorial walkthrough](../../tests/browser/scene_music.py) · [Saved game and exit checks](../../tests/browser/dew_lesson.py)
+
 ## Plantigochi 0.1.55 · Update recovery
 
 The public /update page can refresh an older installation on its existing scope and verify the game entry served after activation. Settings links to it after a failed or slow update check. The repair works on cached app files and leaves garden data in place.

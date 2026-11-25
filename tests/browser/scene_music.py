@@ -170,7 +170,7 @@ def web_tour(browser, source):
         page.goto(url)
         taps(page, "Take a peek")
         first = audible(page, "cotton")
-        taps(page, "Next", "Continue", "Install app", "Back")
+        taps(page, "Next", "Continue", "Next game", "Next game", "Continue", "Install app", "Back")
         assert audible(page, "cotton")["id"] == first["id"]
         assert len(tracks(page)) == 1
     finally:
@@ -181,26 +181,29 @@ def first_visit(browser, source):
     ctx, url, blank = context_for(browser, source)
     try:
         page = ctx.new_page()
+        close_rewards = button(page, "Close daily rewards")
+        page.add_locator_handler(close_rewards, lambda: close_rewards.tap())
         page.goto(blank)
-        # This is the installed, four-card tour checkpoint a reset saves.
+        # This is the installed tour checkpoint a reset saves.
         page.evaluate(SEED_SETUP, None)
         page.goto(url)
         taps(page, "Take a peek")
         cotton = audible(page, "cotton")
-        taps(page, "Next", "Continue", "Begin setup", "Name your seed", "Keep Monstera",
+        taps(page, "Next", "Continue", "Next game", "Next game", "Continue", "Begin setup", "Name your seed", "Keep Monstera",
              "Open toy menu", "Next toy item", "Back on toy", "Open toy menu", "Choose Care",
              "Choose Water", "Visit my garden", "Open iSEED", "Shop", "Terracotta pot · 12 coins", "Buy",
              "Place at Center of the living room windowsill", "Buy for 12 coins", "Return to my seed",
              "Open toy menu", "Next toy item", "Next toy item", "Choose Growth", "Choose Growth Spurt")
         for _ in range(4):
             taps(page, "Choose Spend 50 coins")
-        taps(page, "Play one round", "Play heart")
+        taps(page, "Play Vine Trail", "Play heart")
         assert [t["role"] for t in tracks(page)] == ["cotton"], tracks(page)
         assert audible(page, "cotton")["id"] == cotton["id"]
         claim = button(page, "Claim 20 coins")
         claim.wait_for(timeout=20000)
+        expect(page.get_by_text('Find Dew Catch and Leaf Pairs', exact=False)).to_be_visible()
         claim.tap()
-        page.wait_for_function("document.querySelector('.garden-purse span')?.textContent === '23'")
+        page.wait_for_function("document.querySelector('.garden-purse span')?.textContent === '20'")
         completed = page.evaluate(READ_PLANT)
         fading = tracks(page)[0]
         assert not fading["ended"] and fading["gain"] > .1, ("Quick claim cut the music", fading)
@@ -238,6 +241,8 @@ def saved_record(browser, source, completed):
     ctx, url, blank = context_for(browser, source)
     try:
         page = ctx.new_page()
+        close_rewards = button(page, "Close daily rewards")
+        page.add_locator_handler(close_rewards, lambda: close_rewards.tap())
         page.goto(blank)
         # An already purchased record on the side table; start straight from
         # the completed save captured before its first free garden visit.

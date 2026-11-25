@@ -103,7 +103,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     void commit(p=>p.id===id?savePlayedRound(p,name,phase,level,receipt,startedAt,time,practiceRound,plantClock===Date.now?time:plantClock()):p).then(saved=>{
       if(!saved && practiceRound)setFailedRound([name,phase,level,receipt,startedAt,time,true]);
     });
-    react(phase==='won'?'gameWin':'gameLoss');
+    react(phase==='lost'?'gameLoss':'gameWin');
   },[commit,plant.id,react,plantClock]);
   const activity=usePocketPlay(plant,!resting || paused,recordRound);
   useEffect(()=>{
@@ -124,7 +124,8 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     sproutAnswerPending.current=true;
     setAnsweringSprout(true);
     try{
-      await dismissSprout(play);
+      setLessonError('');
+      if(!await dismissSprout(play))setLessonError('Couldn’t save that choice. Please try again.');
     }finally{
       sproutAnswerPending.current=false;
       setAnsweringSprout(false);
@@ -142,9 +143,9 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       void commit(p=>settleDewLesson(p,'skipped'));return;
     }
     if(!game){
-      setPath([]);activity.resumeDewLesson(dewLesson);
+      setPath([]);activity.resumeTutorialGame(dewLesson);
     }
-  },[resting,dewLesson,game?.name,plant.id,plant.stage,plant.deadAt,commit,activity.resumeDewLesson]);
+  },[resting,dewLesson,game?.name,plant.id,plant.stage,plant.deadAt,commit,activity.resumeTutorialGame]);
   useEffect(()=>{
     if(!game?.lesson || game.phase!=='fall')return;
     const {count,chances,startedAt}=game;
@@ -202,7 +203,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
   const branch=browsing?(section==='home'?choice.command:parentBranch[section]??section):undefined;
   let title=plant.name || 'Monstera';
   if (browsing) title=parentBranch[section]?toyTitles[branch]+' · '+toyTitles[section]:toyTitles[section];
-  else if(game?.lesson)title='Dew Catch · Practice';
+  else if(game?.lesson && game.name==='dew')title='Dew Catch · Practice';
   else if (lost && game.name==='dew') title='Three misses';
   else if (game) title=game.name==='dew'?'Dew Catch '+game.level+'/'+LEVELS:gameNames[game.name];
   const ready=playing && game.phase==='ready';
@@ -357,6 +358,9 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     if(summary){
       if(key!=='heart' || sproutAnswerPending.current)return;
       void finishDewLesson();
+    }else if(sproutWelcome && !section && !game){
+      if(key!=='heart')return;
+      void answerSprout('vine');
     }else if(boosting){
       if(key==='back')back();
       else if((key==='left' || key==='right') && section)browse(key==='left'?-1:1);
@@ -494,8 +498,9 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       <p><b>{tutorial.blocks} of 4 spurts</b> · {lifeOf(plant).balance} coins</p>
       <p>{boostInstruction}</p>
     </GuideChat>}
-    {resting && game?.lesson && ready && <GuideChat className="toy-guide" cue="one-dew-round">
-      <p>{game.startedAt==null?'Let’s play one round.':'Welcome back to your round.'} Catch 3 drops with the arrows before you miss 3. Press my heart to {game.startedAt==null?'start':'resume'}.</p>
+    {resting && game?.lesson && ready && <GuideChat className="toy-guide" cue={'tutorial-'+game.name}>
+      {game.name==='vine'?<p>Press my heart to start. Use the arrows to turn toward suns. Watch out for the walls and your tail!</p>:
+      <p>{game.startedAt==null?'Let’s play one round.':'Welcome back to your round.'} Catch 3 drops with the arrows before you miss 3. Press my heart to {game.startedAt==null?'start':'resume'}.</p>}
       <p>Hold Back to skip to your gift.</p>
     </GuideChat>}
     {resting && game?.lesson && failedRound && <GuideChat className="toy-guide" cue="dew-save-error">
@@ -517,6 +522,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       <div className="farewell-message">
         <p><strong>Thanks for growing with me!</strong></p>
         <p>{plant.deadAt!==null ? 'Your coins carry over to your next seed.' :
+          dewLesson.game==='vine' ? 'There’s more to play! Find Dew Catch and Leaf Pairs in my Play menu.' :
           dewLesson.status==='won' ? (dewLesson.coins ? `Three drops caught! You earned ${dewLesson.coins} coins.` : 'You caught all three drops!') :
           dewLesson.status==='lost' ? 'Try Dew Catch again in my Play menu.' :
           'Check my Water meter for my next drink.'}</p>
@@ -546,9 +552,10 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
       </GuideChat>}
     {sproutWelcome && !section && !game && <GuideChat className="toy-guide sprout-debut" cue="first-leaf">
       <p><strong>{plant.name} sprouted!</strong> My first leaf!</p>
-      <p>{water.label.startsWith('In ')?'My next drink is in '+water.label.slice(3)+'.':water.detail+'.'} Want to play one round of Dew Catch? Catch 3 drops to win 3 coins. Three misses end the round.</p>
+      <p>Want to play Vine Trail with me? Steer a growing vine toward the suns.</p>
+      {lessonError && <p role="status">{lessonError}</p>}
       <div className="chat-actions">
-      <button className="lesson-done" disabled={answeringSprout || reminder?.busy} onClick={()=>answerSprout(true)}>Play one round</button>
+      <button className="lesson-done" disabled={answeringSprout || reminder?.busy} onClick={()=>answerSprout('vine')}>Play Vine Trail</button>
       <button className="lesson-done" disabled={answeringSprout || reminder?.busy} onClick={()=>answerSprout(false)}>Maybe later</button>
       </div>
     </GuideChat>}

@@ -30,10 +30,10 @@ with sync_playwright() as pw, TemporaryDirectory() as directory:
     expect(app.get_by_role('button',name='Restore a garden')).to_be_visible()
     app.get_by_label('Garden backup',exact=True).set_input_files(file)
     taps(app,'Restore this garden')
-    expect(app.get_by_role('button',name='Play one round')).to_be_visible()
+    expect(app.get_by_role('button',name='Play Vine Trail')).to_be_visible()
     assert app.evaluate(READ_PLANT)['id'] == legacy['id']
     app.reload()
-    expect(app.get_by_role('button', name='Play one round')).to_be_visible()
+    expect(app.get_by_role('button', name='Play Vine Trail')).to_be_visible()
     expect(app.get_by_role('heading', name='Welcome back, gardener')).to_have_count(0)
     assert app.evaluate(READ_PLANT)['id'] == legacy['id']
     old, url, blank = context_for(browser, source, installed=False)

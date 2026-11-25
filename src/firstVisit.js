@@ -35,13 +35,18 @@ export function finishSprouting(p,time){
 export const GOOD_LUCK_COINS=20;
 
 export function startDewLesson(plant,play){
-  return {...plant,dewLesson:play?{status:'round',caught:0,chances:3,startedAt:null}:{status:'skipped',coins:0}};
+  // Keep the original Dew Catch save shape so an installed game can finish an older lesson.
+  const round=play==='vine' ? {status:'round',game:play} :
+    {status:'round',caught:0,chances:3,startedAt:null};
+  return {...plant,dewLesson:play?round:{status:'skipped',coins:0}};
 }
 
 export function validDewLesson(lesson){
   if(!lesson || typeof lesson!=='object')return false;
+  if(lesson.game!==undefined && lesson.game!=='vine')return false;
   if(lesson.status!=='round')return ['won','lost','skipped'].includes(lesson.status) &&
     (lesson.coins===0 || lesson.status==='won' && lesson.coins===3);
+  if(lesson.game)return lesson.rewarded===undefined || typeof lesson.rewarded==='boolean';
   return Number.isInteger(lesson.caught) && lesson.caught>=0 && lesson.caught<3 &&
     Number.isInteger(lesson.chances) && lesson.chances>0 && lesson.chances<=3 &&
     (lesson.startedAt===null?lesson.caught===0 && lesson.chances===3:Number.isSafeInteger(lesson.startedAt) && lesson.startedAt>=0);
@@ -49,7 +54,7 @@ export function validDewLesson(lesson){
 
 export function checkpointDewLesson(plant,game){
   const saved=plant.dewLesson;
-  if(saved?.status!=='round' || game.count<saved.caught || game.chances>saved.chances ||
+  if(saved?.status!=='round' || saved.game || game.count<saved.caught || game.chances>saved.chances ||
     (saved.startedAt!==null && game.startedAt!==saved.startedAt) ||
     (saved.startedAt===game.startedAt && saved.caught===game.count && saved.chances===game.chances))return plant;
   return {...plant,dewLesson:{status:'round',caught:game.count,chances:game.chances,startedAt:game.startedAt}};
@@ -57,7 +62,7 @@ export function checkpointDewLesson(plant,game){
 
 export function settleDewLesson(plant,status,coins=0){
   if(plant.dewLesson?.status!=='round')return plant;
-  return {...plant,dewLesson:{status,coins}};
+  return {...plant,dewLesson:{status,coins,...(plant.dewLesson.game && {game:plant.dewLesson.game})}};
 }
 
 export function claimDewGift(plant,reminder=null){

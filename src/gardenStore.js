@@ -264,7 +264,7 @@ export function gardenStore(legacyStorage,visible){
           case 'game-game':
             if((plant.sproutDebut!==plant.id && firstDay?.id!==plant.id) || plant.stage==='seed')throw stale();
             if(plant.sproutDebut){plant={...plant};delete plant.sproutDebut;}
-            if(typeof options.startDewLesson==='boolean')plant=startDewLesson(plant,options.startDewLesson);
+            if(typeof options.startDewLesson==='boolean' || options.startDewLesson==='vine')plant=startDewLesson(plant,options.startDewLesson);
             firstDay=null;
             break;
           case 'watered-game': case 'watered-garden-guide':

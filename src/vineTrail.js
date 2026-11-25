@@ -10,7 +10,7 @@ export function newVine(phase='ready',at=null) {
 
 export function stepVine(g,event) {
   if(event.type==='key'){
-    if(g.phase!=='trail')return event.key==='heart'?newVine('trail',event.at):g;
+    if(g.phase!=='trail')return event.key==='heart'?{...newVine('trail',event.at),...(g.lesson && {lesson:true})}:g;
     if(g.turn || !['left','right'].includes(event.key))return g;
     return {...g,turn:event.key==='right'?1:-1};
   }

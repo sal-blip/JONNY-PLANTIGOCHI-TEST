@@ -1,4 +1,4 @@
-"""Exercise tutorial Dew Catch and its return to the regular game in an isolated profile."""
+"""Exercise the Vine Trail invitation and older saves that still have a Dew Catch lesson."""
 import argparse
 import json
 import re
@@ -52,6 +52,9 @@ def sprout_fixture():
 
 def exercise(browser, url, win):
     fixture = sprout_fixture()
+    # Older installations can reopen mid-lesson after updating.
+    del fixture["plant"]["sproutDebut"]
+    fixture["plant"]["dewLesson"] = {"status": "round", "caught": 0, "chances": 3, "startedAt": None}
     if not win:
         # A practice loss must preserve a regular run saved previously.
         fixture["plant"].update(dewCleared=19, dewRunCleared=19)
@@ -77,12 +80,13 @@ def exercise(browser, url, win):
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.goto(url)
         button = lambda name: page.get_by_role("button", name=name, exact=True)
+        close_rewards = button("Close daily rewards")
+        page.add_locator_handler(close_rewards, lambda: close_rewards.tap())
         lcd = page.locator(".lcd")
         purse = page.locator(".garden-purse span").first
         expected = 3 if win else 0
         progress = lambda: page.evaluate(READ_PLANT)["dewLesson"]
 
-        button("Play one round").tap()
         button("Play heart").tap()
         if not win:
             button("Play left").tap()
@@ -147,6 +151,26 @@ def exercise(browser, url, win):
         context.close()
 
 
+def leave_vine(browser, url):
+    from scene_music import SEED_SETUP, context_for, taps
+    ctx, game_url, blank = context_for(browser, url)
+    try:
+        page = ctx.new_page()
+        page.goto(blank)
+        page.evaluate(SEED_SETUP, sprout_fixture()["plant"])
+        page.goto(game_url)
+        taps(page, "Play Vine Trail")
+        page.reload()
+        taps(page, "Play heart", "Back on toy", "Next toy item", "Choose Leave game")
+        expect(page.get_by_text("Find Dew Catch and Leaf Pairs", exact=False)).to_be_visible()
+        page.reload()
+        taps(page, CLAIM)
+        expect(page.locator(".garden-purse span").first).to_have_text("20")
+        assert "dewLesson" not in page.evaluate(READ_PLANT)
+    finally:
+        ctx.close()
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("url")
@@ -155,6 +179,8 @@ if __name__ == "__main__":
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(executable_path=args.chromium)
         try:
+            leave_vine(browser, args.url)
+            print("Passed Vine Trail reload, early exit and gift", flush=True)
             for win in (True, False):
                 exercise(browser, args.url, win)
                 print("Passed tutorial", "win" if win else "loss", "and regular replay", flush=True)

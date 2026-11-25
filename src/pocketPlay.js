@@ -25,9 +25,17 @@ export function saveDewCheckpoint(plant, cleared) {
 
 export function savePlayedRound(plant,name,phase,level,receipt,startedAt,time,practiceRound=false,plantTime=time){
   let p=wake(plant,plantTime);
-  if(practiceRound && p.dewLesson?.status!=='round')return p;
+  if(practiceRound && (p.dewLesson?.status!=='round' || (p.dewLesson.game ?? 'dew')!==name))return p;
   if(p.deadAt!==null)return practiceRound?settleDewLesson(p,'skipped'):p;
   if(name==='dew' && (!practiceRound || phase==='won'))p=saveDewCheckpoint(p,phase==='won'?level:0);
+  if(practiceRound && name==='vine'){
+    if(phase==='milestone'){
+      if(p.dewLesson.rewarded)return p;
+      p=earnWin(p,receipt,startedAt,time);
+      return {...company(p,plantTime),dewLesson:{...p.dewLesson,rewarded:true}};
+    }
+    return settleDewLesson(company(p,plantTime),phase);
+  }
   if(phase==='won')p=earnWin(p,receipt,startedAt,time);
   p=company(p,plantTime);
   return practiceRound?settleDewLesson(p,phase,lifeOf(p).wins.includes(receipt)?3:0):p;
@@ -72,15 +80,15 @@ function fall(g, lane, at) {
 
 export function stepGame(g, event) {
   if (event.type === 'exit') return null;
-  if (event.type==='enter' && event.name==='vine')return newVine();
+  if (event.type==='enter' && event.name==='vine')return {...newVine(),...(event.lesson && {lesson:true})};
   if (event.type==='enter' && event.name==='pairs')return newPairs();
   if (event.type === 'enter' && event.name==='dew') return {name:event.name,phase:'ready',lane:1,count:0,chances:DEW_CHANCES,drops:[],
     level:highestLevel(event.cleared),unlocked:highestLevel(event.cleared),
     ...(event.lesson?{lesson:true,level:1,unlocked:1,count:event.lesson.caught,chances:event.lesson.chances,startedAt:event.lesson.startedAt}:{})};
   if (!g) return null;
+  if(g.lesson && (g.phase==='won' || g.phase==='lost'))return g;
   if(g.name==='pairs')return stepPairs(g,event);
   if(g.name==='vine')return stepVine(g,event);
-  if(g.lesson && (g.phase==='won' || g.phase==='lost'))return g;
   if (event.type === 'key') {
     if (g.phase === 'ready' || g.phase === 'won') {
       if (event.key !== 'heart') {
@@ -106,6 +114,8 @@ export function stepGame(g, event) {
 
 export function playText(g) {
   if(g.name==='vine'){
+    if(g.lesson && g.phase==='lost')return g.count+' suns · Round over';
+    if(g.lesson && g.phase==='won')return 'Garden full!';
     if(g.phase==='ready')return 'Collect suns · ♥ Start';
     if(g.phase==='won')return 'Garden full! ♥ Again';
     if(g.phase==='lost')return g.count+' suns · ♥ Retry';
@@ -131,18 +141,19 @@ export function playText(g) {
 export function usePocketPlay(plant,paused,onFinish) {
   const [game, dispatch] = useReducer(stepGame, null);
   const exit=useCallback(()=>dispatch({type:'exit'}),[]);
-  const resumeDewLesson=useCallback(lesson=>dispatch({type:'enter',name:'dew',lesson}),[]);
+  const resumeTutorialGame=useCallback(lesson=>dispatch({type:'enter',name:lesson.game ?? 'dew',lesson}),[]);
   const active = game && canPlay(game.name,plant) ? game : null;
   useEffect(() => { if (game && !active) dispatch({type:'exit'}); },[game,active]);
   const lastResult=useRef(null);
   // The fifth sun earns the usual win once, while steering continues.
-  const result=active?.name==='vine' && active.phase!=='lost' ? active.reward :
+  const result=active?.name==='vine' && active.phase!=='lost' && !(active.lesson && active.phase==='won') ? active.reward :
     active && ['won','lost'].includes(active.phase) ? active : null;
   useEffect(() => {
     if(!result){lastResult.current=null;return;}
     if(lastResult.current===result)return;
     lastResult.current=result;
-    onFinish(result.name,result.phase,result.level,crypto.randomUUID(),result.startedAt,result.finishedAt,Boolean(result.lesson));
+    const tutorialMilestone=active.lesson && active.name==='vine' && result===active.reward;
+    onFinish(result.name,tutorialMilestone?'milestone':result.phase,result.level,crypto.randomUUID(),result.startedAt,result.finishedAt,Boolean(active.lesson));
   },[result,onFinish]);
   useEffect(() => {
     if (!active || paused || (active.lesson || active.name!=='dew') && active.phase==='lost') return;
@@ -152,5 +163,5 @@ export function usePocketPlay(plant,paused,onFinish) {
     return () => clearInterval(timer);
   },[active?.name,active?.phase,paused]);
   return { game:active, enter:name => { if (canPlay(name,plant)) dispatch({type:'enter',name,cleared:dewCheckpoint(plant)}); },
-    exit, resumeDewLesson, key:key=>dispatch({type:'key',key,at:Date.now(),dropLane:randomLane(),deck:active?.name==='pairs' && key==='heart' && ['ready','won','lost'].includes(active.phase)?shuffleLeaves():undefined}) };
+    exit, resumeTutorialGame, key:key=>dispatch({type:'key',key,at:Date.now(),dropLane:randomLane(),deck:active?.name==='pairs' && key==='heart' && ['ready','won','lost'].includes(active.phase)?shuffleLeaves():undefined}) };
 }

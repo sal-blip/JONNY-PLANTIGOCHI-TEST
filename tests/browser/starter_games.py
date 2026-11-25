@@ -37,7 +37,7 @@ def play(browser, source):
     page.goto(blank)
     page.evaluate(SEED_SETUP, None)
     page.goto(url)
-    taps(page, "Take a peek", "Next", "Continue", "Begin setup", "Name your seed", "Keep Monstera", "Play a game")
+    taps(page, "Take a peek", "Next", "Continue", "Next game", "Next game", "Continue", "Begin setup", "Name your seed", "Keep Monstera", "Play a game")
     taps(page, "Choose Vine Trail", "Play heart", "Back on toy")
     expect(button(page, "Choose Resume")).to_be_visible()
     page.emulate_media(reduced_motion="no-preference")

@@ -1,5 +1,7 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Leaf} from 'lucide-react';
+import {DewArt,PairsArt,VineArt} from './ActivityArt.jsx';
+import {gameNames} from './pocketPlay.js';
 import LeafReveal from './LeafReveal.jsx';
 import {drawRoom,roomLight,ROOM_WIDTH,ROOM_HEIGHT} from './roomArt.js';
 import {drawRoomDepth} from './roomScenery.js';
@@ -8,9 +10,12 @@ import {transitionOnboarding} from './OnboardingTransition.jsx';
 import './WelcomeTour.css';
 
 const cards=[
-  {lead:'Meet your',name:'Plantigochi',copy:'A tiny Monstera to raise, right on your phone.'},
-  {lead:'Watch it',name:'grow',copy:'Water it, play together, and watch new leaves unfold over a week of good care.'},
+  {lead:'Meet your',name:'Plantigochi',next:'Take a peek',copy:'A tiny Monstera to raise, right on your phone.'},
+  {lead:'Watch it',name:'grow',next:'Next',copy:'Water it, play together, and watch new leaves unfold over a week of good care.'},
   {lead:'Give it',name:'a home',copy:'Move grown plants into your garden, arrange them your way, and start again with a new seed.'},
+  {lead:'Play games',name:gameNames.vine,game:'vine',next:'Next game',copy:'Turn left or right to collect suns. Each sun makes your vine longer, so leave yourself room to turn.'},
+  {lead:'Play games',name:gameNames.dew,game:'dew',next:'Next game',copy:'Slide your pot left or right to catch falling drops. Catch three to clear the first level.'},
+  {lead:'Play games',name:gameNames.pairs,game:'pairs',copy:'Move between seed packets with the arrows. Press the heart to flip two and find matching leaves.'},
   {lead:'Your seed is',name:'ready',copy:'Install Plantigochi to start your garden and save your progress on this phone.'},
 ];
 const last=cards.length-1;
@@ -40,12 +45,16 @@ function RoomPreview(){
     role="img" aria-label="Your garden living room, with open shelves and a cat resting on the sofa"/>;
 }
 
-function TourArt({step}){
+function TourArt({step,game}){
+  if(game)return <div className="tour-game-preview" role="img" aria-label={gameNames[game]+' on the Plantigochi display'}>
+    {game==='vine'?<VineArt game={{body:[73,72,71,70,86,102,101,100,99],direction:0,sun:75}}/>:
+      game==='dew'?<DewArt lane={1} drops={[{id:1,lane:1,progress:.7},{id:2,lane:2,progress:.22}]}/>:
+      <PairsArt game={{deck:[0,2,4,1,3,5,6,7,1,2,8,5,6,0,3,8,4,7],cursor:8,matched:[3,8],open:[1]}}/>}
+  </div>;
   switch(step){
     case 0:return <img className="tour-device" src="/art/welcome-device.webp" alt="Leaf-shaped keychain with a sleeping amber seed on its color screen"/>;
     case 1:return <div className="tour-life-art">
       <img className="tour-stages" src="/art/welcome-growth.webp" alt="Sleeping seed, green sprout and mature split-leaf Monstera"/>
-      <figure><img src="/art/welcome-dew.webp" alt="Catching blue water droplets in a terracotta pot"/><figcaption>Dew Catch</figcaption></figure>
     </div>;
     case 2:return <RoomPreview/>;
     default:return <div className="tour-phone-picture" aria-label="Plantigochi on a phone Home Screen" role="img">
@@ -62,7 +71,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
   const heading=useRef(null), dialog=useRef(null), touch=useRef(null), requested=useRef(step);
   const installing=!installed && step===installStep;
   const pages=installed?installedCards:cards;
-  const card=installing?{lead:'Install',name:'Plantigochi',copy:'Your garden saves on this phone. After installing, open the Plantigochi icon to meet your seed.'}:pages[step];
+  const card=installing?{lead:'Install',name:'Plantigochi',next:'Take a peek',copy:'Your garden saves on this phone. After installing, open the Plantigochi icon to meet your seed.'}:pages[step];
   useLayoutEffect(()=>{
     const el=dialog.current;
     if(el && !el.open)el.showModal();
@@ -107,7 +116,7 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
       e.preventDefault();if(splash)setSplash(false);else onClose?.();
     }
   }
-  const content=<div className={'tour-sheet tour-page-'+Math.min(last,step)} onKeyDown={keys}
+  const content=<div className={'tour-sheet tour-page-'+(card.game?'games':step>=last?'install':step)} onKeyDown={keys}
     onTouchStart={e=>{const t=e.touches[0];touch.current=e.touches.length===1 && !e.target.closest('button,input,a')?[t.clientX,t.clientY]:null;}}
     onTouchCancel={()=>{touch.current=null;}}
     onTouchEnd={e=>{if(!touch.current)return;const [x,y]=touch.current;touch.current=null;
@@ -119,15 +128,15 @@ export default function WelcomeTour({phone,onBegin,onClose,issue}){
     </header>
     <div className="tour-story">
       <div className="tour-art" key={'art'+step}>
-        <TourArt step={step}/>
+        <TourArt step={step} game={card.game}/>
         {splash && step===0 && <LeafReveal title="Plantigochi"/>}
       </div>
       <div className="tour-words">
-        <h1 ref={heading} tabIndex="-1" id="welcome-title">{card.lead} <em>{card.name}</em></h1>
+        <h1 ref={heading} tabIndex="-1" id="welcome-title"><span>{card.lead}</span> <em>{card.name}</em></h1>
         <p className="tour-caption">{card.copy}</p>
         {installing ? <div className="tour-install"><InstallHelp tour phone={phone}/></div> :
           <div className="tour-actions">
-            {step<last ? <button className="tour-primary" onClick={()=>go(step+1)}>{['Take a peek','Next','Continue'][step]}</button> :
+            {step<last ? <button className="tour-primary" onClick={()=>go(step+1)}>{card.next || 'Continue'}</button> :
               installed ? <button className="tour-primary" onClick={onBegin || onClose}>{onBegin?'Begin setup':'Back to game'}</button> :
               <button className="tour-primary" onClick={installNow}>Install app</button>}
           </div>}
