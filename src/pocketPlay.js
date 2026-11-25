@@ -114,6 +114,7 @@ export function playText(g) {
   if(g.name==='pairs'){
     if(g.phase==='ready')return `Find ${leafNames.length} pairs · ♥ Start`;
     if(g.phase==='won')return 'All paired! ♥ Again';
+    if(g.phase==='lost')return 'Game over · ♥ Retry';
     if(g.phase==='peek')return 'Two different leaves';
     const revealed=g.open.includes(g.cursor) || g.matched.includes(g.cursor);
     return (g.matched.length/2)+'/'+leafNames.length+' · '+(revealed?leafNames[g.deck[g.cursor]]:'♥ Flip '+(g.cursor+1));
@@ -144,12 +145,12 @@ export function usePocketPlay(plant,paused,onFinish) {
     onFinish(result.name,result.phase,result.level,crypto.randomUUID(),result.startedAt,result.finishedAt,Boolean(result.lesson));
   },[result,onFinish]);
   useEffect(() => {
-    if (!active || paused || (active.lesson || active.name==='vine') && active.phase==='lost') return;
+    if (!active || paused || (active.lesson || active.name!=='dew') && active.phase==='lost') return;
     const delay = {trail:VINE_STEP_MS, fall:tickMs, lost:1800, peek:950}[active.phase];
     if (!delay) return;
     const timer = setInterval(() => { if (!document.hidden) dispatch({type:'tick',at:Date.now(),dropLane:randomLane(),sunRoll:active.name==='vine'?Math.random():undefined}); },delay);
     return () => clearInterval(timer);
   },[active?.name,active?.phase,paused]);
   return { game:active, enter:name => { if (canPlay(name,plant)) dispatch({type:'enter',name,cleared:dewCheckpoint(plant)}); },
-    exit, resumeDewLesson, key:key=>dispatch({type:'key',key,at:Date.now(),dropLane:randomLane(),deck:active?.name==='pairs' && key==='heart' && ['ready','won'].includes(active.phase)?shuffleLeaves():undefined}) };
+    exit, resumeDewLesson, key:key=>dispatch({type:'key',key,at:Date.now(),dropLane:randomLane(),deck:active?.name==='pairs' && key==='heart' && ['ready','won','lost'].includes(active.phase)?shuffleLeaves():undefined}) };
 }

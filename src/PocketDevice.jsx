@@ -8,6 +8,7 @@ import SproutCelebration from './SproutCelebration.jsx';
 import DeviceShell from './DeviceShell.jsx';
 import CareIndicator from './CareIndicator.jsx';
 import PlantPixel from './PlantPixel.jsx';
+import {PAIR_MISS_LIMIT} from './leafPairs.js';
 import {DewArt,PairsArt,VineArt} from './ActivityArt.jsx';
 import {toyBranches,toyCards,toyTitles} from './GardenLife.jsx';
 import {DEW_CHANCES,LEVELS,gameNames,playText,savePlayedRound,usePocketPlay} from './pocketPlay.js';
@@ -559,6 +560,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
         <span className="lcd-care-light" aria-hidden="true" data-needed={!game && careCues.light || undefined}/>
         <span className="lcd-top"><span>{!browsing && <i/>}{title.toUpperCase()}</span>
           {game?.name==='dew' ? <Chances remaining={game.chances}/>
+            : playing && game.name==='pairs' ? <span>Misses {game.misses}/{PAIR_MISS_LIMIT}</span>
             : browsing ? <span className="lcd-page">{index+1}/{cards.length}</span>
             : food ? <span className="lcd-food" data-tone={food.tone}>{food.label}</span>
             : <span className="battery" aria-hidden="true"><b/><b/><b/></span>}

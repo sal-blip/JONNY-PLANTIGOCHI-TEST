@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.51 · Leaf Pairs miss limit
+
+The toy counts mismatched pairs and ends the round on the fifth miss. Heart deals a shuffled board with a fresh counter.
+
 ## Plantigochi 0.1.50 · Leaf Pairs card faces
 
 All nine faces use original 20 × 20 LCD artwork, with separate silhouettes and accent colors across the eighteen-card board.

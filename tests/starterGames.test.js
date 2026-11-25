@@ -70,3 +70,36 @@ test('eighteen seed packets have nine pairs and mismatches close without credit'
   g=tick(g);
   assert.deepEqual([g.open,g.matched],[[],[]]);
 });
+
+test('the fifth mismatched pair ends the round and Heart deals a fresh board',()=>{
+  const deck=Array.from({length:18},(_,i)=>Math.floor(i/2));
+  let game=key(enter('pairs'),'heart',deck);
+  const flipAt=index=>{
+    while(game.cursor!==index)game=key(game,'right');
+    game=key(game,'heart');
+  };
+  flipAt(0);
+  flipAt(0);
+  flipAt(1);
+  flipAt(1);
+  assert.equal(game.misses,0);
+  assert.deepEqual(game.matched,[0,1]);
+  for(let miss=1;miss<=5;miss++){
+    flipAt(2);
+    flipAt(4);
+    assert.equal(game.misses,miss);
+    assert.equal(game.phase,miss===5?'lost':'peek');
+    game=tick(game);
+  }
+  assert.equal(game.finishedAt,12);
+  assert.equal(key(game,'right'),game);
+  assert.deepEqual(game.open,[2,4]);
+  const fresh=[...deck].reverse();
+  game=key(game,'heart',fresh);
+  assert.equal(game.phase,'pick');
+  assert.equal(game.misses,0);
+  assert.equal(game.cursor,0);
+  assert.deepEqual(game.matched,[]);
+  assert.deepEqual(game.open,[]);
+  assert.equal(game.deck,fresh);
+});

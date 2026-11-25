@@ -16,7 +16,7 @@ const guide = [
   ['Vine Trail','Turn the moving tip with the arrows. Each sun grows your vine. Avoid the edge and your vine.'],
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Garden coins','Visits +10 daily. Helpful watering +2, up to 3/day. Game wins +3, up to 5/day.'],
-  ['Leaf Pairs','Use arrows to pick a packet. Heart flips it. Match all nine pairs.'],
+  ['Leaf Pairs','Use arrows to pick a packet. Heart flips it. Match all nine pairs before your fifth miss.'],
   ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
   ['Fungus','Gnats? First Aid cures fungus. Treat within 12h.'],
   ['Garden keepsakes','Swipe up to visit the garden’s Cutting Jar and Leaf Book.'],

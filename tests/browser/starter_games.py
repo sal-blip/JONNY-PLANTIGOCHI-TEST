@@ -100,13 +100,25 @@ def play(browser, source):
     def choose(index):
         nonlocal cursor
         while cursor != index:
-            taps(page, "Play right")
-            cursor = (cursor+1) % len(deck)
+            step = 1 if (index-cursor) % len(deck) <= len(deck)//2 else -1
+            taps(page, "Play right" if step == 1 else "Play left")
+            cursor = (cursor+step) % len(deck)
         taps(page, "Play heart")
-    choose(0)
-    choose(deck.index(next(leaf for leaf in deck if leaf != deck[0])))
-    expect(page.locator(".lcd-status")).to_contain_text("Two different leaves")
-    expect(page.locator(".lcd-status")).to_contain_text("Flip")
+    different = next(i for i, leaf in enumerate(deck) if leaf != deck[0])
+    for miss in range(1, 6):
+        # Reverse the order of the same two cards each attempt to stay near them.
+        for index in ((0, different) if miss % 2 else (different, 0)):
+            choose(index)
+        expect(page.locator(".lcd-top")).to_contain_text(f"Misses {miss}/5")
+        if miss < 5:
+            expect(page.locator(".lcd-status")).to_contain_text("Two different leaves")
+            expect(page.locator(".lcd-status")).to_contain_text("Flip")
+            expect(faces).to_have_count(0)
+    expect(page.locator(".lcd-status")).to_contain_text("Game over")
+    expect(faces).to_have_count(2)
+    taps(page, "Play heart")
+    cursor = 0
+    expect(page.locator(".lcd-top")).to_contain_text("Misses 0/5")
     expect(faces).to_have_count(0)
     for leaf in range(9):
         for i, face in enumerate(deck):
