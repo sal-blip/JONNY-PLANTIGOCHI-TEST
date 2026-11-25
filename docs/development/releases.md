@@ -2,6 +2,10 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.46 · Garden and iSEED purse
+
+The garden purse sits beside the phone button. The iSEED home screen shows the same coin badge in its lower-right corner. The daily earnings tally has been removed from the wallet display. The [garden HUD walkthrough](../../tests/browser/garden_hud.py) checks the balance and placement. The [interior asset audit](research/garden-interior/README.md) records the artwork for future review.
+
 ## Plantigochi 0.1.45 · iSEED icon frames
 
 The five launcher icons and the Rewards calendar use a level, symmetric outer frame. The rim comes from a SpriteCook edit of the original calendar. The original illustrations and launcher positions are preserved. [SpriteCook asset record](../art-review/iseed-launcher-hd/spritecook-assets.json)
