@@ -1,4 +1,4 @@
-"""Exercise Settings and a real service worker from a previous dist to a new dist."""
+"""Exercise the update menu and a real service worker from a previous dist to a new dist."""
 import argparse
 import json
 import subprocess
@@ -53,6 +53,14 @@ class ReleaseHandler(SimpleHTTPRequestHandler):
         pass
 
 
+def open_update_menu(page):
+    taps(page, "Open Plantigochi menu", "App & data")
+    if page.get_by_role("button", name="Save, Updates & More", exact=True).count():
+        taps(page, "Save, Updates & More")
+    else:
+        taps(page, "Back", "Settings")  # Earlier installed builds.
+
+
 fixture = json.loads(subprocess.check_output(["node", "--input-type=module", "-e", """
 import {newPlant} from './src/game.js';
 import {checkIn} from './src/gardenEconomy.js';
@@ -71,7 +79,7 @@ with ThreadingHTTPServer(("127.0.0.1", 0), partial(ReleaseHandler, directory=str
     page.wait_for_function("!!navigator.serviceWorker.controller", timeout=60000)
     entry = page.locator('script[type="module"]').first
     old = entry.get_attribute("src")
-    taps(page, "Open Plantigochi menu", "Settings")
+    open_update_menu(page)
     release = args.current
     stale_entry = True
     verified_checker = (args.previous / "game-release.json").exists()
@@ -98,7 +106,7 @@ with ThreadingHTTPServer(("127.0.0.1", 0), partial(ReleaseHandler, directory=str
     assert new != old and (args.current / new.lstrip("/")).exists()
     assert page.evaluate(READ_PLANT)["id"] == fixture["id"]
     if verified_checker:
-        taps(page, "Open Plantigochi menu", "Settings")
+        open_update_menu(page)
         expect(page.get_by_text("You have the latest version.")).to_be_visible(timeout=60000)
         page.context.set_offline(True)
         expect(page.get_by_text("Connect to the internet to check for updates.")).to_be_visible()

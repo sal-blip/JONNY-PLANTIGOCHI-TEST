@@ -2,6 +2,12 @@
 
 Use this record to trace the source and verification for a player-facing release. Add the next verified release above the previous one. For each entry, identify what players received, its GitHub revision, the matching Sites source revision and version, verification results, and any outstanding device checks. [Release procedure](pwa-and-release.md#release-and-verify)
 
+## Plantigochi 0.1.62 · Save, Updates & More
+
+Open **App & data → Save, Updates & More** for garden backups, restore, update checks, install and uninstall help, and the three-step garden reset. Back from either help screen and Cancel from reset return to this menu. Players on 0.1.61 can use Settings to install this release.
+
+The production build and 198 unit tests passed. The installed-update walkthrough upgraded a 0.1.61 garden, checked its plant ID after restart, and verified offline and reconnect status on the new screen. The timeout test also recovered from a stalled check there. [Installed update](../../tests/browser/installed_update.py) · [Update recovery](../../tests/browser/update_recovery.py)
+
 ## Plantigochi 0.1.61 · Installed update test
 
 Version-only release for testing Settings → Check for updates from 0.1.60. The production build and all 198 unit tests passed. The installed-update walkthrough verified that Settings recovered from a stale entry, restarted into the new build, and kept the original plant ID. [Upgrade walkthrough](../../tests/browser/installed_update.py)

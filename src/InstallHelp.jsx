@@ -11,7 +11,9 @@ export default function InstallHelp({phone, tour=false}) {
   const installUrl=new URL(gameLink());
   installUrl.hash='install';
   switch(phone.installState){
-    case 'installed': return <p role="status">Plantigochi is installed. Open its icon to play.</p>;
+    case 'installed':
+      if(tour)return <p role="status">Plantigochi is installed. Open its icon to play.</p>;
+      break;
     case 'accepted': return <p role="status">Installation accepted. Open the Plantigochi icon when it appears.</p>;
     case 'prompting': return <p role="status">Choose Install in your browser’s prompt.</p>;
     case 'available': return <>
@@ -29,6 +31,7 @@ export default function InstallHelp({phone, tour=false}) {
   }
   const macSafari=/Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Chromium|Edg/.test(ua);
   return <>
+    {phone.installState==='installed' && <p>Plantigochi is installed on this device. To reinstall, open the game link in your browser.</p>}
     {embedded && <p>Open the game link in {ios?'Safari':android?'Chrome':'your browser'} first.</p>}
     {ios || android ? <>
       <p>{ios?'In Safari, follow these steps.':'In Chrome, follow these steps.'}</p>

@@ -25,9 +25,17 @@ with sync_playwright() as pw, TemporaryDirectory() as folder:
         garden = sprout_fixture()['plant']
         for key in ('dewLesson','tutorial','sproutDebut','sproutBurstPending'):
             garden.pop(key,None)
+        garden['gardenLife']['visit'] = dict(date=garden['gardenLife']['day'], streak=1, claimed=True, shown=True)
         page.evaluate(SEED_SETUP,garden)
         page.goto(url)
-        taps(page,'Open Plantigochi menu','Settings','How to uninstall')
+        taps(page,'Open Plantigochi menu','Settings')
+        for label in ('Check for updates','How to uninstall','Reset all Plantigochi data'):
+            expect(page.get_by_role('button',name=label,exact=True)).to_have_count(0)
+        taps(page,'Back','App & data','Save, Updates & More','How to install')
+        expect(page.get_by_role('dialog',name='How to install')).to_be_visible()
+        taps(page,'Back','Reset all Plantigochi data')
+        expect(page.get_by_text('Confirmation 1 of 3')).to_be_visible()
+        taps(page,'Cancel','How to uninstall')
         expect(page.get_by_role('dialog', name='How to uninstall')).to_be_visible()
         expect(page.get_by_text(instruction,exact=True)).to_be_visible()
         with page.expect_download() as download:
@@ -37,7 +45,7 @@ with sync_playwright() as pw, TemporaryDirectory() as folder:
         assert json.loads(file.read_text())['id'] == garden['id']
         expect(page.get_by_text('Garden backup downloaded.',exact=True)).to_be_visible()
         taps(page,'Back')
-        expect(page.get_by_role('dialog',name='Settings')).to_be_visible()
+        expect(page.get_by_role('dialog',name='Save, Updates & More')).to_be_visible()
         assert page.evaluate(READ_PLANT)['id'] == garden['id']
         ctx.close()
         print(platform,touches,'help, backup and Back passed')

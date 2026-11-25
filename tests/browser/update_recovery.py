@@ -1,4 +1,4 @@
-"""Exercise Settings with a browser update request deliberately left pending."""
+"""Exercise the update menu with a browser update request deliberately left pending."""
 import json
 from pathlib import Path
 import subprocess
@@ -31,7 +31,8 @@ with sync_playwright() as pw:
     page.evaluate(SEED_SETUP, garden)
     page.goto(url)
     page.get_by_role('button', name='Open Plantigochi menu').click()
-    page.get_by_role('button', name='Settings', exact=True).click()
+    page.get_by_role('button', name='App & data', exact=True).click()
+    page.get_by_role('button', name='Save, Updates & More', exact=True).click()
     page.evaluate('window.stallCheck=true')
     check = page.get_by_role('button', name='Check for updates', exact=True)
     check.click()
@@ -45,5 +46,5 @@ with sync_playwright() as pw:
     page.evaluate('window.releaseCheck()')
     expect(check).to_be_enabled()
     assert page.evaluate(READ_PLANT)['id'] == garden['id']
-    print('Stalled Settings check, timeout, successful retry and save preservation passed.')
+    print('Stalled update check, timeout, successful retry and save preservation passed.')
     browser.close()

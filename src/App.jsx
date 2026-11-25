@@ -39,10 +39,10 @@ import {useGardenPhoneApps} from './GardenPhoneApps.jsx';
 import './collector.css';
 import './pocketGarden.css';
 
-const titles = {menu:'Plantigochi menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',uninstall:'How to uninstall',phone:'App & data',about:'About',bug:'Report a bug',install:'Install app',saves:'Saved plant',alerts:'Plant alerts',debug:'Debug menu',lab:'Growth Lab',purse:'1,000 coins in purse',test:'Test notifications',restart:'Start a fresh game'};
-const homeItems = ['scenes','settings','install','phone'];
+const titles = {menu:'Plantigochi menu',share:'Share Plantigochi',scenes:'Backgrounds',settings:'Settings',reset:'Reset garden',uninstall:'How to uninstall',phone:'App & data',about:'About',bug:'Report a bug',install:'How to install',saves:'Save, Updates & More',alerts:'Plant alerts',debug:'Debug menu',lab:'Growth Lab',purse:'1,000 coins in purse',test:'Test notifications',restart:'Start a fresh game'};
+const homeItems = ['scenes','settings','phone'];
 const phonePanels = ['install','saves','alerts'];
-const phoneItems = [...phonePanels,'about','bug'];
+const phoneItems = ['saves','alerts','about','bug'];
 const updateMessages={
   checking:'Checking for an update…',downloading:'Downloading the update…',current:'You have the latest version.',
   slow:'The update is taking longer than expected. You can keep playing or try again.',
@@ -315,12 +315,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     }
   }, [page, intro, sharing]);
 
-  const installParent = useRef('menu');
   function open(id) {
-    if (id === 'install') {
-      installParent.current = page === 'phone' ? 'phone' : 'menu';
-      if (phone.installState === 'available') void phone.promptInstall();
-    }
     restoreFocus.current = id==='rename' ? document.querySelector('.camera .toy-heart') : id === 'share' ? shareButton.current : menuButton.current;
     if(id==='welcome' || id==='rename')transitionOnboarding(()=>setPage(id));
     else setPage(id);
@@ -422,7 +417,9 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
   const menuTrigger=<button id="plantigochi-menu-trigger" data-global-menu="" ref={menuButton} className="wave-menu handset-global-menu"
     hidden={!showGlobalMenu} aria-label="Open Plantigochi menu" title="Plantigochi menu" aria-haspopup="dialog" onClick={()=>open('menu')}><Waves aria-hidden="true"/></button>;
   const introAudible = fxVolume > 0 && !revealMuted && running;
-  const parent = page==='uninstall' ? 'settings' : ['test','restart','lab','purse'].includes(page) ? 'debug' : (page === 'reset' || page === 'debug') ? (lab?'menu':'settings') : page === 'install' ? installParent.current : phoneItems.includes(page) ? 'phone' : 'menu';
+  const parent = ['install','uninstall','reset'].includes(page) ? 'saves'
+    : ['test','restart','lab','purse'].includes(page) ? 'debug'
+    : page==='debug' ? (lab?'menu':'settings') : phoneItems.includes(page) ? 'phone' : 'menu';
 
   let labBadge;
   if(lab){
@@ -542,7 +539,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
     {page==='daily' && plant && <DailyRewards key={visit?.date} viewPlant={()=>{setPage(null);go('toy');}} plant={plant} commit={commit} plantClock={plantClock} close={()=>setPage(null)}/>}
     {page && page !== 'daily' && page !== 'photo' && page !== 'welcome' && page !== 'rename' && <GardenDialog page={page} title={titles[page]} onDebug={page==='settings'?openDebug:undefined} back={page === 'menu' || page === 'share' ? null : () => open(parent)} close={() => setPage(null)}>
       {page === 'share' && <div className="phone-section"><GameLink showAddress/></div>}
-      {page === 'menu' && <MenuItems items={lab?['lab','purse']:phone.installed ? homeItems.filter(id => id !== 'install') : homeItems} open={open}/>}
+      {page === 'menu' && <MenuItems items={lab?['lab','purse']:homeItems} open={open}/>}
       {page === 'phone' && <MenuItems items={phoneItems} open={open}/>}
       {page === 'scenes' && <div className="scenes">{Object.entries(scenes).map(([id,name]) =>
         <button key={id} className="scene-choice" aria-pressed={scene === id} onClick={() => changeScene(id)}>
@@ -554,15 +551,7 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         <AudioSettings levels={levels} adjust={adjust} save={saveVolume} previewEffect={()=>play('tap')}/>
         <button aria-pressed={tilt.active} disabled={tilt.disabled} onClick={tilt.toggle}><Move/>Tilt motion<span className="setting-value">{tilt.label}</span></button>
         {tilt.denied && <p className="hint" role="status">Allow motion access for this site in your browser settings, then retry.</p>}
-        <button disabled={['checking','downloading'].includes(phone.updateStatus)}
-          onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
-          {phone.updateStatus==='ready'?'Restart to update':['failed','slow'].includes(phone.updateStatus)?'Retry update check':'Check for updates'}</button>
-        <small>Running version {appVersion}</small>
-        {phone.publishedVersion && phone.publishedVersion!==appVersion && <small>Published version {phone.publishedVersion}</small>}
-        {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
-        {['failed','slow'].includes(phone.updateStatus) && <a href="/update">Repair update</a>}
-        <button onClick={()=>open('uninstall')}>How to uninstall<ChevronRight className="row-end"/></button>
-        <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
+      </div>}
       {page === 'debug' && <MenuItems items={lab?['lab','purse']:['lab','purse','restart','test']} open={open}/>}
       {page === 'lab' && (lab?<LabControls lab={lab} play={()=>setPage(null)} exit={exitLab}/>:
         <section className="phone-section"><p>Test a temporary copy of {plant.name} and your garden. Closing the app or exiting the lab discards this copy. Your saved garden keeps its usual clock.</p>
@@ -579,6 +568,17 @@ function GardenApp({lab,startLab,exitLab,revealSeed,finishDrink,dismissWelcome,d
         <p><a href={'mailto:info@wazlab.com?subject=' + encodeURIComponent('Plantigochi ' + appVersion + ' bug report')}>info@wazlab.com</a></p>
       </section>}
       {(phonePanels.includes(page) || page==='test' || page==='uninstall') && <PhonePanel key={page} page={page} phone={phone} alerts={alerts} plant={plant} saveOK={saveOK} saveIssue={issue} recoveryRaw={storage.raw} onRestore={restoreBackup}/>}
+      {page === 'saves' && <div className="menu-items">
+        <button disabled={['checking','downloading'].includes(phone.updateStatus)}
+          onClick={phone.updateStatus==='ready'?()=>location.reload():phone.checkForUpdates}>
+          {phone.updateStatus==='ready'?'Restart to update':['failed','slow'].includes(phone.updateStatus)?'Retry update check':'Check for updates'}</button>
+        <small>Running version {appVersion}</small>
+        {phone.publishedVersion && phone.publishedVersion!==appVersion && <small>Published version {phone.publishedVersion}</small>}
+        {updateMessages[phone.updateStatus] && <p className="hint" role="status">{updateMessages[phone.updateStatus]}</p>}
+        {['failed','slow'].includes(phone.updateStatus) && <a href="/update">Repair update</a>}
+        <button onClick={()=>open('install')}>How to install<ChevronRight className="row-end"/></button>
+        <button onClick={()=>open('uninstall')}>How to uninstall<ChevronRight className="row-end"/></button>
+        <button onClick={()=>open('reset')}><Trash2/>Reset all Plantigochi data<ChevronRight className="row-end"/></button></div>}
     </GardenDialog>}
   </main></GuideSound.Provider>;
 }
