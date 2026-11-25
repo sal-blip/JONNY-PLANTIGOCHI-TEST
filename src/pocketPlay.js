@@ -3,7 +3,7 @@ import {company,wake} from './game.js';
 import {earnWin,lifeOf} from './gardenEconomy.js';
 import {settleDewLesson} from './firstVisit.js';
 
-import {newVine,stepVine,VINE_STEP_MS,VINE_GOAL} from './vineTrail.js';
+import {newVine,stepVine,VINE_STEP_MS} from './vineTrail.js';
 
 import {newPairs,stepPairs,shuffleLeaves,leafNames} from './leafPairs.js';
 export const gameNames = { vine: 'Vine Trail', dew: 'Dew Catch', pairs: 'Leaf Pairs' };
@@ -106,17 +106,17 @@ export function stepGame(g, event) {
 
 export function playText(g) {
   if(g.name==='vine'){
-    if(g.phase==='ready')return 'Find 5 suns · ♥ Start';
-    if(g.phase==='won')return 'In bloom! ♥ Again';
-    if(g.phase==='lost')return 'Tangled! ♥ Retry';
-    return g.count+'/'+VINE_GOAL+' suns · ◂ Turn ▸';
+    if(g.phase==='ready')return 'Collect suns · ♥ Start';
+    if(g.phase==='won')return 'Garden full! ♥ Again';
+    if(g.phase==='lost')return g.count+' suns · ♥ Retry';
+    return g.count+' suns · ◂ Turn ▸';
   }
   if(g.name==='pairs'){
-    if(g.phase==='ready')return 'Find 3 pairs · ♥ Start';
+    if(g.phase==='ready')return `Find ${leafNames.length} pairs · ♥ Start`;
     if(g.phase==='won')return 'All paired! ♥ Again';
     if(g.phase==='peek')return 'Two different leaves';
     const revealed=g.open.includes(g.cursor) || g.matched.includes(g.cursor);
-    return (g.matched.length/2)+'/3 · '+(revealed?leafNames[g.deck[g.cursor]]:'♥ Flip '+(g.cursor+1));
+    return (g.matched.length/2)+'/'+leafNames.length+' · '+(revealed?leafNames[g.deck[g.cursor]]:'♥ Flip '+(g.cursor+1));
   }
   if(g.lesson && g.phase==='won')return 'Round clear!';
   if(g.lesson && g.phase==='lost')return 'Three strikes';
@@ -134,12 +134,15 @@ export function usePocketPlay(plant,paused,onFinish) {
   const active = game && canPlay(game.name,plant) ? game : null;
   useEffect(() => { if (game && !active) dispatch({type:'exit'}); },[game,active]);
   const lastResult=useRef(null);
+  // The fifth sun earns the usual win once, while steering continues.
+  const result=active?.name==='vine' && active.phase!=='lost' ? active.reward :
+    active && ['won','lost'].includes(active.phase) ? active : null;
   useEffect(() => {
-    if (!active || !['won','lost'].includes(active.phase)) {lastResult.current=null;return;}
-    if (lastResult.current===active)return;
-    lastResult.current=active;
-    onFinish(active.name,active.phase,active.level,crypto.randomUUID(),active.startedAt,active.finishedAt,Boolean(active.lesson));
-  },[active,onFinish]);
+    if(!result){lastResult.current=null;return;}
+    if(lastResult.current===result)return;
+    lastResult.current=result;
+    onFinish(result.name,result.phase,result.level,crypto.randomUUID(),result.startedAt,result.finishedAt,Boolean(result.lesson));
+  },[result,onFinish]);
   useEffect(() => {
     if (!active || paused || (active.lesson || active.name==='vine') && active.phase==='lost') return;
     const delay = {trail:VINE_STEP_MS, fall:tickMs, lost:1800, peek:950}[active.phase];

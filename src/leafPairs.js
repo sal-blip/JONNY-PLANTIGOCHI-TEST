@@ -1,5 +1,6 @@
-export const leafNames=['Monstera','Snake plant','Fern'];
-const faces=[0,0,1,1,2,2];
+export const leafNames=['Monstera','Snake plant','Fern','Clover','Cactus','Lotus','Maple','Palm','Acorn'];
+export const PAIR_COLUMNS=6;
+const faces=leafNames.flatMap((_,index)=>[index,index]);
 
 export function shuffleLeaves(random=Math.random){
   const deck=[...faces];

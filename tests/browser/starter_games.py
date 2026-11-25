@@ -23,7 +23,7 @@ def turn_for_sun(body, sun):
             face = (heading+turn) % 4
             x, y = points[0][0]+DIRECTIONS[face][0], points[0][1]+DIRECTIONS[face][1]
             moved = ((x, y), *points[:-1])
-            if 0 <= x < 12 and 0 <= y < 6 and (x, y) not in points[:-1] and moved not in visited:
+            if 0 <= x < 16 and 0 <= y < 10 and (x, y) not in points[:-1] and moved not in visited:
                 visited.add(moved)
                 queue.append((moved, face, [*path, turn]))
     raise AssertionError("No route to the sun")
@@ -40,19 +40,33 @@ def play(browser, source):
     taps(page, "Take a peek", "Next", "Continue", "Begin setup", "Name your seed", "Keep Monstera", "Play a game")
     taps(page, "Choose Vine Trail", "Play heart", "Back on toy")
     expect(button(page, "Choose Resume")).to_be_visible()
+    page.emulate_media(reduced_motion="no-preference")
     taps(page, "Choose Resume")
-    expect(page.locator(".lcd-status")).to_contain_text("Tangled!", timeout=9000)
+    # The SVG travels between grid positions while collision logic stays on whole cells.
+    page.wait_for_function("""() => {
+      const line = document.querySelector('.lcd-art polyline');
+      if (!line || !line.animatedPoints.length) return false;
+      const x = line.animatedPoints.getItem(0).x;
+      return Math.abs((x-4)/7-Math.round((x-4)/7)) > .1;
+    }""", timeout=3000)
+    page.emulate_media(reduced_motion="reduce")
+    expect(page.locator(".lcd-status")).to_contain_text("Retry", timeout=9000)
+    # Measure the painted board, including SVG letterboxing, against the physical LCD.
+    bounds = page.locator(".lcd-art svg > rect").first.bounding_box()
+    lcd = page.locator(".lcd").bounding_box()
+    assert bounds["width"] > lcd["width"] * .89, (bounds, lcd)
+    assert bounds["height"] > lcd["height"] * .72, (bounds, lcd)
     taps(page, "Play heart")
     line = page.locator(".lcd-art polyline")
     for _ in range(110):
-        if "In bloom!" in page.locator(".lcd-status").inner_text():
+        if "6 suns" in page.locator(".lcd-status").inner_text():
             break
         body, sun = line.evaluate("""line => {
-          const body=Array.from(line.points,p=>[(p.x-9)/7,(p.y-4)/7]);
-          const sun=line.parentElement.querySelector('.vine-sun');
+          const body=Array.from(line.points,p=>[(p.x-4)/7,(p.y-4)/7]);
+          const sun=line.ownerSVGElement.querySelector('.vine-sun');
           if(!sun)return [body,null];
           const target=sun.transform.baseVal.getItem(0).matrix;
-          return [body,[(target.e-9)/7,(target.f-4)/7]];
+          return [body,[(target.e-4)/7,(target.f-4)/7]];
         }""")
         if sun is None:
             break
@@ -61,7 +75,7 @@ def play(browser, source):
         if turn:
             taps(page, "Play right" if turn == 1 else "Play left")
         expect(line).not_to_have_attribute("points", old, timeout=1800)
-    expect(page.locator(".lcd-status")).to_contain_text("In bloom!")
+    expect(page.locator(".lcd-status")).to_contain_text("6 suns")
     def leave():
         taps(page, "Back on toy", "Next toy item", "Choose Leave game")
         expect(button(page, "Play a game")).to_be_visible()
@@ -70,9 +84,14 @@ def play(browser, source):
     expect(page.locator(".lcd-status")).to_contain_text("Clear!", timeout=13000)
     leave()
     taps(page, "Play a game", "Previous toy item", "Choose Leaf Pairs", "Play heart")
-    # context_for fixes Math.random at .5. Reproduce the six-packet shuffle.
-    deck = [0, 0, 1, 1, 2, 2]
-    for i in range(5, 0, -1):
+    # context_for fixes Math.random at .5. Reproduce the 18-packet shuffle.
+    packets = page.locator(".lcd-art .leaf-packet")
+    expect(packets).to_have_count(18)
+    boxes = packets.evaluate_all("els => els.map(el => el.querySelector('rect').getBoundingClientRect().toJSON())")
+    assert len(set(round(box["y"]) for box in boxes)) == 3
+    assert len(set(round(box["x"]) for box in boxes)) == 6
+    deck = [face for face in range(9) for _ in range(2)]
+    for i in range(len(deck)-1, 0, -1):
         j = (i+1)//2
         deck[i], deck[j] = deck[j], deck[i]
     cursor = 0
@@ -80,13 +99,13 @@ def play(browser, source):
         nonlocal cursor
         while cursor != index:
             taps(page, "Play right")
-            cursor = (cursor+1) % 6
+            cursor = (cursor+1) % len(deck)
         taps(page, "Play heart")
     choose(0)
     choose(deck.index(next(leaf for leaf in deck if leaf != deck[0])))
     expect(page.locator(".lcd-status")).to_contain_text("Two different leaves")
     expect(page.locator(".lcd-status")).to_contain_text("Flip")
-    for leaf in range(3):
+    for leaf in range(9):
         for i, face in enumerate(deck):
             if face == leaf:
                 choose(i)

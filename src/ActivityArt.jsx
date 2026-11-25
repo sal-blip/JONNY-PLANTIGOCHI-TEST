@@ -1,26 +1,47 @@
-import React from "react";
+import React, {useLayoutEffect, useRef} from "react";
 import "./ActivityArt.css";
 
-import {VINE_COLS,VINE_ROWS} from './vineTrail.js';
+import {PAIR_COLUMNS} from './leafPairs.js';
+import {VINE_COLS,VINE_ROWS,VINE_STEP_MS} from './vineTrail.js';
 
 export function VineArt({game}) {
-  const px=cell=>9+7*(cell%VINE_COLS), py=cell=>4+7*Math.floor(cell/VINE_COLS);
-  const head=game.body[0];
-  return <Canvas>
-    <rect x="5.5" y=".5" width={7*VINE_COLS} height={7*VINE_ROWS} rx="1" fill="none" stroke="#63806b"/>
-    <polyline points={game.body.map(cell=>px(cell)+','+py(cell)).join(' ')} fill="none" stroke="#365c43" strokeWidth="2"/>
-    {game.body.slice(1).map((cell,i)=><g key={cell} transform={`translate(${px(cell)} ${py(cell)}) scale(${i%2?-1:1} 1)`}>
-      <path d="M-3-3h3v1h1v2h-2v-1h-2z" fill="#436d49"/><path d="M-2-2h2v1h-2z" fill="#a4bd60"/>
-    </g>)}
-    <g transform={`translate(${px(head)} ${py(head)}) rotate(${game.direction*90})`}>
-      <path d="M-3-2h2v-1h2v1h1v1h2v2H2v1H0v1h-2V2h-1z" fill="#2f5339"/>
-      <path d="M-2-1h2v-1h1v1h1v2H0v1h-2z" fill="#c5dc83"/>
+  const px=cell=>4+7*(cell%VINE_COLS), py=cell=>4+7*Math.floor(cell/VINE_COLS);
+  const motion=useRef(null);
+  const lastBody=useRef(game.body);
+  useLayoutEffect(()=>{
+    const moved=lastBody.current!==game.body;
+    lastBody.current=game.body;
+    if(!moved || !game.previousBody || window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    for(const animation of motion.current.querySelectorAll('animate,animateTransform'))animation.beginElement();
+  },[game.body,game.previousBody]);
+
+  // A newly grown tail starts on the old tail. Keep both polylines the same length.
+  const old=game.previousBody || game.body;
+  const previous=game.body.map((_,i)=>old[Math.min(i,old.length-1)]);
+  const point=cell=>px(cell)+','+py(cell);
+  const timing={begin:'indefinite',dur:(VINE_STEP_MS*.85)+'ms'};
+  return <Canvas viewBox={`0 0 ${7*VINE_COLS+1} ${7*VINE_ROWS+1}`}>
+    <rect x=".5" y=".5" width={7*VINE_COLS} height={7*VINE_ROWS} rx="1" fill="none" stroke="#63806b"/>
+    <g ref={motion}>
+      <polyline points={game.body.map(point).join(' ')} fill="none" stroke="#365c43" strokeWidth="2">
+        <animate attributeName="points" from={previous.map(point).join(' ')} to={game.body.map(point).join(' ')} {...timing}/>
+      </polyline>
+      {game.body.map((cell,i)=><g key={i} transform={`translate(${point(cell)})`}>
+        <animateTransform attributeName="transform" type="translate" from={point(previous[i])} to={point(cell)} {...timing}/>
+        {i===0?<g transform={`rotate(${game.direction*90})`}>
+          <path d="M-3-2H-2V-3H0V-2H2V-1H4V1H2V2H0V3H-2V2H-3Z" fill="#294a35"/>
+          <path d="M-2-1H-1V-2H0V-1H2V1H0V2H-1V1H-2Z" fill="#b4d377"/>
+          <path d="M-2-.5H2V.5H-2Z" fill="#658d50"/>
+        </g>:<g transform={`scale(${i%2?1:-1} 1)`}>
+          <path d="M-3-3h3v1h1v2h-2v-1h-2z" fill="#436d49"/><path d="M-2-2h2v1h-2z" fill="#a4bd60"/>
+        </g>}
+        {i===0 && game.phase==='won' && <g>
+          <path fill="#98576b" d="M-1-3h2v2h2v2H1v2h-2V1h-2v-2h2z"/>
+          <path fill="#f6c8bc" d="M-1-3h1v2h-1z M1-1h2v1H1z M0 1h1v2H0z M-3 0h2v1h-2z"/>
+          <rect x="-1" y="-1" width="2" height="2" fill="#e6bc52"/>
+        </g>}
+      </g>)}
     </g>
-    {game.phase==='won' && <g transform={`translate(${px(head)} ${py(head)})`}>
-      <path fill="#98576b" d="M-1-3h2v2h2v2H1v2h-2V1h-2v-2h2z"/>
-      <path fill="#f6c8bc" d="M-1-3h1v2h-1z M1-1h2v1H1z M0 1h1v2H0z M-3 0h2v1h-2z"/>
-      <rect x="-1" y="-1" width="2" height="2" fill="#e6bc52"/>
-    </g>}
     {game.sun!==null && <g className="vine-sun" transform={`translate(${px(game.sun)} ${py(game.sun)})`}>
       <path d="M-1-3h2v2h2v2H1v2h-2V1h-2v-2h2z" fill="#956423"/>
       <rect x="-1" y="-1" width="2" height="2" fill="#ffdb75"/>
@@ -120,21 +141,32 @@ export function DewArt({ lane = 1, drops, dropLane = 1, progress = 0, result = n
   );
 }
 
-const leafShapes=[
-  'M1 1h5v1h2v2H5v1h3v2H5v1H3V6H2V5H0V2h1z',
-  'M1 8V2h1V0h1v5h1V3h1V1h1v6H5v2H1z',
-  'M4 0h1v2h2v1H5v1h3v1H5v1h2v1H5v2H4V7H2V6h2V5H1V4h3V3H2V2h2z'
-];
+// One two-tone, nine-pixel stamp per face in leafNames order. Shape carries the match at toy size.
+const leafStamps=[
+  ['.###.###.','####.####','###+###..','..#+#####','###+##...','.##+####.','..#+###..','...+##...','....#....'],
+  ['...#.....','..##...#.','..#+..##.','..#+..#+.','#.#+.##+.','#+##.#+#.','#+####+#.','.######..','..####...'],
+  ['....#....','..#.#.#..','...#+#...','.##.+.##.','...#+#...','###.+.###','..##+##..','....+....','....#....'],
+  ['.##...##.','####.####','###+.+###','.###.###.','...#+#...','.###.###.','###+.+###','###..####','.##.#.##.'],
+  ['...###...','...#+#...','.#.#+#...','##.#+#.##','##.#+#.##','.###+###.','...#+#...','...#+#...','...###...'],
+  ['....#....','...#+#...','.#.#+#.#.','###+.+###','.##+.+##.','##.#+#.##','.###+###.','..#####..','.........'],
+  ['....#....','.#..#..#.','..##+##..','####+####','.###+###.','##.#+#.##','...#+#...','....+....','....#....'],
+  ['..##.##..','.###+###.','##..+..##','#..#+#..#','..#.+.#..','....+....','....##...','.....#...','....###..'],
+  ['.....##..','....##...','..#####..','.#+##+##.','#########','.###+###.','.##+###..','..#####..','....#....'],
+].map(rows=>['#','+'].map(ink=>rows.flatMap((row,y)=>Array.from(row,(pixel,x)=>
+  pixel===ink?`M${x} ${y}h1v1h-1z`:'')).join('')));
+
 export function PairsArt({game}){
-  return <Canvas>{game.deck.map((face,i)=>{
+  return <Canvas viewBox="0 0 192 88">{game.deck.map((face,i)=>{
     const selected=i===game.cursor, paired=game.matched.includes(i);
     const revealed=paired || game.open.includes(i);
-    return <g key={i} transform={`translate(${11+(i%3)*26} ${3+Math.floor(i/3)*20})`}>
-      <rect x="1" y="1" width="21" height="16" rx="2" fill={revealed?'#dbe6b9':'#657f59'} stroke="#38533b"/>
-      {revealed?<path transform="translate(7 4)" d={leafShapes[face]} fill="#31573c"/>:
-        <path d="M4 4h15v1H4z M8 11h2v-2h2V7h4v3h-2v2h-4v2H8z" fill="#c4d3a3"/>}
-      {paired && <path d="m16 13 2 2 3-4" fill="none" stroke="#376044"/>}
-      {selected && <path d="M-1 4V-1h5m14 0h5v5m0 9v6h-5m-14 0h-5v-6" fill="none" stroke="#45391f" strokeWidth="2"/>}
+    return <g className="leaf-packet" key={i} transform={`translate(${3+(i%PAIR_COLUMNS)*32} ${2+Math.floor(i/PAIR_COLUMNS)*29})`}>
+      <rect x="2" y="2" width="22" height="21" rx="2" fill={revealed?'#e1e9c4':'#5a7756'} stroke="#304e37" strokeWidth="2"/>
+      {revealed?<g transform="translate(4 3) scale(2)">
+        <path d={leafStamps[face][0]} fill="#2c5239"/>
+        <path d={leafStamps[face][1]} fill="#72904e"/>
+      </g>:<path d="M5 6h16v2H5z M8 17v-4h3v-2h7v4h-3v2h-5v2H8z" fill="#c6d5a2"/>}
+      {paired && <path d="M17 21l2 2 5-5" fill="none" stroke="#365438" strokeWidth="2"/>}
+      {selected && <path d="M0 6V0h6m14 0h6v6m0 13v6h-6M6 25H0v-6" fill="none" stroke="#48361f" strokeWidth="2"/>}
     </g>;
   })}</Canvas>;
 }

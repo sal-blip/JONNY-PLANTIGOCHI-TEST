@@ -555,7 +555,7 @@ export default function PocketDevice({plant,now,plantClock=Date.now,resting,comm
     <div className="device">
       <SproutCelebration plant={plant} resting={resting && !game && !revealing} commit={commit}/>
       <div className="inspect-shell"><DeviceShell/></div>
-      <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} data-branch={branch} role="group" aria-label={description}>
+      <div className={'lcd'+(browsing?' lcd-menu':ready?' lcd-ready':'')} data-branch={branch} data-arcade={playing?game.name:undefined} role="group" aria-label={description}>
         <span className="lcd-care-light" aria-hidden="true" data-needed={!game && careCues.light || undefined}/>
         <span className="lcd-top"><span>{!browsing && <i/>}{title.toUpperCase()}</span>
           {game?.name==='dew' ? <Chances remaining={game.chances}/>

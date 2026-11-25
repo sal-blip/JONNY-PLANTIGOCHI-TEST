@@ -13,10 +13,10 @@ const guide = [
   ['Company','Talk or finish a game. Quiet at 12h, lonely at 24h.'],
   ['Plant food','Food every 48h. Light every 24h.'],
   ['Growing up','New growth on days 3 and 5. Fully grown on day 7.'],
-  ['Vine Trail','Turn the moving tip with the arrows. Find five suns. Avoid the edge and your vine.'],
+  ['Vine Trail','Turn the moving tip with the arrows. Each sun grows your vine. Avoid the edge and your vine.'],
   ['Dew Catch','Catch with the arrows. Three misses restart at level 1.'],
   ['Garden coins','Visits +10 daily. Helpful watering +2, up to 3/day. Game wins +3, up to 5/day.'],
-  ['Leaf Pairs','Use arrows to pick a packet. Heart flips it. Match all three pairs.'],
+  ['Leaf Pairs','Use arrows to pick a packet. Heart flips it. Match all nine pairs.'],
   ['Taking a break','Tap Back to pause. Hold Back for your plant.'],
   ['Fungus','Gnats? First Aid cures fungus. Treat within 12h.'],
   ['Garden keepsakes','Swipe up to visit the garden’s Cutting Jar and Leaf Book.'],
@@ -65,9 +65,9 @@ export function toyCards(section, plant, now) {
       let hint=cleared===LEVELS?'20 levels cleared':'Level '+(cleared+1)+' / '+LEVELS;
       if (plant.dewCleared>cleared) hint+=' · Best '+plant.dewCleared;
       return [
-        card('Vine Trail','Turn toward five suns','game:vine',{locked:!canPlay('vine',plant)}),
+        card('Vine Trail','Grow as long as you can','game:vine',{locked:!canPlay('vine',plant)}),
         card('Dew Catch',hint,'game:dew',{locked:!canPlay('dew',plant)}),
-        card('Leaf Pairs','Match three leaf pairs','game:pairs',{locked:!canPlay('pairs',plant)})];
+        card('Leaf Pairs','Match nine leaf pairs','game:pairs',{locked:!canPlay('pairs',plant)})];
     }
     case 'pause': return [card('Resume','Hold Back for your plant','resume'),card('Leave game','Return to your plant','leave')];
     case 'growth': {

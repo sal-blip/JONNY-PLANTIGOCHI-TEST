@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {VINE_COLS,VINE_ROWS} from '../src/vineTrail.js';
 import {newPlant} from '../src/game.js';
 import {canPlay,stepGame} from '../src/pocketPlay.js';
 import {shuffleLeaves} from '../src/leafPairs.js';
@@ -17,33 +18,51 @@ test('all three games open on a living, unwatered seed',()=>{
   assert.equal(canPlay('echo',seed),false);
 });
 
-test('vine grows toward five suns, turns once per step and waits for replay after a collision',()=>{
+test('vine grows past five suns, turns once per step and waits for replay after a collision',()=>{
   let g=key(enter('vine'),'heart');
   g=tick(tick(tick(g)));
   assert.equal(g.count,1);
   assert.equal(g.body.length,4);
   assert.ok(!g.body.includes(g.sun));
+  const tip=g.body[0];
   g=tick(key(key(g,'right'),'left'));
   assert.equal(g.direction,1);
-  assert.deepEqual(g.body.slice(0,2),[54,42]);
+  assert.deepEqual(g.body.slice(0,2),[tip+VINE_COLS,tip]);
   while(g.phase==='trail')g=tick(g);
   assert.equal(g.phase,'lost');
   assert.equal(tick(g),g);
   assert.equal(key(g,'heart').phase,'trail');
-  const loop={...key(enter('vine'),'heart'),body:[29,30,42,41,40],direction:1,sun:1};
+  const loop={...key(enter('vine'),'heart'),body:[29,30,30+VINE_COLS,29+VINE_COLS,28+VINE_COLS],direction:1,sun:1};
   assert.equal(tick(loop).phase,'lost');
-  assert.equal(tick({...loop,body:[29,30,42,41]}).phase,'trail');
+  assert.equal(tick({...loop,body:loop.body.slice(0,-1)}).phase,'trail');
   g=tick({...loop,body:[29,28,27,26,25,24,12],sun:30,count:4,direction:0});
-  assert.equal(g.phase,'won');
+  assert.equal(g.phase,'trail');
+  assert.equal(g.reward.phase,'won');
   assert.equal(g.count,5);
   assert.equal(g.body.length,8);
+  const more=tick({...g,sun:g.body[0]+1});
+  assert.equal(more.count,6);
+  assert.equal(more.reward,g.reward);
 });
 
-test('six seed packets have three pairs and mismatches close without credit',()=>{
-  assert.deepEqual(shuffleLeaves().sort(),[0,0,1,1,2,2]);
-  let g=key(enter('pairs'),'heart',[0,1,2,0,1,2]);
+test('collecting the last available sun fills the board and ends the run',()=>{
+  const capacity=VINE_ROWS*VINE_COLS;
+  const body=Array.from({length:capacity},(_,i)=>{
+    const row=Math.floor(i/VINE_COLS),col=i%VINE_COLS;
+    return row*VINE_COLS+(row%2?VINE_COLS-1-col:col);
+  }).slice(1);
+  const g=tick({...key(enter('vine'),'heart'),body,direction:2,sun:0,count:capacity-4});
+  assert.equal(g.phase,'won');
+  assert.equal(g.sun,null);
+  assert.equal(new Set(g.body).size,capacity);
+});
+
+test('eighteen seed packets have nine pairs and mismatches close without credit',()=>{
+  const faces=Array.from({length:9},(_,i)=>i);
+  assert.deepEqual(shuffleLeaves().sort(),faces.flatMap(i=>[i,i]));
+  let g=key(enter('pairs'),'heart',[...faces,...faces]);
   g=key(key(g,'left'),'heart');
-  assert.deepEqual(g.open,[5]);
+  assert.deepEqual(g.open,[17]);
   assert.equal(key(g,'heart'),g);
   g=key(key(g,'right'),'heart');
   assert.equal(g.phase,'peek');

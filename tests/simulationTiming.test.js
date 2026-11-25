@@ -77,7 +77,7 @@ test('a delayed visit records the actual earned crossing for each stage, includi
 });
 
 const enter = (name,cleared=0) => stepGame(null,{type:'enter',name,cleared});
-const key = (game,input,at,dropLane=1) => stepGame(game,{type:'key',key:input,at,dropLane,deck:[0,0,1,1,2,2]});
+const key = (game,input,at,dropLane=1) => stepGame(game,{type:'key',key:input,at,dropLane,deck:Array.from({length:18},(_,i)=>Math.floor(i/2))});
 const tick = (game,at,dropLane=1) => stepGame(game,{type:'tick',at,dropLane});
 
 test('finishing Dew Catch with one life starts a full three-life replay at any unlocked level',()=>{
@@ -121,7 +121,7 @@ test('Dew and Leaf Pairs award coins using the round actually played across midn
 
   function finishPairs(game,start){
     let at=start;
-    for(let i=0;i<6;i++){
+    for(let i=0;i<game.deck.length;i++){
       if(i)game=key(game,'right',++at);
       game=key(game,'heart',++at);
     }

@@ -120,3 +120,9 @@
   white-space:nowrap;
 }
 .fungus-alarm svg {height:.9em;width:.9em;fill:currentColor}
+
+/* Use the LCD above the control cue as a single playfield. */
+.lcd[data-arcade="vine"] .lcd-top {display:none}
+.lcd[data-arcade="vine"] .lcd-art {inset:2% 2% 14%}
+.lcd[data-arcade="vine"].lcd-ready .lcd-art {bottom:22%}
+.lcd[data-arcade="vine"] .lcd-status {margin-top:auto}
