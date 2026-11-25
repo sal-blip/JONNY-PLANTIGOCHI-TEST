@@ -10,6 +10,8 @@ The new worker fetches the exact game page from a content-addressed URL and veri
 
 The build and 201 unit tests passed. Chromium walkthroughs upgraded unmodified 0.1.61 and 0.1.62 installations after a failed attempt, with stale public HTML on retry. Both reached Restart and retained the plant ID. A separate test exercised repair and restart from an installed 0.1.61 garden. [Upgrade walkthrough](../../tests/browser/installed_update.py) · [Timeout and progress tests](../../tests/appUpdates.test.js)
 
+On the public origin, an installation opened on 0.1.62 reached **Restart to update**, reopened on 0.1.63 and retained its plant. A separate archived 0.1.61 installation served on localhost fetched the live 0.1.63 files and passed the same check. Public release descriptor, module, worker digest, and immutable shell matched the built files. Published Sites version `appgver_12b5432e5c0c8191b190a1acbb74d7ee` from Sites source `77d3a277917bdb4702b1a7b92fa995beba2a1415` in deployment `appgdep_6b067822b6888191b1b2b3263938f5b1`. [GitHub release revision](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/8e98eb5)
+
 ## Plantigochi 0.1.62 · Save, Updates & More
 
 Open **App & data → Save, Updates & More** for garden backups, restore, update checks, install and uninstall help, and the three-step garden reset. Back from either help screen and Cancel from reset return to this menu. Players on 0.1.61 can use Settings to install this release.
