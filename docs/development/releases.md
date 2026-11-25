@@ -6,6 +6,8 @@ Use this record to trace the source and verification for a player-facing release
 
 Cotton Candy Skies plays through the first pot purchase and the prompt to swipe the toy away. Completing that swipe starts the crossfade to Mystic Oasis. The same loop continues as the player visits the Plant Studio, returns home, and opens and closes the first rewards. Reopening a saved room lesson selects Mystic Oasis. [Music walkthrough](../../tests/browser/scene_music.py)
 
+All 202 unit tests passed. A mobile Chromium walkthrough measured both fades, checked the same Mystic loop during the spin, and reopened each of the four tour checkpoints. A live installation updated through the regular menu from 0.1.64 and kept its plant. Published Sites version `appgver_5aafcce27dbc8191a2397e0d23d18112` from Sites source `ebdf10c5322eb867eb21f396a5a9459c459c6210` in deployment `appgdep_6b06814db7d481919ccd2148d1e525cf`. [GitHub release revision](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/b6a92f2)
+
 ## Plantigochi 0.1.64 · Explore the garden before the first rewards
 
 After collecting the sprout gift and answering any care reminder, the player swipes the toy away, visits the Plant Studio and comes back to the living room. The garden calendar then shows an alert. Opening it leads to the existing daily check-in and free spin. A player who already received the check-in coins during setup can go straight to the spin. Returning from the first rewards visit fades Cotton Candy Skies into Mystic Oasis. The saved tour step lets a player resume after closing the game. Gardens that finished the previous tutorial keep their usual daily rewards.
