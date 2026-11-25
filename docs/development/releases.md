@@ -6,11 +6,15 @@ Use this record to trace the source and verification for a player-facing release
 
 Version-only release for testing Settings → Check for updates from 0.1.60. The production build and all 198 unit tests passed. The installed-update walkthrough verified that Settings recovered from a stale entry, restarted into the new build, and kept the original plant ID. [Upgrade walkthrough](../../tests/browser/installed_update.py)
 
+Published to the [public game](https://plantigochi-pocket-garden-mobile.salbasilone.chatgpt.site/) from [GitHub revision d6544db](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/d6544db). Sites source `714d50fb799e71d6e21cdee5e39237c10c4d5abd`, saved version `appgver_16b5302d95d08191bd2ee171bdf39ff6`, deployment `appgdep_6b067403a4508191a6301898ea0e402b`.
+
 ## Plantigochi 0.1.60 · Explore the toy menu before watering
 
 The first seed introduces Care, Play, Growth, First Aid, and Field Guide as players browse in either direction. The tour remembers distinct icons across reloads and asks for Back once all five have been seen. Opening the menu again highlights Care, then Water. Returning players who already finished the controls lesson go straight to watering.
 
 The production build and 198 unit tests passed. Mobile Chromium checks covered both arrow directions, reversing and reloading midway, the watering handoff and the rest of the first visit. An installed 0.1.59 garden also updated to 0.1.60 through Settings. [First visit](../../tests/browser/scene_music.py) · [Resume the menu tour](../../tests/browser/starter_games.py)
+
+Published to the [public game](https://plantigochi-pocket-garden-mobile.salbasilone.chatgpt.site/) from [GitHub revision db6854d](https://github.com/sal-blip/JONNY-PLANTIGOCHI-TEST/commit/db6854d). Sites source `9d12c4e8cc4444280e9efee80b90bce5e432ca7b`, saved version `appgver_4e6a6b6ba54c8191a69d2d5a6118a9c8`, deployment `appgdep_6b0671dae8d4819189b43224db8292ee`.
 
 ## Plantigochi 0.1.59 · Verify updates against the published game
 
